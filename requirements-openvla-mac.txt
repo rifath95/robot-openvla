@@ -1,0 +1,11 @@
+# Isolated Python 3.11 inference environment; preserve upstream model API.
+torch==2.2.2
+torchvision==0.17.2
+transformers==4.40.1
+tokenizers==0.19.1
+timm==0.9.10
+numpy==1.26.4
+accelerate==0.29.3
+pillow>=10,<12
+sentencepiece==0.2.0
+huggingface-hub>=0.23,<1

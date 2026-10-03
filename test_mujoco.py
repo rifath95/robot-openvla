@@ -1,0 +1,18 @@
+import mujoco
+import mujoco.viewer
+
+xml = """
+<mujoco>
+    <worldbody>
+        <geom type="plane" size="2 2 0.1"/>
+        <body pos="0 0 1">
+            <geom type="box" size="0.2 0.2 0.2"/>
+        </body>
+    </worldbody>
+</mujoco>
+"""
+
+model = mujoco.MjModel.from_xml_string(xml)
+data = mujoco.MjData(model)
+
+mujoco.viewer.launch(model, data)

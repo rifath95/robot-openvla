@@ -1,0 +1,4 @@
+# Simulation environment tested with Python 3.14 on macOS.
+mujoco==3.14.0
+numpy==2.5.3
+glfw==2.10.2
