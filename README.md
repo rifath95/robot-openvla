@@ -2,7 +2,7 @@
 
 A Phase 1 robotics workspace for connecting a simulated Franka Panda arm to OpenVLA. Development currently runs on a MacBook using Python and MuJoCo 3.14.0, without ROS.
 
-Last updated: 2026-10-03. Update this document as milestones, run instructions, and model locations change.
+Last updated: 2026-10-07. Update this document as milestones, run instructions, and model locations change.
 
 ## Goal
 
@@ -31,6 +31,7 @@ The seven values are `[dx, dy, dz, droll, dpitch, dyaw, gripper]`: three positio
 - Downloaded the pretrained `openvla/openvla-7b` checkpoint and ran inference on a camera image with the instruction “pick up the red cube.”
 - Fixed an inference input mismatch by supplying a required prompt token together with its attention-mask entry.
 - Confirmed that inference produced seven finite action values on the Mac's Apple GPU.
+- Completed a fresh-image single-action test: the predicted command moved the simulated arm and produced a new camera image, with position tracking error below 0.1 mm. That run took approximately 579 seconds for inference.
 
 The successful inference took approximately **516 seconds (8 minutes 36 seconds)**, excluding model loading. This proves local inference works, but its measured speed is too slow for practical interactive control.
 
@@ -48,7 +49,12 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | `capture_camera.py` | Saves the fixed-camera view to `camera_image.png`; also provides a PNG writer. |
 | `try_openvla_mac.py` | Runs the GPU check, checkpoint download/cache check, and one action prediction; updates status and logs. |
 | `openvla_mac.py` | Local inference entry point: loads the processor/model, processes image and instruction, calls `predict_action()`, and saves the result. |
+| `openvla_single_action.py` | Captures a fresh scene, predicts one action, executes a bounded command, and saves before/after images and a movement report. |
+| `openvla_loop.py` | Runs three successive observation/action cycles while loading OpenVLA once; saves each image, prediction, movement, and timing. |
 | `requirements-openvla-mac.txt` | Dependencies for the isolated OpenVLA environment. |
+| `requirements-openvla.txt` | Shared pinned inference dependencies for Mac and Linux. |
+| `requirements-sim-linux.txt` | Linux/Python 3.11 simulation dependencies for cloud runs. |
+| `CLOUD_SETUP.md` | Linux NVIDIA GPU setup, headless rendering checks, and the CUDA loop benchmark. |
 | `robot_controls.py` | Earlier browser-based control panel; the current keyboard demo does not use it. |
 | `mujoco_menagerie/` | Cloned upstream robot models and mesh assets. |
 | `.venv/` | Simulation Python environment. |
@@ -84,7 +90,7 @@ python3.11 -m venv .venv-openvla
 .venv-openvla/bin/python try_openvla_mac.py
 ```
 
-The first OpenVLA run needs internet access and downloads approximately 15 GB of weights from Hugging Face into `.cache-openvla/`. It then attempts inference using the Mac's MPS GPU. Subsequent runs reuse downloaded checkpoint files. Model loading and inference also require substantial memory; this is the tested Mac feasibility path, not yet a Linux/CUDA launcher. The Mac test does not move the robot.
+The first OpenVLA run needs internet access and downloads approximately 15 GB of weights from Hugging Face into `.cache-openvla/`. It then attempts inference using the Mac's MPS GPU. Subsequent runs reuse downloaded checkpoint files. Model loading and inference also require substantial memory. These setup commands describe the tested Mac path; use [CLOUD_SETUP.md](CLOUD_SETUP.md) for Linux/CUDA. The Mac inference wrapper does not move the robot.
 
 Missing environments must be installed before running scripts, and missing submodule assets will prevent the Panda scene from loading. A fresh clone will not contain the original machine's result files; generate your own camera image and inference result with the commands above.
 
@@ -111,6 +117,39 @@ These are separate options, not a sequence that must all be run. To run inferenc
 ```
 
 The direct command saves the action but does not update the wrapper's status file.
+
+### One model-predicted movement
+
+Run `openvla_single_action.py` in VS Code, or use:
+
+```bash
+.venv/bin/python openvla_single_action.py
+```
+
+It launches the simulation and inference stages in their respective environments. After fresh inference finishes, it restores the scene state that produced the input image, executes one bounded command, and opens the final scene in the standard viewer. No simulation advances during inference. Use `--no-view` to save results without opening the final viewer. You do not need to launch another simulator first.
+
+Each run creates `outputs/single_action_<timestamp>/` containing `before.png`, `after.png`, `scene_state.npz`, `prediction.json`, `execution.json`, `status.json`, and `run.log`. Check `status.json` for progress or failures. `execution.json` records the raw action, converted command, measured movement, and tracking error.
+
+This is a provisional plumbing test using `bridge_orig` statistics and an identity mapping of world XYZ/Euler axes, not a calibrated WidowX-to-Panda transfer. It limits the translation vector to 1 cm and the rotation vector to 0.05 radians, preserving their directions. The gripper changes from model 0 closed / 1 open to controller -1 closed / +1 open. The control point is the Panda hand origin. A successful movement does not demonstrate model-driven grasping or task success.
+
+### Three-action feedback loop
+
+Run `openvla_loop.py` in VS Code, or:
+
+```bash
+.venv/bin/python openvla_loop.py
+```
+
+It loads OpenVLA once, predicts an action from the first image, advances the simulation, and feeds the resulting image into the next prediction. It stops after three actions. No final viewer is opened; inspect the saved images. Physics stays frozen during inference, and the same provisional mapping and per-action bounds apply. The simulated state is carried forward rather than reset between actions.
+
+Results are saved in `outputs/openvla_loop_<timestamp>/`:
+
+- `status.json`: phase, current step, completed steps, UTC update time, most recent inference time when available, and total elapsed time when finished.
+- `summary.json`: completed movement reports and per-step/total inference times; updated after each completed action.
+- `run.log`: model loading, prediction, execution, and failure details.
+- `step_01/`, `step_02/`, `step_03/`: each step's `before.png`, `after.png`, `prediction.json`, `execution.json`, and simulation states. Step 2's input image is step 1's output image, and so on.
+
+`status.json` becomes `Completed` after all requested actions pass execution checks, or `Failed` with the failing phase. `--steps 1` or `--steps 2` provides a shorter run; the initial experiment is limited to three actions. Keeping weights loaded avoids repeated loading, but does not guarantee faster prediction. Allow substantial time on the Mac.
 
 ### Keyboard controls
 
@@ -180,10 +219,10 @@ The successful test used `bridge_orig` action statistics. These statistics are f
 
 ## Current status and next intended work
 
-**Current status:** simulation, keyboard end-effector control, scripted pick-and-place, camera capture, and one OpenVLA action prediction work. The predicted action has **not been sent to the robot**. The repeated model-controlled loop is not connected, and no custom-domain fine-tuning has been performed.
+**Current status:** simulation, keyboard end-effector control, scripted pick-and-place, camera capture, a fresh-image OpenVLA single-action movement, and the live three-action feedback loop work on the Mac. The three predictions took approximately 462, 601, and 554 seconds, with position tracking error below 0.1 mm. CUDA support and a Linux/headless setup guide have been added, but have not yet been tested on an NVIDIA GPU. No custom-domain fine-tuning has been performed, and model-driven pick-and-place has not been demonstrated.
 
-**Next intended milestone:** connect a model prediction to the existing controller after verifying coordinate, rotation, gripper, and normalization conventions. Then capture the resulting camera image and repeat the loop, evaluating actual task success.
+**Next intended milestone:** run the same three-action benchmark on cloud NVIDIA compute using [CLOUD_SETUP.md](CLOUD_SETUP.md) and measure inference latency. Before task evaluation, validate the coordinate, rotation, control-point, and normalization conventions for our Panda domain and plan demonstration collection/fine-tuning.
 
-For practical inference and future training, we intend to evaluate cloud NVIDIA GPU compute. A single **A100 80GB** is a documented starting point for OpenVLA LoRA fine-tuning, which adapts a small set of parameters rather than retraining the entire model. Custom-domain adaptation will also require collecting suitable demonstrations, preparing a dataset, and measuring success on unseen trials. GPU migration and training are not implemented yet.
+For practical inference and future training, we intend to evaluate cloud NVIDIA GPU compute. A single **A100 80GB** is a documented starting point for OpenVLA LoRA fine-tuning, which adapts a small set of parameters rather than retraining the entire model. Custom-domain adaptation will also require collecting suitable demonstrations, preparing a dataset, and measuring success on unseen trials. Cloud inference can be launched with `.venv/bin/python openvla_loop.py --device cuda`; training and a remote inference server are not implemented yet. The Mac default remains `--device mps`.
 
 Upstream references: [OpenVLA](https://github.com/openvla/openvla), [checkpoint](https://huggingface.co/openvla/openvla-7b), [LoRA fine-tuning](https://github.com/openvla/openvla#fine-tuning-openvla-via-lora), [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie).

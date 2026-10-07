@@ -1,4 +1,4 @@
-"""One-image OpenVLA feasibility test. Does not command the robot.
+"""OpenVLA inference entry point; default mode predicts one action only.
 
 Run with .venv-openvla/bin/python; the simulator's .venv is separate.
 """
@@ -19,10 +19,13 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--preflight", action="store_true")
     parser.add_argument("--download", action="store_true")
-    parser.add_argument("--device", choices=("mps", "cpu"), default="mps")
+    parser.add_argument("--device", choices=("mps", "cuda", "cpu"), default="mps")
     parser.add_argument("--image", type=Path, default=ROOT / "camera_image.png")
     parser.add_argument("--instruction", default="pick up the red cube")
     parser.add_argument("--unnorm-key", default="bridge_orig")
+    parser.add_argument("--output", type=Path, default=ROOT / "outputs" / "openvla_mac_action.json")
+    parser.add_argument("--loop-dir", type=Path, help=argparse.SUPPRESS)
+    parser.add_argument("--loop-steps", type=int, default=3, help=argparse.SUPPRESS)
     args = parser.parse_args()
 
     import torch
@@ -31,11 +34,21 @@ def main():
 
     print(f"PyTorch {torch.__version__}; Transformers {transformers.__version__}", flush=True)
     print(f"Apple GPU available: {torch.backends.mps.is_available()}", flush=True)
+    print(f"NVIDIA CUDA available: {torch.cuda.is_available()}", flush=True)
+    # Downloads do not require the target GPU to be available.
+    if not args.download:
+        if args.device == "mps" and not torch.backends.mps.is_available():
+            raise RuntimeError("Apple GPU is unavailable")
+        if args.device == "cuda" and not torch.cuda.is_available():
+            raise RuntimeError("CUDA is unavailable. Check nvidia-smi and install the CUDA PyTorch wheel; see CLOUD_SETUP.md")
+    dtype = torch.bfloat16 if args.device == "cuda" and torch.cuda.is_available() and torch.cuda.is_bf16_supported() else torch.float16
+    if args.device == "cuda" and torch.cuda.is_available():
+        properties = torch.cuda.get_device_properties(0)
+        print(f"GPU: {properties.name}; VRAM: {properties.total_memory / 2**30:.1f} GiB", flush=True)
     if args.preflight:
-        if torch.backends.mps.is_available():
-            tensor = torch.ones((32, 32), device="mps", dtype=torch.float16)
-            assert (tensor @ tensor).cpu()[0, 0].item() == 32
-            print("MPS float16 matrix test passed", flush=True)
+        tensor = torch.ones((32, 32), device=args.device, dtype=dtype)
+        assert (tensor @ tensor).cpu()[0, 0].item() == 32
+        print(f"{args.device} {dtype} matrix test passed", flush=True)
         return
 
     model_id = "openvla/openvla-7b"
@@ -58,47 +71,63 @@ def main():
     from PIL import Image
     from transformers import AutoModelForVision2Seq, AutoProcessor
 
-    if args.device == "mps" and not torch.backends.mps.is_available():
-        raise RuntimeError("Apple GPU is unavailable")
     # Eager attention avoids the CUDA-only FlashAttention dependency.
     # Device-map loading places each weight on its destination immediately.
-    print(f"Loading float16 model on {args.device}…", flush=True)
+    print(f"Loading {dtype} model on {args.device}…", flush=True)
     start = time.monotonic()
     processor = AutoProcessor.from_pretrained(model_path, trust_remote_code=True, local_files_only=True)
     model = AutoModelForVision2Seq.from_pretrained(
         model_path, trust_remote_code=True, local_files_only=True,
-        torch_dtype=torch.float16, low_cpu_mem_usage=True,
+        torch_dtype=dtype, low_cpu_mem_usage=True,
         attn_implementation="eager", device_map={"": args.device},
     ).eval()
     print(f"Loaded in {time.monotonic()-start:.1f} seconds", flush=True)
     if args.unnorm_key not in model.norm_stats:
         raise ValueError(f"Unknown statistics key; choices: {list(model.norm_stats)}")
-    image = Image.open(args.image).convert("RGB")
-    prompt = f"In: What action should the robot take to {args.instruction}?\nOut:"
-    inputs = processor(prompt, image).to(args.device, dtype=torch.float16)
-    # predict_action appends this training-time token without extending the
-    # processor's attention mask. Supply both together to keep lengths aligned.
-    if not torch.all(inputs["input_ids"][:, -1] == 29871):
-        inputs["input_ids"] = torch.cat(
-            [inputs["input_ids"], inputs["input_ids"].new_full((1, 1), 29871)], dim=1
-        )
-        inputs["attention_mask"] = torch.cat(
-            [inputs["attention_mask"], inputs["attention_mask"].new_ones((1, 1))], dim=1
-        )
-    print("Image and prompt processed; token and attention-mask lengths aligned", flush=True)
-    start = time.monotonic()
-    with torch.inference_mode():
-        action = model.predict_action(**inputs, unnorm_key=args.unnorm_key, do_sample=False)
-    if args.device == "mps":
-        torch.mps.synchronize()
-    import numpy as np
-    if np.asarray(action).shape != (7,) or not np.all(np.isfinite(action)):
-        raise RuntimeError(f"Invalid predicted action: {action}")
-    result = {"action": action.tolist(), "inference_seconds": time.monotonic()-start,
-              "device": args.device, "unnorm_key": args.unnorm_key,
-              "instruction": args.instruction, "image": str(args.image)}
-    destination = ROOT / "outputs" / "openvla_mac_action.json"
-    destination.parent.mkdir(exist_ok=True)
+    def predict(image_path):
+        with Image.open(image_path) as source:
+            image = source.convert("RGB")
+        prompt = f"In: What action should the robot take to {args.instruction}?\nOut:"
+        inputs = processor(prompt, image).to(args.device, dtype=dtype)
+        # Supply the training-time token AND its mask entry before predict_action.
+        if not torch.all(inputs["input_ids"][:, -1] == 29871):
+            inputs["input_ids"] = torch.cat(
+                [inputs["input_ids"], inputs["input_ids"].new_full((1, 1), 29871)], dim=1
+            )
+            inputs["attention_mask"] = torch.cat(
+                [inputs["attention_mask"], inputs["attention_mask"].new_ones((1, 1))], dim=1
+            )
+        print("Image and prompt processed; token and attention-mask lengths aligned", flush=True)
+        start = time.monotonic()
+        with torch.inference_mode():
+            action = model.predict_action(**inputs, unnorm_key=args.unnorm_key, do_sample=False)
+        if args.device == "mps":
+            torch.mps.synchronize()
+        elif args.device == "cuda":
+            torch.cuda.synchronize()
+        import numpy as np
+        if np.asarray(action).shape != (7,) or not np.all(np.isfinite(action)):
+            raise RuntimeError(f"Invalid predicted action: {action}")
+        result = {"action": action.tolist(), "inference_seconds": time.monotonic()-start,
+                  "device": args.device, "dtype": str(dtype), "attention": "eager",
+                  "unnorm_key": args.unnorm_key,
+                  "instruction": args.instruction, "image": str(image_path)}
+        # Release generation temporaries before the simulation renderer runs;
+        # keep the model weights resident for the next image.
+        del inputs
+        if args.device == "mps":
+            torch.mps.empty_cache()
+        elif args.device == "cuda":
+            torch.cuda.empty_cache()
+        return result
+
+    if args.loop_dir is not None:
+        from openvla_loop import run_loaded_model
+        run_loaded_model(args.loop_dir.resolve(), args.loop_steps, predict)
+        return
+    result = predict(args.image)
+    destination = args.output.resolve()
+    destination.parent.mkdir(parents=True, exist_ok=True)
     destination.write_text(json.dumps(result, indent=2))
     print(json.dumps(result, indent=2), flush=True)
     print(f"Saved {destination}. This action has NOT been sent to the robot.", flush=True)

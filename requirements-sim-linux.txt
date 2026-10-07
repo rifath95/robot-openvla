@@ -1,0 +1,4 @@
+# Linux cloud simulation with Python 3.11, separate from model dependencies.
+mujoco==3.14.0
+numpy==1.26.4
+glfw==2.10.2
