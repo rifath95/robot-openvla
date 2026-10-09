@@ -1,4 +1,4 @@
-"""Send a fresh MuJoCo camera image to the test server; never move the robot."""
+"""Send a fresh MuJoCo image to a test or OpenVLA server; never move the robot."""
 
 import argparse
 import base64
@@ -35,14 +35,16 @@ def main():
     parser.add_argument("--image", type=Path, help="Use an existing PNG instead of capturing MuJoCo")
     parser.add_argument("--timeout-seconds", type=float, default=30)
     parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--expected-mode", choices=("connection_test", "openvla"), default="connection_test")
     args = parser.parse_args()
     url = urlsplit(args.server_url)
     if url.scheme != "http" or not url.hostname or url.path not in ("", "/") or url.query or url.fragment or url.username:
         parser.error("--server-url must be an HTTP origin, e.g. http://127.0.0.1:8000 (use an SSH tunnel for cloud)")
-    if args.timeout_seconds <= 0:
+    if not math.isfinite(args.timeout_seconds) or args.timeout_seconds <= 0:
         parser.error("--timeout-seconds must be positive")
     request_id = uuid.uuid4().hex
-    output = args.output_dir or Path(__file__).with_name("outputs") / f"connection_test_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{request_id[:8]}"
+    prefix = "remote_inference" if args.expected_mode == "openvla" else "connection_test"
+    output = args.output_dir or Path(__file__).with_name("outputs") / f"{prefix}_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{request_id[:8]}"
     output.mkdir(parents=True, exist_ok=True)
     def status(phase, **extra):
         (output / "status.json").write_text(json.dumps({"phase": phase, "request_id": request_id, **extra}, indent=2) + "\n")
@@ -66,6 +68,7 @@ def main():
         connected = time.perf_counter()
         connection.request("POST", "/predict", body=body, headers={"Content-Type": "application/json"})
         sent = time.perf_counter()
+        status("Waiting for OpenVLA prediction" if args.expected_mode == "openvla" else "Waiting for test response")
         response = connection.getresponse()
         headers_received = time.perf_counter()
         raw = response.read(1024 * 1024 + 1)
@@ -75,7 +78,7 @@ def main():
         result = json.loads(raw)
         if response.status != 200:
             raise ValueError(f"Server returned HTTP {response.status}: {result}")
-        if result.get("request_id") != request_id or result.get("mode") != "connection_test" or result.get("model_loaded") is not False:
+        if result.get("request_id") != request_id or result.get("mode") != args.expected_mode or result.get("model_loaded") is not (args.expected_mode == "openvla"):
             raise ValueError("Unexpected server mode or request ID")
         action = result.get("action")
         if not isinstance(action, list) or len(action) != 7 or any(type(x) not in (int, float) or not math.isfinite(x) for x in action):
@@ -91,14 +94,18 @@ def main():
             "total": downloaded - started,
             "robot_movement": None,
         }
-        result["timing_note"] = "Client send/read durations are local measurements, not isolated one-way network latency. Header wait includes network and server work. No model tokenization, inference, or robot movement occurs."
+        result["timing_note"] = "Client send/read durations are local measurements, not isolated one-way network latency. Header wait includes network and server work. Server preprocessing and inference use its own clock. Robot movement is not executed."
         result["robot_moved"] = False
         (output / "result.json").write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
         status("Completed", elapsed_seconds=time.perf_counter() - started)
-        print("Received fixed test action:", action)
+        print("Received OpenVLA action:" if args.expected_mode == "openvla" else "Received fixed test action:", action)
         print("Server decoded image:", result["image"])
         print(f"Request round trip: {result['client_timings_seconds']['request_round_trip']:.4f}s")
-        print("No model inference or robot movement performed.")
+        if args.expected_mode == "openvla":
+            print("Server timings:", result["timings_seconds"])
+            print("Prediction displayed only; robot movement is not executed.")
+        else:
+            print("No model inference or robot movement performed.")
         print(f"Image, timings and status saved in {output}")
     except Exception as exc:
         status("Failed", error=str(exc), elapsed_seconds=time.perf_counter() - started)

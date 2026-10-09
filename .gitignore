@@ -12,6 +12,7 @@ htmlcov/
 .venv/
 .venv-openvla/
 .cache-openvla/
+.cache-openvla-server/
 venv/
 env/
 mujoco_env/

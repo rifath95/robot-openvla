@@ -101,5 +101,6 @@ was approximately 18 ms. Saved successful-test artifacts are in
 `outputs/connection_test_verified/` (excluded from Git). Cloud connectivity has
 not been tested with these scripts yet.
 
-Once the communication test succeeds on a pod, replace the fixed response with
-one real OpenVLA prediction while retaining the request/response interface.
+The communication test subsequently passed on a pod, with approximately 1.58
+seconds round trip. Real inference is now available as an explicit server mode,
+but still needs cloud-GPU validation; follow [REMOTE_INFERENCE.md](REMOTE_INFERENCE.md).

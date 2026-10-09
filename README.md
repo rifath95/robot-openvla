@@ -55,10 +55,14 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | `requirements-openvla.txt` | Shared pinned inference dependencies for Mac and Linux. |
 | `requirements-sim-linux.txt` | Linux/Python 3.11 simulation dependencies for cloud runs. |
 | `CLOUD_SETUP.md` | Linux NVIDIA GPU setup, headless rendering checks, and the CUDA loop benchmark. |
-| `connection_server.py` | Lightweight HTTP image-decoding server returning a fixed seven-number test action; no OpenVLA or GPU needed. |
-| `connection_client.py` | Captures a MuJoCo image, sends it with an instruction, and saves the returned test action and timings; never moves the arm. |
+| `connection_server.py` | HTTP server with fixed-action test mode and explicit resident OpenVLA inference mode. |
+| `connection_client.py` | Captures a MuJoCo image, sends it with an instruction, and saves returned test/model actions and timings; never moves the arm. |
 | `requirements-connection-server.txt` | Pillow dependency for the lightweight connection server. |
 | `CONNECTION_TEST.md` | Local connection-test commands, later SSH-tunnel setup, output files, and timing interpretation. |
+| `openvla_backend.py` | Loads OpenVLA once and predicts actions with processor and synchronized GPU inference timings. |
+| `prepare_cloud_model.py` | Downloads the pinned model locally and exports regular files to Global storage for reuse. |
+| `REMOTE_INFERENCE.md` | Cloud model setup and one real prediction through an SSH tunnel, without robot movement. |
+| `test_remote_inference.py` | Contract tests using substituted model objects; does not run the real 7B checkpoint. |
 | `robot_controls.py` | Earlier browser-based control panel; the current keyboard demo does not use it. |
 | `mujoco_menagerie/` | Cloned upstream robot models and mesh assets. |
 | `.venv/` | Simulation Python environment. |
@@ -177,6 +181,8 @@ The camera can also be switched using `]`. The passive-viewer demos step physics
 
 Our entry point is **`openvla_mac.py`**. The neural-network implementation is official OpenVLA code downloaded from Hugging Face using `trust_remote_code=True`; the OpenVLA GitHub repository has not been cloned into this workspace.
 
+For remote serving, **`openvla_backend.py`** loads the same official model implementation and processor. **`connection_server.py --mode openvla`** keeps them loaded between HTTP requests. Cloud weights can be stored as regular files in `/workspace/openvla-7b` using `prepare_cloud_model.py`; the original Mac cache paths below remain unchanged.
+
 The pinned model snapshot is:
 
 ```text
@@ -225,12 +231,12 @@ The successful test used `bridge_orig` action statistics. These statistics are f
 
 **Current status:** simulation, keyboard end-effector control, scripted pick-and-place, camera capture, a fresh-image OpenVLA single-action movement, and the live three-action feedback loop work on the Mac. The three predictions took approximately 462, 601, and 554 seconds, with position tracking error below 0.1 mm. CUDA support and a Linux/headless setup guide have been added, but have not yet been tested on an NVIDIA GPU. No custom-domain fine-tuning has been performed, and model-driven pick-and-place has not been demonstrated.
 
-**Phase 2 status:** a small Python script was successfully run through VS Code Remote SSH on a RunPod A40, using PyTorch 2.4.1/CUDA 12.4. The GPU calculation passed; OpenVLA has not yet been tested on that cloud GPU. The intended architecture keeps MuJoCo on the Mac and serves OpenVLA predictions from the cloud. A provider-independent image/request connection test has now been added: the server decodes a PNG and returns fixed test numbers, and the client saves its camera image, response, and timings without moving the robot. See [CONNECTION_TEST.md](CONNECTION_TEST.md). No real remote model server or continuous remote control loop is implemented yet.
+**Phase 2 status:** a small Python script was successfully run through VS Code Remote SSH on a RunPod A40, using PyTorch 2.4.1/CUDA 12.4. The GPU calculation passed; OpenVLA has not yet been tested on that cloud GPU. The intended architecture keeps MuJoCo on the Mac and serves OpenVLA predictions from the cloud. The provider-independent image/request connection test decodes a PNG and returns fixed test numbers, and the client saves its camera image, response, and timings without moving the robot. See [CONNECTION_TEST.md](CONNECTION_TEST.md). A continuous remote control loop is not implemented yet.
 
-The local connection test passed with a fresh 640x480 camera image and approximately 18 ms request round trip. Invalid requests, an unavailable server, and automatic server exit were also checked. Artifacts are in `outputs/connection_test_verified/`. This local timing does not predict cloud latency.
+The local connection test passed with a fresh 640x480 camera image and approximately 18 ms request round trip. Invalid requests, an unavailable server, and automatic server exit were also checked. Artifacts are in `outputs/connection_test_verified/`. The subsequent Mac-to-RunPod fixed-action test passed with approximately 1.58 seconds round trip. Real remote inference is now implemented as `connection_server.py --mode openvla`, with the model resident between requests and the Mac client explicitly expecting that mode. Model files can be exported to the Global volume while caches and dependencies stay on the container disk. This real-model server has not yet been validated on a cloud GPU; see [REMOTE_INFERENCE.md](REMOTE_INFERENCE.md).
 
-**Next intended milestone:** run the connection-test server on a pod and its client on the Mac through an SSH tunnel. After that, replace the fixed action with one real OpenVLA prediction and measure GPU latency. Before task evaluation, validate the coordinate, rotation, control-point, and normalization conventions for our Panda domain and plan demonstration collection/fine-tuning. [CLOUD_SETUP.md](CLOUD_SETUP.md) remains a separate guide for running both simulation and inference on a cloud machine.
+**Next intended milestone:** validate one real cloud OpenVLA prediction from a Mac camera image through the SSH tunnel, without moving the robot, and measure processing and GPU prediction latency. After that, connect the returned actions to bounded simulation movements. Before task evaluation, validate the coordinate, rotation, control-point, and normalization conventions for our Panda domain and plan demonstration collection/fine-tuning. [CLOUD_SETUP.md](CLOUD_SETUP.md) remains a separate guide for running both simulation and inference on a cloud machine.
 
-For practical inference and future training, we intend to evaluate cloud NVIDIA GPU compute. A single **A100 80GB** is a documented starting point for OpenVLA LoRA fine-tuning, which adapts a small set of parameters rather than retraining the entire model. Custom-domain adaptation will also require collecting suitable demonstrations, preparing a dataset, and measuring success on unseen trials. Cloud inference can be launched with `.venv/bin/python openvla_loop.py --device cuda`; training and a remote inference server are not implemented yet. The Mac default remains `--device mps`.
+For practical inference and future training, we intend to evaluate cloud NVIDIA GPU compute. A single **A100 80GB** is a documented starting point for OpenVLA LoRA fine-tuning, which adapts a small set of parameters rather than retraining the entire model. Custom-domain adaptation will also require collecting suitable demonstrations, preparing a dataset, and measuring success on unseen trials. Running both simulation and inference on cloud compute is available via `.venv/bin/python openvla_loop.py --device cuda`; the Mac default remains `--device mps`. Remote model inference now has a separate server/client path described above, but has not been validated on a cloud GPU. Training is not implemented yet.
 
 Upstream references: [OpenVLA](https://github.com/openvla/openvla), [checkpoint](https://huggingface.co/openvla/openvla-7b), [LoRA fine-tuning](https://github.com/openvla/openvla#fine-tuning-openvla-via-lora), [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie).

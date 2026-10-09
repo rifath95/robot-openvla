@@ -1,6 +1,6 @@
 # Cloud GPU inference setup
 
-Prepared on 2026-10-07. The Mac three-action loop passed; **Linux/CUDA execution has not been tested on a rented GPU yet**. This guide runs both the simulator and OpenVLA on the cloud machine. A Mac-to-cloud inference server and fine-tuning pipeline are separate future steps.
+Prepared on 2026-10-07. The Mac three-action loop passed; **Linux/CUDA OpenVLA execution has not been tested on a rented GPU yet**. This guide runs both the simulator and OpenVLA on the cloud machine. For the separate Mac-simulator/cloud-model path, see [REMOTE_INFERENCE.md](REMOTE_INFERENCE.md). Fine-tuning is still future work.
 
 ## Machine to use
 

@@ -1,4 +1,4 @@
-"""Receive a camera image and return a fixed action; no model or GPU required."""
+"""Receive image/instruction requests; return fixed test values or resident OpenVLA predictions."""
 
 import argparse
 import base64
@@ -6,6 +6,9 @@ import binascii
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from io import BytesIO
 import json
+import math
+import os
+from pathlib import Path
 import threading
 import time
 import warnings
@@ -38,7 +41,9 @@ class Handler(BaseHTTPRequestHandler):
         if self.path != "/health":
             self.send_json(404, {"error": "Unknown endpoint"})
             return
-        self.send_json(200, {"status": "ready", "mode": "connection_test", "model_loaded": False})
+        self.send_json(200, {"status": "ready", "mode": self.server.mode,
+                             "model_loaded": self.server.predictor is not None,
+                             "model_load_seconds": getattr(self.server.predictor, "load_seconds", None)})
 
     def do_POST(self):
         if self.path != "/predict":
@@ -83,20 +88,36 @@ class Handler(BaseHTTPRequestHandler):
                 Image.DecompressionBombError, Image.DecompressionBombWarning) as exc:
             self.send_json(400, {"error": str(exc)})
             return
+        inference = {"action": TEST_ACTION,
+                     "action_convention": "Panda controller: world XYZ metres, rotation radians, gripper -1 closed / +1 open",
+                     "timings_seconds": {"processor_and_device_transfer": None, "model_inference": None}}
+        if self.server.predictor is not None:
+            if not self.server.prediction_lock.acquire(blocking=False):
+                self.send_json(503, {"error": "Model is busy; wait for the current prediction to finish", "request_id": request_id})
+                return
+            try:
+                inference = self.server.predictor.predict(rgb, instruction)
+            except Exception as exc:
+                self.log_error("Prediction failed: %s", exc)
+                self.send_json(500, {"error": "OpenVLA prediction failed; inspect the server log", "request_id": request_id})
+                return
+            finally:
+                self.server.prediction_lock.release()
+        finished = time.perf_counter()
+        timings = inference.pop("timings_seconds")
         self.send_json(200, {
             "request_id": request_id,
-            "mode": "connection_test",
-            "model_loaded": False,
+            "mode": self.server.mode,
+            "model_loaded": self.server.predictor is not None,
             "instruction": instruction,
             "image": {"width": width, "height": height, "mode": "RGB", "png_bytes": len(png)},
-            "action": TEST_ACTION,
+            **inference,
             "action_names": ACTION_NAMES,
-            "action_convention": "Panda controller: world XYZ metres, rotation radians, gripper -1 closed / +1 open",
             "timings_seconds": {
                 "receive_body": received - started,
                 "preprocess": prepared - received,
-                "model_inference": None,
-                "server_processing": prepared - started,
+                **timings,
+                "server_processing": finished - started,
             },
         })
 
@@ -106,18 +127,38 @@ def main():
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
     parser.add_argument("--max-runtime-seconds", type=float, default=900)
+    parser.add_argument("--mode", choices=("connection_test", "openvla"), default="connection_test")
+    parser.add_argument("--model-dir", type=Path)
+    parser.add_argument("--device", choices=("cuda", "mps", "cpu"), default="cuda")
+    parser.add_argument("--unnorm-key", default="bridge_orig")
+    parser.add_argument("--cache-dir", type=Path, default=Path(__file__).with_name(".cache-openvla-server"))
     args = parser.parse_args()
-    if args.max_runtime_seconds <= 0:
+    if not math.isfinite(args.max_runtime_seconds) or args.max_runtime_seconds <= 0:
         parser.error("--max-runtime-seconds must be positive")
-    if args.host not in ("127.0.0.1", "localhost", "::1"):
+    if args.host not in ("127.0.0.1", "localhost"):
         parser.error("Use a loopback address and an SSH tunnel; this test server has no authentication")
+    predictor = None
+    if args.mode == "openvla":
+        if args.model_dir is None:
+            parser.error("--model-dir is required for --mode openvla")
+        cache = args.cache_dir.resolve()
+        os.environ["HF_HOME"] = str(cache)
+        os.environ["HF_MODULES_CACHE"] = str(cache / "modules")
+        os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+        print(f"Loading OpenVLA from {args.model_dir} on {args.device}; HTTP readiness follows successful loading.", flush=True)
+        from openvla_backend import OpenVLAPredictor
+        predictor = OpenVLAPredictor(args.model_dir, device=args.device, unnorm_key=args.unnorm_key)
+        print(f"Model loaded in {predictor.load_seconds:.2f}s", flush=True)
     with ThreadingHTTPServer((args.host, args.port), Handler) as server:
+        server.mode = args.mode
+        server.predictor = predictor
+        server.prediction_lock = threading.Lock()
         timer = threading.Timer(args.max_runtime_seconds, server.shutdown)
         timer.daemon = True
         timer.start()
-        print(f"Connection test ready at http://{args.host}:{server.server_port}", flush=True)
-        print("Fixed test action only; no OpenVLA loaded. Robot movement is not executed.", flush=True)
-        print(f"Server exits after {args.max_runtime_seconds:g}s. This does NOT terminate a rented pod or stop its billing.", flush=True)
+        print(f"{args.mode} server ready at http://{args.host}:{server.server_port}", flush=True)
+        print("Robot movement is not executed. Use an SSH tunnel for remote requests.", flush=True)
+        print(f"Server stops accepting requests after {args.max_runtime_seconds:g}s of readiness. Loading and an in-flight prediction may extend this. This does NOT terminate a rented pod or stop billing.", flush=True)
         try:
             server.serve_forever(poll_interval=0.1)
         except KeyboardInterrupt:
