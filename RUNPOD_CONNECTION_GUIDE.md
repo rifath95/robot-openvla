@@ -222,3 +222,8 @@ GPU memory happens again on every new server process. A future custom Docker
 image can avoid repeated dependency installation.
 
 For implementation details, see [REMOTE_INFERENCE.md](REMOTE_INFERENCE.md).
+
+For the next single-movement test, keep the same server/tunnel setup and replace
+Terminal 3's display-only command with `.venv/bin/python remote_single_action.py`.
+This executes one bounded action and opens the final scene; read
+[REMOTE_SINGLE_ACTION.md](REMOTE_SINGLE_ACTION.md) before using it.

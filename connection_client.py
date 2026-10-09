@@ -28,6 +28,64 @@ def capture_png(path):
         save_rgb_png(path, renderer.render())
 
 
+def request_prediction(image_path, instruction, *, server_url="http://127.0.0.1:8000",
+                       expected_mode="openvla", timeout_seconds=180,
+                       request_id=None, progress=None):
+    """Request and validate one action, without touching any simulation state."""
+    url = urlsplit(server_url)
+    if url.scheme != "http" or not url.hostname or url.path not in ("", "/") or url.query or url.fragment or url.username:
+        raise ValueError("server_url must be an HTTP origin; use an SSH tunnel for cloud")
+    if not math.isfinite(timeout_seconds) or timeout_seconds <= 0:
+        raise ValueError("timeout_seconds must be positive")
+    if expected_mode not in ("openvla", "connection_test"):
+        raise ValueError("Unknown expected server mode")
+    request_id = request_id or uuid.uuid4().hex
+    started = time.perf_counter()
+    body = json.dumps({"request_id": request_id, "instruction": instruction,
+                       "image_png_base64": base64.b64encode(Path(image_path).read_bytes()).decode("ascii")}).encode()
+    encoded = time.perf_counter()
+    if progress:
+        progress("Sending image")
+    connection = http.client.HTTPConnection(url.hostname, url.port or 80, timeout=timeout_seconds)
+    try:
+        connect_started = time.perf_counter()
+        connection.connect()
+        connected = time.perf_counter()
+        connection.request("POST", "/predict", body=body, headers={"Content-Type": "application/json"})
+        sent = time.perf_counter()
+        if progress:
+            progress("Waiting for OpenVLA prediction" if expected_mode == "openvla" else "Waiting for test response")
+        response = connection.getresponse()
+        headers_received = time.perf_counter()
+        raw = response.read(1024 * 1024 + 1)
+        downloaded = time.perf_counter()
+        if len(raw) > 1024 * 1024:
+            raise ValueError("Response exceeds 1 MiB")
+        result = json.loads(raw)
+        if not isinstance(result, dict):
+            raise ValueError("Expected a response object")
+        if response.status != 200:
+            raise ValueError(f"Server returned HTTP {response.status}: {result}")
+        if result.get("request_id") != request_id or result.get("mode") != expected_mode or result.get("model_loaded") is not (expected_mode == "openvla"):
+            raise ValueError("Unexpected server mode or request ID")
+        action = result.get("action")
+        if not isinstance(action, list) or len(action) != 7 or any(type(x) not in (int, float) or not math.isfinite(x) for x in action):
+            raise ValueError("Response must contain seven finite action numbers")
+        result["client_timings_seconds"] = {
+            "encode_request": encoded - started,
+            "connect": connected - connect_started,
+            "upload_send": sent - connected,
+            "wait_for_response_headers": headers_received - sent,
+            "response_body_read": downloaded - headers_received,
+            "request_round_trip": downloaded - connected,
+            "total_request": downloaded - started,
+        }
+        result["timing_note"] = "Client send/read durations are local measurements, not isolated one-way network latency. Header wait includes network and server work. Server preprocessing and inference use its own clock."
+        return result
+    finally:
+        connection.close()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--server-url", default="http://127.0.0.1:8000")
@@ -50,7 +108,6 @@ def main():
         (output / "status.json").write_text(json.dumps({"phase": phase, "request_id": request_id, **extra}, indent=2) + "\n")
     started = time.perf_counter()
     status("Capturing image")
-    connection = None
     try:
         image_path = output / "input.png"
         if args.image:
@@ -58,43 +115,12 @@ def main():
         else:
             capture_png(image_path)
         captured = time.perf_counter()
-        body = json.dumps({"request_id": request_id, "instruction": args.instruction,
-                           "image_png_base64": base64.b64encode(image_path.read_bytes()).decode("ascii")}).encode()
-        encoded = time.perf_counter()
-        status("Sending image")
-        connection = http.client.HTTPConnection(url.hostname, url.port or 80, timeout=args.timeout_seconds)
-        connect_started = time.perf_counter()
-        connection.connect()
-        connected = time.perf_counter()
-        connection.request("POST", "/predict", body=body, headers={"Content-Type": "application/json"})
-        sent = time.perf_counter()
-        status("Waiting for OpenVLA prediction" if args.expected_mode == "openvla" else "Waiting for test response")
-        response = connection.getresponse()
-        headers_received = time.perf_counter()
-        raw = response.read(1024 * 1024 + 1)
-        downloaded = time.perf_counter()
-        if len(raw) > 1024 * 1024:
-            raise ValueError("Response exceeds 1 MiB")
-        result = json.loads(raw)
-        if response.status != 200:
-            raise ValueError(f"Server returned HTTP {response.status}: {result}")
-        if result.get("request_id") != request_id or result.get("mode") != args.expected_mode or result.get("model_loaded") is not (args.expected_mode == "openvla"):
-            raise ValueError("Unexpected server mode or request ID")
-        action = result.get("action")
-        if not isinstance(action, list) or len(action) != 7 or any(type(x) not in (int, float) or not math.isfinite(x) for x in action):
-            raise ValueError("Response must contain seven finite action numbers")
-        result["client_timings_seconds"] = {
-            "capture_or_copy": captured - started,
-            "encode_request": encoded - captured,
-            "connect": connected - connect_started,
-            "upload_send": sent - connected,
-            "wait_for_response_headers": headers_received - sent,
-            "response_body_read": downloaded - headers_received,
-            "request_round_trip": downloaded - connected,
-            "total": downloaded - started,
-            "robot_movement": None,
-        }
-        result["timing_note"] = "Client send/read durations are local measurements, not isolated one-way network latency. Header wait includes network and server work. Server preprocessing and inference use its own clock. Robot movement is not executed."
+        result = request_prediction(image_path, args.instruction, server_url=args.server_url,
+                                    expected_mode=args.expected_mode, timeout_seconds=args.timeout_seconds,
+                                    request_id=request_id, progress=status)
+        action = result["action"]
+        result["client_timings_seconds"].update(capture_or_copy=captured - started,
+                                                 total=time.perf_counter() - started, robot_movement=None)
         result["robot_moved"] = False
         (output / "result.json").write_text(json.dumps(result, indent=2, allow_nan=False) + "\n")
         status("Completed", elapsed_seconds=time.perf_counter() - started)
@@ -110,9 +136,6 @@ def main():
     except Exception as exc:
         status("Failed", error=str(exc), elapsed_seconds=time.perf_counter() - started)
         raise SystemExit(f"Connection test failed: {exc}\nDetails: {output / 'status.json'}") from exc
-    finally:
-        if connection:
-            connection.close()
 
 
 if __name__ == "__main__":
