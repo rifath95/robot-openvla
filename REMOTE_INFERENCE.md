@@ -1,9 +1,11 @@
 # One cloud OpenVLA prediction, displayed on the Mac
 
-Prepared 2026-10-09. The image-only connection test passed both locally and from
-Mac to RunPod (approximately 1.58 seconds cloud round trip). The real-model server
-is implemented, but **has not yet been validated with OpenVLA on a cloud GPU**.
-No robot movement or continuous control loop is performed by these commands.
+Validated 2026-10-09 on a RunPod RTX A6000: model loading took 202.13 seconds,
+one real prediction took 0.702 seconds, and the Mac-to-cloud request round trip
+took 1.689 seconds. The image-only connection test also passed (approximately
+1.58 seconds cloud round trip). No robot movement or continuous control loop is
+performed by these commands. For the three-terminal session checklist and
+placeholder lookup, see [RUNPOD_CONNECTION_GUIDE.md](RUNPOD_CONNECTION_GUIDE.md).
 
 ## Files and architecture
 
@@ -146,5 +148,4 @@ handling, and exporting linked cache files as regular persistent files. They do
 not establish CUDA compatibility or real model correctness. The unchanged fixed
 mode can still be checked with [CONNECTION_TEST.md](CONNECTION_TEST.md).
 
-Next milestone: validate one real GPU prediction through the tunnel, review its
-timings, then connect bounded actions to the simulation in a separate change.
+Next milestone: connect bounded actions to the simulation in a separate change.

@@ -62,6 +62,7 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | `openvla_backend.py` | Loads OpenVLA once and predicts actions with processor and synchronized GPU inference timings. |
 | `prepare_cloud_model.py` | Downloads the pinned model locally and exports regular files to Global storage for reuse. |
 | `REMOTE_INFERENCE.md` | Cloud model setup and one real prediction through an SSH tunnel, without robot movement. |
+| `RUNPOD_CONNECTION_GUIDE.md` | Copyable session checklist for pod setup, SSH login, three terminal roles, model reuse, prediction, and shutdown. |
 | `test_remote_inference.py` | Contract tests using substituted model objects; does not run the real 7B checkpoint. |
 | `robot_controls.py` | Earlier browser-based control panel; the current keyboard demo does not use it. |
 | `mujoco_menagerie/` | Cloned upstream robot models and mesh assets. |
