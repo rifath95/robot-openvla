@@ -2,7 +2,7 @@
 
 A Phase 1 robotics workspace for connecting a simulated Franka Panda arm to OpenVLA. Development currently runs on a MacBook using Python and MuJoCo 3.14.0, without ROS.
 
-Last updated: 2026-10-07. Update this document as milestones, run instructions, and model locations change.
+Last updated: 2026-10-09. Update this document as milestones, run instructions, and model locations change.
 
 ## Goal
 
@@ -55,6 +55,10 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | `requirements-openvla.txt` | Shared pinned inference dependencies for Mac and Linux. |
 | `requirements-sim-linux.txt` | Linux/Python 3.11 simulation dependencies for cloud runs. |
 | `CLOUD_SETUP.md` | Linux NVIDIA GPU setup, headless rendering checks, and the CUDA loop benchmark. |
+| `connection_server.py` | Lightweight HTTP image-decoding server returning a fixed seven-number test action; no OpenVLA or GPU needed. |
+| `connection_client.py` | Captures a MuJoCo image, sends it with an instruction, and saves the returned test action and timings; never moves the arm. |
+| `requirements-connection-server.txt` | Pillow dependency for the lightweight connection server. |
+| `CONNECTION_TEST.md` | Local connection-test commands, later SSH-tunnel setup, output files, and timing interpretation. |
 | `robot_controls.py` | Earlier browser-based control panel; the current keyboard demo does not use it. |
 | `mujoco_menagerie/` | Cloned upstream robot models and mesh assets. |
 | `.venv/` | Simulation Python environment. |
@@ -221,7 +225,11 @@ The successful test used `bridge_orig` action statistics. These statistics are f
 
 **Current status:** simulation, keyboard end-effector control, scripted pick-and-place, camera capture, a fresh-image OpenVLA single-action movement, and the live three-action feedback loop work on the Mac. The three predictions took approximately 462, 601, and 554 seconds, with position tracking error below 0.1 mm. CUDA support and a Linux/headless setup guide have been added, but have not yet been tested on an NVIDIA GPU. No custom-domain fine-tuning has been performed, and model-driven pick-and-place has not been demonstrated.
 
-**Next intended milestone:** run the same three-action benchmark on cloud NVIDIA compute using [CLOUD_SETUP.md](CLOUD_SETUP.md) and measure inference latency. Before task evaluation, validate the coordinate, rotation, control-point, and normalization conventions for our Panda domain and plan demonstration collection/fine-tuning.
+**Phase 2 status:** a small Python script was successfully run through VS Code Remote SSH on a RunPod A40, using PyTorch 2.4.1/CUDA 12.4. The GPU calculation passed; OpenVLA has not yet been tested on that cloud GPU. The intended architecture keeps MuJoCo on the Mac and serves OpenVLA predictions from the cloud. A provider-independent image/request connection test has now been added: the server decodes a PNG and returns fixed test numbers, and the client saves its camera image, response, and timings without moving the robot. See [CONNECTION_TEST.md](CONNECTION_TEST.md). No real remote model server or continuous remote control loop is implemented yet.
+
+The local connection test passed with a fresh 640x480 camera image and approximately 18 ms request round trip. Invalid requests, an unavailable server, and automatic server exit were also checked. Artifacts are in `outputs/connection_test_verified/`. This local timing does not predict cloud latency.
+
+**Next intended milestone:** run the connection-test server on a pod and its client on the Mac through an SSH tunnel. After that, replace the fixed action with one real OpenVLA prediction and measure GPU latency. Before task evaluation, validate the coordinate, rotation, control-point, and normalization conventions for our Panda domain and plan demonstration collection/fine-tuning. [CLOUD_SETUP.md](CLOUD_SETUP.md) remains a separate guide for running both simulation and inference on a cloud machine.
 
 For practical inference and future training, we intend to evaluate cloud NVIDIA GPU compute. A single **A100 80GB** is a documented starting point for OpenVLA LoRA fine-tuning, which adapts a small set of parameters rather than retraining the entire model. Custom-domain adaptation will also require collecting suitable demonstrations, preparing a dataset, and measuring success on unseen trials. Cloud inference can be launched with `.venv/bin/python openvla_loop.py --device cuda`; training and a remote inference server are not implemented yet. The Mac default remains `--device mps`.
 
