@@ -17,8 +17,33 @@ from openvla_single_action import adapt_bridge_action
 ROOT = Path(__file__).resolve().parent
 
 
+class ActiveTimer:
+    """Thread-safe elapsed time excluding periods when the viewer is paused."""
+
+    def __init__(self, clock=time.perf_counter):
+        self.clock = clock
+        self.started = clock()
+        self.paused_at = None
+        self.paused_seconds = 0.0
+        self.lock = threading.Lock()
+
+    def set_paused(self, value):
+        with self.lock:
+            now = self.clock()
+            if value and self.paused_at is None:
+                self.paused_at = now
+            elif not value and self.paused_at is not None:
+                self.paused_seconds += now - self.paused_at
+                self.paused_at = None
+
+    def elapsed(self):
+        with self.lock:
+            end = self.clock() if self.paused_at is None else self.paused_at
+            return end - self.started - self.paused_seconds
+
+
 def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red cube",
-             steps=10, timeout_seconds=180, max_runtime_seconds=120,
+             steps=100, timeout_seconds=180, max_runtime_seconds=900,
              output_dir=None, no_view=False, start_immediately=False,
              stop_event=None):
     import mujoco
@@ -37,6 +62,8 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
     folder = Path(output_dir) if output_dir else ROOT / "outputs" / f"remote_loop_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}"
     folder.mkdir(parents=True, exist_ok=False)
     started = time.perf_counter()
+    active_timer = ActiveTimer()
+    active_timer.set_paused(paused.is_set())
     completed = []
     phase = "Initializing simulation"
     current_step = 0
@@ -53,6 +80,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
         save(folder / "status.json", {
             "phase": phase, "current_step": current_step, "completed_steps": len(completed),
             "requested_steps": steps, "elapsed_seconds": time.perf_counter() - started,
+            "active_seconds": active_timer.elapsed(), "paused": paused.is_set(),
             **extra,
         })
         print(f"Step {current_step}/{steps}: {phase}", flush=True)
@@ -69,7 +97,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
             reason = "user_stop"
         elif viewer is not None and not viewer.is_running():
             reason = "viewer_closed"
-        elif time.perf_counter() - started >= max_runtime_seconds:
+        elif active_timer.elapsed() >= max_runtime_seconds:
             reason = "runtime_limit"
         return reason is not None
 
@@ -79,7 +107,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
             viewer.set_texts((mujoco.mjtFontScale.mjFONTSCALE_150,
                              mujoco.mjtGridPos.mjGRID_TOPLEFT,
                              f"Cloud OpenVLA | {len(completed)}/{steps} actions",
-                             f"{'PAUSED' if paused.is_set() else phase}\nSpace: start/pause/resume | Esc: stop\nClose window: stop | Local limit: {max_runtime_seconds:g}s"))
+                             f"{'PAUSED' if paused.is_set() else phase}\nSpace: start/pause/resume | Esc: stop\nClose window: stop | Active limit: {max_runtime_seconds:g}s (pauses excluded)"))
             viewer.sync()
             last_refresh = time.perf_counter()
 
@@ -95,8 +123,10 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
             stop_event.set()
         elif key == glfw.KEY_SPACE:
             if paused.is_set():
+                active_timer.set_paused(False)
                 paused.clear()
             else:
+                active_timer.set_paused(True)
                 paused.set()
 
     print(f"Results and status: {folder}", flush=True)
@@ -140,7 +170,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                     def predict(path=step_dir / "before.png", destination=replies):
                         try:
                             response = request_prediction(path, instruction, server_url=server_url,
-                                                          timeout_seconds=min(timeout_seconds, max(0.01, max_runtime_seconds - (time.perf_counter() - started))),
+                                                          timeout_seconds=min(timeout_seconds, max(0.01, max_runtime_seconds - active_timer.elapsed())),
                                                           expected_mode="openvla")
                             destination.put((response, None))
                         except Exception as exc:
@@ -241,6 +271,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
         # Preserve successful steps even if a later request/movement fails or is stopped.
         save(folder / "summary.json", {"completed_steps": len(completed), "steps": completed,
                                       "phase": phase, "stop_reason": reason,
+                                      "active_seconds": active_timer.elapsed(),
                                       "elapsed_seconds": time.perf_counter() - started})
     return folder
 
@@ -249,9 +280,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--server-url", default="http://127.0.0.1:8000")
     parser.add_argument("--instruction", default="pick up the red cube")
-    parser.add_argument("--steps", type=int, default=10)
+    parser.add_argument("--steps", type=int, default=100)
     parser.add_argument("--timeout-seconds", type=float, default=180)
-    parser.add_argument("--max-runtime-seconds", type=float, default=120)
+    parser.add_argument("--max-runtime-seconds", type=float, default=900,
+                        help="Maximum active seconds; time paused in the viewer is excluded")
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--no-view", action="store_true")
     parser.add_argument("--start-immediately", action="store_true")

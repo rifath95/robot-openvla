@@ -1,8 +1,12 @@
 # RunPod connection guide: Mac camera → cloud OpenVLA → Mac action
 
-Last updated: 2026-10-09. This is the repeatable procedure used for our successful
+Last updated: 2026-10-10. This is the repeatable procedure used for our successful
 RTX A6000 test. It returns a real seven-number prediction and displays it on the
 Mac; it does **not** move the robot.
+
+For the simplified single-command workflow and Docker option, use
+[CLOUD_QUICKSTART.md](CLOUD_QUICKSTART.md). This guide retains the individual
+commands for understanding and troubleshooting.
 
 ## What runs where
 
@@ -229,6 +233,6 @@ This executes one bounded action and opens the final scene; read
 [REMOTE_SINGLE_ACTION.md](REMOTE_SINGLE_ACTION.md) before using it.
 
 For repeated predictions and a live simulator, use the same server and tunnel,
-then run `.venv/bin/python remote_loop.py --steps 10 --max-runtime-seconds 120`
+then run `.venv/bin/python remote_loop.py --steps 100 --max-runtime-seconds 900`
 in Terminal 3 on the Mac. The window starts paused; press Space to start. See
 [REMOTE_LOOP.md](REMOTE_LOOP.md) for controls, results, limits, and shutdown.

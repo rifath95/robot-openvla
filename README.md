@@ -2,7 +2,7 @@
 
 A Phase 1 robotics workspace for connecting a simulated Franka Panda arm to OpenVLA. Development currently runs on a MacBook using Python and MuJoCo 3.14.0, without ROS.
 
-Last updated: 2026-10-09. Update this document as milestones, run instructions, and model locations change.
+Last updated: 2026-10-10. Update this document as milestones, run instructions, and model locations change.
 
 ## Goal
 
@@ -55,6 +55,11 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | `requirements-openvla.txt` | Shared pinned inference dependencies for Mac and Linux. |
 | `requirements-sim-linux.txt` | Linux/Python 3.11 simulation dependencies for cloud runs. |
 | `CLOUD_SETUP.md` | Linux NVIDIA GPU setup, headless rendering checks, and the CUDA loop benchmark. |
+| `cloud_session.py` | One Mac command to prepare a GPU host, open the SSH tunnel, wait for model readiness, and launch repeated local trials. |
+| `scripts/cloud_start.sh` / `scripts/cloud_stop.sh` | Linux setup and recorded server lifecycle; reuse preinstalled Docker dependencies or install the tested environment. |
+| `Dockerfile` / `.github/workflows/build-cloud-image.yml` | Dependency image and manual GitHub Container Registry build/publication workflow; weights remain on the external volume. |
+| `CLOUD_QUICKSTART.md` | Simplified session instructions and one-time Docker publication/template setup. |
+| `test_cloud_session.py` | SSH input, readiness, and lifecycle orchestration tests without a GPU or remote connection. |
 | `connection_server.py` | HTTP server with fixed-action test mode and explicit resident OpenVLA inference mode. |
 | `connection_client.py` | Captures a MuJoCo image, sends it with an instruction, and saves returned test/model actions and timings; never moves the arm. |
 | `requirements-connection-server.txt` | Pillow dependency for the lightweight connection server. |
@@ -63,7 +68,7 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | `prepare_cloud_model.py` | Downloads the pinned model locally and exports regular files to Global storage for reuse. |
 | `REMOTE_INFERENCE.md` | Cloud model setup and one real prediction through an SSH tunnel, without robot movement. |
 | `RUNPOD_CONNECTION_GUIDE.md` | Copyable session checklist for pod setup, SSH login, three terminal roles, model reuse, prediction, and shutdown. |
-| `remote_loop.py` | Repeats cloud predictions and bounded local movements with a live viewer, Space pause/resume, stop controls, per-step artifacts, and runtime/step limits. |
+| `remote_loop.py` | Repeats cloud predictions and bounded local movements with a live viewer, Space pause/resume, a default 100-action budget, per-step artifacts, and a runtime limit excluding pauses. |
 | `test_remote_loop.py` | Real MuJoCo and HTTP fixture checks for repeated observations, stop/runtime limits, and failure handling. |
 | `remote_single_action.py` | Requests one cloud prediction from a preserved local scene, executes a bounded command, saves before/after images and movement timings, and optionally shows the final scene. |
 | `REMOTE_SINGLE_ACTION.md` | Cloud-to-movement run instructions, output files, limits, and verification status. |
@@ -76,6 +81,12 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | `outputs/` | Generated images, action JSON, status, and logs. |
 
 ## What to run
+
+For cloud sessions, use `.venv/bin/python cloud_session.py` on the Mac and paste
+the current RunPod SSH command when prompted. It prepares the server/tunnel and
+opens the paused 100-step simulator. See [CLOUD_QUICKSTART.md](CLOUD_QUICKSTART.md)
+for the one-time Docker build and session shutdown. The Docker image is prepared
+but has not yet been built or validated on a GPU.
 
 ### Setup after cloning
 
@@ -243,7 +254,7 @@ The local connection test passed with a fresh 640x480 camera image and approxima
 
 The new `remote_single_action.py` connects a cloud prediction to bounded local robot movement and an after image. Local real-MuJoCo tests passed using an HTTP fixture replaying the observed cloud action, with approximately 0.079 mm tracking error; invalid mode/statistics/gripper responses were rejected before execution. The real Mac-to-cloud-to-MuJoCo single-action test subsequently passed with **0.082 mm** tracking error. `remote_loop.py` now repeats this pipeline with a live viewer; local tests passed for updated observations across three actions, stop/runtime limits, and failure handling. See [REMOTE_LOOP.md](REMOTE_LOOP.md). See [REMOTE_SINGLE_ACTION.md](REMOTE_SINGLE_ACTION.md).
 
-**Next intended milestone:** run a ten-action real-cloud experiment using `remote_loop.py`, inspect the live motion and per-step timing/images, and assess the provisional action mapping. Before task evaluation, validate the coordinate, rotation, control-point, and normalization conventions for our Panda domain and plan demonstration collection/fine-tuning. [CLOUD_SETUP.md](CLOUD_SETUP.md) remains a separate guide for running both simulation and inference on a cloud machine.
+**Next intended milestone:** run a 100-action real-cloud experiment using `remote_loop.py`, inspect the live motion and per-step timing/images, and assess the provisional action mapping. Before task evaluation, validate the coordinate, rotation, control-point, and normalization conventions for our Panda domain and plan demonstration collection/fine-tuning. [CLOUD_SETUP.md](CLOUD_SETUP.md) remains a separate guide for running both simulation and inference on a cloud machine.
 
 For future training, a single **A100 80GB** is a documented starting point for OpenVLA LoRA fine-tuning, which adapts a small set of parameters rather than retraining the entire model. Custom-domain adaptation will also require collecting suitable demonstrations, preparing a dataset, and measuring success on unseen trials. Running both simulation and inference on cloud compute is available via `.venv/bin/python openvla_loop.py --device cuda`; the Mac default remains `--device mps`. Remote model inference has passed on an RTX A6000 using the separate server/client path above. Training is not implemented yet.
 

@@ -1,19 +1,83 @@
 """Real MuJoCo with HTTP fixtures; no model weights or paid cloud required."""
 
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from contextlib import nullcontext
 import json
 from pathlib import Path
 import tempfile
 import threading
 import unittest
 from unittest.mock import patch
+from types import SimpleNamespace
 
 import numpy as np
 
-from remote_loop import run_loop
+from remote_loop import ActiveTimer, run_loop
 
 
 class LoopTests(unittest.TestCase):
+    def test_active_timer_excludes_pauses_and_resumes(self):
+        now = [0.0]
+        timer = ActiveTimer(lambda: now[0])
+        now[0] = 15
+        timer.set_paused(True)
+        now[0] = 300
+        self.assertEqual(timer.elapsed(), 15)
+        timer.set_paused(False)
+        now[0] = 310
+        self.assertEqual(timer.elapsed(), 25)
+
+    def test_viewer_starts_paused_and_resumes_mid_movement(self):
+        import glfw
+        import mujoco.viewer
+        pauses = []
+        class Viewer:
+            def __init__(self, model, data, key_callback, **kwargs):
+                self.data = data
+                self.key = key_callback
+                self.cam = SimpleNamespace()
+                self.initial_frames = 0
+                self.pause_frames = 0
+                self.did_pause = False
+                self.snapshot = None
+            def __enter__(self):
+                return self
+            def __exit__(self, *args):
+                pass
+            def is_running(self):
+                return True
+            def lock(self):
+                return nullcontext()
+            def set_texts(self, texts):
+                pass
+            def sync(self):
+                if self.initial_frames < 3:
+                    self.initial_frames += 1
+                    if self.initial_frames == 3:
+                        self.key(glfw.KEY_SPACE)
+                elif self.snapshot is not None:
+                    np.testing.assert_array_equal(self.data.qpos, self.snapshot)
+                    self.pause_frames += 1
+                    if self.pause_frames == 3:
+                        self.snapshot = None
+                        self.key(glfw.KEY_SPACE)
+                elif not self.did_pause and self.data.time > 1.1:
+                    self.did_pause = True
+                    self.snapshot = self.data.qpos.copy()
+                    pauses.append(float(self.data.time))
+                    self.key(glfw.KEY_SPACE)
+        prediction = dict(request_id='fixture', unnorm_key='bridge_orig',
+                          action=[0, 0.005, 0, 0, 0, 0, 1], client_timings_seconds={})
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / 'run'
+            with patch.object(mujoco.viewer, 'launch_passive', Viewer), patch('remote_loop.request_prediction', return_value=prediction):
+                run_loop(steps=1, output_dir=output, max_runtime_seconds=10)
+            self.assertEqual(len(pauses), 1)
+            summary = json.loads((output / 'summary.json').read_text())
+            self.assertEqual(summary['completed_steps'], 1)
+            self.assertEqual(summary['steps'][0]['executed_physics_steps'], 1000)
+            self.assertLess(summary['active_seconds'], summary['elapsed_seconds'])
+
     def run_case(self, *, fail_second=False, stop_during_request=False):
         requests = []
         stop = threading.Event()

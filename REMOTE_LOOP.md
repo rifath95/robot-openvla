@@ -27,7 +27,7 @@ or download weights again in the same running pod.
 Start a small experiment:
 
 ```bash
-.venv/bin/python remote_loop.py --instruction "pick up the red cube" --steps 10 --max-runtime-seconds 120
+.venv/bin/python remote_loop.py --instruction "pick up the red cube" --steps 100 --max-runtime-seconds 900
 ```
 
 The simulator opens **paused**. Click inside its window and press **Space** to
@@ -35,8 +35,12 @@ start. Space also pauses/resumes; **Esc** or closing the window stops the loop.
 Each movement is paced to approximately two seconds of simulation time so you
 can see it. The arm stays still while waiting for the next prediction.
 
-After ten completed actions, the viewer closes and the script exits. The local
-120-second limit includes setup, initial waiting, pauses, predictions, and motion.
+After 100 completed actions, the viewer closes and the script exits. The local
+900-second limit counts active work, including predictions and motion, but excludes
+time paused. These are also the defaults when no step/time options are supplied.
+Pause/resume preserves the current scene and step count: after 15 completed actions,
+the next action after resuming is action 16. Pausing during a movement resumes the
+remaining portion of that same action before advancing to the next one.
 Use `--start-immediately` to skip the initial pause, or `--no-view` to run without
 the viewer. Headless execution advances physics without real-time pacing.
 
@@ -79,7 +83,11 @@ The response-header wait includes server work and network travel.
 **The local limit and stop controls do not stop the cloud server, terminate the
 pod, or stop billing.** An already submitted cloud prediction may finish after
 the local run stops. Stop or terminate the pod in RunPod when finished testing.
-The independent Global volume retains the exported model weights.
+The independent Global volume retains the exported model weights. Pausing locally
+does not pause GPU billing or the cloud server's own runtime limit. If the server
+expires during a long pause, a subsequent request will fail; allow sufficient
+server runtime for the experiment. An in-flight HTTP request also retains its
+network timeout while the local viewer is paused.
 
 ## Local verification
 
