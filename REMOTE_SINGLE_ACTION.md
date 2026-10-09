@@ -94,8 +94,8 @@ advance. Wrong server mode, unknown action statistics, and out-of-range gripper
 values were rejected before action execution. Existing inference contracts also
 passed after sharing the HTTP request helper.
 
-The real cloud model already passed the display-only prediction test. This new
-cloud-to-movement path still needs one end-to-end cloud test. After it passes,
-continuous observe/predict/move control with a live viewer is a separate change.
+The real cloud-to-movement test subsequently passed with **0.082 mm** tracking
+error. The next experiment repeats observe/predict/move with a live viewer using
+`remote_loop.py`; see [REMOTE_LOOP.md](REMOTE_LOOP.md).
 Keep the pod stopped while preparing code; stop/terminate it in RunPod after
 paid tests. Closing terminals or the viewer alone does not stop billing.

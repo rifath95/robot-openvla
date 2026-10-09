@@ -227,3 +227,8 @@ For the next single-movement test, keep the same server/tunnel setup and replace
 Terminal 3's display-only command with `.venv/bin/python remote_single_action.py`.
 This executes one bounded action and opens the final scene; read
 [REMOTE_SINGLE_ACTION.md](REMOTE_SINGLE_ACTION.md) before using it.
+
+For repeated predictions and a live simulator, use the same server and tunnel,
+then run `.venv/bin/python remote_loop.py --steps 10 --max-runtime-seconds 120`
+in Terminal 3 on the Mac. The window starts paused; press Space to start. See
+[REMOTE_LOOP.md](REMOTE_LOOP.md) for controls, results, limits, and shutdown.
