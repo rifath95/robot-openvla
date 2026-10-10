@@ -1,6 +1,7 @@
 """Resident OpenVLA predictor used by the HTTP server."""
 
 import math
+import json
 from pathlib import Path
 import time
 
@@ -34,6 +35,26 @@ class OpenVLAPredictor:
         ).eval()
         self.synchronize()
         self.load_seconds = time.perf_counter() - started
+        metrics_path = Path(__file__).resolve().parent / 'outputs/cloud_startup.json'
+        self.startup_info = json.loads(metrics_path.read_text()) if metrics_path.exists() else {}
+        import transformers
+        self.startup_info.update({
+            'model_load_seconds': self.load_seconds,
+            'loading_note': 'Processor setup, checkpoint reading, model construction and device transfer, synchronized at completion; not isolated storage-to-VRAM time.',
+            'device': device, 'dtype': str(self.dtype), 'attention': 'eager',
+            'pytorch_version': torch.__version__, 'transformers_version': transformers.__version__,
+        })
+        if device == 'cuda':
+            properties = torch.cuda.get_device_properties(torch.cuda.current_device())
+            free, total = torch.cuda.mem_get_info()
+            self.startup_info['gpu'] = {
+                'name': properties.name, 'total_vram_bytes': total,
+                'free_vram_bytes_after_loading': free,
+                'used_vram_bytes_after_loading': total - free,
+                'pytorch_allocated_bytes_after_loading': torch.cuda.memory_allocated(),
+                'pytorch_reserved_bytes_after_loading': torch.cuda.memory_reserved(),
+                'pytorch_peak_allocated_bytes_during_loading': torch.cuda.max_memory_allocated(),
+            }
         if unnorm_key not in self.model.norm_stats:
             raise ValueError(f"Unknown action statistics {unnorm_key}; choices: {list(self.model.norm_stats)}")
         stats = self.model.norm_stats[unnorm_key]["action"]

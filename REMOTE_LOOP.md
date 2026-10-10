@@ -139,3 +139,28 @@ Open the run folder’s `replay.py` using `.venv/bin/python`, or run
 `.venv/bin/python replay_run.py outputs/<RUN_FOLDER>`. Space starts/pauses/resumes.
 New runs include sampled motion frames; older runs interpolate saved endpoints.
 See [REPLAY.md](REPLAY.md) for speed controls and playback limitations.
+
+## Saved startup measurements
+
+The one-command `cloud_session.py` launcher saves `startup_info.json` in an
+`outputs/cloud_session_<timestamp>_<id>/` folder when the server is ready and
+copies it into each `remote_loop_*` trial folder it launches. Subsequent trials
+reuse the session measurements; they do not reload the model.
+
+The file records model loading seconds (processor setup, checkpoint reading,
+model construction and synchronized GPU transfer), checkpoint preparation seconds
+(validation or download/export), whether a completed export existed before setup,
+mount source/filesystem, GPU name, total/free/used VRAM after loading, PyTorch
+allocated/reserved/peak loading memory, device/dtype, and software versions.
+Memory figures are bytes; divide by 1024**3 for GiB. Visible CPU/RAM figures may
+reflect the host rather than the pod's allocated limits. GPU-wide usage can
+include allocations outside PyTorch. These are startup measurements, not peak
+inference memory or isolated volume-to-VRAM transfer timings. A marker present
+before setup does not guarantee the export is valid: preparation validates it.
+
+The mount information distinguishes filesystems and volume sources; consult the
+RunPod console for the actual volume name/type. Loading comparisons should use
+the same GPU/model settings and note whether preparation just downloaded files.
+Direct `remote_loop.py` runs can supply `--startup-info <PATH>`; without it no
+cloud startup measurements are available. This update is pulled as source by the
+launcher after pushing it to GitHub; no dependency Docker rebuild is needed.

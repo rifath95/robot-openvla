@@ -110,7 +110,9 @@ class LoopTests(unittest.TestCase):
             thread = threading.Thread(target=server.serve_forever, daemon=True)
             thread.start()
             output = Path(directory) / 'run'
-            kwargs = dict(server_url=f'http://127.0.0.1:{server.server_port}', steps=steps,
+            startup_path = Path(directory) / 'startup.json'
+            startup_path.write_text(json.dumps({'model_load_seconds': 44.64, 'gpu': {'name': 'fixture'}}))
+            kwargs = dict(startup_info=startup_path, server_url=f'http://127.0.0.1:{server.server_port}', steps=steps,
                           max_runtime_seconds=30, no_view=True, output_dir=output, stop_event=stop)
             original_solver = PandaController._solve_ik
             def solver(controller, *args, **kwargs):
@@ -126,6 +128,7 @@ class LoopTests(unittest.TestCase):
                         run_loop(**kwargs)
                 summary = json.loads((output / 'summary.json').read_text())
                 status = json.loads((output / 'status.json').read_text())
+                self.assertEqual(json.loads((output / 'startup_info.json').read_text())['model_load_seconds'], 44.64)
                 self.assertTrue((output / 'replay.py').exists())
                 for record in summary['steps']:
                     step = output / f"step_{record['step']:03d}"

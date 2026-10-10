@@ -43,7 +43,8 @@ class Handler(BaseHTTPRequestHandler):
             return
         self.send_json(200, {"status": "ready", "mode": self.server.mode,
                              "model_loaded": self.server.predictor is not None,
-                             "model_load_seconds": getattr(self.server.predictor, "load_seconds", None)})
+                             "model_load_seconds": getattr(self.server.predictor, "load_seconds", None),
+                             "startup_info": getattr(self.server.predictor, "startup_info", {})})
 
     def do_POST(self):
         if self.path != "/predict":

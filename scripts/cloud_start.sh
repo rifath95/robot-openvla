@@ -36,7 +36,7 @@ else
 fi
 "$python" -m pip check
 "$python" openvla_mac.py --preflight --device cuda
-"$python" prepare_cloud_model.py --export-dir /workspace/openvla-7b
+"$python" cloud_startup_metrics.py
 # Fail before expensive loading if port 8000 belongs to another process.
 "$python" -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",8000)); s.close()'
 nohup "$python" -u connection_server.py --mode openvla --model-dir /workspace/openvla-7b --device cuda --max-runtime-seconds "$runtime" >outputs/cloud_server.log 2>&1 < /dev/null 9>&- &

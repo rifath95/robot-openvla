@@ -1,6 +1,8 @@
 """One Mac command: set up a GPU host, tunnel, then run the paused local loop."""
 
 import argparse
+from datetime import datetime, timezone
+import uuid
 import json
 from pathlib import Path
 import re
@@ -140,6 +142,15 @@ def main():
                 raise RuntimeError('The cloud server exited during loading; see its log below.')
         health = wait_for_server(tunnel, args.startup_timeout_seconds, check_liveness)
         print(f"Ready. Model loading took {health.get('model_load_seconds')} seconds.", flush=True)
+        startup_info = dict(health.get('startup_info', {}))
+        startup_info.setdefault('model_load_seconds', health.get('model_load_seconds'))
+        startup_info['ready_at_utc'] = datetime.now(timezone.utc).isoformat()
+        startup_info['note'] = 'Session startup measurements reused for subsequent trials; the model is not reloaded per trial.'
+        session_dir = ROOT / 'outputs' / f"cloud_session_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}"
+        session_dir.mkdir(parents=True, exist_ok=False)
+        startup_path = session_dir / 'startup_info.json'
+        startup_path.write_text(json.dumps(startup_info, indent=2, allow_nan=False) + '\n')
+        print(f'Startup measurements saved: {startup_path}', flush=True)
         if args.setup_only:
             print('Server and tunnel ready. Run remote_loop.py in another Mac terminal; Ctrl+C disconnects.', flush=True)
             while tunnel.poll() is None:
@@ -149,6 +160,7 @@ def main():
             print('Opening paused simulator: Space starts/pauses/resumes; Esc stops the local trial.', flush=True)
             result = subprocess.run([str(ROOT / '.venv/bin/python'), str(ROOT / 'remote_loop.py'),
                                      '--steps', str(args.steps), '--instruction', args.instruction,
+                                     '--startup-info', str(startup_path),
                                      '--max-consecutive-rejections', str(args.max_consecutive_rejections),
                                      '--max-runtime-seconds', str(args.max_runtime_seconds)], cwd=ROOT)
             if result.returncode:

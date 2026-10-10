@@ -89,7 +89,7 @@ class ActiveTimer:
 def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red cube",
              steps=100, timeout_seconds=180, max_runtime_seconds=900,
              max_consecutive_rejections=3,
-             output_dir=None, no_view=False, start_immediately=False,
+             output_dir=None, no_view=False, start_immediately=False, startup_info=None,
              stop_event=None):
     import mujoco
     import numpy as np
@@ -110,6 +110,9 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
     folder.mkdir(parents=True, exist_ok=False)
     from replay_run import write_launcher
     write_launcher(folder)
+    if startup_info is not None:
+        metadata = json.loads(Path(startup_info).read_text())
+        (folder / "startup_info.json").write_text(json.dumps(metadata, indent=2, allow_nan=False) + "\n")
     started = time.perf_counter()
     active_timer = ActiveTimer()
     active_timer.set_paused(paused.is_set())
@@ -399,6 +402,7 @@ def main():
     parser.add_argument("--timeout-seconds", type=float, default=180)
     parser.add_argument("--max-runtime-seconds", type=float, default=900,
                         help="Maximum active seconds; time paused in the viewer is excluded")
+    parser.add_argument("--startup-info", type=Path, help="Cloud session startup metadata to copy into this run")
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--no-view", action="store_true")
     parser.add_argument("--start-immediately", action="store_true")
