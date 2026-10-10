@@ -1,8 +1,9 @@
 # Phase 3: prepare, fine-tune, and evaluate OpenVLA
 
 The local preparation milestone packages all 50 expert trajectories into a
-portable TFDS/RLDS dataset at `datasets/panda_pick_place/training_v1`. No GPU
-training has run yet. Generated datasets remain outside Git; upload the bundle
+portable TFDS/RLDS dataset at `datasets/panda_pick_place/training_v1`. Local
+preparation has passed, and the first 20-update cloud training test has
+completed. Generated datasets remain outside Git; upload the bundle
 separately from pushing code.
 
 | Split | Trajectories | Training examples |
@@ -96,9 +97,9 @@ Get the exact SHA/tag from the completed build or package page. Do not include
 your Mac's public key. Attach the network volume containing `/workspace/openvla-7b`
 at `/workspace`; the template's legacy volume-disk size can remain zero.
 
-The Linux image build and actual CUDA training remain cloud checks. A GPU has
-not been rented or billed by the local preparation. Batch size 1 is a conservative
-initial setting; fitting and speed must be measured on the selected GPU.
+The Linux image build and first CUDA smoke test have passed. Batch size 1 with
+accumulation 4 reached a peak PyTorch allocation of approximately 18.01 GiB on
+the tested pod. Other hardware or settings still require their own measurement.
 
 ## Upload once after the pod is ready
 
@@ -143,6 +144,54 @@ schedule. Every 10 updates it evaluates a fixed **64-example validation subset**
 and saves an adapter. The metrics explicitly record whether validation covered
 the complete split. For a longer experiment, use a separate reviewed config and
 set `validation_max_batches` to **0** to evaluate all 507 validation examples.
+
+## Next run: 1,000 updates with full validation
+
+The first smoke test passed. Its review and the evidence limits are in
+[training/SMOKE_REVIEW.md](training/SMOKE_REVIEW.md). Commit and push the new
+configuration before the next run. **The existing training Docker image can be
+reused; no rebuild or dataset upload is needed.** Attach
+`robot-openvla-network-volume-A40` at `/workspace`, select the training template,
+and use the new pod's direct TCP SSH command.
+
+In the cloud terminal, clone the latest repository as above (or pull if it is
+already present), then run:
+
+```bash
+cd /root/robot-openvla
+/opt/openvla/bin/python train_panda.py \
+  --dataset /workspace/panda-training/training_v1 \
+  --model /workspace/openvla-7b \
+  --config training/pick_place_1000.json
+```
+
+This starts a **fresh LoRA adapter from the original pretrained model** in a new
+run directory; it does not continue or overwrite the smoke checkpoint. Settings
+are microbatch 1, accumulation 4, rank 32, learning rate 0.0001, and a 512-example
+encoded-image shuffle buffer. It evaluates **all 507 validation examples** and
+saves adapters at updates 250, 500, 750 and 1,000. Approximately 4,000 examples
+are sampled over the run (about 1.54 training-dataset passes).
+
+Allow roughly **35–45 minutes after setup**, based on the smoke test, with
+additional uncertainty for model loading and storage/checkpoint speed. The
+one-hour training guard remains a process limit, not a pod billing limit.
+Choose a checkpoint based on full validation performance before testing robot
+behavior. Leave the test split out of checkpoint selection.
+
+The previous smoke metrics remain on the network volume. On the next pod, you
+can download the small result files into a **Mac terminal** without copying its
+adapter weights:
+
+```bash
+mkdir -p outputs/phase3_smoke_results
+scp -i ~/.ssh/id_ed25519_maxalderone -P POD_PORT \
+  root@POD_IP:/workspace/panda-training/runs/lora_20261010_130927_064468/{loss.png,metrics.jsonl,model_info.json,experiment.json} \
+  outputs/phase3_smoke_results/
+```
+
+Substitute the new pod's IP and port. These files let us inspect the exact earlier
+metrics and parameter counts; only its plot and final console metrics have been
+reviewed so far.
 
 ## See plots and save results
 

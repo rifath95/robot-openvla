@@ -101,8 +101,12 @@ The dataset is now packaged as portable TFDS/RLDS episodes, with fixed splits
 and training-only normalization. A pinned integration of the official OpenVLA
 LoRA script adds periodic validation, local loss plots, adapter checkpoints and
 a 20-update smoke-test configuration. See [PHASE3_TRAINING.md](PHASE3_TRAINING.md)
-for preparation, image-build, upload and training commands. Actual CUDA training
-and model-driven task evaluation have not run yet.
+for preparation, image-build, upload and training commands. The first cloud
+LoRA test completed 20 updates and saved adapters: final training loss 2.881,
+validation loss 3.794 on 64 held-out examples, peak PyTorch allocation 18.01 GiB.
+See [the smoke-test review](training/SMOKE_REVIEW.md). A 1,000-update configuration
+with complete validation is prepared; longer training and model-driven task
+evaluation have not run yet.
 
 Remaining goals:
 
@@ -117,7 +121,7 @@ cloud cost. Phase 3 is complete when the dataset and training path are reproduci
 and the adapted model has been observed and evaluated live on held-out scenarios,
 with results compared with the pretrained baseline. Document limited success
 honestly; perfect performance is not a prerequisite for assessing the experiment.
-No custom-domain fine-tuning has run yet. See
+The short custom-domain training test passed; task success has not been evaluated. See
 [PANDA_DEMONSTRATIONS.md](PANDA_DEMONSTRATIONS.md) for the current data workflow.
 
 ### Phase 4 — planned: broader tasks and transfer
