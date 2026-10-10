@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 import unittest
+import tempfile
 from unittest.mock import patch
 
 import mujoco
@@ -16,8 +17,8 @@ ROOT = Path(__file__).resolve().parent
 
 
 class RetryTests(unittest.TestCase):
-    def scene(self):
-        fixture = json.loads((ROOT / 'tests/fixtures/ik_step96.json').read_text())
+    def scene(self, fixture_name='ik_step96.json'):
+        fixture = json.loads((ROOT / 'tests/fixtures' / fixture_name).read_text())
         model = mujoco.MjModel.from_xml_path(str(ROOT / 'scene.xml'))
         data = mujoco.MjData(model)
         for key in ('qpos', 'qvel', 'ctrl', 'act'):
@@ -56,7 +57,7 @@ class RetryTests(unittest.TestCase):
         with patch.object(controller, '_solve_ik', return_value=failure):
             accepted, _, attempts = apply_with_ik_retries(controller, action)
         self.assertIsNone(accepted)
-        self.assertEqual([a['scale'] for a in attempts], [1, 0.5, 0.25])
+        self.assertEqual([a['scale'] for a in attempts], [1, 0.5, 0.25, 0.125])
         np.testing.assert_array_equal(controller.data.ctrl, before_ctrl)
         np.testing.assert_array_equal(controller.data.qpos, before_qpos)
         np.testing.assert_array_equal(controller.target_position, before_position)
@@ -75,6 +76,39 @@ class RetryTests(unittest.TestCase):
         np.testing.assert_allclose(action[:6], original[:6] * 0.25)
         np.testing.assert_allclose(controller.target_position, position + original[:3] * 0.25)
         self.assertEqual(action[6], original[6])
+
+    def test_saved_step97_recovers_at_eighth_scale(self):
+        controller, original = self.scene('ik_step97.json')
+        action, result, attempts = apply_with_ik_retries(controller, original)
+        self.assertEqual([a['converged'] for a in attempts], [False, False, False, True])
+        self.assertTrue(result.converged)
+        np.testing.assert_allclose(action[:6], original[:6] * 0.125)
+        self.assertEqual(action[6], original[6])
+        controller.step(1000)
+        position, _ = controller.end_effector_pose()
+        error = float(np.linalg.norm(controller.target_position - position))
+        self.assertLess(error, 0.005)
+        print(f'Recovered step 97 at eighth scale; tracking error {error * 1000:.3f} mm')
+
+    def test_offline_analysis_is_read_only_and_probes_saved_failure(self):
+        from analyze_remote_run import analyze_run
+        fixture = json.loads((ROOT / 'tests/fixtures/ik_step97.json').read_text())
+        with tempfile.TemporaryDirectory() as directory:
+            step = Path(directory) / 'step_097'
+            step.mkdir()
+            np.savez(step / 'scene_state.npz', **fixture['state'])
+            (step / 'prediction.json').write_text(json.dumps({'action': fixture['action']}))
+            (step / 'ik_attempts.json').write_text(json.dumps({'selected_scale': None}))
+            original_bytes = (step / 'scene_state.npz').read_bytes()
+            report = analyze_run(directory)
+            self.assertEqual(report['prediction_count'], 1)
+            probes = report['rejected_pose_solver_probes'][0]['probes']
+            self.assertFalse(probes[0]['converged'])
+            self.assertFalse(probes[1]['converged'])
+            self.assertFalse(probes[2]['converged'])
+            self.assertTrue(probes[-1]['converged'])
+            self.assertGreater(report['final_pose']['minimum_joint_limit_margin_degrees'], 20)
+            self.assertEqual((step / 'scene_state.npz').read_bytes(), original_bytes)
 
 
 if __name__ == '__main__':

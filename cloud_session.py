@@ -97,13 +97,14 @@ def main():
     parser.add_argument('--ssh', help='Complete SSH over exposed TCP command copied from RunPod')
     parser.add_argument('--key', type=Path, help='Override the local private-key path')
     parser.add_argument('--steps', type=int, default=100)
+    parser.add_argument('--max-consecutive-rejections', type=int, default=3)
     parser.add_argument('--instruction', default='pick up the red cube')
     parser.add_argument('--max-runtime-seconds', type=int, default=900, help='Local active limit, excluding pauses')
     parser.add_argument('--server-runtime-seconds', type=int, default=1800, help='Server wall limit AFTER readiness; does not stop pod billing')
     parser.add_argument('--startup-timeout-seconds', type=int, default=600, help='Wait for loading after dependency setup')
     parser.add_argument('--setup-only', action='store_true', help='Keep server/tunnel ready without opening the simulator')
     args = parser.parse_args()
-    if any(value <= 0 for value in (args.steps, args.max_runtime_seconds, args.server_runtime_seconds, args.startup_timeout_seconds)):
+    if any(value <= 0 for value in (args.steps, args.max_consecutive_rejections, args.max_runtime_seconds, args.server_runtime_seconds, args.startup_timeout_seconds)):
         parser.error('Step counts and time limits must be positive')
     try:
         host, port, key = parse_ssh(args.ssh or input('Paste SSH over exposed TCP command: '), args.key)
@@ -148,6 +149,7 @@ def main():
             print('Opening paused simulator: Space starts/pauses/resumes; Esc stops the local trial.', flush=True)
             result = subprocess.run([str(ROOT / '.venv/bin/python'), str(ROOT / 'remote_loop.py'),
                                      '--steps', str(args.steps), '--instruction', args.instruction,
+                                     '--max-consecutive-rejections', str(args.max_consecutive_rejections),
                                      '--max-runtime-seconds', str(args.max_runtime_seconds)], cwd=ROOT)
             if result.returncode:
                 print('Trial failed; inspect its status.json and the terminal output.', flush=True)

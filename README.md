@@ -1,6 +1,6 @@
 # robot-openvla
 
-A Phase 1 robotics workspace for connecting a simulated Franka Panda arm to OpenVLA. Development currently runs on a MacBook using Python and MuJoCo 3.14.0, without ROS.
+A robotics workspace for connecting a simulated Franka Panda arm to OpenVLA. Development currently runs on a MacBook using Python and MuJoCo 3.14.0, without ROS.
 
 Last updated: 2026-10-10. Update this document as milestones, run instructions, and model locations change.
 
@@ -19,6 +19,20 @@ simulated camera image + task instruction
 ```
 
 The seven values are `[dx, dy, dz, droll, dpitch, dyaw, gripper]`: three position changes, three orientation changes, and a gripper command. The local controller uses world-frame position changes in metres and rotation changes in radians; its gripper convention is -1 closed and +1 open. Model output conventions and dataset statistics must be matched to this interface before deployment.
+
+## Project phases
+
+**Phase 1:** local Panda simulation, camera observations, keyboard end-effector
+control, scripted pick-and-place, and local OpenVLA prediction/execution were verified.
+
+**Phase 2:** keep the simulator on the Mac and run OpenVLA on a remote GPU,
+measuring the observation/prediction/movement loop with live viewing. Real trials
+completed 95 and 96 movements. Rejection recovery and diagnostic replay now pass
+local tests; model-driven task success and action/camera calibration remain open.
+See [CONTROL_FINDINGS.md](CONTROL_FINDINGS.md) for the latest investigation.
+Local direction and camera checks now pass; see
+[CONTROL_CALIBRATION.md](CONTROL_CALIBRATION.md) for measurements and the
+remaining Bridge-to-Panda convention differences.
 
 ## What works so far
 
@@ -68,8 +82,12 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | `prepare_cloud_model.py` | Downloads the pinned model locally and exports regular files to Global storage for reuse. |
 | `REMOTE_INFERENCE.md` | Cloud model setup and one real prediction through an SSH tunnel, without robot movement. |
 | `RUNPOD_CONNECTION_GUIDE.md` | Copyable session checklist for pod setup, SSH login, three terminal roles, model reuse, prediction, and shutdown. |
-| `remote_loop.py` | Repeats cloud predictions and bounded local movements with a live viewer, Space pause/resume, a default 100-action budget, per-step artifacts, and a runtime limit excluding pauses, and half/quarter-size IK retries. |
-| `test_ik_retries.py` / `tests/fixtures/ik_step96.json` | Saved real step-96 regression: half-size recovery, quarter fallback, and unchanged targets after all attempts fail. |
+| `remote_loop.py` | Repeats cloud predictions and bounded local movements with a live viewer, Space pause/resume, a default 100-action budget, per-step artifacts, and a runtime limit excluding pauses, IK size retries, and bounded hold/re-predict recovery. |
+| `test_ik_retries.py` / `tests/fixtures/ik_step*.json` | Saved real step-96/97 regressions: size recovery, target restoration, and offline solver analysis. |
+| `control_diagnostics.py` / `analyze_remote_run.py` | Read-only pose metrics and offline trajectory/IK investigation without a GPU. |
+| `CONTROL_FINDINGS.md` | Measured drift, solver findings, bounded recovery design, checks, and next calibration work. |
+| `calibrate_controls.py` / `CONTROL_CALIBRATION.md` | Local known-command movement, rotation, gripper and camera checks with before/after images; comparison with upstream conventions. |
+| `preview_model_input.py` | Saves the actual cached image processor's backbone inputs without loading weights or predicting actions. |
 | `test_remote_loop.py` | Real MuJoCo and HTTP fixture checks for repeated observations, stop/runtime limits, and failure handling. |
 | `remote_single_action.py` | Requests one cloud prediction from a preserved local scene, executes a bounded command, saves before/after images and movement timings, and optionally shows the final scene. |
 | `REMOTE_SINGLE_ACTION.md` | Cloud-to-movement run instructions, output files, limits, and verification status. |
@@ -255,7 +273,7 @@ The local connection test passed with a fresh 640x480 camera image and approxima
 
 The new `remote_single_action.py` connects a cloud prediction to bounded local robot movement and an after image. Local real-MuJoCo tests passed using an HTTP fixture replaying the observed cloud action, with approximately 0.079 mm tracking error; invalid mode/statistics/gripper responses were rejected before execution. The real Mac-to-cloud-to-MuJoCo single-action test subsequently passed with **0.082 mm** tracking error. `remote_loop.py` now repeats this pipeline with a live viewer; local tests passed for updated observations across three actions, stop/runtime limits, and failure handling. See [REMOTE_LOOP.md](REMOTE_LOOP.md). See [REMOTE_SINGLE_ACTION.md](REMOTE_SINGLE_ACTION.md).
 
-**Next intended milestone:** run another 100-action real-cloud trial with the tested half/quarter-size IK retries, inspect recovery counts and timing/images, and assess the provisional action mapping. The retry logic is a Mac controller change and does not require rebuilding the dependency Docker image. Before task evaluation, validate the coordinate, rotation, control-point, and normalization conventions for our Panda domain and plan demonstration collection/fine-tuning. [CLOUD_SETUP.md](CLOUD_SETUP.md) remains a separate guide for running both simulation and inference on a cloud machine.
+**Next intended milestone:** validate camera/action coordinate and control-point conventions with known movements, then run a short real-cloud recovery trial. The second trial completed 96 movements and exhausted size retries on cycle 97. Offline analysis showed hand/cube distance increasing from 0.355 to 0.821 m and worsening Jacobian conditioning; additional solver iterations/lower damping did not solve the original command. One-eighth size recovers the saved cycle 97 locally with 0.059 mm error. Exhausted retries now hold the pose, request another observation/prediction, and stop cleanly after three consecutive rejections; tests verify unchanged state and resetting counters after success. The retry logic is a Mac controller change and does not require rebuilding the dependency Docker image. Before task evaluation, validate the coordinate, rotation, control-point, and normalization conventions for our Panda domain and plan demonstration collection/fine-tuning. [CLOUD_SETUP.md](CLOUD_SETUP.md) remains a separate guide for running both simulation and inference on a cloud machine.
 
 For future training, a single **A100 80GB** is a documented starting point for OpenVLA LoRA fine-tuning, which adapts a small set of parameters rather than retraining the entire model. Custom-domain adaptation will also require collecting suitable demonstrations, preparing a dataset, and measuring success on unseen trials. Running both simulation and inference on cloud compute is available via `.venv/bin/python openvla_loop.py --device cuda`; the Mac default remains `--device mps`. Remote model inference has passed on an RTX A6000 using the separate server/client path above. Training is not implemented yet.
 

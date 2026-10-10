@@ -61,7 +61,8 @@ by stopping/terminating it in RunPod. Model weights on the independent Global
 volume remain. Local artifacts are under `outputs/remote_loop_*`; the cloud
 server log is `/root/robot-openvla/outputs/cloud_server.log`.
 
-Defaults: 100 actions, 900 active local seconds (pauses excluded), 1,800 server
+Defaults: 100 prediction cycles (including rejected ones), three consecutive
+IK rejections before a clean stop, 900 active local seconds (pauses excluded), 1,800 server
 wall seconds after readiness (pauses included), and 600 seconds to wait for model
 loading after setup. The server deadline is not renewed between trials. Pause
 and setup time still incur pod billing. A terminated pod loses container-side
@@ -144,3 +145,8 @@ for future deployments; updating a template does not change an already running p
 For the current pod, use its web terminal to add the matching public key to
 `/root/.ssh/authorized_keys`, set directory/file modes to 700/600, run
 `ssh-keygen -A`, and `service ssh start`. Then retry the Mac launcher.
+
+Local recovery now records held actions and stops cleanly after repeated IK
+rejection. Use `--max-consecutive-rejections 3` in the launcher to set this bound.
+See [CONTROL_FINDINGS.md](CONTROL_FINDINGS.md) before interpreting repeated motion
+as task success. No Docker rebuild is needed for this controller change.

@@ -7,7 +7,9 @@ installation in the pod is needed if that server is still running.
 The real single-action cloud test succeeded with **0.082 mm** position tracking
 error. This repeated loop has passed local tests with real MuJoCo and HTTP
 fixture predictions; a real-cloud trial on an A40 subsequently completed 95 actions before IK rejected
-action 96. Smaller-action retries now recover that saved case locally.
+action 96. The next cloud trial completed 96 actions and rejected action 97.
+Both saved failures now recover locally, and exhausted retries hold the pose
+and stop cleanly after repeated rejections. See [CONTROL_FINDINGS.md](CONTROL_FINDINGS.md).
 Tracking error measures execution of a requested movement, not task success.
 
 ## Run on the Mac
@@ -36,7 +38,8 @@ start. Space also pauses/resumes; **Esc** or closing the window stops the loop.
 Each movement is paced to approximately two seconds of simulation time so you
 can see it. The arm stays still while waiting for the next prediction.
 
-After 100 completed actions, the viewer closes and the script exits. The local
+After 100 observation/prediction cycles, the viewer closes and the script exits.
+Rejected cycles count toward this budget but not toward completed movements. The local
 900-second limit counts active work, including predictions and motion, but excludes
 time paused. These are also the defaults when no step/time options are supplied.
 Pause/resume preserves the current scene and step count: after 15 completed actions,
@@ -54,12 +57,16 @@ the viewer. Headless execution advances physics without real-time pacing.
 
 There is one outstanding request at a time. Translation is bounded to **1 cm**
 per action and rotation to **0.05 radians**. If IK rejects the bounded command,
-the controller retries **half**, then **quarter** of its translation and rotation.
+the controller retries **half**, **quarter**, then **one-eighth** of its translation and rotation.
 The gripper command remains unchanged. No new cloud request is made for retries;
 all attempts start from the same physical pose without advancing simulation.
 Rejected trials restore actuator targets, including the gripper. If none solves,
-the loop saves the attempts and stops. Invalid responses, exhausted IK retries,
-nonfinite state, or tracking error above **5 mm** stop the run. Predictions
+the loop records a rejection, holds the current pose without advancing physics,
+and requests another prediction from a newly captured observation. After **three
+consecutive rejections**, it stops cleanly; successful execution resets the counter.
+Set `--max-consecutive-rejections` to change that bound. An unchanged scene may
+produce the same prediction repeatedly. Invalid responses, nonfinite state, or
+tracking error above **5 mm** still stop the run as errors. Predictions
 received after a stop are discarded. Pausing during a request holds its result
 until resume; pausing during movement stops further simulation steps until resume.
 Stopping midway through movement saves the partial execution separately and
@@ -74,7 +81,7 @@ picking up the cube. Task completion and fine-tuning are later milestones.
 The terminal prints `outputs/remote_loop_<timestamp>_<id>/`:
 
 - `status.json`: current phase, step counts, elapsed time, and any failure.
-- `summary.json`: completed steps and final stop reason/status.
+- `summary.json`: successful movements, rejected cycles, prediction count, and final stop reason/status.
 - `run.log`: phase transitions with elapsed times.
 - `step_001/`, `step_002/`, etc.: `before.png`, `after.png`, simulation states,
   `prediction.json`, `ik_attempts.json`, and `execution.json`.
@@ -82,7 +89,10 @@ The terminal prints `outputs/remote_loop_<timestamp>_<id>/`:
 `ik_attempts.json` records attempted scales, solver errors, convergence, and
 timings even when every attempt fails. `execution.json` distinguishes the raw
 model action, original bounded action, actual executed action, and accepted scale.
-A successful retry is still one action in the loop.
+A successful size retry is still one prediction cycle. A completely rejected
+action has `executed: false`, no executed controller action, and zero movement
+time. It is stored separately from completed movements in the summary. Pose
+diagnostics include joint-limit margins, hand/cube distance, and Jacobian conditioning.
 
 Each step records client encoding, connection, upload send, response-header wait,
 response-body read, and round-trip timings. Server timings separate image
@@ -103,7 +113,7 @@ network timeout while the local viewer is paused.
 ## Local verification
 
 ```bash
-.venv/bin/python -m unittest test_ik_retries test_remote_loop test_remote_single_action -v
+.venv/bin/python -m unittest test_ik_retries test_remote_loop test_cloud_session -v
 ```
 
 Tests use real MuJoCo with fixture responses, without loading model weights.
@@ -112,5 +122,7 @@ while waiting, runtime limits, and preservation of completed steps after failure
 
 The saved real step-96 regression selects half scale and executes with **0.056 mm**
 position tracking error. Tests also cover quarter-scale selection and restoring
-all actuator/pose targets when full, half, and quarter attempts fail. The new
+all actuator/pose targets when every size fails. The step-97 regression selects
+one-eighth size and tracks with **0.059 mm** error. Recovery tests verify holding
+and requesting new predictions, and clean stopping after repeated rejection. The new
 retry path has been checked locally; a fresh cloud trial is still pending.

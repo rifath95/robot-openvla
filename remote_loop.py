@@ -13,12 +13,13 @@ import uuid
 
 from connection_client import request_prediction
 from openvla_single_action import adapt_bridge_action
+from control_diagnostics import pose_diagnostics
 
 ROOT = Path(__file__).resolve().parent
 
 
 def apply_with_ik_retries(controller, bounded_action):
-    """Try the original pose delta, half, then quarter, without advancing physics.
+    """Try full, half, quarter, then eighth pose deltas without advancing physics.
 
     Gripper command is unchanged. Failed trials restore actuator/pose targets,
     including the gripper target that apply_action updates even on failed IK.
@@ -37,7 +38,7 @@ def apply_with_ik_retries(controller, bounded_action):
         controller.target_quaternion = saved_quaternion.copy()
 
     attempts = []
-    for scale in (1.0, 0.5, 0.25):
+    for scale in (1.0, 0.5, 0.25, 0.125):
         candidate = original.copy()
         candidate[:6] *= scale
         started = time.perf_counter()
@@ -86,6 +87,7 @@ class ActiveTimer:
 
 def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red cube",
              steps=100, timeout_seconds=180, max_runtime_seconds=900,
+             max_consecutive_rejections=3,
              output_dir=None, no_view=False, start_immediately=False,
              stop_event=None):
     import mujoco
@@ -95,6 +97,8 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
 
     if type(steps) is not int or steps < 1:
         raise ValueError("steps must be a positive integer")
+    if type(max_consecutive_rejections) is not int or max_consecutive_rejections < 1:
+        raise ValueError("max_consecutive_rejections must be a positive integer")
     if any(not math.isfinite(x) or x <= 0 for x in (timeout_seconds, max_runtime_seconds)):
         raise ValueError("Timeout and runtime must be finite positive seconds")
     stop_event = stop_event if stop_event is not None else threading.Event()
@@ -107,6 +111,9 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
     active_timer = ActiveTimer()
     active_timer.set_paused(paused.is_set())
     completed = []
+    rejections = []
+    consecutive_rejections = 0
+    prediction_attempts = 0
     phase = "Initializing simulation"
     current_step = 0
     reason = None
@@ -122,6 +129,8 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
         save(folder / "status.json", {
             "phase": phase, "current_step": current_step, "completed_steps": len(completed),
             "requested_steps": steps, "elapsed_seconds": time.perf_counter() - started,
+            "prediction_attempts": prediction_attempts, "rejected_steps": len(rejections),
+            "consecutive_rejections": consecutive_rejections,
             "active_seconds": active_timer.elapsed(), "paused": paused.is_set(),
             **extra,
         })
@@ -148,7 +157,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
         if viewer is not None and viewer.is_running() and (force or time.perf_counter() - last_refresh >= 1 / 30):
             viewer.set_texts((mujoco.mjtFontScale.mjFONTSCALE_150,
                              mujoco.mjtGridPos.mjGRID_TOPLEFT,
-                             f"Cloud OpenVLA | {len(completed)}/{steps} actions",
+                             f"Cloud OpenVLA | {prediction_attempts}/{steps} cycles | {len(completed)} moves | {len(rejections)} held",
                              f"{'PAUSED' if paused.is_set() else phase}\nSpace: start/pause/resume | Esc: stop\nClose window: stop | Active limit: {max_runtime_seconds:g}s (pauses excluded)"))
             viewer.sync()
             last_refresh = time.perf_counter()
@@ -198,13 +207,16 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                     status("Capturing scene")
                     capture_started = time.perf_counter()
                     with viewer.lock() if viewer is not None else nullcontext():
+                        # Refresh derived transforms before rendering the observation.
+                        before_position, before_quaternion = env.controller.end_effector_pose()
+                        diagnostics = pose_diagnostics(env.controller)
                         save_rgb_png(step_dir / "before.png", env.observe())
                         state(step_dir / "scene_state.npz", env)
                         snapshot = {name: getattr(env.data, name).copy() for name in ("qpos", "qvel", "ctrl")}
                         sim_time = float(env.data.time)
-                        before_position, before_quaternion = env.controller.end_effector_pose()
                     capture_seconds = time.perf_counter() - capture_started
 
+                    prediction_attempts += 1
                     status("Waiting for cloud prediction")
                     replies = queue.Queue(maxsize=1)
                     # The daemon only performs HTTP and queues a response. It never accesses
@@ -247,9 +259,41 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                     save(step_dir / "ik_attempts.json", {
                         "bounded_action": bounded_action.tolist(), "attempts": ik_attempts,
                         "selected_scale": ik_attempts[-1]["scale"] if action is not None else None,
+                        "pose_diagnostics_before": diagnostics,
                     })
                     if not ik.converged:
-                        raise RuntimeError("IK rejected full, half, and quarter actions; no physics is advanced for them")
+                        consecutive_rejections += 1
+                        status("Action rejected; holding pose", reason="ik_exhausted")
+                        capture_started = time.perf_counter()
+                        with viewer.lock() if viewer is not None else nullcontext():
+                            save_rgb_png(step_dir / "after.png", env.observe())
+                            state(step_dir / "after_state.npz", env)
+                            if float(env.data.time) != sim_time or any(
+                                not np.array_equal(getattr(env.data, name), value) for name, value in snapshot.items()
+                            ):
+                                raise RuntimeError("Rejected action unexpectedly changed the simulation")
+                        rejection = {
+                            "step": current_step, "request_id": prediction["request_id"],
+                            "outcome": "rejected", "reason": "ik_exhausted", "executed": False,
+                            "raw_action": prediction["action"], "bounded_action": bounded_action.tolist(),
+                            "controller_action": None, "action_scale": None, "ik_attempts": ik_attempts,
+                            "pose_diagnostics_before": diagnostics,
+                            "consecutive_rejections": consecutive_rejections,
+                            "executed_physics_steps": 0, "physics_seconds": 0,
+                            "timings_seconds": {"capture_and_state_save": capture_seconds, "ik": ik_seconds,
+                                                "robot_execution_wall": 0,
+                                                "next_capture_and_state_save": time.perf_counter() - capture_started,
+                                                "cycle": time.perf_counter() - cycle_started},
+                            "request_timings_seconds": prediction["client_timings_seconds"],
+                            "server_timings_seconds": prediction.get("timings_seconds"),
+                        }
+                        save(step_dir / "execution.json", rejection)
+                        rejections.append(rejection)
+                        if consecutive_rejections >= max_consecutive_rejections:
+                            reason = "consecutive_rejection_limit"
+                            break
+                        refresh(force=True)
+                        continue  # New observation/prediction, not another execution of this action.
                     if len(ik_attempts) > 1:
                         print(f"Action {current_step}: IK accepted {ik_attempts[-1]['scale']:g} of the bounded movement/rotation", flush=True)
                     if stopping():
@@ -281,6 +325,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                         "raw_action": prediction["action"], "controller_action": action.tolist(),
                         "bounded_action": bounded_action.tolist(),
                         "action_scale": ik_attempts[-1]["scale"], "ik_attempts": ik_attempts,
+                        "outcome": "executed", "executed": True, "pose_diagnostics_before": diagnostics,
                         "translation_limit_metres": 0.01, "rotation_limit_radians": 0.05,
                         "mapping": "Provisional Bridge world XYZ/Euler to Panda world XYZ/Euler; hand origin",
                         "gripper_mapping": "2 * model_gripper - 1", "unnorm_key": "bridge_orig",
@@ -306,7 +351,9 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                     if not finite or tracking_error > 0.005:
                         raise RuntimeError(f"Action executed but tracking failed: {tracking_error:.6f} m")
                     completed.append(report)
-                    save(folder / "summary.json", {"completed_steps": len(completed), "steps": completed})
+                    consecutive_rejections = 0
+                    save(folder / "summary.json", {"completed_steps": len(completed), "steps": completed,
+                                                  "rejections": rejections, "prediction_attempts": prediction_attempts})
                     print(f"Action {current_step}: tracking error {tracking_error * 1000:.3f} mm", flush=True)
                 status("Stopped" if reason is not None else "Completed", stop_reason=reason)
                 refresh(force=True)
@@ -321,6 +368,8 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
         # Preserve successful steps even if a later request/movement fails or is stopped.
         save(folder / "summary.json", {"completed_steps": len(completed), "steps": completed,
                                       "phase": phase, "stop_reason": reason,
+                                      "requested_steps": steps, "prediction_attempts": prediction_attempts,
+                                      "rejected_steps": len(rejections), "rejections": rejections,
                                       "active_seconds": active_timer.elapsed(),
                                       "elapsed_seconds": time.perf_counter() - started})
     return folder
@@ -330,7 +379,10 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--server-url", default="http://127.0.0.1:8000")
     parser.add_argument("--instruction", default="pick up the red cube")
-    parser.add_argument("--steps", type=int, default=100)
+    parser.add_argument("--steps", type=int, default=100,
+                        help="Maximum observation/prediction cycles, including held/rejected actions")
+    parser.add_argument("--max-consecutive-rejections", type=int, default=3,
+                        help="Hold rejected actions; stop cleanly after this many consecutive IK rejections")
     parser.add_argument("--timeout-seconds", type=float, default=180)
     parser.add_argument("--max-runtime-seconds", type=float, default=900,
                         help="Maximum active seconds; time paused in the viewer is excluded")

@@ -13,6 +13,7 @@ from types import SimpleNamespace
 import numpy as np
 
 from remote_loop import ActiveTimer, run_loop
+from panda_controller import PandaController, IKResult
 
 
 class LoopTests(unittest.TestCase):
@@ -78,7 +79,7 @@ class LoopTests(unittest.TestCase):
             self.assertEqual(summary['steps'][0]['executed_physics_steps'], 1000)
             self.assertLess(summary['active_seconds'], summary['elapsed_seconds'])
 
-    def run_case(self, *, fail_second=False, stop_during_request=False):
+    def run_case(self, *, fail_second=False, stop_during_request=False, rejection_cycles=(), steps=3):
         requests = []
         stop = threading.Event()
 
@@ -108,17 +109,48 @@ class LoopTests(unittest.TestCase):
             thread = threading.Thread(target=server.serve_forever, daemon=True)
             thread.start()
             output = Path(directory) / 'run'
-            kwargs = dict(server_url=f'http://127.0.0.1:{server.server_port}', steps=3,
+            kwargs = dict(server_url=f'http://127.0.0.1:{server.server_port}', steps=steps,
                           max_runtime_seconds=30, no_view=True, output_dir=output, stop_event=stop)
+            original_solver = PandaController._solve_ik
+            def solver(controller, *args, **kwargs):
+                if len(requests) in rejection_cycles:
+                    return IKResult(controller.data.qpos[controller.qpos_indices].copy(), .01, .01, 150, False)
+                return original_solver(controller, *args, **kwargs)
             try:
                 if fail_second:
                     with self.assertRaises(ValueError):
                         run_loop(**kwargs)
                 else:
-                    run_loop(**kwargs)
+                    with patch.object(PandaController, '_solve_ik', solver):
+                        run_loop(**kwargs)
                 summary = json.loads((output / 'summary.json').read_text())
                 status = json.loads((output / 'status.json').read_text())
-                if stop_during_request:
+                if rejection_cycles:
+                    rejected = summary['rejections']
+                    self.assertEqual(summary['rejected_steps'], len(rejected))
+                    for record in rejected:
+                        step = output / f"step_{record['step']:03d}"
+                        self.assertFalse(record['executed'])
+                        self.assertEqual(record['executed_physics_steps'], 0)
+                        self.assertIsNone(record['controller_action'])
+                        self.assertEqual(len(record['ik_attempts']), 4)
+                        self.assertTrue((step / 'ik_attempts.json').exists())
+                        self.assertEqual((step / 'before.png').read_bytes(), (step / 'after.png').read_bytes())
+                        with np.load(step / 'scene_state.npz') as before, np.load(step / 'after_state.npz') as after:
+                            for name in ('qpos', 'qvel', 'ctrl', 'time'):
+                                np.testing.assert_array_equal(before[name], after[name])
+                    if rejection_cycles == (1, 2, 3):
+                        self.assertEqual(len(requests), 3)
+                        self.assertEqual(summary['completed_steps'], 0)
+                        self.assertEqual(summary['stop_reason'], 'consecutive_rejection_limit')
+                        self.assertEqual(status['phase'], 'Stopped')
+                    else:
+                        self.assertEqual(len(requests), steps)
+                        self.assertEqual(summary['completed_steps'], steps - len(rejection_cycles))
+                        self.assertEqual(status['consecutive_rejections'], 0)
+                        self.assertEqual(status['phase'], 'Completed')
+                        self.assertEqual([r['consecutive_rejections'] for r in rejected], [1, 1, 2])
+                elif stop_during_request:
                     self.assertEqual(summary['completed_steps'], 0)
                     self.assertEqual(summary['stop_reason'], 'user_stop')
                     self.assertEqual(len(requests), 1)
@@ -158,6 +190,12 @@ class LoopTests(unittest.TestCase):
 
     def test_stop_discards_inflight_prediction(self):
         self.run_case(stop_during_request=True)
+
+    def test_rejections_hold_and_success_resets_rejection_counter(self):
+        self.run_case(rejection_cycles=(2, 4, 5), steps=6)
+
+    def test_repeated_rejections_stop_cleanly_before_budget_exhaustion(self):
+        self.run_case(rejection_cycles=(1, 2, 3), steps=10)
 
     def test_runtime_limit_stops_while_waiting(self):
         release = threading.Event()
