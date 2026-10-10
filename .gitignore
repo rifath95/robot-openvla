@@ -49,3 +49,7 @@ camera_image.png
 *.swo
 .DS_Store
 Thumbs.db
+
+# Generated fine-tuning datasets (retain the tracked directory guide)
+datasets/*
+!datasets/README.md

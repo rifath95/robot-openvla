@@ -11,7 +11,9 @@ def write_launcher(folder):
     launcher = '''"""Offline playback. Run with the repository simulation Python environment."""
 from pathlib import Path
 import sys
-root = Path(__file__).resolve().parents[2]
+root = next((p for p in Path(__file__).resolve().parents
+             if (p / 'replay_run.py').is_file() and (p / 'scene.xml').is_file()),
+            Path(__file__).resolve().parent)
 sys.path.insert(0, str(root))
 from replay_run import main
 if __name__ == '__main__':
@@ -37,6 +39,8 @@ def load_frames(folder, model):
                 raise ValueError(f'Invalid trajectory: {trajectory}')
         else:
             before, after = step / 'scene_state.npz', step / 'after_state.npz'
+            if not before.exists():
+                before = step / 'before_state.npz'  # Expert demonstration format.
             if not before.exists():
                 continue
             with np.load(before, allow_pickle=False) as saved:

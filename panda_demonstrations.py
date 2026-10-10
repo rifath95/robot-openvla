@@ -12,6 +12,7 @@ import numpy as np
 from capture_camera import save_rgb_png
 from panda_actions import (PHYSICS_STEPS, action_contract, from_controller_action,
                            to_controller_action)
+from dataset_paths import PANDA_DATASET_ROOT
 from panda_env import PandaEnv
 from remote_loop import apply_with_ik_retries
 
@@ -63,23 +64,44 @@ def task_result(initial, destination, positions):
                 destination_cube=destination.tolist(), final_cube=final.tolist())
 
 
-def record_episode(folder):
+def record_episode(folder, *, cube_xy=None, destination_offset=(0, 0.12), instruction=None, scenario=None):
+    offset = np.asarray(destination_offset, dtype=float)
+    if offset.shape != (2,) or not np.isfinite(offset).all() or not 0.04 <= np.linalg.norm(offset) <= 0.18:
+        raise ValueError('Destination offset must be a finite XY vector of length 4–18 cm')
+    if cube_xy is not None:
+        cube_xy = np.asarray(cube_xy, dtype=float)
+        if cube_xy.shape != (2,) or not np.isfinite(cube_xy).all():
+            raise ValueError('Cube XY must contain two finite coordinates')
+        for point in (cube_xy, cube_xy + offset):
+            if not (.45 <= point[0] <= .65 and -.20 <= point[1] <= .20):
+                raise ValueError('Cube/destination is outside the pilot collection area')
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=False)
-    instruction = 'pick up the red cube and place it 12 cm in the positive world Y direction'
+    from replay_run import write_launcher
+    write_launcher(folder)
+    instruction = instruction or ('pick up the red cube and place it 12 cm in the positive world Y direction'
+                                  if np.array_equal(offset, [0, .12]) else
+                                  f'pick up the red cube and move it {offset[0]*100:g} cm along world X and {offset[1]*100:g} cm along world Y')
     metadata = dict(schema_version=1, action_contract=action_contract(),
                     instruction=instruction, source='scripted expert with privileged cube coordinates',
                     camera='workspace_camera', image_size=[640, 480],
                     mujoco_version=mujoco.__version__, scene_xml_sha256=scene_fingerprint(),
+                    scenario=scenario, requested_cube_xy=None if cube_xy is None else cube_xy.tolist(),
+                    requested_destination_offset_xy=offset.tolist(),
                     success=False, training_eligible=False,
                     note='Task success and deterministic replay required before dataset preparation.')
     write_json(folder / 'episode.json', metadata)
     rows = []
     try:
         with PandaEnv() as env:
+            if cube_xy is not None:
+                joint = mujoco.mj_name2id(env.model, mujoco.mjtObj.mjOBJ_JOINT, 'cube_joint')
+                address = int(env.model.jnt_qposadr[joint])
+                env.data.qpos[address:address + 2] = cube_xy
+                mujoco.mj_forward(env.model, env.data)
             env.controller.step(500)
             initial = cube_position(env)
-            destination = initial + [0, 0.12, 0]
+            destination = initial + [*offset, 0]
             positions = [initial]
             save_state(folder / 'initial_state.npz', env)
 
@@ -205,7 +227,7 @@ def replay_episode(folder):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--replay', type=Path, help='Replay an existing episode instead of recording')
-    parser.add_argument('--output-dir', type=Path, default=ROOT / 'outputs' /
+    parser.add_argument('--output-dir', type=Path, default=PANDA_DATASET_ROOT / 'episodes' /
                         datetime.now().strftime('panda_demo_%Y%m%d_%H%M%S_%f'))
     args = parser.parse_args()
     if args.replay:

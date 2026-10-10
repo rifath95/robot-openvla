@@ -86,6 +86,12 @@ Already implemented:
 - Sequential replay verification, dataset eligibility checks, and Panda-specific action statistics.
 - One successful 72-transition scripted episode and a verified staging dataset; this is a pipeline check, not sufficient training coverage.
 
+Phase 3 collection has started with a reproducible ten-scene pilot: six training,
+two validation and two test scenes, assigned before recording. This checks spatial
+variation and split handling; all ten expert episodes passed recording/replay
+(425 training / 142 validation / 145 test transitions). It is not yet a sufficient
+fine-tuning dataset or a measurement of OpenVLA task success.
+
 Remaining goals:
 
 1. Collect varied successful pick-and-place demonstrations with different object starting positions, destinations, approaches, orientations, and instructions.
@@ -129,6 +135,7 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | --- | --- |
 | `scene.xml` | Panda scene, floor, table, cube, camera, and `scene_home` starting state. |
 | `panda_actions.py` | Shared Panda action bounds, rotation rule, grasp point, gripper conversion and fixed interval. |
+| `collect_panda_pilot.py` | Records a predeclared ten-scene pick-and-place pilot with 6 training / 2 validation / 2 test episodes; only training episodes enter staging normalization. |
 | `panda_demonstrations.py` | Records expert image/action transitions and verifies sequential contact-physics replay. |
 | `prepare_panda_dataset.py` | Validates replayed expert episodes and exports JSONL plus Panda statistics. |
 | `test_panda_demonstrations.py` / `PANDA_DEMONSTRATIONS.md` | Recording/replay, dataset eligibility tests and usage guide. |
@@ -178,7 +185,8 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | `mujoco_menagerie/` | Cloned upstream robot models and mesh assets. |
 | `.venv/` | Simulation Python environment. |
 | `.venv-openvla/` | Separate Python environment containing PyTorch, Transformers, and OpenVLA inference dependencies. |
-| `outputs/` | Generated images, action JSON, status, and logs. |
+| `datasets/` / `datasets/README.md` | Verified expert trajectories and fine-tuning exports; each trajectory includes replay.py. Generated data is excluded from GitHub. |
+| `outputs/` | Experiment images, model-driven action JSON, status, and logs. |
 
 ## What to run
 

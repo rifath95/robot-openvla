@@ -38,6 +38,14 @@ class ReplayTests(unittest.TestCase):
         np.testing.assert_array_equal(frames[-1][2], self.end)
         self.assertEqual(frames[-1][0], 'step_002')
 
+    def test_expert_before_state_format_is_playable(self):
+        np.savez(self.step / 'before_state.npz', qpos=self.start, time=0)
+        np.savez(self.step / 'after_state.npz', qpos=self.end, time=.4)
+        frames, approximate = load_frames(self.folder, self.model)
+        self.assertTrue(approximate)
+        np.testing.assert_array_equal(frames[0][2], self.start)
+        np.testing.assert_array_equal(frames[-1][2], self.end)
+
     def test_invalid_frames_rejected(self):
         np.savez(self.step / 'motion_frames.npz', qpos=np.zeros((2, 1)), time=[0, .4])
         with self.assertRaises(ValueError):

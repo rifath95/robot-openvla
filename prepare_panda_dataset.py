@@ -5,6 +5,8 @@ model or mixes Bridge normalization into the Panda action labels.
 """
 
 import argparse
+from datetime import datetime, timezone
+from dataset_paths import PANDA_DATASET_ROOT
 import hashlib
 import json
 from pathlib import Path
@@ -19,6 +21,8 @@ def fingerprint(folder):
     folder = Path(folder)
     metadata = json.loads((folder / 'episode.json').read_text())
     fixed = {key: metadata[key] for key in ('action_contract', 'instruction', 'scene_xml_sha256', 'mujoco_version')}
+    if metadata.get('scenario') is not None:
+        fixed['scenario'] = metadata['scenario']
     digest = hashlib.sha256(json.dumps(fixed, sort_keys=True).encode())
     for name in ('transitions.jsonl', 'initial_state.npz'):
         digest.update((folder / name).read_bytes())
@@ -83,7 +87,7 @@ def prepare_dataset(episodes, output):
     (output / 'normalization_stats.json').write_text(json.dumps({CONVENTION_ID: {'action': statistics}}, indent=2) + '\n')
     report = dict(convention=action_contract(), episodes=len(episodes), transitions=len(records),
                   ready_for_finetuning=False,
-                  limitations=['One scripted scene is a pipeline check, not adequate task coverage.',
+                  limitations=['A scripted pilot is a pipeline check, not proof of adequate task coverage.',
                                'JSONL references local files; bundle episodes and regenerate paths after copying.',
                                'RLDS conversion, varied demonstrations, and training integration remain to be implemented.',
                                'Zero-variance dimensions must be handled explicitly when normalizing a training dataset.'])
@@ -94,7 +98,9 @@ def prepare_dataset(episodes, output):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('episodes', nargs='+', type=Path)
-    parser.add_argument('--output-dir', required=True, type=Path)
+    parser.add_argument('--output-dir', type=Path, default=PANDA_DATASET_ROOT / 'staging' /
+                        datetime.now(timezone.utc).strftime('dataset_%Y%m%d_%H%M%S'),
+                        help='Defaults to a new staging directory under datasets/panda_pick_place')
     args = parser.parse_args()
     print(json.dumps(prepare_dataset(args.episodes, args.output_dir), indent=2))
 
