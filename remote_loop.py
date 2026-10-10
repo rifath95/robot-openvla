@@ -108,6 +108,8 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
         paused.set()
     folder = Path(output_dir) if output_dir else ROOT / "outputs" / f"remote_loop_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}"
     folder.mkdir(parents=True, exist_ok=False)
+    from replay_run import write_launcher
+    write_launcher(folder)
     started = time.perf_counter()
     active_timer = ActiveTimer()
     active_timer.set_paused(paused.is_set())
@@ -303,16 +305,22 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                     status("Executing bounded movement")
                     execution_started = time.perf_counter()
                     executed_steps = 0
+                    motion_poses = [env.data.qpos.copy()]
+                    motion_times = [float(env.data.time)]
                     while executed_steps < PHYSICS_STEPS and wait_ready():
                         chunk_started = time.perf_counter()
                         count = min(20, PHYSICS_STEPS - executed_steps)
                         with viewer.lock() if viewer is not None else nullcontext():
                             env.controller.step(count)
+                            motion_poses.append(env.data.qpos.copy())
+                            motion_times.append(float(env.data.time))
                         executed_steps += count
                         refresh()
                         if viewer is not None:
                             # Pace motion to simulation time so it is visible, not instantaneous.
                             time.sleep(max(0, count * float(env.model.opt.timestep) - (time.perf_counter() - chunk_started)))
+                    np.savez_compressed(step_dir / "motion_frames.npz",
+                                        qpos=np.asarray(motion_poses), time=np.asarray(motion_times))
                     execution_seconds = time.perf_counter() - execution_started
                     capture_started = time.perf_counter()
                     with viewer.lock() if viewer is not None else nullcontext():

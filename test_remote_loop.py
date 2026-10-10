@@ -126,6 +126,13 @@ class LoopTests(unittest.TestCase):
                         run_loop(**kwargs)
                 summary = json.loads((output / 'summary.json').read_text())
                 status = json.loads((output / 'status.json').read_text())
+                self.assertTrue((output / 'replay.py').exists())
+                for record in summary['steps']:
+                    step = output / f"step_{record['step']:03d}"
+                    with np.load(step / 'motion_frames.npz') as frames, np.load(step / 'scene_state.npz') as before, np.load(step / 'after_state.npz') as after:
+                        np.testing.assert_array_equal(frames['qpos'][0], before['qpos'])
+                        np.testing.assert_array_equal(frames['qpos'][-1], after['qpos'])
+                        self.assertEqual(len(frames['time']), PHYSICS_STEPS // 20 + 1)
                 if rejection_cycles:
                     rejected = summary['rejections']
                     self.assertEqual(summary['rejected_steps'], len(rejected))

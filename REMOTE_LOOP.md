@@ -132,3 +132,10 @@ all actuator/pose targets when every size fails. The step-97 regression selects
 one-eighth size and tracks with **0.059 mm** error. Recovery tests verify holding
 and requesting new predictions, and clean stopping after repeated rejection. The new
 retry path has been checked locally; a fresh cloud trial is still pending.
+
+## Replay a saved run without a pod
+
+Open the run folder’s `replay.py` using `.venv/bin/python`, or run
+`.venv/bin/python replay_run.py outputs/<RUN_FOLDER>`. Space starts/pauses/resumes.
+New runs include sampled motion frames; older runs interpolate saved endpoints.
+See [REPLAY.md](REPLAY.md) for speed controls and playback limitations.
