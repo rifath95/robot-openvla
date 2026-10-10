@@ -162,10 +162,58 @@ for slower playback. To select another episode, use its `train/`, `validation/`
 or `test/` directory. All ten existing pilot episodes now have launchers, listed
 in the pilot folder's `WATCH_TRAJECTORIES.md`.
 
-This is an offline visual replay, without a pod or model inference. Expert
-recordings currently store before/after states: the viewer interpolates the
-intermediate motion, preserving saved endpoints. Contact motion between those
+This is an offline visual replay, without a pod or model inference. Original expert
+recordings store before/after states: the viewer interpolates the
+intermediate motion, preserving saved endpoints. New recordings also save sampled
+motion frames and replay those recorded poses. Contact motion between those
 endpoints is approximate. For the independent deterministic physics verification,
 use `panda_demonstrations.py --replay <EPISODE_DIR>`; it checks the recorded
 commands without opening a viewer. Watching an episode does not alter its data
 or replay eligibility.
+
+## Expanded 40-trajectory collection
+
+```bash
+.venv/bin/python collect_panda_expansion.py
+```
+
+The deterministic plan uses 40 new starting scenes, disjoint from the original
+pilot: 30 training, 5 validation and 5 test. It varies eight placement directions
+(+/-X, +/-Y and diagonals), four grasp yaw angles (+/-0.09 and +/-0.18 radians),
+four 2.5 cm approach offsets, and initial joint-1 positions (-0.08, 0, +0.08 rad).
+The robot's starting posture varies within the safe elevated region. Instructions
+specify the X/Y displacement; orientation/path are expert variations of that task.
+The same red cube and fixed camera remain in use, and roll/pitch variation is
+limited to orientation stabilization rather than deliberately tilted grasps.
+
+The folder `datasets/panda_pick_place/panda_expansion_<timestamp>/` contains the
+predeclared `collection_plan.json`, per-split episodes and launchers,
+`WATCH_TRAJECTORIES.md`, and a continually updated `collection_report.json`.
+Successful expert episodes must pass lift/placement and sequential replay checks.
+Failed attempts are retained and excluded; a failed attempt does not count toward
+40 successful additions. The `combined_manifest.json` lists the successful pilot
+and expansion episodes. `combined_train_staging/` contains only training episodes
+from both batches and their training-only normalization. The separate seed episode
+is not included in the 50-trajectory experiment.
+
+New expert recordings now save `motion_frames.npz` every 20 physics ticks, so
+playback displays recorded poses. The original pilot and seed still interpolate
+between endpoints. Each episode's `replay.py` opens the local paused viewer;
+Space starts/pauses/resumes and Esc or closing the window exits. No model inference
+or pod is needed. Watching recorded frames is separate from sequential physics
+replay verification and does not change dataset eligibility.
+
+Even with 50 trajectories, the dataset is staging data: RLDS conversion, robust
+normalization of near-constant dimensions and fine-tuning/evaluation integration
+remain to be implemented. Expert success is not an OpenVLA success rate.
+
+Verified expansion: `datasets/panda_pick_place/panda_expansion_20261010_104720`.
+All **40/40 additions** passed expert pickup/placement checks and sequential
+physics replay. With the pilot, the experiment now has **50 trajectories**:
+**36 training / 7 validation / 7 test**, containing **2,595 / 507 / 507 transitions**
+respectively (3,609 total). Maximum added-episode placement error was **8.15 mm**;
+maximum sequential replay qpos discrepancy was **2.29e-13**. Sampled motion
+files for all 40 episodes load correctly and preserve saved action endpoints. Training
+normalization is computed from the 36 training episodes only. The earlier seed
+remains separate. A combined replay index is at
+`datasets/panda_pick_place/WATCH_TRAJECTORIES.md`.

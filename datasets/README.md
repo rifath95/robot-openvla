@@ -53,3 +53,21 @@ local image paths: after copying to another machine, regenerate exports there.
 Replay launchers locate the repository among their parent directories; moving
 an episode outside this repository requires the repository to remain available.
 See [PANDA_DEMONSTRATIONS.md](../PANDA_DEMONSTRATIONS.md) for eligibility checks.
+
+## Expanded collection
+
+`collect_panda_expansion.py` adds a reproducible 40-scene plan (30 train / 5
+validation / 5 test) under `panda_pick_place/panda_expansion_<timestamp>/`. It
+combines successful training episodes with the pilot in `combined_train_staging/`
+and lists all selected scenes in `combined_manifest.json`; the earlier seed is
+separate. Failed attempts remain excluded. New expert episodes include sampled
+motion frames; their launchers show recorded motion instead of interpolating
+endpoints. See the expansion's `WATCH_TRAJECTORIES.md` to select a trajectory.
+
+Current verified expansion: `panda_pick_place/panda_expansion_20261010_104720/`.
+The original pilot plus 40 successful additions yields 50 trajectories:
+36 train (2,595 transitions), 7 validation (507), and 7 test (507).
+Open [the combined trajectory index](panda_pick_place/WATCH_TRAJECTORIES.md)
+to watch all 50. Training JSONL/statistics are in the expansion's
+`combined_train_staging/`; earlier seed data remains separate. No fine-tuning
+has run. All generated data/index files are excluded from GitHub.

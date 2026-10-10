@@ -64,7 +64,15 @@ def task_result(initial, destination, positions):
                 destination_cube=destination.tolist(), final_cube=final.tolist())
 
 
-def record_episode(folder, *, cube_xy=None, destination_offset=(0, 0.12), instruction=None, scenario=None):
+def record_episode(folder, *, cube_xy=None, destination_offset=(0, 0.12), instruction=None, scenario=None,
+                   grasp_yaw_radians=None, approach_offset_xy=(0, 0), initial_joint1_radians=0):
+    approach_offset = np.asarray(approach_offset_xy, dtype=float)
+    if approach_offset.shape != (2,) or not np.isfinite(approach_offset).all() or np.linalg.norm(approach_offset) > .06:
+        raise ValueError('Approach offset must be a finite XY vector no longer than 6 cm')
+    if not np.isfinite(initial_joint1_radians) or abs(initial_joint1_radians) > .15:
+        raise ValueError('Initial joint1 variation must be within 0.15 radians')
+    if grasp_yaw_radians is not None and (not np.isfinite(grasp_yaw_radians) or abs(grasp_yaw_radians) > .3):
+        raise ValueError('Grasp yaw variation must be within 0.3 radians')
     offset = np.asarray(destination_offset, dtype=float)
     if offset.shape != (2,) or not np.isfinite(offset).all() or not 0.04 <= np.linalg.norm(offset) <= 0.18:
         raise ValueError('Destination offset must be a finite XY vector of length 4–18 cm')
@@ -86,6 +94,8 @@ def record_episode(folder, *, cube_xy=None, destination_offset=(0, 0.12), instru
                     instruction=instruction, source='scripted expert with privileged cube coordinates',
                     camera='workspace_camera', image_size=[640, 480],
                     mujoco_version=mujoco.__version__, scene_xml_sha256=scene_fingerprint(),
+                    grasp_yaw_radians=grasp_yaw_radians, approach_offset_xy=approach_offset.tolist(),
+                    initial_joint1_radians=initial_joint1_radians,
                     scenario=scenario, requested_cube_xy=None if cube_xy is None else cube_xy.tolist(),
                     requested_destination_offset_xy=offset.tolist(),
                     success=False, training_eligible=False,
@@ -94,6 +104,12 @@ def record_episode(folder, *, cube_xy=None, destination_offset=(0, 0.12), instru
     rows = []
     try:
         with PandaEnv() as env:
+            reference_quaternion = env.controller.end_effector_pose()[1].copy()
+            if initial_joint1_radians:
+                env.data.qpos[env.controller.qpos_indices[0]] = initial_joint1_radians
+                env.data.ctrl[env.controller.actuator_ids[0]] = initial_joint1_radians
+                from panda_actions import make_controller
+                env.controller = make_controller(env.model, env.data)
             if cube_xy is not None:
                 joint = mujoco.mj_name2id(env.model, mujoco.mjtObj.mjOBJ_JOINT, 'cube_joint')
                 address = int(env.model.jnt_qposadr[joint])
@@ -104,6 +120,10 @@ def record_episode(folder, *, cube_xy=None, destination_offset=(0, 0.12), instru
             destination = initial + [*offset, 0]
             positions = [initial]
             save_state(folder / 'initial_state.npz', env)
+            target_quaternion = None
+            if grasp_yaw_radians is not None:
+                from panda_controller import _quat_multiply, _euler_xyz_to_quat
+                target_quaternion = _quat_multiply(_euler_xyz_to_quat(0, 0, grasp_yaw_radians), reference_quaternion)
 
             def act(proposal, stage):
                 directory = folder / f'step_{len(rows) + 1:04}'
@@ -117,7 +137,13 @@ def record_episode(folder, *, cube_xy=None, destination_offset=(0, 0.12), instru
                     write_json(directory / 'rejection.json', dict(proposed_action=list(proposal),
                                attempts=attempts, executed=False, training_eligible=False))
                     raise RuntimeError('Expert action rejected; episode is ineligible for training')
-                env.controller.step(PHYSICS_STEPS)
+                motion_poses = [env.data.qpos.copy()]
+                motion_times = [float(env.data.time)]
+                for count in range(0, PHYSICS_STEPS, 20):
+                    env.controller.step(min(20, PHYSICS_STEPS - count))
+                    motion_poses.append(env.data.qpos.copy())
+                    motion_times.append(float(env.data.time))
+                np.savez_compressed(directory / 'motion_frames.npz', qpos=motion_poses, time=motion_times)
                 after, quaternion_after = env.controller.end_effector_pose()
                 tracking = float(np.linalg.norm(after - env.controller.target_position))
                 finite = np.isfinite(env.data.qpos).all() and np.isfinite(env.data.qvel).all()
@@ -149,14 +175,25 @@ def record_episode(folder, *, cube_xy=None, destination_offset=(0, 0.12), instru
             def move(target, gripper, stage):
                 print(stage, flush=True)
                 for _ in range(100):
-                    position, _ = env.controller.end_effector_pose()
+                    position, quaternion = env.controller.end_effector_pose()
                     delta = target - position
-                    if np.linalg.norm(delta) < 0.0015:
+                    rotation = np.zeros(3)
+                    if target_quaternion is not None:
+                        current_matrix = np.empty(9); target_matrix = np.empty(9)
+                        mujoco.mju_quat2Mat(current_matrix, quaternion)
+                        mujoco.mju_quat2Mat(target_matrix, target_quaternion)
+                        relative = target_matrix.reshape(3, 3) @ current_matrix.reshape(3, 3).T
+                        rotation = np.array([np.arctan2(relative[2, 1], relative[2, 2]),
+                                             np.arcsin(np.clip(-relative[2, 0], -1, 1)),
+                                             np.arctan2(relative[1, 0], relative[0, 0])])
+                    if np.linalg.norm(delta) < 0.0015 and np.linalg.norm(rotation) < .003:
                         return
                     # The shared adapter bounds it to 1 cm; record its executed value.
-                    act([*delta, 0, 0, 0, gripper], stage)
+                    act([*delta, *rotation, gripper], stage)
                 raise RuntimeError('Expert waypoint did not settle')
 
+            if np.linalg.norm(approach_offset):
+                move(initial + [*approach_offset, .14], 1, 'approach_via_offset')
             move(initial + [0, 0, 0.14], 1, 'approach')
             move(initial + [0, 0, 0.003], 1, 'lower_to_grasp')
             act([0, 0, 0, 0, 0, 0, 0], 'close')

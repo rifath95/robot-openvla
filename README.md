@@ -92,6 +92,13 @@ variation and split handling; all ten expert episodes passed recording/replay
 (425 training / 142 validation / 145 test transitions). It is not yet a sufficient
 fine-tuning dataset or a measurement of OpenVLA task success.
 
+The first expansion is complete: 40 additional expert episodes passed task and
+replay checks, giving **50 trajectories (36 train / 7 validation / 7 test)** and
+**3,609 transitions**. It adds placement directions, approach offsets, grasp yaw
+and starting arm poses; training statistics use only training episodes. See
+`datasets/panda_pick_place/WATCH_TRAJECTORIES.md` to watch all 50 locally.
+Fine-tuning and model-driven task evaluation remain unimplemented.
+
 Remaining goals:
 
 1. Collect varied successful pick-and-place demonstrations with different object starting positions, destinations, approaches, orientations, and instructions.
@@ -135,6 +142,7 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | --- | --- |
 | `scene.xml` | Panda scene, floor, table, cube, camera, and `scene_home` starting state. |
 | `panda_actions.py` | Shared Panda action bounds, rotation rule, grasp point, gripper conversion and fixed interval. |
+| `collect_panda_expansion.py` | Collects 40 additional scenes with placement, approach, yaw and starting-pose variation; combines only training episodes for statistics. |
 | `collect_panda_pilot.py` | Records a predeclared ten-scene pick-and-place pilot with 6 training / 2 validation / 2 test episodes; only training episodes enter staging normalization. |
 | `panda_demonstrations.py` | Records expert image/action transitions and verifies sequential contact-physics replay. |
 | `prepare_panda_dataset.py` | Validates replayed expert episodes and exports JSONL plus Panda statistics. |
