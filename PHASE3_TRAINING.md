@@ -178,6 +178,13 @@ one-hour training guard remains a process limit, not a pod billing limit.
 Choose a checkpoint based on full validation performance before testing robot
 behavior. Leave the test split out of checkpoint selection.
 
+For training while the Mac sleeps, follow [TRAINING_OVERNIGHT.md](TRAINING_OVERNIGHT.md)
+instead of running the command directly in SSH. It starts a tmux supervisor,
+stores logs/results on the network volume, and requests an automatic pod stop
+after training or failure. A management API secret is required. This route puts
+training results inside `panda-training/sessions/SESSION_NAME/runs/training/`;
+use the checkpoint path from that session for later adapter evaluation.
+
 The previous smoke metrics remain on the network volume. On the next pod, you
 can download the small result files into a **Mac terminal** without copying its
 adapter weights:

@@ -18,6 +18,7 @@ def main():
     p.add_argument('--config',type=Path,default=Path('training/smoke.json'))
     p.add_argument('--upstream',type=Path,default=Path('/opt/openvla-source'))
     p.add_argument('--prepare-only',action='store_true',help='Print launch command without running training')
+    p.add_argument('--run-name',help='Optional unique run name inside output-root (used by detached supervisor)')
     args=p.parse_args()
     if not (args.dataset/'verification.json').is_file() or not json.loads((args.dataset/'verification.json').read_text())['passed']:
         p.error('Dataset must have a passing export verification')
@@ -30,7 +31,10 @@ def main():
     pin=json.loads(Path('training/upstream/PIN.json').read_text())
     generated=Path('training/generated/panda_finetune.py').resolve()
     generated.parent.mkdir(parents=True,exist_ok=True);generated.write_text(integrated_source())
-    run=args.output_root.resolve()/datetime.now(timezone.utc).strftime('lora_%Y%m%d_%H%M%S_%f')
+    if args.run_name and (Path(args.run_name).name != args.run_name or args.run_name in ('.','..')):
+        p.error('Run name must be a single directory name')
+    run=args.output_root.resolve()/(args.run_name or datetime.now(timezone.utc).strftime('lora_%Y%m%d_%H%M%S_%f'))
+    if run.exists():p.error('Run already exists; choose a new run name')
     env=os.environ.copy()
     env.update(PANDA_RUN_DIR=str(run),PANDA_UPSTREAM_REVISION=pin['revision'],
         PANDA_VALIDATE_EVERY=str(config.pop('validation_every')),
