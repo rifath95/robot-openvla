@@ -11,6 +11,13 @@ import cloud_session
 
 
 class SessionTests(unittest.TestCase):
+    def test_adapter_bootstrap_merges_before_starting_panda_server(self):
+        script = cloud_session.bootstrap_script(1800, '/workspace/run/checkpoint_000020')
+        self.assertIn('--adapter /workspace/run/checkpoint_000020', script)
+        self.assertIn('mktemp -d /root/panda-evaluation-', script)
+        self.assertIn('bash scripts/cloud_start.sh 1800 "$merged_dir/model" panda_grasp_v1', script)
+        self.assertLess(script.index('training.merge_adapter'), script.index('bash scripts/cloud_start.sh'))
+
     def test_parses_direct_tcp_and_uses_explicit_private_key(self):
         with tempfile.TemporaryDirectory() as directory:
             key = Path(directory) / 'my key'

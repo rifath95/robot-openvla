@@ -39,6 +39,7 @@ class OpenVLAPredictor:
         self.startup_info = json.loads(metrics_path.read_text()) if metrics_path.exists() else {}
         import transformers
         self.startup_info.update({
+            'model_dir': str(folder), 'unnorm_key': unnorm_key,
             'model_load_seconds': self.load_seconds,
             'loading_note': 'Processor setup, checkpoint reading, model construction and device transfer, synchronized at completion; not isolated storage-to-VRAM time.',
             'device': device, 'dtype': str(self.dtype), 'attention': 'eager',
@@ -99,7 +100,10 @@ class OpenVLAPredictor:
             "device": self.device,
             "dtype": str(self.dtype),
             "attention": "eager",
-            "action_convention": "Raw OpenVLA action unnormalized with dataset statistics; provisional Bridge-to-Panda mapping is not applied. Gripper is 0 closed / 1 open for bridge_orig.",
+            "action_convention": (
+                "panda_grasp_v1: world translation in metres, Euler rotation in radians, absolute gripper 0 closed / 1 open."
+                if self.unnorm_key == "panda_grasp_v1" else
+                "Raw OpenVLA action unnormalized with dataset statistics; provisional Bridge-to-Panda mapping is not applied. Gripper is 0 closed / 1 open for bridge_orig."),
             "timings_seconds": {
                 "processor_and_device_transfer": prepared - started,
                 "model_inference": predicted - prepared,

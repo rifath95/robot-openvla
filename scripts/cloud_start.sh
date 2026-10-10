@@ -3,6 +3,8 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 runtime="${1:-1800}"
+model_dir="${2:-/workspace/openvla-7b}"
+unnorm_key="${3:-bridge_orig}"
 [[ "$runtime" =~ ^[1-9][0-9]*$ ]] || { echo 'Invalid server runtime'; exit 1; }
 mkdir -p outputs
 exec 9>outputs/cloud_setup.lock
@@ -39,7 +41,7 @@ fi
 "$python" cloud_startup_metrics.py
 # Fail before expensive loading if port 8000 belongs to another process.
 "$python" -c 'import socket; s=socket.socket(); s.bind(("127.0.0.1",8000)); s.close()'
-nohup "$python" -u connection_server.py --mode openvla --model-dir /workspace/openvla-7b --device cuda --max-runtime-seconds "$runtime" >outputs/cloud_server.log 2>&1 < /dev/null 9>&- &
+nohup "$python" -u connection_server.py --mode openvla --model-dir "$model_dir" --unnorm-key "$unnorm_key" --device cuda --max-runtime-seconds "$runtime" >outputs/cloud_server.log 2>&1 < /dev/null 9>&- &
 printf '%s\n' "$!" >outputs/cloud_server.pid
 echo 'Server loading; log: /root/robot-openvla/outputs/cloud_server.log'
 echo 'The server timer does not stop the pod or billing.'

@@ -80,7 +80,7 @@ class LoopTests(unittest.TestCase):
             self.assertEqual(summary['steps'][0]['executed_physics_steps'], PHYSICS_STEPS)
             self.assertLess(summary['active_seconds'], summary['elapsed_seconds'])
 
-    def run_case(self, *, fail_second=False, stop_during_request=False, rejection_cycles=(), steps=3):
+    def run_case(self, *, fail_second=False, stop_during_request=False, rejection_cycles=(), steps=3, unnorm_key='bridge_orig'):
         requests = []
         stop = threading.Event()
 
@@ -92,7 +92,7 @@ class LoopTests(unittest.TestCase):
                     stop.set()
                 reply = {
                     'request_id': request['request_id'], 'mode': 'openvla',
-                    'model_loaded': True, 'unnorm_key': 'bridge_orig',
+                    'model_loaded': True, 'unnorm_key': unnorm_key,
                     'action': [-0.0044585979, -0.0318288251, 0.0036561353,
                                -0.0052476346, -0.0242258626, -0.0016785094, 0.9960784314],
                     'timings_seconds': {'model_inference': 0.01},
@@ -177,6 +177,7 @@ class LoopTests(unittest.TestCase):
                     self.assertEqual(status['phase'], 'Completed')
                     self.assertEqual(len(set(r['request_id'] for r in requests)), 3)
                     for report in summary['steps']:
+                        self.assertEqual(report['unnorm_key'], unnorm_key)
                         self.assertTrue(report['finite_state'])
                         self.assertEqual(report['action_scale'], 1)
                         self.assertEqual(len(report['ik_attempts']), 1)
@@ -196,6 +197,9 @@ class LoopTests(unittest.TestCase):
 
     def test_three_steps_use_updated_scene(self):
         self.run_case()
+
+    def test_panda_finetuned_actions_execute_and_record_convention(self):
+        self.run_case(unnorm_key='panda_grasp_v1')
 
     def test_failure_preserves_previous_step_and_stops(self):
         self.run_case(fail_second=True)

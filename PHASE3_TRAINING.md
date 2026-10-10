@@ -238,8 +238,41 @@ Keep the tunnel open and visit `http://127.0.0.1:6006` in your Mac browser.
 
 ## Merge and live evaluation after training
 
-The merge helper is prepared but needs a trained checkpoint. It creates a full
-model once, attaching `panda_grasp_v1` statistics. Its output is roughly another
+The saved 20-update smoke adapter can be evaluated before longer training.
+Launch the **training template**, attach `robot-openvla-network-volume-A40` at
+`/workspace`, and use its current SSH over exposed TCP command. Push the latest
+launcher changes first; no Docker rebuild or dataset upload is needed.
+
+In a **local Mac terminal** in this repository:
+
+```bash
+.venv/bin/python cloud_session.py \
+  --ssh 'ssh root@POD_IP -p POD_PORT -i ~/.ssh/id_ed25519' \
+  --adapter /workspace/panda-training/runs/lora_20261010_130927_064468/checkpoint_000020
+```
+
+Replace `POD_IP` and `POD_PORT` using RunPod → your running pod → Connect →
+SSH over exposed TCP. The launcher chooses this Mac's existing private key.
+It clones/updates cloud code, merges the saved adapter with the base model onto
+container disk, loads the merged model, creates the tunnel, and opens the paused
+100-step simulator. Space starts/pauses/resumes; closing the viewer ends the
+trial. Enter repeats a trial with the model still loaded. Ctrl+C ends the session;
+stop or terminate the pod separately in RunPod.
+
+No training updates happen during this evaluation. The simulator accepts the
+trained `panda_grasp_v1` action statistics and retains movement limits and IK
+rejection handling. Outputs include images, actions, timings, replay, and the
+adapter checkpoint path in startup metadata. A 20-update model may still fail to
+pick or place; this is a qualitative behavior check, not evidence of convergence
+or a held-out task benchmark.
+
+Each launcher invocation makes a separate merged copy under
+`/root/panda-evaluation-*/model`; repeated trials within one session reuse it.
+Merging and loading take additional time. The base model and adapter remain
+unchanged on the network volume.
+
+For manual merging, the helper creates a full model, attaching
+`panda_grasp_v1` statistics. Its output is roughly another
 15 GB; use container disk or a volume with sufficient free space, rather than
 assuming a 30 GB volume holding the base model can also hold a merged copy.
 
@@ -252,9 +285,8 @@ assuming a 30 GB volume holding the base model can also hold a merged copy.
 
 Then the existing server can load it with `--model-dir /root/panda-finetuned`
 and `--unnorm-key panda_grasp_v1`. Persistent checkpoint adapters let us recreate
-the merged model after terminating a pod. The cloud-session launcher and held-out
-task evaluation will be wired to the chosen trained checkpoint after the smoke
-test passes; do not assume the smoke model will already solve the task.
+the merged model after terminating a pod. The launcher supports live exploratory
+evaluation; controlled held-out task evaluation is still pending.
 
 ## Completion criteria
 

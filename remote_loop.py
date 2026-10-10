@@ -13,7 +13,7 @@ import uuid
 
 from connection_client import request_prediction
 from openvla_single_action import adapt_bridge_action
-from panda_actions import PHYSICS_STEPS, action_contract, from_controller_action
+from panda_actions import PHYSICS_STEPS, action_contract, from_controller_action, to_controller_action
 from control_diagnostics import pose_diagnostics
 
 ROOT = Path(__file__).resolve().parent
@@ -251,14 +251,17 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                     if error is not None:
                         raise error
                     save(step_dir / "prediction.json", prediction)
-                    if prediction.get("unnorm_key") != "bridge_orig":
-                        raise ValueError("Only bridge_orig adaptation is implemented")
+                    unnorm_key = prediction.get("unnorm_key")
+                    if unnorm_key not in ("bridge_orig", "panda_grasp_v1"):
+                        raise ValueError("Unsupported model action statistics")
                     with viewer.lock() if viewer is not None else nullcontext():
                         if float(env.data.time) != sim_time or any(
                             not np.array_equal(getattr(env.data, name), value) for name, value in snapshot.items()
                         ):
                             raise RuntimeError("Scene changed during prediction; returned action is discarded")
-                        bounded_action = adapt_bridge_action(prediction["action"])
+                        bounded_action = (to_controller_action(prediction["action"])
+                                          if unnorm_key == "panda_grasp_v1"
+                                          else adapt_bridge_action(prediction["action"]))
                         status("Solving bounded action")
                         ik_started = time.perf_counter()
                         action, ik, ik_attempts = apply_with_ik_retries(env.controller, bounded_action)
@@ -340,11 +343,13 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                         "action_scale": ik_attempts[-1]["scale"], "ik_attempts": ik_attempts,
                         "outcome": "executed", "executed": True, "pose_diagnostics_before": diagnostics,
                         "translation_limit_metres": 0.01, "rotation_limit_radians": 0.05,
-                        "mapping": "Provisional Bridge deltas interpreted using panda_grasp_v1; grasp-point control",
+                        "mapping": ("Panda training action contract; grasp-point control"
+                                    if unnorm_key == "panda_grasp_v1" else
+                                    "Provisional Bridge deltas interpreted using panda_grasp_v1; grasp-point control"),
                         "action_contract": action_contract(),
                         "executed_panda_action": from_controller_action(action).tolist(),
                         "training_eligible": False,
-                        "gripper_mapping": "2 * model_gripper - 1", "unnorm_key": "bridge_orig",
+                        "gripper_mapping": "2 * model_gripper - 1", "unnorm_key": unnorm_key,
                         "before_position": before_position.tolist(), "after_position": after_position.tolist(),
                         "actual_translation": (after_position - before_position).tolist(),
                         "before_quaternion_wxyz": before_quaternion.tolist(), "after_quaternion_wxyz": after_quaternion.tolist(),

@@ -59,8 +59,19 @@ def ssh_arguments(host, port, key):
             '-o', 'ServerAliveCountMax=3', '-i', str(key), '-p', str(port), host]
 
 
-def bootstrap_script(runtime):
+def bootstrap_script(runtime, adapter=None):
     # All variable arguments are shell-quoted; pasted SSH text is never a shell command.
+    model_setup = ''
+    model_args = ''
+    if adapter:
+        # Merge on container disk, leaving the persistent base and adapter intact.
+        model_setup = f'''test -x /opt/openvla/bin/python || {{ echo 'Use the training Docker template for adapter evaluation.'; exit 1; }}
+test -f {shlex.quote(str(adapter) + '/adapter_config.json')} || {{ echo 'Adapter checkpoint not found on the attached volume.'; exit 1; }}
+bash scripts/cloud_stop.sh
+merged_dir="$(mktemp -d /root/panda-evaluation-XXXXXXXX)"
+/opt/openvla/bin/python -m training.merge_adapter --base-model /workspace/openvla-7b --adapter {shlex.quote(str(adapter))} --output "$merged_dir/model"
+'''
+        model_args = ' "$merged_dir/model" panda_grasp_v1'
     return f'''set -euo pipefail
 if [[ ! -d /root/robot-openvla ]]; then
   git clone {shlex.quote(REPOSITORY)} /root/robot-openvla
@@ -68,7 +79,7 @@ else
   git -C /root/robot-openvla pull --ff-only
 fi
 cd /root/robot-openvla
-bash scripts/cloud_start.sh {int(runtime)}
+{model_setup}bash scripts/cloud_start.sh {int(runtime)}{model_args}
 '''
 
 
@@ -98,6 +109,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--ssh', help='Complete SSH over exposed TCP command copied from RunPod')
     parser.add_argument('--key', type=Path, help='Override the local private-key path')
+    parser.add_argument('--adapter', help='Cloud checkpoint directory to merge and evaluate; requires the training template')
     parser.add_argument('--steps', type=int, default=100)
     parser.add_argument('--max-consecutive-rejections', type=int, default=3)
     parser.add_argument('--instruction', default='pick up the red cube')
@@ -129,7 +141,7 @@ def main():
         subprocess.run(ssh + ['true'], check=True)
         print('Updating cloud code and preparing the server...', flush=True)
         remote_started = True  # Also clean up if interrupted just after background launch.
-        subprocess.run(ssh + ['bash -s'], input=bootstrap_script(args.server_runtime_seconds).encode(), check=True)
+        subprocess.run(ssh + ['bash -s'], input=bootstrap_script(args.server_runtime_seconds, args.adapter).encode(), check=True)
         tunnel = subprocess.Popen(ssh[:-1] + ['-o', 'ExitOnForwardFailure=yes', '-N',
                                   '-L', '127.0.0.1:8000:127.0.0.1:8000', host])
         def check_liveness():
@@ -144,6 +156,8 @@ def main():
         print(f"Ready. Model loading took {health.get('model_load_seconds')} seconds.", flush=True)
         startup_info = dict(health.get('startup_info', {}))
         startup_info.setdefault('model_load_seconds', health.get('model_load_seconds'))
+        if args.adapter:
+            startup_info['adapter_checkpoint'] = args.adapter
         startup_info['ready_at_utc'] = datetime.now(timezone.utc).isoformat()
         startup_info['note'] = 'Session startup measurements reused for subsequent trials; the model is not reloaded per trial.'
         session_dir = ROOT / 'outputs' / f"cloud_session_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}"
