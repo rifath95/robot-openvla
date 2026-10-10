@@ -68,6 +68,17 @@ command -v tmux || (apt-get update && apt-get install -y tmux)
 bash scripts/train_detached.sh
 ```
 
+For the first **20-update automatic-stop test**, run this instead of the last
+line above:
+
+```bash
+bash scripts/train_detached.sh training/smoke.json
+```
+
+The smoke test evaluates a 64-example validation sample; completing that sample
+is accepted for this test. The default 1,000-update configuration still requires
+full final validation. Each launch creates a new session directory.
+
 The script verifies API read access and the attached network volume before
 launching. It prints the exact session name, attach command, log path, and status
 path. No Python training parameters need to be pasted: it uses

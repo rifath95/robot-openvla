@@ -67,6 +67,14 @@ class DetachedTrainingTests(unittest.TestCase):
             (run / 'checkpoint_000250/adapter_model.safetensors').unlink()
             self.assertTrue(verify_results(run, 1000)['missing_artifacts'])
 
+    def test_smoke_allows_configured_validation_sample_but_long_run_requires_full(self):
+        with tempfile.TemporaryDirectory() as folder:
+            run = self.artifacts(Path(folder), update=20)
+            metrics = run / 'metrics.jsonl'
+            metrics.write_text(metrics.read_text().replace('"validation_complete": true', '"validation_complete": false'))
+            self.assertTrue(verify_results(run, 20, require_full_validation=False)['training_complete'])
+            self.assertFalse(verify_results(run, 20)['training_complete'])
+
     def test_timeout_terminates_process_group_and_stops(self):
         with tempfile.TemporaryDirectory() as folder:
             process = MagicMock(); process.pid = 1234

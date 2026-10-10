@@ -58,7 +58,7 @@ def write_status(path, values):
     temporary.replace(path)
 
 
-def verify_results(run_dir, expected_updates):
+def verify_results(run_dir, expected_updates, *, require_full_validation=True):
     """Report complete versus partial runs; never treat a zero exit as 1,000 updates."""
     rows = [json.loads(line) for line in (run_dir / 'metrics.jsonl').read_text().splitlines()]
     updates = [row['update'] for row in rows if 'train_loss' in row]
@@ -73,12 +73,15 @@ def verify_results(run_dir, expected_updates):
                 if not (run_dir / name).is_file() or not (run_dir / name).stat().st_size]
     full_validation = any(row.get('update') == last and row.get('validation_complete') is True
                           for row in rows)
+    validation_present = any(row.get('update') == last and 'validation_complete' in row for row in rows)
     return dict(last_update=last, checkpoint=str(checkpoint), missing_artifacts=missing,
                 final_full_validation=full_validation,
-                training_complete=last >= expected_updates and not missing and full_validation)
+                validation_requirement='full_split' if require_full_validation else 'configured_sample',
+                training_complete=last >= expected_updates and not missing and validation_present
+                and (full_validation or not require_full_validation))
 
 
-def supervise(command, directory, pod_id, key, *, hard_limit, expected_updates):
+def supervise(command, directory, pod_id, key, *, hard_limit, expected_updates, require_full_validation=True):
     """Always attempt to stop this pod after the child exits, fails, or times out."""
     status = dict(started_at_utc=datetime.now(timezone.utc).isoformat(),
                   pod_id=pod_id, command=command, hard_limit_seconds=hard_limit,
@@ -108,7 +111,8 @@ def supervise(command, directory, pod_id, key, *, hard_limit, expected_updates):
             if status['phase'] == 'training':
                 status['phase'] = 'training_exited' if result == 0 else 'training_failed'
         if result == 0:
-            status.update(verify_results(directory / 'runs' / 'training', expected_updates))
+            status.update(verify_results(directory / 'runs' / 'training', expected_updates,
+                                         require_full_validation=require_full_validation))
             status['phase'] = 'completed' if status['training_complete'] else 'incomplete'
     except Exception as exc:
         # Internal errors cannot contain the API credential (which stays here).
@@ -149,6 +153,9 @@ def main():
     if args.hard_limit_seconds <= 0:
         parser.error('Hard wall limit must be positive')
     try:
+        config = json.loads(args.config.read_text())
+        if config['max_steps'] < 1 or config['validation_max_batches'] < 0:
+            raise ValueError('Invalid update count or validation limit')
         pod_id, key = preflight()
         if args.check_only:
             print('API and network-volume checks passed. This did not stop the pod.')
@@ -159,14 +166,14 @@ def main():
         if not directory.is_relative_to(Path('/workspace/panda-training/sessions')):
             parser.error('Session directory must be inside /workspace/panda-training/sessions')
         directory.mkdir(parents=True, exist_ok=False)
-        config = json.loads(args.config.read_text())
         command = [sys.executable, '-u', str(ROOT / 'train_panda.py'),
                    '--dataset', '/workspace/panda-training/training_v1',
                    '--model', '/workspace/openvla-7b', '--config', str(args.config.resolve()),
                    '--output-root', str(directory / 'runs'),
                    '--run-name', 'training']
         return supervise(command, directory, pod_id, key,
-                         hard_limit=args.hard_limit_seconds, expected_updates=config['max_steps'])
+                         hard_limit=args.hard_limit_seconds, expected_updates=config['max_steps'],
+                         require_full_validation=config['validation_max_batches'] == 0)
     except (RuntimeError, OSError, ValueError, subprocess.CalledProcessError) as exc:
         print(f'Not started: {exc}. The pod still bills; stop it manually if needed.', file=sys.stderr)
         return 1
