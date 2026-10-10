@@ -19,7 +19,8 @@ def api_request(pod_id, key, *, stop=False):
     """Never put the credential in a URL, command line, or logged exception."""
     request = Request(
         f'https://rest.runpod.io/v1/pods/{pod_id}' + ('/stop' if stop else ''),
-        headers={'Authorization': f'Bearer {key}'},
+        # The tested RunPod/Cloudflare route rejects urllib's default agent.
+        headers={'Authorization': f'Bearer {key}', 'User-Agent': 'Mozilla/5.0'},
         method='POST' if stop else 'GET',
     )
     try:

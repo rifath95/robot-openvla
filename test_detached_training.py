@@ -104,6 +104,7 @@ class DetachedTrainingTests(unittest.TestCase):
         request = opened.call_args.args[0]
         self.assertEqual(request.full_url, 'https://rest.runpod.io/v1/pods/fakepod/stop')
         self.assertEqual(request.method, 'POST')
+        self.assertEqual(request.get_header('User-agent'), 'Mozilla/5.0')
         self.assertNotIn('test-secret', request.full_url)
 
 
