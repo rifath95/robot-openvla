@@ -1,0 +1,12 @@
+# Separate training image; preserve the tested inference Dockerfile.
+FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
+COPY requirements-openvla.txt requirements-dataset.txt requirements-training.txt /opt/requirements/
+RUN python3.11 -m venv /opt/openvla \
+    && /opt/openvla/bin/python -m pip install --no-cache-dir torch==2.2.2 torchvision==0.17.2 --index-url https://download.pytorch.org/whl/cu121 \
+    && /opt/openvla/bin/python -m pip install --no-cache-dir -r /opt/requirements/requirements-training.txt \
+    && /opt/openvla/bin/python -m pip check
+COPY training/fetch_upstream.py /opt/training/fetch_upstream.py
+COPY training/upstream /opt/training/upstream
+RUN /opt/openvla/bin/python /opt/training/fetch_upstream.py --destination /opt/openvla-source
+# Model weights and datasets live on the attached volume, not in this image.
+# Retain the base image's RunPod SSH startup and configure TCP port 22.

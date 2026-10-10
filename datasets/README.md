@@ -71,3 +71,12 @@ Open [the combined trajectory index](panda_pick_place/WATCH_TRAJECTORIES.md)
 to watch all 50. Training JSONL/statistics are in the expansion's
 `combined_train_staging/`; earlier seed data remains separate. No fine-tuning
 has run. All generated data/index files are excluded from GitHub.
+
+## Training-ready package
+
+`panda_pick_place/training_v1/` contains the portable TFDS/RLDS export of the
+50-trajectory experiment: 36 train / 7 validation / 7 test. Images are embedded
+in TFRecords; no Mac paths are needed in the cloud. Training-only statistics,
+split manifest, verification, input checks and upload checksums accompany it.
+This package is generated and ignored by Git. See
+[PHASE3_TRAINING.md](../PHASE3_TRAINING.md) for checks and cloud instructions.

@@ -1,3 +1,10 @@
 **
 !Dockerfile
 !requirements-openvla.txt
+!Dockerfile.training
+!requirements-dataset.txt
+!requirements-training.txt
+!training/
+!training/fetch_upstream.py
+!training/upstream/
+!training/upstream/**

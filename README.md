@@ -97,19 +97,26 @@ replay checks, giving **50 trajectories (36 train / 7 validation / 7 test)** and
 **3,609 transitions**. It adds placement directions, approach offsets, grasp yaw
 and starting arm poses; training statistics use only training episodes. See
 `datasets/panda_pick_place/WATCH_TRAJECTORIES.md` to watch all 50 locally.
-Fine-tuning and model-driven task evaluation remain unimplemented.
+The dataset is now packaged as portable TFDS/RLDS episodes, with fixed splits
+and training-only normalization. A pinned integration of the official OpenVLA
+LoRA script adds periodic validation, local loss plots, adapter checkpoints and
+a 20-update smoke-test configuration. See [PHASE3_TRAINING.md](PHASE3_TRAINING.md)
+for preparation, image-build, upload and training commands. Actual CUDA training
+and model-driven task evaluation have not run yet.
 
 Remaining goals:
 
 1. Collect varied successful pick-and-place demonstrations with different object starting positions, destinations, approaches, orientations, and instructions.
 2. Reserve separate validation/test scenes and demonstrations before training; exclude rejected, unsuccessful, or unverified episodes from expert training data.
 3. Finalize normalization, package the dataset for OpenVLA training (including RLDS integration), and verify image/action alignment.
-4. Run a small, budgeted LoRA fine-tuning experiment, then expand only after measuring runtime, memory, and cost.
+4. Run a small, budgeted LoRA fine-tuning experiment, inspect training/validation plots and save checkpoints, then expand only after measuring runtime, memory, and cost.
 5. Deploy the adapted checkpoint through the existing cloud pipeline and compare it with the pretrained baseline on held-out pick-and-place trials.
 
 Record success rate, grasp/lift/placement outcomes, IK rejections, latency, and
 cloud cost. Phase 3 is complete when the dataset and training path are reproducible
-and held-out task performance is measured against an agreed success target.
+and the adapted model has been observed and evaluated live on held-out scenarios,
+with results compared with the pretrained baseline. Document limited success
+honestly; perfect performance is not a prerequisite for assessing the experiment.
 No custom-domain fine-tuning has run yet. See
 [PANDA_DEMONSTRATIONS.md](PANDA_DEMONSTRATIONS.md) for the current data workflow.
 

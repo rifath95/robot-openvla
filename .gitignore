@@ -11,6 +11,9 @@ htmlcov/
 # Virtual environments
 .venv/
 .venv-openvla/
+.venv-training/
+training/vendor/
+training/generated/
 .cache-openvla/
 .cache-openvla-server/
 venv/

@@ -1,0 +1,6 @@
+{
+  "repository": "https://github.com/openvla/openvla",
+  "revision": "c8f03f48af692657d3060c19588038c7220e9af9",
+  "finetune_sha256": "0b3d7ccd6b95ce7fb13ea82414f2be80c2c1aa8f0f84060eb677dd0e0e40243b",
+  "dlimp_revision": "040105d256bd28866cc6620621a3d5f7b6b91b46"
+}

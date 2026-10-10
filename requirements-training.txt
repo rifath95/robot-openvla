@@ -1,0 +1,12 @@
+-r requirements-openvla.txt
+-r requirements-dataset.txt
+peft==0.11.1
+draccus==0.8.0
+einops==0.8.0
+rich>=13,<15
+json-numpy==2.1.0
+jsonlines==4.0.0
+wandb==0.17.9
+tensorflow-graphics==2021.12.3
+tensorflow-probability==0.23.0
+dlimp @ git+https://github.com/moojink/dlimp_openvla@040105d256bd28866cc6620621a3d5f7b6b91b46

@@ -1,0 +1,7 @@
+# CPU-only preparation environment; separate from the simulation environment.
+tensorflow==2.15.0
+tensorflow-datasets==4.9.3
+tensorflow-metadata==1.15.0
+numpy==1.26.4
+Pillow>=10,<12
+matplotlib>=3.8,<4
