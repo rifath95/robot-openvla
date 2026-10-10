@@ -17,6 +17,48 @@ from openvla_single_action import adapt_bridge_action
 ROOT = Path(__file__).resolve().parent
 
 
+def apply_with_ik_retries(controller, bounded_action):
+    """Try the original pose delta, half, then quarter, without advancing physics.
+
+    Gripper command is unchanged. Failed trials restore actuator/pose targets,
+    including the gripper target that apply_action updates even on failed IK.
+    """
+    import numpy as np
+    original = np.asarray(bounded_action, dtype=float)
+    if original.shape != (7,) or not np.all(np.isfinite(original)):
+        raise ValueError('Expected seven finite controller action values')
+    saved_ctrl = controller.data.ctrl.copy()
+    saved_position = controller.target_position.copy()
+    saved_quaternion = controller.target_quaternion.copy()
+
+    def restore():
+        controller.data.ctrl[:] = saved_ctrl
+        controller.target_position = saved_position.copy()
+        controller.target_quaternion = saved_quaternion.copy()
+
+    attempts = []
+    for scale in (1.0, 0.5, 0.25):
+        candidate = original.copy()
+        candidate[:6] *= scale
+        started = time.perf_counter()
+        try:
+            result = controller.apply_action(candidate)
+        except Exception:
+            restore()
+            raise
+        attempts.append({
+            'scale': scale, 'controller_action': candidate.tolist(),
+            'converged': bool(result.converged), 'iterations': int(result.iterations),
+            'position_error_metres': float(result.position_error),
+            'orientation_error_radians': float(result.orientation_error),
+            'elapsed_seconds': time.perf_counter() - started,
+        })
+        if result.converged:
+            return candidate, result, attempts
+        restore()
+    return None, result, attempts
+
+
 class ActiveTimer:
     """Thread-safe elapsed time excluding periods when the viewer is paused."""
 
@@ -197,13 +239,19 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                             not np.array_equal(getattr(env.data, name), value) for name, value in snapshot.items()
                         ):
                             raise RuntimeError("Scene changed during prediction; returned action is discarded")
-                        action = adapt_bridge_action(prediction["action"])
+                        bounded_action = adapt_bridge_action(prediction["action"])
                         status("Solving bounded action")
                         ik_started = time.perf_counter()
-                        ik = env.controller.apply_action(action)
+                        action, ik, ik_attempts = apply_with_ik_retries(env.controller, bounded_action)
                         ik_seconds = time.perf_counter() - ik_started
+                    save(step_dir / "ik_attempts.json", {
+                        "bounded_action": bounded_action.tolist(), "attempts": ik_attempts,
+                        "selected_scale": ik_attempts[-1]["scale"] if action is not None else None,
+                    })
                     if not ik.converged:
-                        raise RuntimeError("IK rejected the action; no physics is advanced for it")
+                        raise RuntimeError("IK rejected full, half, and quarter actions; no physics is advanced for them")
+                    if len(ik_attempts) > 1:
+                        print(f"Action {current_step}: IK accepted {ik_attempts[-1]['scale']:g} of the bounded movement/rotation", flush=True)
                     if stopping():
                         break
                     status("Executing bounded movement")
@@ -231,6 +279,8 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                     report = {
                         "step": current_step, "request_id": prediction["request_id"],
                         "raw_action": prediction["action"], "controller_action": action.tolist(),
+                        "bounded_action": bounded_action.tolist(),
+                        "action_scale": ik_attempts[-1]["scale"], "ik_attempts": ik_attempts,
                         "translation_limit_metres": 0.01, "rotation_limit_radians": 0.05,
                         "mapping": "Provisional Bridge world XYZ/Euler to Panda world XYZ/Euler; hand origin",
                         "gripper_mapping": "2 * model_gripper - 1", "unnorm_key": "bridge_orig",

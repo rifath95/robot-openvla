@@ -6,7 +6,8 @@ installation in the pod is needed if that server is still running.
 
 The real single-action cloud test succeeded with **0.082 mm** position tracking
 error. This repeated loop has passed local tests with real MuJoCo and HTTP
-fixture predictions; its next check is a run against the real cloud model.
+fixture predictions; a real-cloud trial on an A40 subsequently completed 95 actions before IK rejected
+action 96. Smaller-action retries now recover that saved case locally.
 Tracking error measures execution of a requested movement, not task success.
 
 ## Run on the Mac
@@ -52,7 +53,12 @@ the viewer. Headless execution advances physics without real-time pacing.
 4. Execute the bounded motion, capture the resulting scene, and repeat from it.
 
 There is one outstanding request at a time. Translation is bounded to **1 cm**
-per action and rotation to **0.05 radians**. Invalid responses, failed IK,
+per action and rotation to **0.05 radians**. If IK rejects the bounded command,
+the controller retries **half**, then **quarter** of its translation and rotation.
+The gripper command remains unchanged. No new cloud request is made for retries;
+all attempts start from the same physical pose without advancing simulation.
+Rejected trials restore actuator targets, including the gripper. If none solves,
+the loop saves the attempts and stops. Invalid responses, exhausted IK retries,
 nonfinite state, or tracking error above **5 mm** stop the run. Predictions
 received after a stop are discarded. Pausing during a request holds its result
 until resume; pausing during movement stops further simulation steps until resume.
@@ -71,7 +77,12 @@ The terminal prints `outputs/remote_loop_<timestamp>_<id>/`:
 - `summary.json`: completed steps and final stop reason/status.
 - `run.log`: phase transitions with elapsed times.
 - `step_001/`, `step_002/`, etc.: `before.png`, `after.png`, simulation states,
-  `prediction.json`, and `execution.json`.
+  `prediction.json`, `ik_attempts.json`, and `execution.json`.
+
+`ik_attempts.json` records attempted scales, solver errors, convergence, and
+timings even when every attempt fails. `execution.json` distinguishes the raw
+model action, original bounded action, actual executed action, and accepted scale.
+A successful retry is still one action in the loop.
 
 Each step records client encoding, connection, upload send, response-header wait,
 response-body read, and round-trip timings. Server timings separate image
@@ -92,9 +103,14 @@ network timeout while the local viewer is paused.
 ## Local verification
 
 ```bash
-.venv/bin/python -m unittest test_remote_loop test_remote_single_action -v
+.venv/bin/python -m unittest test_ik_retries test_remote_loop test_remote_single_action -v
 ```
 
 Tests use real MuJoCo with fixture responses, without loading model weights.
 They check repeated updated observations, bounded motion, step limits, stopping
 while waiting, runtime limits, and preservation of completed steps after failure.
+
+The saved real step-96 regression selects half scale and executes with **0.056 mm**
+position tracking error. Tests also cover quarter-scale selection and restoring
+all actuator/pose targets when full, half, and quarter attempts fail. The new
+retry path has been checked locally; a fresh cloud trial is still pending.

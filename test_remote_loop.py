@@ -134,6 +134,8 @@ class LoopTests(unittest.TestCase):
                     self.assertEqual(len(set(r['request_id'] for r in requests)), 3)
                     for report in summary['steps']:
                         self.assertTrue(report['finite_state'])
+                        self.assertEqual(report['action_scale'], 1)
+                        self.assertEqual(len(report['ik_attempts']), 1)
                         self.assertLess(report['position_tracking_error_metres'], 0.005)
                         self.assertEqual(report['executed_physics_steps'], 1000)
                         self.assertLessEqual(np.linalg.norm(report['controller_action'][:3]), 0.010000001)

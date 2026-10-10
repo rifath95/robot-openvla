@@ -99,7 +99,11 @@ Mac virtual environments, or outputs are included in the Docker build context.
    requires configuring registry credentials in RunPod instead.
 5. Create a RunPod pod template using that container image. Prefer the **commit-SHA
    tag shown by the workflow** for reproducibility. Enable SSH and expose **TCP
-   port 22**. Retain the image's default startup command; attach the Global volume
+   port 22**. Set the template environment variable `PUBLIC_KEY` to the complete
+   contents of your Mac public-key file (`cat ~/.ssh/id_ed25519_maxalderone.pub`).
+   This is the public key, never the private key. Our first custom-template test
+   started without this value and skipped SSH startup, causing connection refused.
+   Retain the image's default startup command; attach the Global volume
    at `/workspace` and use the same disk/GPU settings as before. Jupyter is optional.
 6. Launch using that template. Use the same one-command launcher above.
 
@@ -109,10 +113,13 @@ The server and model can still be launched on another provider using
 `bash scripts/cloud_start.sh 1800` with a persistent mount at `/workspace`.
 The inference modules themselves contain no RunPod-specific API calls.
 
-The Docker image has **not yet been built or tested on a GPU**. This Mac has no
-Docker executable available; the GitHub workflow is the prepared build path.
-The first cloud session must validate image pulling, SSH startup, and inference.
-The ordinary-template fallback is ready for use before publishing the image.
+The Docker image was built through GitHub Actions and tested on an **A40**.
+Its dependencies were reused without pip installation and CUDA preflight passed.
+The first custom-template deployment skipped SSH until the public key was added;
+set `PUBLIC_KEY` in the template as described above for future sessions.
+The live cloud loop completed 95 actions before an IK rejection. The ordinary
+template fallback remains available. Docker is not installed on this Mac;
+GitHub Actions remains the image build path.
 
 References: [RunPod official base-image startup](https://github.com/runpod/containers/blob/main/container-template/start.sh),
 [RunPod template image examples](https://github.com/runpod-workers/pod-template).
@@ -127,3 +134,13 @@ bash -n scripts/cloud_start.sh scripts/cloud_stop.sh
 Tests cover SSH parsing/quoting, rejection of pasted extra shell commands,
 real-model readiness checks, and cleanup orchestration with mocked subprocesses.
 They do not rent a GPU or claim an end-to-end cloud setup has been executed.
+
+## SSH connection refused after image startup
+
+If container logs show `Pod Started` and environment export but no SSH setup,
+check that `PUBLIC_KEY` is present. The inherited startup script skips SSH when
+that variable is empty. Save the complete public key in the template environment
+for future deployments; updating a template does not change an already running pod.
+For the current pod, use its web terminal to add the matching public key to
+`/root/.ssh/authorized_keys`, set directory/file modes to 700/600, run
+`ssh-keygen -A`, and `service ssh start`. Then retry the Mac launcher.
