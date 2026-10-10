@@ -4,6 +4,18 @@ A robotics workspace for connecting a simulated Franka Panda arm to OpenVLA. Dev
 
 Last updated: 2026-10-10. Update this document as milestones, run instructions, and model locations change.
 
+**Phases 1 and 2 are complete. Phase 3 is the current focus:** collect and
+validate varied pick-and-place demonstrations, fine-tune OpenVLA for our Panda
+setup, and evaluate task success on unseen scenes. Phase 4 will explore additional
+tasks and transfer beyond the fine-tuning demonstrations.
+
+The Phase 3 foundation already includes the shared **`panda_grasp_v1`** action
+convention, expert recorder, sequential replay, and Panda dataset statistics.
+One 72-action scripted contact pick/place passed recording/replay (13.7 cm lift,
+2.0 mm placement error). This verifies data collection; OpenVLA has not yet been
+fine-tuned or demonstrated successful pick-and-place in this setup.
+See [PANDA_DEMONSTRATIONS.md](PANDA_DEMONSTRATIONS.md).
+
 ## Goal
 
 Build this repeated control loop:
@@ -22,17 +34,79 @@ The seven values are `[dx, dy, dz, droll, dpitch, dyaw, gripper]`: three positio
 
 ## Project phases
 
-**Phase 1:** local Panda simulation, camera observations, keyboard end-effector
-control, scripted pick-and-place, and local OpenVLA prediction/execution were verified.
+| Phase | Goal | Status |
+| --- | --- | --- |
+| 1 | Establish local simulation, seven-value control, and OpenVLA inference. | **Completed** |
+| 2 | Connect local simulation to cloud OpenVLA and demonstrate a live repeated control loop. | **Completed** |
+| 3 | Adapt OpenVLA to our Panda setup for pick-and-place using validated demonstrations and held-out evaluation. | **Current — data pipeline foundation implemented; collection and training remain** |
+| 4 | Expand to other tasks and measure transfer to tasks excluded from fine-tuning. | **Planned** |
 
-**Phase 2:** keep the simulator on the Mac and run OpenVLA on a remote GPU,
-measuring the observation/prediction/movement loop with live viewing. Real trials
-completed 95 and 96 movements. Rejection recovery and diagnostic replay now pass
-local tests; model-driven task success and action/camera calibration remain open.
-See [CONTROL_FINDINGS.md](CONTROL_FINDINGS.md) for the latest investigation.
-Local direction and camera checks now pass; see
-[CONTROL_CALIBRATION.md](CONTROL_CALIBRATION.md) for measurements and the
-remaining Bridge-to-Panda convention differences.
+### Phase 1 — completed: local foundation
+
+- Set up the Panda arm, table, red cube, and camera in MuJoCo on the Mac.
+- Verified keyboard position/rotation/gripper control and inverse kinematics.
+- Demonstrated scripted pick-and-place with contact physics.
+- Downloaded OpenVLA, supplied an image and instruction, and obtained seven action values.
+- Executed model-predicted movements and a short feedback loop locally.
+
+Local inference took minutes per prediction, motivating the cloud GPU pipeline.
+Scripted task success and model-predicted movement were separate demonstrations.
+
+### Phase 2 — completed: local robot, cloud model
+
+- Kept the simulator, camera capture, robot controller, and live viewer on the Mac.
+- Ran resident OpenVLA on RunPod GPUs, accepting image/instruction requests and returning seven action values through an SSH tunnel.
+- Demonstrated repeated fresh-image prediction and visible arm movement. Long trials completed 95 and 96 movements before IK rejection; a later short trial completed 26 movements and stopped cleanly on viewer close.
+- Added Space start/pause/resume, viewer-close/stop handling, action/runtime limits, and per-step images, states, actions, status, and timings.
+- Added bounded action retries, hold/re-predict behavior, and clean stopping after consecutive rejections; saved failure cases and recovery behavior were tested locally.
+- Simplified startup with a Docker dependency image, reusable Global-volume weights, and the one-command cloud session launcher.
+- Checked local axes, rotations, gripper behavior, and camera processing; defined the shared Panda grasp-point action convention for future data collection.
+
+A short cloud trial measured mean prediction time of **0.34 s** and full cycle
+of **3.40 s**. These are historical measurements using the earlier 2 s movement
+interval; current commands use a 0.4 s interval. Model loading is a separate cost.
+See [CONTROL_FINDINGS.md](CONTROL_FINDINGS.md) and
+[CONTROL_CALIBRATION.md](CONTROL_CALIBRATION.md) for evidence and limitations.
+
+**Completion means the remote control pipeline works.** Model-driven pickup has
+not been demonstrated. The latest grasp-point/interval changes and exhausted-retry
+recovery still need verification together in a long real cloud trial. The Panda
+convention defines our interface; it does not establish pretrained Bridge-to-Panda
+policy calibration. Session/server limits do not terminate the rented pod or stop billing.
+
+### Phase 3 — current: pick-and-place adaptation
+
+**Goal:** fine-tune the pretrained OpenVLA model to perform pick-and-place reliably
+in our Panda environment, and measure performance on scenes excluded from training.
+
+Already implemented:
+
+- A versioned action contract covering world-frame metres, rotation order, grasp point, gripper values, bounds, and a fixed 0.4 s execution interval.
+- An expert recorder that pairs each observation/instruction with the accepted bounded command actually executed, plus measured motion and simulator state.
+- Sequential replay verification, dataset eligibility checks, and Panda-specific action statistics.
+- One successful 72-transition scripted episode and a verified staging dataset; this is a pipeline check, not sufficient training coverage.
+
+Remaining goals:
+
+1. Collect varied successful pick-and-place demonstrations with different object starting positions, destinations, approaches, orientations, and instructions.
+2. Reserve separate validation/test scenes and demonstrations before training; exclude rejected, unsuccessful, or unverified episodes from expert training data.
+3. Finalize normalization, package the dataset for OpenVLA training (including RLDS integration), and verify image/action alignment.
+4. Run a small, budgeted LoRA fine-tuning experiment, then expand only after measuring runtime, memory, and cost.
+5. Deploy the adapted checkpoint through the existing cloud pipeline and compare it with the pretrained baseline on held-out pick-and-place trials.
+
+Record success rate, grasp/lift/placement outcomes, IK rejections, latency, and
+cloud cost. Phase 3 is complete when the dataset and training path are reproducible
+and held-out task performance is measured against an agreed success target.
+No custom-domain fine-tuning has run yet. See
+[PANDA_DEMONSTRATIONS.md](PANDA_DEMONSTRATIONS.md) for the current data workflow.
+
+### Phase 4 — planned: broader tasks and transfer
+
+Expand beyond pick-and-place, for example to pushing, stacking, or opening drawers.
+First measure which pretrained skills transfer after adaptation without new task
+demonstrations. Add mixed-task demonstrations where needed and evaluate both new
+skills and retention of pick-and-place performance. This does not require assuming
+a separate model or fine-tuning run for every task.
 
 ## What works so far
 
@@ -54,6 +128,10 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | File | Purpose |
 | --- | --- |
 | `scene.xml` | Panda scene, floor, table, cube, camera, and `scene_home` starting state. |
+| `panda_actions.py` | Shared Panda action bounds, rotation rule, grasp point, gripper conversion and fixed interval. |
+| `panda_demonstrations.py` | Records expert image/action transitions and verifies sequential contact-physics replay. |
+| `prepare_panda_dataset.py` | Validates replayed expert episodes and exports JSONL plus Panda statistics. |
+| `test_panda_demonstrations.py` / `PANDA_DEMONSTRATIONS.md` | Recording/replay, dataset eligibility tests and usage guide. |
 | `launch_sim.py` | Opens the scene in the standard MuJoCo viewer with actuator controls. |
 | `end_effector_demo.py` | Opens a simulator with keyboard control of the seven action components. |
 | `panda_controller.py` | Implements the action interface, inverse kinematics, joint targets, and physics stepping. |
@@ -174,7 +252,7 @@ It launches the simulation and inference stages in their respective environments
 
 Each run creates `outputs/single_action_<timestamp>/` containing `before.png`, `after.png`, `scene_state.npz`, `prediction.json`, `execution.json`, `status.json`, and `run.log`. Check `status.json` for progress or failures. `execution.json` records the raw action, converted command, measured movement, and tracking error.
 
-This is a provisional plumbing test using `bridge_orig` statistics and an identity mapping of world XYZ/Euler axes, not a calibrated WidowX-to-Panda transfer. It limits the translation vector to 1 cm and the rotation vector to 0.05 radians, preserving their directions. The gripper changes from model 0 closed / 1 open to controller -1 closed / +1 open. The control point is the Panda hand origin. A successful movement does not demonstrate model-driven grasping or task success.
+This is a provisional plumbing test using `bridge_orig` statistics and an identity mapping of world XYZ/Euler axes, not a calibrated WidowX-to-Panda transfer. It limits the translation vector to 1 cm and the rotation vector to 0.05 radians, preserving their directions. The gripper changes from model 0 closed / 1 open to controller -1 closed / +1 open. New execution uses the shared Panda grasp point and 0.4 s interval; historical runs used hand origin and 2 s. A successful movement does not demonstrate model-driven grasping or task success.
 
 ### Three-action feedback loop
 
@@ -265,16 +343,21 @@ The successful test used `bridge_orig` action statistics. These statistics are f
 
 ## Current status and next intended work
 
-**Current status:** simulation, keyboard end-effector control, scripted pick-and-place, camera capture, a fresh-image OpenVLA single-action movement, and the live three-action feedback loop work on the Mac. The three local predictions took approximately 462, 601, and 554 seconds, with position tracking error below 0.1 mm. Real remote CUDA inference has now passed on an RTX A6000; the separate cloud-hosted simulator/three-action benchmark remains untested. No custom-domain fine-tuning has been performed, and model-driven pick-and-place has not been demonstrated.
+**Phases 1 and 2 are complete; Phase 3 is current.** The Mac/cloud observation,
+prediction, and movement loop has been demonstrated with live viewing and saved
+per-step results. Local controller recovery and the shared Panda action/data
+contract have been tested. OpenVLA task success and custom-domain fine-tuning
+remain to be established.
 
-**Phase 2 status:** basic SSH and GPU computation passed on a RunPod A40. The architecture keeps MuJoCo on the Mac and serves OpenVLA predictions from the cloud. Real remote inference then passed on a RunPod RTX A6000: model loading took 202.13 seconds, image decoding 0.031 seconds, processor/device transfer 0.072 seconds, complete prediction 0.702 seconds, and request round trip 1.689 seconds. It returned seven finite values without moving the robot. The real 100-step trial on an A40 completed **95 actions** with visible local motion and fresh camera feedback, then stopped when IK rejected action 96. Average prediction took **0.346 s**, round trip **1.171 s**, and cycle **3.541 s**. Docker dependencies and existing Global-volume weights were reused; model loading took **310.27 s**. The saved action-96 case now succeeds at half scale with **0.056 mm** tracking error using the new local retry implementation. No GPU was rented for the regression test.
+**Next:** collect varied, replay-verified pick-and-place demonstrations and reserve
+held-out evaluation scenes, then prepare the training dataset and run an initial
+budgeted fine-tuning experiment. The successful scripted episode is the data
+pipeline's first check. See [Project phases](#project-phases) for completed work,
+remaining goals, and the planned Phase 4 expansion.
 
-The local connection test passed with a fresh 640x480 camera image and approximately 18 ms request round trip. Invalid requests, an unavailable server, and automatic server exit were also checked. Artifacts are in `outputs/connection_test_verified/`. The subsequent Mac-to-RunPod fixed-action test passed with approximately 1.58 seconds round trip. Real remote inference uses `connection_server.py --mode openvla`, with the model resident between requests and the Mac client explicitly expecting that mode. Model files are exported to the Global volume while caches and dependencies stay on the container disk. See [REMOTE_INFERENCE.md](REMOTE_INFERENCE.md) and [RUNPOD_CONNECTION_GUIDE.md](RUNPOD_CONNECTION_GUIDE.md).
-
-The new `remote_single_action.py` connects a cloud prediction to bounded local robot movement and an after image. Local real-MuJoCo tests passed using an HTTP fixture replaying the observed cloud action, with approximately 0.079 mm tracking error; invalid mode/statistics/gripper responses were rejected before execution. The real Mac-to-cloud-to-MuJoCo single-action test subsequently passed with **0.082 mm** tracking error. `remote_loop.py` now repeats this pipeline with a live viewer; local tests passed for updated observations across three actions, stop/runtime limits, and failure handling. See [REMOTE_LOOP.md](REMOTE_LOOP.md). See [REMOTE_SINGLE_ACTION.md](REMOTE_SINGLE_ACTION.md).
-
-**Next intended milestone:** validate camera/action coordinate and control-point conventions with known movements, then run a short real-cloud recovery trial. The second trial completed 96 movements and exhausted size retries on cycle 97. Offline analysis showed hand/cube distance increasing from 0.355 to 0.821 m and worsening Jacobian conditioning; additional solver iterations/lower damping did not solve the original command. One-eighth size recovers the saved cycle 97 locally with 0.059 mm error. Exhausted retries now hold the pose, request another observation/prediction, and stop cleanly after three consecutive rejections; tests verify unchanged state and resetting counters after success. The retry logic is a Mac controller change and does not require rebuilding the dependency Docker image. Before task evaluation, validate the coordinate, rotation, control-point, and normalization conventions for our Panda domain and plan demonstration collection/fine-tuning. [CLOUD_SETUP.md](CLOUD_SETUP.md) remains a separate guide for running both simulation and inference on a cloud machine.
-
-For future training, a single **A100 80GB** is a documented starting point for OpenVLA LoRA fine-tuning, which adapts a small set of parameters rather than retraining the entire model. Custom-domain adaptation will also require collecting suitable demonstrations, preparing a dataset, and measuring success on unseen trials. Running both simulation and inference on cloud compute is available via `.venv/bin/python openvla_loop.py --device cuda`; the Mac default remains `--device mps`. Remote model inference has passed on an RTX A6000 using the separate server/client path above. Training is not implemented yet.
+Use [CLOUD_QUICKSTART.md](CLOUD_QUICKSTART.md) for existing remote sessions and
+[PANDA_DEMONSTRATIONS.md](PANDA_DEMONSTRATIONS.md) for local recording/replay.
+Running both simulation and inference in the cloud remains an optional separate
+path described in [CLOUD_SETUP.md](CLOUD_SETUP.md), rather than a Phase 2 requirement.
 
 Upstream references: [OpenVLA](https://github.com/openvla/openvla), [checkpoint](https://huggingface.co/openvla/openvla-7b), [LoRA fine-tuning](https://github.com/openvla/openvla#fine-tuning-openvla-via-lora), [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie).

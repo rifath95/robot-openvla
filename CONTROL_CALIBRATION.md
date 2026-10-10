@@ -1,5 +1,10 @@
 # Local control and camera checks
 
+The original measurements below describe the historical hand-origin/2 s setup.
+New execution uses `panda_grasp_v1` with a grasp point and 0.4 s interval. The
+calibrator now reports action-boundary errors separately from 800 additional
+diagnostic settling ticks. See [PANDA_DEMONSTRATIONS.md](PANDA_DEMONSTRATIONS.md).
+
 Verified locally on 2026-10-10. No rented GPU or model inference was used.
 These checks establish the Panda controller's behavior; they do not establish
 that pretrained Bridge predictions are appropriate for this Panda scene.

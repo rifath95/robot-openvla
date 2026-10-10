@@ -14,6 +14,7 @@ from unittest.mock import patch
 import numpy as np
 
 from panda_controller import PandaController
+from panda_actions import PHYSICS_STEPS
 from remote_single_action import run_single_action
 
 
@@ -59,7 +60,7 @@ class SingleActionTests(unittest.TestCase):
                     else:
                         run_single_action(server_url=f'http://127.0.0.1:{server.server_port}',output_dir=output,no_view=True)
                         report = json.loads((output/'execution.json').read_text())
-                        self.assertEqual(steps,[500,1000])
+                        self.assertEqual(steps,[500,PHYSICS_STEPS])
                         self.assertTrue(report['tracking_passed'])
                         self.assertLess(report['position_tracking_error_metres'],0.005)
                         self.assertLessEqual(np.linalg.norm(report['controller_action'][:3]),0.0100000001)

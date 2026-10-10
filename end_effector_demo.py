@@ -12,6 +12,7 @@ import numpy as np
 import glfw
 
 from panda_controller import PandaController
+from panda_actions import make_controller
 
 
 SCENE_PATH = Path(__file__).with_name("scene.xml")
@@ -42,7 +43,7 @@ def main() -> None:
     mujoco.mj_resetDataKeyframe(model, data, home_key)
     mujoco.mj_forward(model, data)
 
-    controller = PandaController(model, data)
+    controller = make_controller(model, data)
     # Keep at most one pending command so holding a key cannot flood the robot
     # with incremental targets faster than it can execute them.
     pending_actions: queue.Queue[str] = queue.Queue(maxsize=1)

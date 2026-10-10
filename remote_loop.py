@@ -13,6 +13,7 @@ import uuid
 
 from connection_client import request_prediction
 from openvla_single_action import adapt_bridge_action
+from panda_actions import PHYSICS_STEPS, action_contract, from_controller_action
 from control_diagnostics import pose_diagnostics
 
 ROOT = Path(__file__).resolve().parent
@@ -181,6 +182,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                 paused.set()
 
     print(f"Results and status: {folder}", flush=True)
+    save(folder / "action_contract.json", action_contract())
     status(phase)
     try:
         with PandaEnv() as env:
@@ -301,9 +303,9 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                     status("Executing bounded movement")
                     execution_started = time.perf_counter()
                     executed_steps = 0
-                    while executed_steps < 1000 and wait_ready():
+                    while executed_steps < PHYSICS_STEPS and wait_ready():
                         chunk_started = time.perf_counter()
-                        count = min(20, 1000 - executed_steps)
+                        count = min(20, PHYSICS_STEPS - executed_steps)
                         with viewer.lock() if viewer is not None else nullcontext():
                             env.controller.step(count)
                         executed_steps += count
@@ -327,7 +329,10 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                         "action_scale": ik_attempts[-1]["scale"], "ik_attempts": ik_attempts,
                         "outcome": "executed", "executed": True, "pose_diagnostics_before": diagnostics,
                         "translation_limit_metres": 0.01, "rotation_limit_radians": 0.05,
-                        "mapping": "Provisional Bridge world XYZ/Euler to Panda world XYZ/Euler; hand origin",
+                        "mapping": "Provisional Bridge deltas interpreted using panda_grasp_v1; grasp-point control",
+                        "action_contract": action_contract(),
+                        "executed_panda_action": from_controller_action(action).tolist(),
+                        "training_eligible": False,
                         "gripper_mapping": "2 * model_gripper - 1", "unnorm_key": "bridge_orig",
                         "before_position": before_position.tolist(), "after_position": after_position.tolist(),
                         "actual_translation": (after_position - before_position).tolist(),
@@ -336,7 +341,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                         "ik_converged": bool(ik.converged), "simulation_frozen_during_request": True,
                         "executed_physics_steps": executed_steps,
                         "physics_seconds": executed_steps * float(env.model.opt.timestep),
-                        "interrupted": executed_steps != 1000 or reason is not None,
+                        "interrupted": executed_steps != PHYSICS_STEPS or reason is not None,
                         "timings_seconds": {"capture_and_state_save": capture_seconds, "ik": ik_seconds,
                                             "robot_execution_wall": execution_seconds,
                                             "next_capture_and_state_save": after_capture_seconds,

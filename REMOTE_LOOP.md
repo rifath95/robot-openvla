@@ -1,5 +1,11 @@
 # Repeated cloud control with a live local simulator
 
+New execution uses `panda_grasp_v1`: the grasp point 0.103 m along hand-local Z,
+200 physics ticks (0.4 s) per action, and a saved `action_contract.json`. Earlier
+trials used hand origin and 1,000 ticks. Pretrained predictions still use
+`bridge_orig`; Panda statistics belong to a future adapted model.
+See [PANDA_DEMONSTRATIONS.md](PANDA_DEMONSTRATIONS.md).
+
 `remote_loop.py` runs on the **Mac**. The existing cloud server keeps OpenVLA
 loaded and needs no code changes for this step. No new clone or dependency
 installation in the pod is needed if that server is still running.

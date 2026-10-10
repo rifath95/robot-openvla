@@ -6,6 +6,7 @@ import mujoco
 import numpy as np
 
 from panda_controller import IKResult, PandaController
+from panda_actions import PHYSICS_STEPS, make_controller
 
 
 class PandaEnv:
@@ -38,11 +39,12 @@ class PandaEnv:
             raise ValueError("scene_home keyframe is missing")
         mujoco.mj_resetDataKeyframe(self.model, self.data, home_key)
         mujoco.mj_forward(self.model, self.data)
-        self.controller = PandaController(self.model, self.data)
+        self.controller = make_controller(self.model, self.data)
         return self.observe()
 
     def observe(self) -> np.ndarray:
         """Return a new HxWx3 uint8 RGB image from the workspace camera."""
+        mujoco.mj_forward(self.model, self.data)
         self.renderer.update_scene(self.data, camera=self.camera)
         return self.renderer.render().copy()
 
@@ -50,13 +52,15 @@ class PandaEnv:
         self,
         action: np.ndarray | list[float],
         *,
-        physics_steps: int = 250,
+        physics_steps: int = PHYSICS_STEPS,
     ) -> tuple[np.ndarray, IKResult]:
         """Execute one 7D action and return the resulting image and IK status."""
         if physics_steps < 1:
             raise ValueError("physics_steps must be at least 1")
-        ik_result = self.controller.apply_action(action)
-        self.controller.step(physics_steps)
+        from remote_loop import apply_with_ik_retries
+        _, ik_result, _ = apply_with_ik_retries(self.controller, np.asarray(action, dtype=float))
+        if ik_result.converged:
+            self.controller.step(physics_steps)
         return self.observe(), ik_result
 
     def close(self) -> None:

@@ -14,6 +14,7 @@ import numpy as np
 
 from remote_loop import ActiveTimer, run_loop
 from panda_controller import PandaController, IKResult
+from panda_actions import PHYSICS_STEPS
 
 
 class LoopTests(unittest.TestCase):
@@ -76,7 +77,7 @@ class LoopTests(unittest.TestCase):
             self.assertEqual(len(pauses), 1)
             summary = json.loads((output / 'summary.json').read_text())
             self.assertEqual(summary['completed_steps'], 1)
-            self.assertEqual(summary['steps'][0]['executed_physics_steps'], 1000)
+            self.assertEqual(summary['steps'][0]['executed_physics_steps'], PHYSICS_STEPS)
             self.assertLess(summary['active_seconds'], summary['elapsed_seconds'])
 
     def run_case(self, *, fail_second=False, stop_during_request=False, rejection_cycles=(), steps=3):
@@ -169,7 +170,7 @@ class LoopTests(unittest.TestCase):
                         self.assertEqual(report['action_scale'], 1)
                         self.assertEqual(len(report['ik_attempts']), 1)
                         self.assertLess(report['position_tracking_error_metres'], 0.005)
-                        self.assertEqual(report['executed_physics_steps'], 1000)
+                        self.assertEqual(report['executed_physics_steps'], PHYSICS_STEPS)
                         self.assertLessEqual(np.linalg.norm(report['controller_action'][:3]), 0.010000001)
                     for index in (1, 2):
                         previous = output / f'step_{index:03d}'

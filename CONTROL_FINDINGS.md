@@ -1,5 +1,11 @@
 # Local investigation and bounded recovery
 
+The next data preparation step is now implemented: shared grasp-point commands,
+expert recording, successful sequential replay and Panda statistics. See
+[PANDA_DEMONSTRATIONS.md](PANDA_DEMONSTRATIONS.md). Historical trial metrics below
+used hand-origin control with 2 s intervals; new trials use the grasp point and
+0.4 s. Task performance of the unchanged pretrained model remains unproven.
+
 Updated 2026-10-10. No model weights were loaded and no GPU was rented for
 this investigation. Saved model predictions and MuJoCo states were replayed.
 
@@ -34,6 +40,58 @@ have not been calibrated. We cannot yet attribute the drift solely to the model
 or solely to the mapping. Successful execution of a small command is not successful
 pick-and-place. Merely increasing the loop length or reducing every command cannot
 resolve that task-level problem.
+
+## Latest short cloud trial review (2026-10-10)
+
+Run: `outputs/remote_loop_20261010_032744_4fbbc1ff`. The instruction remained
+`pick up the red cube`; the model was not instructed to move away.
+
+- 26 executed movements, 27 request attempts. Closing the viewer stopped cycle
+  27 before a prediction/execution record was saved. Final status is `Stopped`,
+  with `stop_reason: user_stop`, not a failure.
+- All 26 movements passed full-size IK; no reduced retries or rejections occurred.
+  Maximum position tracking error was **0.095 mm**. This run does not exercise
+  late-pose recovery or the consecutive-rejection stop.
+- Hand-origin distance from the cube increased from **0.355 m to 0.400 m**.
+  Distance increased in 21 of 26 movements. Net hand displacement was about
+  (-8.74 cm, -13.70 cm, +1.22 cm) in world XYZ.
+- 21 of 26 raw predictions requested negative world Y under our provisional
+  mapping. Every saved gripper prediction was **0.9961**, near fully open.
+  Cube coordinates were effectively unchanged; before/after images show no pickup.
+- Mixed-unit Jacobian condition number changed from 12.4 to 11.0; the nearest
+  current joint limit was still about 77 degrees away at the end. This short
+  trial gives no evidence of the late poorly conditioned pose yet.
+
+| Timing component | Mean over 26 completed cycles |
+| --- | ---: |
+| Server request-body receive | 0.0357 s |
+| Server image decoding/preprocessing | 0.0109 s |
+| Image/text processor and GPU transfer | 0.1654 s |
+| Model prediction | 0.3363 s |
+| Mac request/response round trip | 1.0936 s |
+| Robot movement wall time | 2.2310 s |
+| Movement plus next image/state save | 2.2657 s |
+| Complete cycle | 3.3954 s |
+
+Median model prediction was 0.3063 s; the first prediction took 0.7384 s.
+The movements each advance 2.0 seconds of simulated physics. The live viewer
+therefore accounts for much of the cycle duration. Local `upload_send` averaged
+0.000569 s and `response_body_read` 0.000064 s, but these are socket write/read
+measurements, **not** isolated one-way image/action transit times. The round trip
+includes network, server work, and response delivery; do not add it to inference
+as if they were independent components.
+
+The trial lasted 101.2 seconds locally, including 89.4 active seconds; this does
+not include pod startup/model loading and is not a billed-runtime measurement.
+Offline replay saved `trajectory_analysis.json` in the run directory. The first
+and final images are `step_001/before.png` and `step_026/after.png`.
+
+Conclusion: the observation/cloud/action pipeline and manual stopping worked,
+but the predicted behavior did not approach or grasp the cube. Accurate command
+tracking does not imply task success. Early task drift exists well before the
+later IK rejection. Next work should resolve the remaining orientation/tool-frame
+conventions and prepare expert Panda demonstrations; another longer trial would
+primarily test recovery, not establish task competence.
 
 ## Implemented recovery
 
@@ -98,8 +156,10 @@ See [CONTROL_CALIBRATION.md](CONTROL_CALIBRATION.md) for measured results,
 upstream sources, and remaining orientation/control-point/domain differences.
 This establishes controller behavior, not calibrated pretrained task performance.
 
-Validate the camera/action coordinate, units, rotation, and control-point conventions
-with controlled known movements before collecting fine-tuning demonstrations.
-Then evaluate task progress on fresh observations. The new recovery path can be
-checked in a short cloud trial once those checks are prepared, using the existing
-Docker template; no dependency image rebuild is needed for these Mac-side changes.
+The shared Panda action convention and a replay-verified expert recording pipeline
+are now implemented; see [PANDA_DEMONSTRATIONS.md](PANDA_DEMONSTRATIONS.md).
+Phase 2 is complete as a remote control pipeline milestone. Phase 3 now focuses
+on varied pick-and-place demonstrations, dataset preparation, fine-tuning, and
+held-out task evaluation. The latest controller changes still need a combined
+long cloud trial; successful local checks do not establish pretrained task success.
+See [README.md](README.md#project-phases) for the authoritative phase roadmap.

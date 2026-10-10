@@ -15,6 +15,7 @@ import numpy as np
 from capture_camera import save_rgb_png
 from openvla_single_action import adapt_bridge_action
 from panda_env import PandaEnv
+from panda_actions import PHYSICS_STEPS, action_contract
 
 ROOT = Path(__file__).resolve().parent
 
@@ -61,17 +62,31 @@ def run_calibration(output_dir):
                 save_rgb_png(folder / f'{name_signed}_before.png', env.observe())
                 ik = controller.apply_action(action)
                 if ik.converged:
-                    controller.step(1000)
+                    controller.step(PHYSICS_STEPS)
                 after, _ = controller.end_effector_pose()
                 matrix_after = env.data.xmat[controller.hand_id].reshape(3, 3).copy()
                 measured = np.r_[after - before, rotation_vector(matrix_after @ matrix_before.T)]
-                position_error = float(np.linalg.norm(measured[:3] - action[:3]))
-                rotation_error = float(np.linalg.norm(measured[3:] - action[3:6]))
-                passed = bool(ik.converged and position_error < 0.0005 and
-                              rotation_error < 0.003 and sign * measured[axis] > 0)
+                runtime_position_error = float(np.linalg.norm(measured[:3] - action[:3]))
+                runtime_rotation_error = float(np.linalg.norm(measured[3:] - action[3:6]))
                 save_rgb_png(folder / f'{name_signed}_after.png', env.observe())
+                # Measure residual servo lag separately from the direction convention.
+                # Extra settling belongs only to this diagnostic, not runtime/dataset actions.
+                controller.step(800)
+                settled_position, _ = controller.end_effector_pose()
+                settled_matrix = env.data.xmat[controller.hand_id].reshape(3, 3).copy()
+                settled = np.r_[settled_position - before, rotation_vector(settled_matrix @ matrix_before.T)]
+                position_error = float(np.linalg.norm(settled[:3] - action[:3]))
+                rotation_error = float(np.linalg.norm(settled[3:] - action[3:6]))
+                passed = bool(ik.converged and position_error < 0.0005 and rotation_error < 0.003
+                              and runtime_position_error < 0.005 and runtime_rotation_error < 0.015
+                              and sign * measured[axis] > 0)
+                save_rgb_png(folder / f'{name_signed}_settled.png', env.observe())
                 cases.append(dict(name=name_signed, raw_action=raw.tolist(),
                                   controller_action=action.tolist(), measured_delta=measured.tolist(),
+                                  runtime_physics_steps=PHYSICS_STEPS, extra_diagnostic_settling_steps=800,
+                                  runtime_position_error_metres=runtime_position_error,
+                                  runtime_rotation_error_radians=runtime_rotation_error,
+                                  settled_delta=settled.tolist(),
                                   position_error_metres=position_error,
                                   rotation_error_radians=rotation_error, passed=passed))
                 print(f'{name_signed}: {"PASS" if passed else "FAIL"}; '
@@ -87,7 +102,7 @@ def run_calibration(output_dir):
             raw = [0, 0, 0, 0, 0, 0, value]
             ik = env.controller.apply_action(adapt_bridge_action(raw))
             if ik.converged:
-                env.controller.step(1000)
+                env.controller.step(PHYSICS_STEPS)
             env.controller.end_effector_pose()
             opening = float(env.data.qpos[fingers].sum())
             passed = bool(ik.converged and (opening < 0.002 if value == 0 else opening > 0.075))
@@ -99,7 +114,8 @@ def run_calibration(output_dir):
 
         env.reset()
         env.controller.step(500)
-        hand, _ = env.controller.end_effector_pose()
+        control_point, _ = env.controller.end_effector_pose()
+        hand = env.data.xpos[env.controller.hand_id].copy()
         cube = env.data.xpos[mujoco.mj_name2id(env.model, mujoco.mjtObj.mjOBJ_BODY, 'cube')].copy()
         hand_pixel, cube_pixel = project(env, hand), project(env, cube)
         axes = {}
@@ -118,12 +134,13 @@ def run_calibration(output_dir):
                       red_pixel_count=int(len(xs)),
                       red_pixel_centroid=None if not len(xs) else [float(xs.mean()), float(ys.mean())],
                       hand_origin_world=hand.tolist(), approximate_grasp_point_world=grasp.tolist(),
+                      actual_control_point_world=control_point.tolist(),
                       control_point_offset_metres=0.103,
                       note='Projection does not measure occlusion; red threshold is scene-specific. '
                            'Finger joint sum is travel, not calibrated inner pad clearance.')
-    report = dict(passed=all(case['passed'] for case in cases + gripper),
+    report = dict(passed=all(case['passed'] for case in cases + gripper), action_contract=action_contract(),
                   movement_cases=cases, gripper_cases=gripper, camera=camera,
-                  scope='Local identity mapping only; no OpenVLA prediction or Bridge-to-Panda extrinsic calibration.')
+                  scope='Local Panda grasp-point identity mapping only; no OpenVLA prediction or Bridge-to-Panda extrinsic calibration.')
     (folder / 'calibration.json').write_text(json.dumps(report, indent=2) + '\n')
     print(f'Results: {folder}', flush=True)
     return report

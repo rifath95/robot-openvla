@@ -13,6 +13,7 @@ import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parent
+from panda_actions import PHYSICS_STEPS, action_contract
 
 
 def write_json(path, value):
@@ -26,19 +27,8 @@ def adapt_bridge_action(values):
     Translation/Euler deltas are interpreted in the simulation world axes for
     this plumbing experiment, not calibrated between WidowX and Panda robots.
     """
-    import numpy as np
-
-    action = np.asarray(values, dtype=float).copy()
-    if action.shape != (7,) or not np.all(np.isfinite(action)):
-        raise ValueError("Expected seven finite action values")
-    if not 0 <= action[6] <= 1:
-        raise ValueError("Bridge gripper command must be between 0 and 1")
-    for section, limit in ((slice(0, 3), 0.01), (slice(3, 6), 0.05)):
-        magnitude = float(np.linalg.norm(action[section]))
-        if magnitude > limit:
-            action[section] *= limit / magnitude
-    action[6] = 2 * action[6] - 1
-    return action
+    from panda_actions import to_controller_action
+    return to_controller_action(values)
 
 
 def simulation_stage(args):
@@ -65,7 +55,8 @@ def simulation_stage(args):
                 getattr(env.data, name)[:] = state[name]
             env.data.time = float(state["time"])
         mujoco.mj_forward(env.model, env.data)
-        env.controller = PandaController(env.model, env.data)
+        from panda_actions import make_controller
+        env.controller = make_controller(env.model, env.data)
         prediction = json.loads((folder / "prediction.json").read_text())
         if prediction.get("unnorm_key") != "bridge_orig":
             raise ValueError("Only bridge_orig action adaptation is implemented")
@@ -74,7 +65,7 @@ def simulation_stage(args):
         ik = env.controller.apply_action(action)
         if not ik.converged:
             raise RuntimeError("IK rejected the action; scene will not be advanced")
-        env.controller.step(1000)
+        env.controller.step(PHYSICS_STEPS)
         after_position, after_quaternion = env.controller.end_effector_pose()
         save_rgb_png(folder / "after.png", env.observe())
         np.savez(folder / "after_state.npz", qpos=env.data.qpos,
@@ -86,7 +77,8 @@ def simulation_stage(args):
             raise RuntimeError("Non-finite simulation state after execution")
         report = {
             "raw_action": prediction["action"], "controller_action": action.tolist(),
-            "mapping": "Provisional Bridge world XYZ/Euler to Panda world XYZ/Euler",
+            "mapping": "Provisional Bridge deltas using panda_grasp_v1; grasp point",
+            "action_contract": action_contract(),
             "translation_limit_metres": 0.01, "rotation_limit_radians": 0.05,
             "gripper_mapping": "2 * model_gripper - 1; no sign inversion",
             "before_position": before_position.tolist(),
@@ -97,7 +89,7 @@ def simulation_stage(args):
             "target_position": env.controller.target_position.tolist(),
             "position_tracking_error_metres": tracking_error,
             "ik_converged": bool(ik.converged),
-            "physics_seconds": 1000 * float(env.model.opt.timestep),
+            "physics_seconds": PHYSICS_STEPS * float(env.model.opt.timestep),
             "inference_seconds": prediction.get("inference_seconds"),
         }
         write_json(folder / "execution.json", report)

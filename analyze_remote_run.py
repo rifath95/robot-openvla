@@ -15,6 +15,9 @@ def analyze_run(folder):
     from panda_controller import PandaController, _euler_xyz_to_quat, _quat_multiply
 
     folder = Path(folder)
+    contract_path = folder / 'action_contract.json'
+    tool_offset = (json.loads(contract_path.read_text())['control_offset_body_metres']
+                   if contract_path.exists() else (0, 0, 0))
     model = mujoco.MjModel.from_xml_path(str(ROOT / 'scene.xml'))
     records = []
     failures = []
@@ -25,7 +28,7 @@ def analyze_run(folder):
             for key in ('qpos', 'qvel', 'act', 'ctrl'):
                 getattr(data, key)[:] = state[key]
             data.time = float(state['time'])
-        return PandaController(model, data)
+        return PandaController(model, data, tool_offset=tool_offset)
 
     for directory in sorted(folder.glob('step_*')):
         if not (directory / 'scene_state.npz').exists() or not (directory / 'prediction.json').exists():

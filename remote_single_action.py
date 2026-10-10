@@ -9,6 +9,7 @@ import uuid
 
 from connection_client import request_prediction
 from openvla_single_action import adapt_bridge_action
+from panda_actions import PHYSICS_STEPS, action_contract, from_controller_action
 
 ROOT = Path(__file__).resolve().parent
 
@@ -75,7 +76,7 @@ def run_single_action(*, server_url="http://127.0.0.1:8000",
             status("Executing one action")
             execution_started = time.perf_counter()
             motion_started = True
-            env.controller.step(1000)
+            env.controller.step(PHYSICS_STEPS)
             movement_seconds = time.perf_counter() - execution_started
             after_position, after_quaternion = env.controller.end_effector_pose()
             status("Capturing resulting scene")
@@ -89,7 +90,10 @@ def run_single_action(*, server_url="http://127.0.0.1:8000",
             report = {
                 "request_id": request_id, "raw_action": prediction["action"],
                 "controller_action": action.tolist(), "unnorm_key": "bridge_orig",
-                "mapping": "Provisional Bridge world XYZ/Euler to Panda world XYZ/Euler; hand-origin control point",
+                "mapping": "Provisional Bridge deltas interpreted using panda_grasp_v1; grasp-point control",
+                "action_contract": action_contract(),
+                "executed_panda_action": from_controller_action(action).tolist(),
+                "training_eligible": False,
                 "translation_limit_metres": 0.01, "rotation_limit_radians": 0.05,
                 "gripper_mapping": "2 * model_gripper - 1",
                 "before_position": before_position.tolist(), "after_position": after_position.tolist(),
@@ -100,7 +104,7 @@ def run_single_action(*, server_url="http://127.0.0.1:8000",
                 "position_tracking_error_metres": tracking_error,
                 "ik_converged": bool(ik.converged), "finite_state": finite_state,
                 "tracking_passed": tracking_passed,
-                "physics_seconds": 1000 * float(env.model.opt.timestep),
+                "physics_seconds": PHYSICS_STEPS * float(env.model.opt.timestep),
                 "simulation_frozen_during_request": True,
                 "motion_started": motion_started,
                 "timings_seconds": {

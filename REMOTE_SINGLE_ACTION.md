@@ -42,7 +42,8 @@ not cancel a cloud inference that is already running or stop pod billing.
   magnitude to **0.05 radians**, preserving their directions.
 - Converts the Bridge gripper convention (0 closed / 1 open) to the Panda
   controller convention (-1 closed / +1 open) using `2 * gripper - 1`.
-- Uses the existing Panda hand-origin control point and inverse kinematics.
+- Uses the shared Panda grasp point and inverse kinematics, with 200 physics
+  ticks (0.4 s) per action. Historical runs used hand origin and 1,000 ticks.
   IK must converge before physics advances for the returned action.
 - Executes 1,000 physics steps, then checks finite positions/velocities and
   position tracking error at most **5 mm**. A failed tracking check is reported

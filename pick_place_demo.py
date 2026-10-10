@@ -15,6 +15,7 @@ import mujoco.viewer
 import numpy as np
 
 from panda_controller import PandaController
+from panda_actions import TRANSLATION_LIMIT, make_controller
 from end_effector_demo import _restart_with_mjpython
 from capture_camera import save_rgb_png
 
@@ -35,7 +36,7 @@ def sequence(controller, snapshot=lambda name: None):
             delta = target - position
             if np.linalg.norm(delta) < 0.0015:
                 return
-            delta *= min(1.0, 0.015 / np.linalg.norm(delta))
+            delta *= min(1.0, TRANSLATION_LIMIT / np.linalg.norm(delta))
             result = controller.apply_action([*delta, 0, 0, 0, gripper])
             if not result.converged:
                 raise RuntimeError("Waypoint IK failed; stopping pick/place")
@@ -94,7 +95,7 @@ def main():
     mujoco.mj_resetDataKeyframe(model, data, key)
     mujoco.mj_forward(model, data)
     # 0.0584 m finger mounting offset + approximately 0.044 m pad offset.
-    controller = PandaController(model, data, tool_offset=(0, 0, 0.103))
+    controller = make_controller(model, data)
     context = nullcontext(None) if args.headless else mujoco.viewer.launch_passive(model, data)
     capture = not args.headless or args.capture
     renderer_context = mujoco.Renderer(model, height=480, width=640) if capture else nullcontext(None)
