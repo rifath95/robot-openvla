@@ -130,6 +130,7 @@ class LoopTests(unittest.TestCase):
                 status = json.loads((output / 'status.json').read_text())
                 self.assertEqual(json.loads((output / 'startup_info.json').read_text())['model_load_seconds'], 44.64)
                 self.assertTrue((output / 'replay.py').exists())
+                self.assertTrue((output / 'RUN_REPORT.md').exists())
                 for record in summary['steps']:
                     step = output / f"step_{record['step']:03d}"
                     with np.load(step / 'motion_frames.npz') as frames, np.load(step / 'scene_state.npz') as before, np.load(step / 'after_state.npz') as after:

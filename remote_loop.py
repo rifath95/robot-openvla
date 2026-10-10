@@ -388,6 +388,8 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                                       "rejected_steps": len(rejections), "rejections": rejections,
                                       "active_seconds": active_timer.elapsed(),
                                       "elapsed_seconds": time.perf_counter() - started})
+        from run_report import write_run_report
+        write_run_report(folder)
     return folder
 
 

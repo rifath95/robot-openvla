@@ -175,3 +175,24 @@ the same GPU/model settings and note whether preparation just downloaded files.
 Direct `remote_loop.py` runs can supply `--startup-info <PATH>`; without it no
 cloud startup measurements are available. This update is pulled as source by the
 launcher after pushing it to GitHub; no dependency Docker rebuild is needed.
+
+## Read the run summary
+
+Each finalized loop creates **`RUN_REPORT.md`** in its output folder, including
+completed, stopped, and failed trials. Open it for startup/loading, GPU/VRAM and
+storage information, then the full-cycle overview before remote-request and local
+simulation timing breakdowns. The remote request includes server processing;
+its remaining overhead is not an isolated upload/download measurement. Finalized
+cycle averages include recorded rejected holds and interrupted movements; cycles
+without timing records are excluded. Missing measurements say “Not recorded.”
+
+To regenerate a report from existing saved files:
+
+```bash
+.venv/bin/python run_report.py outputs/<RUN_FOLDER>
+```
+
+No cloud connection or model loading is needed. Existing local remote-loop folders
+have been backfilled. Reports require the recorded startup metadata to identify
+GPU/storage/loading; historical missing data is not guessed. As usual, push source
+updates before launching the next session; no Docker dependency rebuild is needed.

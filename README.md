@@ -161,6 +161,7 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | `prepare_cloud_model.py` | Downloads the pinned model locally and exports regular files to Global storage for reuse. |
 | `REMOTE_INFERENCE.md` | Cloud model setup and one real prediction through an SSH tunnel, without robot movement. |
 | `RUNPOD_CONNECTION_GUIDE.md` | Copyable session checklist for pod setup, SSH login, three terminal roles, model reuse, prediction, and shutdown. |
+| `run_report.py` | Automatically writes each trial’s RUN_REPORT.md with startup/GPU/storage details and full-cycle timing before detailed breakdowns; can regenerate reports for existing runs. |
 | `replay_run.py` / `REPLAY.md` | Offline saved-run viewer with pause/resume and speed control; new run folders include `replay.py` and sampled motion frames. |
 | `remote_loop.py` | Repeats cloud predictions and bounded local movements with a live viewer, Space pause/resume, a default 100-action budget, per-step artifacts, and a runtime limit excluding pauses, IK size retries, and bounded hold/re-predict recovery. |
 | `test_ik_retries.py` / `tests/fixtures/ik_step*.json` | Saved real step-96/97 regressions: size recovery, target restoration, and offline solver analysis. |
