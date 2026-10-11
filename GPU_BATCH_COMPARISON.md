@@ -46,25 +46,24 @@ Fastest candidate with headroom: **microbatch 8, accumulation 1**, 3.74 examples
 
 ## Updating this file
 
-The cloud copy updates automatically after each benchmark candidate. The workspace
-copy does not synchronize automatically across SSH. Download results to the Mac
-before updating this file.
+Use the local launcher for automatic cloud execution, report download and workspace refresh:
 
-This A40 entry was imported from `outputs/gpu-benchmarks/A40_COMPARISON.md`.
-Only that Markdown report has been downloaded so far; the underlying JSON,
-configs, and logs remain on the network volume. The summary link opens the local
-report instead of pointing to an undownloaded candidate folder.
+```bash
+.venv/bin/python benchmark_cloud_session.py \
+  --ssh 'ssh root@POD_IP -p POD_PORT -i ~/.ssh/id_ed25519'
+```
 
-When full benchmark folders have been downloaded into `outputs/gpu-benchmarks`,
-regenerate the combined workspace report using:
+Get POD_IP and POD_PORT from RunPod → Pod → Connect → SSH over exposed TCP. The launcher selects this Mac's existing private key.
+Keep the Mac awake and connected. This command does not stop the rented pod. Stop it in RunPod after synchronization.
+For an existing run or an interrupted download, use the same command with `--fetch-only`; it does not run training.
+The download includes all saved benchmark reports, JSON measurements, configs and logs on the attached volume; adapter weights are excluded.
+Timestamped report folders and a combined report are saved in outputs/gpu-benchmarks. This workspace file is rebuilt automatically from the downloaded JSON.
+For report folders already downloaded, the standalone refresh command remains available:
 
 ```bash
 .venv-training/bin/python summarize_gpu_benchmarks.py \
   --root outputs/gpu-benchmarks \
   --output GPU_BATCH_COMPARISON.md
 ```
-
-That command reads `benchmark.json` files. A Markdown-only download is insufficient
-to rebuild the combined report, so do not run it until the JSON files are present.
 
 Historical training memory usage alone does not establish maximum batch capacity.

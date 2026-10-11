@@ -9,8 +9,8 @@ For the planned A40 microbatch speed/memory comparison, see
 existing training batch configuration is unchanged.
 The cross-GPU capacity and throughput table is in
 [GPU_BATCH_COMPARISON.md](GPU_BATCH_COMPARISON.md), including the measured A40
-capacity and throughput. The cloud report updates automatically; its workspace
-copy must be refreshed after downloading results.
+capacity and throughput. Use `benchmark_cloud_session.py` on the Mac to run the
+cloud benchmark, download reports and automatically refresh the workspace copy.
 
 **Phases 1 and 2 are complete. Phase 3 is the current focus:** collect and
 validate varied pick-and-place demonstrations, fine-tune OpenVLA for our Panda

@@ -100,6 +100,8 @@ class BatchBenchmarkTests(unittest.TestCase):
             self.assertIn('## NVIDIA A40',text)
             self.assertIn('## NVIDIA A100-SXM4-80GB',text)
             self.assertIn('Capacity finding:',text)
+            self.assertEqual(comparison(root,output,gpu_filter='NVIDIA A40'),1)
+            self.assertNotIn('NVIDIA A100-SXM4-80GB',output.read_text())
 
     def test_empty_comparison_does_not_invent_measurements(self):
         with tempfile.TemporaryDirectory() as directory:

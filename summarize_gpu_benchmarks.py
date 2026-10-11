@@ -9,7 +9,7 @@ def cell(value):
     return str(value).replace('|','/').replace('\n',' ')
 
 
-def comparison(root, output):
+def comparison(root, output, gpu_filter=None):
     lines=['# GPU batch capacity and training throughput','',
         'This table collects measured OpenVLA LoRA batch benchmarks. Each row is one run; different datasets or settings remain separate.', '',
         '**Throughput** means training examples processed per second after warmup. One example is one camera image, its task instruction, and seven target action values—not one trajectory.',
@@ -21,6 +21,7 @@ def comparison(root, output):
         '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |']
     paths=sorted(root.rglob('benchmark.json')) if root.exists() else []
     groups={}
+    selected=0
     for path in paths:
         rows=json.loads(path.read_text())
         metadata_path=path.parent/'benchmark_metadata.json'
@@ -45,6 +46,9 @@ def comparison(root, output):
         for info_path in sorted(path.parent.glob('batch_*/model_info.json')):
             info=json.loads(info_path.read_text());break
         gpu=info.get('gpu',complete[0].get('gpu','Unknown') if complete else 'Unknown')
+        if gpu_filter is not None and gpu!=gpu_filter:
+            continue
+        selected+=1
         vram=info.get('total_vram_gib')
         reference=os.path.relpath(path.parent/'BATCH_BENCHMARK.md',output.parent).replace(os.sep,'/')
         values=[gpu,f'{vram:.1f}' if vram is not None else '—',
@@ -56,7 +60,7 @@ def comparison(root, output):
             f'[{path.parent.name}]({reference})']
         lines.append('| '+' | '.join(cell(v) for v in values)+' |')
         groups.setdefault((gpu,vram),[]).append((path,rows,metadata,info,capacity,best))
-    if not paths:
+    if not selected:
         lines+=['| NVIDIA A40 | — | — | Planned | Not measured | — | — | — | — | — | Pending |',
                 '| NVIDIA A100 (variant to be recorded) | — | — | Planned | Not measured | — | — | — | — | — | Pending |']
     for (gpu,vram),runs in groups.items():
@@ -88,14 +92,22 @@ def comparison(root, output):
         '- Compare GPUs with the same dataset, model, LoRA rank, precision and attention settings. A100 40 GB and 80 GB variants should be recorded as separate runs.',
         '- Each linked report has per-batch timings and memory. Its sibling benchmark_metadata.json, benchmark.json, and model_info.json inside candidate folders preserve the exact settings and GPU details.', '',
         '## Updating this file','',
-        'Every cloud benchmark refreshes a comparison file in the network-volume benchmark directory. To refresh this workspace copy after downloading benchmark folders into outputs/gpu-benchmarks:', '',
+        'Use the local launcher for automatic cloud execution, report download and workspace refresh:', '',
+        '```bash','.venv/bin/python benchmark_cloud_session.py \\',
+        "  --ssh 'ssh root@POD_IP -p POD_PORT -i ~/.ssh/id_ed25519'",'```','',
+        'Get POD_IP and POD_PORT from RunPod → Pod → Connect → SSH over exposed TCP. The launcher selects this Mac\'s existing private key.',
+        'Keep the Mac awake and connected. This command does not stop the rented pod. Stop it in RunPod after synchronization.',
+        'For an existing run or an interrupted download, use the same command with `--fetch-only`; it does not run training.',
+        'The download includes all saved benchmark reports, JSON measurements, configs and logs on the attached volume; adapter weights are excluded.',
+        'Timestamped report folders and a combined report are saved in outputs/gpu-benchmarks. This workspace file is rebuilt automatically from the downloaded JSON.',
+        'For report folders already downloaded, the standalone refresh command remains available:', '',
         '```bash','.venv-training/bin/python summarize_gpu_benchmarks.py \\',
         '  --root outputs/gpu-benchmarks \\',
         '  --output GPU_BATCH_COMPARISON.md','```','',
         'Historical training memory usage alone does not establish maximum batch capacity.']
     output.parent.mkdir(parents=True,exist_ok=True)
     output.write_text('\n'.join(lines)+'\n')
-    return len(paths)
+    return selected
 
 
 def main():

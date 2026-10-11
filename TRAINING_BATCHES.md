@@ -1,5 +1,45 @@
 # Measure training microbatch size on the A40
 
+## Automatic launch and local results
+
+Use this command in a **local Mac terminal inside the workspace**. Paste the SSH
+command from RunPod's Connect tab; the launcher selects the Mac's existing key.
+
+```bash
+caffeinate -i .venv/bin/python benchmark_cloud_session.py \
+  --ssh 'ssh root@POD_IP -p POD_PORT -i ~/.ssh/id_ed25519'
+```
+
+The pod must already be running with the training image and the network volume.
+The default dataset is the existing `/workspace/panda-training/training_v1`;
+add `--dataset /workspace/panda-training/training_v2` once v2 is downloaded and
+verified. The launcher updates the cloud code, runs the adaptive capacity and
+speed test, and automatically downloads all saved benchmark report folders from
+the volume. It excludes the large temporary adapter weights.
+
+Local results go into `outputs/gpu-benchmarks/<cloud-run-timestamp>/` along with
+`outputs/gpu-benchmarks/GPU_BATCH_COMPARISON.md`. The top-level workspace
+`GPU_BATCH_COMPARISON.md` is automatically rebuilt too, retaining all downloaded
+GPU runs. Per-GPU copies such as `A40_COMPARISON.md` are refreshed in that output
+folder too; A100 filenames include the actual variant name reported by CUDA.
+It is not necessary to manually copy results or edit the table.
+
+Keep the Mac connected and the lid open until synchronization completes. This
+is a foreground workflow, not the detached training wrapper. If interrupted,
+reconnect to a running pod with the same volume and fetch already-saved results:
+
+```bash
+.venv/bin/python benchmark_cloud_session.py \
+  --ssh 'ssh root@POD_IP -p POD_PORT -i ~/.ssh/id_ed25519' \
+  --fetch-only
+```
+
+`--fetch-only` runs no benchmark or training. It can collect a prior run even
+from a new pod attached to the same volume. Neither mode automatically stops
+the pod: stop it in RunPod after the download completes. No Docker rebuild needed.
+
+## Direct cloud command (manual download)
+
 Prepared locally; GPU measurements are pending. The previous run used microbatch
 1 with four accumulation steps: four individual image–instruction–action examples
 per parameter update, not four trajectories. Portal VRAM usage was about 27 GiB;
