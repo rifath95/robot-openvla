@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from benchmark_training_batches import summarize,write_report
+from benchmark_training_batches import summarize,write_report,next_capacity_batch
 from training.integrate_upstream import integrated_source
 
 
@@ -41,6 +41,29 @@ class BatchBenchmarkTests(unittest.TestCase):
         source=integrated_source()
         self.assertLess(source.index('optimizer.step()'),source.index('wandb.log('))
         self.assertLess(source.index('wandb.log('),source.index('validate(vla'))
+
+    def test_adaptive_search_finds_non_power_of_two_boundary(self):
+        results=[];tried=[]
+        while (batch:=next_capacity_batch(results)) is not None:
+            tried.append(batch)
+            results.append(dict(microbatch=batch,status='completed' if batch<=6 else 'out_of_memory'))
+        self.assertEqual(tried,[1,2,4,8,6,7])
+        self.assertEqual(max(r['microbatch'] for r in results if r['status']=='completed'),6)
+
+    def test_search_stops_at_bound_or_when_even_one_fails(self):
+        self.assertIsNone(next_capacity_batch([dict(microbatch=1,status='out_of_memory')]))
+        self.assertIsNone(next_capacity_batch([dict(microbatch=8,status='completed')],maximum=8))
+        self.assertEqual(next_capacity_batch([dict(microbatch=4,status='completed')],maximum=6),6)
+        with self.assertRaises(ValueError):
+            next_capacity_batch([dict(microbatch=1,status='failed')])
+
+    def test_bound_is_reported_as_lower_bound_not_maximum(self):
+        row=dict(summarize(self.rows(),8,1),status='completed')
+        with tempfile.TemporaryDirectory() as directory:
+            write_report(Path(directory),[row],mode='capacity',maximum=8)
+            report=(Path(directory)/'BATCH_BENCHMARK.md').read_text()
+            self.assertIn('the maximum was not established',report)
+            self.assertIn('effective batch changes',report)
 
 
 if __name__=='__main__':unittest.main()

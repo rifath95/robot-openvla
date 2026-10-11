@@ -36,20 +36,48 @@ def summarize(rows, microbatch, accumulation, warmup=5):
     return result
 
 
-def write_report(root, results):
+def next_capacity_batch(results, maximum=64):
+    """Double until OOM, then binary-search the fitting/failing interval."""
+    if maximum<1:
+        raise ValueError('Maximum batch must be positive')
+    if any(r['status'] not in ('completed','out_of_memory') for r in results):
+        raise ValueError('Capacity search cannot continue after a non-OOM failure')
+    fitting=[r['microbatch'] for r in results if r['status']=='completed']
+    failing=[r['microbatch'] for r in results if r['status']=='out_of_memory']
+    low=max(fitting,default=0)
+    if failing:
+        high=min(failing)
+        if high<=low:
+            raise ValueError('Inconsistent fit results; inspect the GPU before retrying')
+        return None if high-low<=1 else (low+high)//2
+    if low>=maximum:
+        return None
+    return min(maximum,low*2) if low else 1
+
+
+def write_report(root, results, mode='controlled', maximum=64):
     (root/'benchmark.json').write_text(json.dumps(results,indent=2)+'\n')
-    lines=['# A40 training batch benchmark','',
-        'Fresh LoRA runs from the same base model; effective batch stays at four examples.',
+    description=('Fresh LoRA runs from the same base model; effective batch stays at four examples.'
+                 if mode=='controlled' else
+                 'Adaptive fit test: accumulation one; effective batch changes with microbatch. This compares hardware throughput, not training convergence.')
+    lines=['# Training batch benchmark','',description,
         'First five updates excluded from throughput. Final validation and checkpoint writes excluded.',
         'Timings include data loading, forward/backward, optimizer and normal training logging.',
         'These short runs measure throughput, not model quality. No benchmark adapter is promoted.', '',
-        '| Microbatch | Accumulation | Status | Seconds/update | Examples/s | Peak allocated GiB | Peak reserved GiB | Headroom screen |',
-        '| --- | --- | --- | --- | --- | --- | --- | --- |']
+        '| Microbatch | Accumulation | Effective batch | Status | Seconds/update | Examples/s | Peak allocated GiB | Peak reserved GiB | Headroom screen |',
+        '| --- | --- | --- | --- | --- | --- | --- | --- | --- |']
     for row in results:
         if row['status']=='completed':
-            lines.append(f"| {row['microbatch']} | {row['accumulation']} | completed | {row['seconds_per_update']:.3f} | {row['examples_per_second']:.2f} | {row['gpu_peak_allocated_gib']:.2f} | {row['gpu_peak_reserved_gib']:.2f} | {row['headroom_screen_passed']} |")
+            lines.append(f"| {row['microbatch']} | {row['accumulation']} | {row['effective_batch']} | completed | {row['seconds_per_update']:.3f} | {row['examples_per_second']:.2f} | {row['gpu_peak_allocated_gib']:.2f} | {row['gpu_peak_reserved_gib']:.2f} | {row['headroom_screen_passed']} |")
         else:
-            lines.append(f"| {row['microbatch']} | {row['accumulation']} | {row['status']} | — | — | — | — | — |")
+            lines.append(f"| {row['microbatch']} | {row['accumulation']} | {row['microbatch']*row['accumulation']} | {row['status']} | — | — | — | — | — |")
+    if mode=='capacity':
+        fitting=[r['microbatch'] for r in results if r['status']=='completed']
+        failing=[r['microbatch'] for r in results if r['status']=='out_of_memory']
+        lines+=['',f'Largest tested fitting microbatch: {max(fitting,default=0)}.',
+                f'Smallest tested OOM microbatch: {min(failing) if failing else "not observed"}.',
+                f'Search bound: {maximum}. If the bound fits, capacity is at least that size; the maximum was not established.',
+                'Fit results assume approximately monotonic memory demand. They apply to the tested data/settings and short runs, not every possible instruction length.']
     eligible=[r for r in results if r['status']=='completed' and r['headroom_screen_passed']]
     if eligible:
         best=max(eligible,key=lambda r:r['examples_per_second'])
@@ -65,17 +93,38 @@ def main():
     p.add_argument('--dataset',type=Path,default=Path('/workspace/panda-training/training_v2'))
     p.add_argument('--model',type=Path,default=Path('/workspace/openvla-7b'))
     p.add_argument('--output-root',type=Path,default=Path('/workspace/panda-training/batch-benchmarks'))
+    p.add_argument('--find-capacity',action='store_true',help='Double until OOM, then refine the boundary; accumulation one')
+    p.add_argument('--max-batch',type=int,default=64,help='Bound the adaptive search (default: 64)')
     args=p.parse_args()
+    if args.max_batch<1:
+        p.error('--max-batch must be positive')
     verification=args.dataset/'verification.json'
     if not verification.is_file() or not json.loads(verification.read_text()).get('passed'):
-        p.error('Download and verify training_v2 first')
+        p.error(f'Download and verify the selected dataset first: {args.dataset}')
     root=args.output_root/datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')
     root.mkdir(parents=True,exist_ok=False)
     config=json.loads(Path('training/pick_place_1000.json').read_text())
     results=[]
+    mode='capacity' if args.find_capacity else 'controlled'
+    (root/'benchmark_metadata.json').write_text(json.dumps(dict(mode=mode,
+        dataset=str(args.dataset.resolve()),model=str(args.model.resolve()),
+        max_batch=args.max_batch,updates_per_candidate=25,warmup_updates=5),indent=2)+'\n')
+    def report():
+        write_report(root,results,mode,args.max_batch)
     print(f'Benchmark outputs: {root}',flush=True)
     print('This command does not stop the pod. Stop it in RunPod afterward.',flush=True)
-    for microbatch,accumulation in ((1,4),(2,2),(4,1)):
+    controlled=iter(((1,4),(2,2),(4,1)))
+    while True:
+        if args.find_capacity:
+            microbatch=next_capacity_batch(results,args.max_batch)
+            if microbatch is None:
+                break
+            accumulation=1
+        else:
+            pair=next(controlled,None)
+            if pair is None:
+                break
+            microbatch,accumulation=pair
         name=f'batch_{microbatch}_accum_{accumulation}'
         candidate=dict(config,batch_size=microbatch,grad_accumulation_steps=accumulation,
             max_steps=25,save_steps=25,validation_every=25,validation_max_batches=1,
@@ -96,7 +145,7 @@ def main():
                 os.killpg(process.pid,signal.SIGKILL)
                 process.wait()
                 results.append(dict(microbatch=microbatch,accumulation=accumulation,status='timeout'))
-                write_report(root,results)
+                report()
                 raise SystemExit('Benchmark timed out. Stop the pod; do not start another GPU job.')
             except KeyboardInterrupt:
                 os.killpg(process.pid,signal.SIGTERM)
@@ -109,6 +158,9 @@ def main():
                  wall_seconds=time.monotonic()-started)
         if status=='completed':
             rows=[json.loads(line) for line in (root/name/'metrics.jsonl').read_text().splitlines()]
+            if max((r['update'] for r in rows if 'train_loss' in r),default=0)!=25:
+                results.append(dict(row,status='incomplete'));report()
+                raise SystemExit('Candidate ended before 25 updates; capacity was not established.')
             row.update(summarize(rows,microbatch,accumulation))
             info=json.loads((root/name/'model_info.json').read_text())
             row['gpu']=info['gpu'];row['torch_version']=info['torch_version']
@@ -117,9 +169,9 @@ def main():
             if 'CUDA out of memory' in log_text or 'torch.cuda.OutOfMemoryError' in log_text:
                 row['status']='out_of_memory'
             else:
-                results.append(row);write_report(root,results)
+                results.append(row);report()
                 raise SystemExit(f'Benchmark failed; inspect {root / (name + ".log")}')
-        results.append(row);write_report(root,results)
+        results.append(row);report()
         print(json.dumps(row),flush=True)
     print(f'Report: {root / "BATCH_BENCHMARK.md"}',flush=True)
 

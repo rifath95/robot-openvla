@@ -50,3 +50,39 @@ and faster, it can keep the same effective batch using accumulation one. Larger
 effective batches (e.g. microbatch four, accumulation two = eight examples) are a
 separate learning experiment: the same update count would then process more data.
 Do not double the learning rate automatically.
+
+## Adaptive batch fitting
+
+To find the tested memory boundary instead of checking only 1/2/4, run:
+
+```bash
+/opt/openvla/bin/python benchmark_training_batches.py \
+  --find-capacity \
+  --dataset /workspace/panda-training/training_v1
+```
+
+This can run on the existing v1 volume copy while the Mac uploads v2 to Hugging
+Face. Confirm the selected batch on v2 before its full training run.
+
+The adaptive mode tests 1, 2, 4, 8, ... until CUDA OOM. It then binary-searches
+between the last fitting and first failing size (e.g. 4 fits, 8 fails, then test
+6 and 7). Each size gets a fresh subprocess/model/optimizer and 25 real updates,
+so this tests forward/backward and optimizer memory, not merely loading inputs.
+Failed subprocesses release their GPU allocations; an unexpected non-OOM error
+stops the search. Run it alone on the GPU.
+
+For finite runtime/cost, `--max-batch` bounds the search at 64 by default. If 64
+fits, the report states capacity is **at least 64**, not that 64 is the maximum.
+The report separates largest fitting batch from fastest candidate passing the
+4 GiB headroom screen. It assumes approximately monotonic memory use; short-run
+fit results are specific to sampled inputs, model, LoRA and attention settings.
+
+Accumulation is one in this mode: batch size and examples per update both change.
+Compare examples/second for hardware efficiency; do not use these loss curves to
+compare learning quality. The controlled 1/4, 2/2, 4/1 mode remains available by
+omitting `--find-capacity`. No actual training configuration is changed by either
+benchmark. GPU measurements are still pending; no capacity number is claimed yet.
+
+Use the same command on an A100 to measure that GPU independently. Reports record
+its actual GPU name and VRAM; a batch limit measured on an A40 does not transfer
+automatically. Keep the cloud connection open and manually stop the pod when done.
