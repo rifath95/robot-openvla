@@ -55,6 +55,19 @@ def next_capacity_batch(results, maximum=64):
     return min(maximum,low*2) if low else 1
 
 
+def missed_speed_candidates(results):
+    """Fill the final doubling interval, without repeating measured candidates."""
+    fitting=[r['microbatch'] for r in results if r['status']=='completed']
+    if not fitting:
+        return []
+    largest=max(fitting)
+    failures=[r['microbatch'] for r in results if r['status']=='out_of_memory']
+    bound=min(failures) if failures else largest
+    lower=1 << ((bound-1).bit_length()-1) if bound>1 else 1
+    tested={r['microbatch'] for r in results}
+    return [batch for batch in range(lower,largest+1) if batch not in tested]
+
+
 def write_report(root, results, mode='controlled', maximum=64):
     (root/'benchmark.json').write_text(json.dumps(results,indent=2)+'\n')
     description=('Fresh LoRA runs from the same base model; effective batch stays at four examples.'
@@ -116,11 +129,17 @@ def main():
     print(f'Benchmark outputs: {root}',flush=True)
     print('This command does not stop the pod. Stop it in RunPod afterward.',flush=True)
     controlled=iter(((1,4),(2,2),(4,1)))
+    speed_candidates=None
     while True:
         if args.find_capacity:
-            microbatch=next_capacity_batch(results,args.max_batch)
-            if microbatch is None:
-                break
+            if speed_candidates is None:
+                microbatch=next_capacity_batch(results,args.max_batch)
+                if microbatch is None:
+                    speed_candidates=iter(missed_speed_candidates(results))
+                    print('Capacity search finished; measuring missed fitting sizes in the final interval...',flush=True)
+            if speed_candidates is not None:
+                microbatch=next(speed_candidates,None)
+            if microbatch is None:break
             accumulation=1
         else:
             pair=next(controlled,None)
@@ -157,6 +176,7 @@ def main():
                     os.killpg(process.pid,signal.SIGKILL);process.wait()
                 raise
         row=dict(microbatch=microbatch,accumulation=accumulation,status=status,
+                 phase='speed_refinement' if speed_candidates is not None else 'capacity' if args.find_capacity else 'controlled',
                  wall_seconds=time.monotonic()-started)
         if status=='completed':
             rows=[json.loads(line) for line in (root/name/'metrics.jsonl').read_text().splitlines()]

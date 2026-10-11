@@ -20,6 +20,7 @@ def comparison(root, output):
         '| GPU | VRAM GiB | Dataset | Mode | Fitting capacity | First OOM | Suggested microbatch / accumulation | Seconds/update | Examples/s | Peak allocated / reserved GiB | Run / details |',
         '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |']
     paths=sorted(root.rglob('benchmark.json')) if root.exists() else []
+    groups={}
     for path in paths:
         rows=json.loads(path.read_text())
         metadata_path=path.parent/'benchmark_metadata.json'
@@ -30,6 +31,8 @@ def comparison(root, output):
         mode=metadata.get('mode','unknown')
         if not largest:
             capacity='None fitted' if failures else 'Pending'
+        elif failures and min(failures)<=largest:
+            capacity='Inconsistent fits; recheck'
         elif mode=='capacity' and failures and min(failures)==largest+1:
             capacity=f'{largest} (boundary found)'
         elif mode=='capacity':
@@ -52,14 +55,36 @@ def comparison(root, output):
             f"{best['gpu_peak_allocated_gib']:.2f} / {best['gpu_peak_reserved_gib']:.2f}" if best else '—',
             f'[{path.parent.name}]({reference})']
         lines.append('| '+' | '.join(cell(v) for v in values)+' |')
+        groups.setdefault((gpu,vram),[]).append((path,rows,metadata,info,capacity,best))
     if not paths:
         lines+=['| NVIDIA A40 | — | — | Planned | Not measured | — | — | — | — | — | Pending |',
                 '| NVIDIA A100 (variant to be recorded) | — | — | Planned | Not measured | — | — | — | — | — | Pending |']
+    for (gpu,vram),runs in groups.items():
+        lines+=['',f'## {cell(gpu)}'+(f' — {vram:.1f} GiB' if vram is not None else ''),'']
+        for path,rows,metadata,info,capacity,best in runs:
+            config=info.get('config',{})
+            lines += [f'### Run {path.parent.name}','',
+                f"Dataset: `{metadata.get('dataset','unknown')}`. Model: `{metadata.get('model','unknown')}`.",
+                f"Mode: {metadata.get('mode','unknown')}; PyTorch: {info.get('torch_version','unknown')}; LoRA rank: {config.get('lora_rank','unknown')}; quantization: {config.get('use_quantization','unknown')}; image augmentation: {config.get('image_aug','unknown')}.",
+                'Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.',
+                f'Capacity finding: **{capacity}**.',
+                (f"Fastest candidate with headroom: **microbatch {best['microbatch']}, accumulation {best['accumulation']}**, {best['examples_per_second']:.2f} examples/s." if best else 'No candidate passed the headroom screen.'),'',
+                '| Microbatch | Accumulation | Phase | Status | Seconds/update | Examples/s | Peak allocated / reserved GiB | Headroom screen |',
+                '| --- | --- | --- | --- | --- | --- | --- | --- |']
+            for row in sorted(rows,key=lambda r:(r['microbatch'],r['accumulation'])):
+                values=[row['microbatch'],row['accumulation'],row.get('phase','not recorded'),row['status']]
+                if row['status']=='completed':
+                    values += [f"{row['seconds_per_update']:.3f}",f"{row['examples_per_second']:.2f}",
+                        f"{row['gpu_peak_allocated_gib']:.2f} / {row['gpu_peak_reserved_gib']:.2f}",row['headroom_screen_passed']]
+                else:
+                    values += ['—','—','—','—']
+                lines.append('| '+' | '.join(cell(v) for v in values)+' |')
     lines+=['','## Reading the results','',
         '- “Boundary found” means adjacent sizes were tested: N fitted and N+1 ran out of memory. Intermediate untested sizes are inferred using approximately monotonic memory demand.',
         '- “Boundary not established” means the search is incomplete or its ceiling fitted. It is a lower bound, not a measured maximum.',
         '- Suggested batches leave at least 4 GiB by peak reserved and sampled free VRAM. This is a screening rule, not a stability guarantee.',
         '- Capacity mode uses accumulation one; effective batch changes. Controlled mode keeps effective batch four. These speed tests do not compare learning quality.',
+        '- After capacity search, missed fitting sizes in the final doubling interval are timed too. The recommendation is the fastest tested candidate with headroom; smaller sizes outside that interval are not exhaustively scanned.',
         '- Compare GPUs with the same dataset, model, LoRA rank, precision and attention settings. A100 40 GB and 80 GB variants should be recorded as separate runs.',
         '- Each linked report has per-batch timings and memory. Its sibling benchmark_metadata.json, benchmark.json, and model_info.json inside candidate folders preserve the exact settings and GPU details.', '',
         '## Updating this file','',

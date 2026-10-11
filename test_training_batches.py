@@ -4,7 +4,7 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from benchmark_training_batches import summarize,write_report,next_capacity_batch
+from benchmark_training_batches import summarize,write_report,next_capacity_batch,missed_speed_candidates
 from training.integrate_upstream import integrated_source
 from summarize_gpu_benchmarks import comparison
 
@@ -58,6 +58,13 @@ class BatchBenchmarkTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             next_capacity_batch([dict(microbatch=1,status='failed')])
 
+    def test_speed_refinement_fills_only_missed_fitting_sizes(self):
+        results=[]
+        while (batch:=next_capacity_batch(results)) is not None:
+            results.append(dict(microbatch=batch,status='completed' if batch<=13 else 'out_of_memory'))
+        self.assertEqual(missed_speed_candidates(results),[9,10,11])
+        self.assertEqual(missed_speed_candidates([dict(microbatch=1,status='out_of_memory')]),[])
+
     def test_bound_is_reported_as_lower_bound_not_maximum(self):
         row=dict(summarize(self.rows(),8,1),status='completed')
         with tempfile.TemporaryDirectory() as directory:
@@ -87,7 +94,12 @@ class BatchBenchmarkTests(unittest.TestCase):
             self.assertIn('6 (boundary found)',text)
             self.assertIn('≥6 (fixed candidates only)',text)
             self.assertIn('| 2 / 1 | 2.000 | 1.00 |',text)
-            self.assertNotIn('99.00',text)
+            # Summary uses the safe candidate; details still show the faster
+            # unsafe batch so readers can understand the tradeoff.
+            self.assertIn('99.00',text)
+            self.assertIn('## NVIDIA A40',text)
+            self.assertIn('## NVIDIA A100-SXM4-80GB',text)
+            self.assertIn('Capacity finding:',text)
 
     def test_empty_comparison_does_not_invent_measurements(self):
         with tempfile.TemporaryDirectory() as directory:
