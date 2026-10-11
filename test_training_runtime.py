@@ -4,16 +4,37 @@ import os
 from pathlib import Path
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch,Mock
+from types import SimpleNamespace
 
 import torch
 from peft import LoraConfig,get_peft_model
 from transformers import PreTrainedModel,PretrainedConfig
 
-from training.runtime import Metrics
+from training.runtime import Metrics,save_adapter
 
 
 class TrainingRuntimeTests(unittest.TestCase):
+    def test_benchmark_skips_saves_and_normal_training_keeps_checkpoints(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);model=Mock();processor=Mock()
+            cfg=SimpleNamespace(lora_rank=32)
+            dataset=SimpleNamespace(dataset_statistics={'train':{}})
+            model.module.save_pretrained.side_effect=lambda folder:(folder/'adapter_model.safetensors').write_bytes(b'adapter')
+            with patch('training.runtime.metrics',SimpleNamespace(directory=root,model_details={'gpu':'test'})):
+                with patch.dict(os.environ,{'PANDA_SAVE_CHECKPOINTS':'0'}):
+                    save_adapter(model,processor,cfg,dataset,25)
+                    self.assertFalse((root/'checkpoint_000025').exists())
+                    model.module.save_pretrained.assert_not_called()
+                    processor.save_pretrained.assert_not_called()
+                with patch.dict(os.environ,{'PANDA_SAVE_CHECKPOINTS':'1'}):
+                    save_adapter(model,processor,cfg,dataset,1000)
+                    folder=root/'checkpoint_001000'
+                    self.assertTrue((folder/'adapter_model.safetensors').is_file())
+                    self.assertTrue((folder/'dataset_statistics.json').is_file())
+                    self.assertTrue((folder/'training_config.json').is_file())
+                    self.assertTrue((root/'model_info.json').is_file())
+
     def test_lora_update_keeps_base_weights_fixed(self):
         class TinyModel(PreTrainedModel):
             config_class=PretrainedConfig

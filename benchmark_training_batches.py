@@ -74,7 +74,7 @@ def write_report(root, results, mode='controlled', maximum=64):
                  if mode=='controlled' else
                  'Adaptive fit test: accumulation one; effective batch changes with microbatch. This compares hardware throughput, not training convergence.')
     lines=['# Training batch benchmark','',description,
-        'First five updates excluded from throughput. Final validation and checkpoint writes excluded.',
+        'First five updates excluded from throughput. Validation excluded. Adapter checkpoint saving is disabled for benchmark candidates.',
         'Timings include data loading, forward/backward, optimizer and normal training logging.',
         'These short runs measure throughput, not model quality. No benchmark adapter is promoted.', '',
         '| Microbatch | Accumulation | Effective batch | Status | Seconds/update | Examples/s | Peak allocated GiB | Peak reserved GiB | Headroom screen |',
@@ -123,7 +123,8 @@ def main():
     from training.batch_policy import benchmark_context
     context=benchmark_context(config,args.dataset,args.model)
     metadata=dict(mode=mode,dataset=str(args.dataset.resolve()),model=str(args.model.resolve()),
-        max_batch=args.max_batch,updates_per_candidate=25,warmup_updates=5,context=context)
+        max_batch=args.max_batch,updates_per_candidate=25,warmup_updates=5,context=context,
+        checkpoint_saving=False)
     def report(outcome='running'):
         metadata.update(benchmark_elapsed_seconds=time.monotonic()-benchmark_started,benchmark_outcome=outcome)
         (root/'benchmark_metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')
@@ -158,7 +159,7 @@ def main():
         config_path.write_text(json.dumps(candidate,indent=2)+'\n')
         command=[sys.executable,'-u','train_panda.py','--dataset',str(args.dataset),
             '--model',str(args.model),'--config',str(config_path),
-            '--output-root',str(root),'--run-name',name,'--batch-policy','config']
+            '--output-root',str(root),'--run-name',name,'--batch-policy','config','--no-checkpoints']
         print(f'Testing microbatch {microbatch}, accumulation {accumulation} (25 updates)...',flush=True)
         started=time.monotonic()
         with (root/f'{name}.log').open('w') as log:

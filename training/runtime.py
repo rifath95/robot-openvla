@@ -30,6 +30,7 @@ class Metrics:
             max_runtime_seconds=int(os.environ['PANDA_MAX_RUNTIME']),
             initial_adapter=os.environ.get('PANDA_INITIAL_ADAPTER') or None,
             continuation_mode='adapter_weights_fresh_optimizer' if os.environ.get('PANDA_INITIAL_ADAPTER') else 'fresh_base',
+            checkpoint_saving=os.environ.get('PANDA_SAVE_CHECKPOINTS','1')!='0',
             note='Runtime guard is checked between updates; it does not stop pod billing.'),indent=2)+'\n')
         if hasattr(self,'model_details'):
             (self.directory/'model_info.json').write_text(json.dumps(self.model_details,default=str,indent=2)+'\n')
@@ -108,6 +109,9 @@ def validate(model, cfg, batch_transform, collator, device_id, update):
 
 
 def save_adapter(model, processor, cfg, dataset, update):
+    if os.environ.get('PANDA_SAVE_CHECKPOINTS','1')=='0':
+        print(f'Benchmark: adapter checkpoint saving disabled at update {update}',flush=True)
+        return
     folder=metrics.directory/f'checkpoint_{update:06d}'
     folder.mkdir(parents=True,exist_ok=False)
     model.module.save_pretrained(folder)

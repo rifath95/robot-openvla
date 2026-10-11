@@ -15,7 +15,16 @@ The default dataset is the existing `/workspace/panda-training/training_v1`;
 add `--dataset /workspace/panda-training/training_v2` once v2 is downloaded and
 verified. The launcher updates the cloud code, runs the adaptive capacity and
 speed test, and automatically downloads all saved benchmark report folders from
-the volume. It excludes the large temporary adapter weights.
+the volume. Future benchmark candidates pass `--no-checkpoints`: they train the
+LoRA adapters for measurement but do not save adapter checkpoint directories.
+Metrics, model information, validation results, logs and reports are still saved.
+The downloader also excludes adapter weights from older benchmark runs.
+
+Normal fine-tuning keeps checkpoint saving enabled by default, including the
+5,000-update profile. Each launcher explicitly sets the checkpoint mode for its
+child process, so a benchmark's setting cannot carry into a normal training run.
+This repository change does not modify a training process already running on a
+pod. No Docker rebuild is needed for future benchmarks using updated code.
 
 Local results go into `outputs/gpu-benchmarks/<cloud-run-timestamp>/` along with
 `outputs/gpu-benchmarks/GPU_BATCH_COMPARISON.md`. The top-level workspace

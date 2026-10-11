@@ -18,6 +18,7 @@ def main():
     p.add_argument('--config',type=Path,default=Path('training/smoke.json'))
     p.add_argument('--upstream',type=Path,default=Path('/opt/openvla-source'))
     p.add_argument('--adapter',type=Path,help='Continue from LoRA weights in a new run with a fresh optimizer')
+    p.add_argument('--no-checkpoints',action='store_true',help='Benchmark only: skip adapter saves while retaining metrics and reports')
     p.add_argument('--prepare-only',action='store_true',help='Print launch command without running training')
     p.add_argument('--run-name',help='Optional unique run name inside output-root (used by detached supervisor)')
     p.add_argument('--batch-policy',choices=('auto','config'),default='auto',help='Reuse matching benchmark recommendation, or keep configured batch settings')
@@ -70,6 +71,7 @@ def main():
         PANDA_MAX_RUNTIME=str(config.pop('max_runtime_seconds')),
         PANDA_BATCH_SELECTION=json.dumps(batch_selection),
         PANDA_INITIAL_ADAPTER=str(adapter) if adapter else '',
+        PANDA_SAVE_CHECKPOINTS='0' if args.no_checkpoints else '1',
         PYTHONPATH=os.pathsep.join([str(Path.cwd()),str(args.upstream.resolve()),env.get('PYTHONPATH','')]),
         TF_CPP_MIN_LOG_LEVEL='2',TOKENIZERS_PARALLELISM='false',WANDB_MODE='disabled')
     command=[sys.executable,'-m','torch.distributed.run','--standalone','--nnodes','1','--nproc-per-node','1',str(generated),

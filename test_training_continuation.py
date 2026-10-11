@@ -25,6 +25,20 @@ class TinyModel(PreTrainedModel):
 
 
 class ContinuationTests(unittest.TestCase):
+    def test_launcher_disables_saves_only_with_explicit_benchmark_flag(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);dataset=root/'dataset';dataset.mkdir()
+            (dataset/'verification.json').write_text('{"passed":true}')
+            for flags,expected in [([], '1'),(['--no-checkpoints'],'0')]:
+                argv=['train','--dataset',str(dataset),'--config','training/smoke.json',
+                      '--output-root',str(root/'runs'),'--batch-policy','config']+flags
+                with patch('sys.argv',argv),patch.dict(os.environ,{'PANDA_SAVE_CHECKPOINTS':'0'}), \
+                     patch('training.fetch_upstream.fetch'),patch('train_panda.subprocess.run') as run, \
+                     patch('sys.stdout',new_callable=io.StringIO):
+                    train_panda.main()
+                self.assertEqual(run.call_args.kwargs['env']['PANDA_SAVE_CHECKPOINTS'],expected)
+                self.assertNotIn('--no-checkpoints',run.call_args.args[0])
+
     def test_reloaded_adapter_preserves_learned_output_and_remains_trainable(self):
         torch.manual_seed(123);base=TinyModel();base_weights={k:v.clone() for k,v in base.state_dict().items()}
         cfg=LoraConfig(r=2,target_modules='all-linear')

@@ -41,7 +41,8 @@ class BatchBenchmarkTests(unittest.TestCase):
     def test_metrics_follow_optimizer_and_precede_validation(self):
         source=integrated_source()
         self.assertLess(source.index('optimizer.step()'),source.index('wandb.log('))
-        self.assertLess(source.index('wandb.log('),source.index('validate(vla'))
+        loop=source[source.index('    # Train!'):]
+        self.assertLess(loop.index('wandb.log('),loop.index('validate(vla'))
 
     def test_adaptive_search_finds_non_power_of_two_boundary(self):
         results=[];tried=[]
