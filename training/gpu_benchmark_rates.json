@@ -11,6 +11,11 @@
       "gpu": "NVIDIA H100 80GB HBM3",
       "hourly_rate_usd": 3.99,
       "confirmed_on": "2026-10-11"
+    },
+    "20261011_095911_435567": {
+      "gpu": "NVIDIA RTX A6000",
+      "hourly_rate_usd": 0.59,
+      "confirmed_on": "2026-10-11"
     }
   }
 }
