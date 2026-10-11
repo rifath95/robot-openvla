@@ -4,10 +4,31 @@ from pathlib import Path
 import tempfile
 import unittest
 
-from download_training_dataset import verify_bundle,finalize_download
+from download_training_dataset import verify_bundle,finalize_download,load_hf_token
 
 
 class DownloadDatasetTests(unittest.TestCase):
+    def test_recovers_only_hf_token_from_container_when_ssh_omits_it(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'environ'
+            path.write_bytes(b'RUNPOD_API_KEY=other-secret\0HF_TOKEN=test-read-token\0PATH=/bin\0')
+            env={}
+            self.assertEqual(load_hf_token(env,path),'container environment')
+            self.assertEqual(env,{'HF_TOKEN':'test-read-token'})
+
+    def test_explicit_shell_token_takes_precedence(self):
+        env={'HF_TOKEN':' shell-token '}
+        self.assertEqual(load_hf_token(env,Path('/missing')),'shell environment')
+        self.assertEqual(env['HF_TOKEN'],'shell-token')
+
+    def test_missing_and_unresolved_secrets_are_reported_without_values(self):
+        with self.assertRaisesRegex(ValueError,'missing'):
+            load_hf_token({},Path('/missing'))
+        value='{{ RUNPOD_SECRET_huggingface-read }}'
+        with self.assertRaises(ValueError) as exc:
+            load_hf_token({'HF_TOKEN':value})
+        self.assertNotIn(value,str(exc.exception))
+
     def bundle(self,root):
         root.mkdir()
         (root/'verification.json').write_text('{"passed": true}')

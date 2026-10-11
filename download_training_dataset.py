@@ -2,6 +2,7 @@
 import argparse
 import hashlib
 import json
+import os
 from pathlib import Path, PurePosixPath
 import re
 import subprocess
@@ -9,6 +10,32 @@ import subprocess
 
 REPOSITORY='Maxalderone/robot-openvla-panda'
 REVISION='8ffd54b1dd27022102aba0866b65a7a9ac4eefc7'
+
+
+def load_hf_token(environ=None,container_environment=Path('/proc/1/environ')):
+    """SSH may omit the HF_TOKEN injected into the container's PID 1.
+
+    Recover only HF_TOKEN in memory, without sourcing shell code or persisting
+    credentials. An explicitly provided shell token takes precedence.
+    """
+    environ=os.environ if environ is None else environ
+    token=environ.get('HF_TOKEN','')
+    source='shell environment'
+    if not token:
+        try:
+            entries=container_environment.read_bytes().split(b'\0')
+            token=next((entry.split(b'=',1)[1].decode() for entry in entries
+                        if entry.startswith(b'HF_TOKEN=')), '')
+        except (OSError,UnicodeError):
+            token=''
+        source='container environment'
+    token=token.strip()
+    if not token:
+        raise ValueError('HF_TOKEN is missing. Set it to the Hugging Face read secret on the pod.')
+    if '{{' in token or 'RUNPOD_SECRET' in token:
+        raise ValueError('HF_TOKEN contains an unresolved RunPod secret placeholder.')
+    environ['HF_TOKEN']=token
+    return source
 
 
 def verify_bundle(directory, checksums):
@@ -50,6 +77,11 @@ def main():
     p.add_argument('--revision',default=REVISION,help='Pinned completed upload; change explicitly for future bundles')
     args=p.parse_args()
     subprocess.run(['mountpoint','-q','/workspace'],check=True)
+    try:
+        source=load_hf_token()
+    except ValueError as exc:
+        p.error(str(exc))
+    print(f'Hugging Face authentication loaded from {source}.',flush=True)
     from huggingface_hub import HfApi,hf_hub_download,snapshot_download
     # Resolve any supplied tag to a commit once, so files cannot mix revisions.
     revision=HfApi().repo_info(args.repo,repo_type='dataset',revision=args.revision).sha

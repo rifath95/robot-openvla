@@ -58,6 +58,10 @@ the training template's environment variables using the secret picker. Do not
 paste the token into commands or Git. Launch with the existing network volume.
 No Docker rebuild is required.
 
+Some RunPod images pass `HF_TOKEN` to the container but omit it from SSH shells.
+The downloader automatically recovers only that variable from the container's
+environment when needed. It never prints the token or saves it in the dataset.
+
 After cloning/updating this repository in the cloud terminal, run:
 
 ```bash
