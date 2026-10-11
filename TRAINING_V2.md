@@ -116,3 +116,28 @@ Omitting the dataset argument preserves the old `training_v1` default.
 The wrapper checks the selected dataset, prints its path, and records it in the
 persistent session command. The existing tmux, outer timeout and automatic pod
 stop behavior remain. Confirm stopped status in RunPod after any cloud work.
+
+## Reuse the existing A40 batch benchmark
+
+No repeat benchmark or Docker rebuild is needed for v2. Both bundles use
+processed images of shape `[6, 224, 224]` and eight supervised tokens (seven
+action tokens plus the stop token). The existing reviewed A40 benchmark selects
+microbatch **8**, accumulation **1**, when its original files are present on the
+network volume and the GPU/training settings match. Selection is printed and
+saved in `batch_selection.json`; a missing/incompatible result uses the
+configured fallback and prints its reason.
+
+For the next 1,000-update baseline on the expanded bundle, after updating the
+cloud checkout and ensuring tmux is installed:
+
+```bash
+bash scripts/train_detached.sh training/pick_place_1000.json /workspace/panda-training/training_v2
+```
+
+This uses the expanded 250-trajectory bundle: **176 training**, **37 validation**,
+and **37 held-out test** trajectories. Validation/test examples are not trained
+on. At effective batch eight, 1,000 updates consume 8,000 sampled training steps;
+this is an initial baseline, not a guarantee that every training step is seen.
+Checkpoints and full validation occur every 250 updates. The existing one-hour
+inner training limit and 90-minute outer wrapper limit still apply. The wrapper
+requests a pod stop after it saves the results; confirm this in the portal.

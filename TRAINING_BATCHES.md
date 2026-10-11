@@ -52,15 +52,24 @@ rebuild needed. Stop status is saved on the volume in
 `train_panda.py` defaults to `--batch-policy auto`. It detects the actual GPU and
 looks in `/workspace/panda-training/batch-benchmarks` for matching capacity-mode
 measurements. Compatibility includes GPU name/VRAM/compute capability, PyTorch,
-Transformers, CUDA runtime, dataset SHA256SUMS identity, model export/config
-identity, LoRA rank/dropout, quantization, image augmentation, BF16 and eager
+Transformers, CUDA runtime, processed image shape/action-target format, model
+export/config identity, LoRA rank/dropout, quantization, image augmentation, BF16 and eager
 attention. The fastest completed candidate passing the headroom screen supplies
 the microbatch; accumulation is set to **one** for the initial training baseline.
 
 If there is no matching benchmark, the configured microbatch and accumulation
-are retained and the reason is printed. A v1 result does not automatically set
-the batch for v2. Legacy measurements without the new context identity are not
-automatically reused; benchmark the selected dataset once with current code.
+are retained and the reason is printed. Dataset names, checksum identities and
+trajectory counts do not have to match: v1 results can configure v2 when the
+GPU, model and training inputs/settings are compatible. Changing image shape,
+model or training settings still requires compatible measurements.
+
+The reviewed A40 run `20261011_054257_777818` predates context metadata and is
+also supported. Its original candidate `model_info.json` files must remain on
+the volume; GPU/VRAM, PyTorch, model path, LoRA settings and candidate batch
+settings are checked. Its Transformers 4.40.1/CUDA 12.1/BF16/eager configuration
+comes from the known pinned training image. Other legacy runs without context
+are excluded. For this reviewed run, the existing base-model path is trusted;
+new benchmarks additionally check model export/config identity.
 To refuse training rather than fall back, pass `--require-benchmark` to
 `train_panda.py`. To use manual settings, pass `--batch-policy config`.
 
@@ -73,7 +82,7 @@ decide total data exposure and validation cadence with the chosen effective batc
 
 ## Direct benchmark details
 
-Prepared locally; GPU measurements are pending. The previous run used microbatch
+The A40 capacity run is complete; see [GPU_BATCH_COMPARISON.md](GPU_BATCH_COMPARISON.md). The previous training run used microbatch
 1 with four accumulation steps: four individual image–instruction–action examples
 per parameter update, not four trajectories. Portal VRAM usage was about 27 GiB;
 PyTorch peak allocated memory was about 18 GiB. Allocator caching and other GPU
@@ -135,7 +144,7 @@ To find the tested memory boundary instead of checking only 1/2/4, run:
 ```
 
 This can run on the existing v1 volume copy while the Mac uploads v2 to Hugging
-Face. Confirm the selected batch on v2 before its full training run.
+Face. Its recommendation can be reused for v2 with compatible input/training settings.
 
 The adaptive mode tests 1, 2, 4, 8, ... until CUDA OOM. It then binary-searches
 between the last fitting and first failing size (e.g. 4 fits, 8 fails, then test
