@@ -175,7 +175,7 @@ def main():
             p.error('Session directory must be inside the benchmark sessions directory')
         from training.pod_environment import recover_pod_environment
         pod_id,key=recover_pod_environment()
-        command=[sys.executable,'-u',str(ROOT/'benchmark_training_batches.py'),
+        command=[sys.executable,'-u',"-m", 'training.benchmark_training_batches',
                  '--dataset',args.dataset,'--max-batch',str(args.max_batch)]
         if not args.controlled:command.append('--find-capacity')
         persistent_root=None

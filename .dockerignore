@@ -1,15 +1,17 @@
 **
-!Dockerfile
-!requirements-openvla.txt
-!Dockerfile.training
-!requirements-dataset.txt
-!requirements-training.txt
+!docker/
+!requirements/
+!docker/Dockerfile
+!requirements/requirements-openvla.txt
+!docker/Dockerfile.training
+!requirements/requirements-dataset.txt
+!requirements/requirements-training.txt
 !training/
 !training/fetch_upstream.py
 !training/upstream/
 !training/upstream/**
 
-!Dockerfile.training.blackwell
-!requirements-openvla-blackwell.txt
-!requirements-training-blackwell.txt
+!docker/Dockerfile.training.blackwell
+!requirements/requirements-openvla-blackwell.txt
+!requirements/requirements-training-blackwell.txt
 !training/check_training_stack.py

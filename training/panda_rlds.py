@@ -11,7 +11,7 @@ import numpy as np
 from PIL import Image
 from torch.utils.data import IterableDataset
 
-from prepare_training_dataset import normalize
+from data_tools.prepare_training_dataset import normalize
 
 
 class PandaRLDSDataset(IterableDataset):

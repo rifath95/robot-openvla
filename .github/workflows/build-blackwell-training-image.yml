@@ -23,7 +23,7 @@ jobs:
       - uses: docker/build-push-action@v6
         with:
           context: .
-          file: Dockerfile.training.blackwell
+          file: docker/Dockerfile.training.blackwell
           platforms: linux/amd64
           push: true
           tags: ${{ steps.image.outputs.name }}:${{ github.sha }}

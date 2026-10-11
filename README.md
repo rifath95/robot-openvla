@@ -4,11 +4,19 @@ A robotics workspace for connecting a simulated Franka Panda arm to OpenVLA. Dev
 
 Last updated: 2026-10-12. Update this document as milestones, run instructions, and model locations change.
 
+Code is organized by purpose: `simulation/`, `inference/`, `cloud/`,
+`data_tools/`, `training/`, and `analysis/`. Tests live in `tests/`, dependency
+lists in `requirements/`, and Dockerfiles in `docker/`.
+See the [repository layout](docs/REPOSITORY_LAYOUT.md) and
+[documentation index](docs/README.md) to find files and guides.
+The small root launchers preserve familiar commands such as
+`.venv/bin/python end_effector_demo.py` and `.venv/bin/python cloud_session.py`.
+
 For the planned A40 microbatch speed/memory comparison, see
-[TRAINING_BATCHES.md](TRAINING_BATCHES.md). GPU benchmarking is pending; the
+[TRAINING_BATCHES.md](docs/training/TRAINING_BATCHES.md). GPU benchmarking is pending; the
 existing training batch configuration is unchanged.
 The cross-GPU capacity and throughput table is in
-[GPU_BATCH_COMPARISON.md](GPU_BATCH_COMPARISON.md), including the measured A40
+[GPU_BATCH_COMPARISON.md](docs/benchmarks/GPU_BATCH_COMPARISON.md), including the measured A40
 capacity and throughput. Use `benchmark_cloud_session.py` on the Mac to run the
 cloud benchmark, download reports and automatically refresh the workspace copy.
 
@@ -22,7 +30,7 @@ convention, expert recorder, sequential replay, and Panda dataset statistics.
 One 72-action scripted contact pick/place passed recording/replay (13.7 cm lift,
 2.0 mm placement error). This verifies data collection. OpenVLA has since been
 fine-tuned, but successful model-driven pick-and-place has not been demonstrated.
-See [PANDA_DEMONSTRATIONS.md](PANDA_DEMONSTRATIONS.md).
+See [PANDA_DEMONSTRATIONS.md](docs/datasets/PANDA_DEMONSTRATIONS.md).
 
 ## Goal
 
@@ -73,8 +81,8 @@ Scripted task success and model-predicted movement were separate demonstrations.
 A short cloud trial measured mean prediction time of **0.34 s** and full cycle
 of **3.40 s**. These are historical measurements using the earlier 2 s movement
 interval; current commands use a 0.4 s interval. Model loading is a separate cost.
-See [CONTROL_FINDINGS.md](CONTROL_FINDINGS.md) and
-[CONTROL_CALIBRATION.md](CONTROL_CALIBRATION.md) for evidence and limitations.
+See [CONTROL_FINDINGS.md](docs/simulation/CONTROL_FINDINGS.md) and
+[CONTROL_CALIBRATION.md](docs/simulation/CONTROL_CALIBRATION.md) for evidence and limitations.
 
 **Completion means the remote control pipeline works.** Model-driven pickup has
 not been demonstrated. The latest grasp-point/interval changes and exhausted-retry
@@ -108,11 +116,11 @@ and starting arm poses; training statistics use only training episodes. See
 The dataset is now packaged as portable TFDS/RLDS episodes, with fixed splits
 and training-only normalization. A pinned integration of the official OpenVLA
 LoRA script adds periodic validation, local loss plots, adapter checkpoints and
-a 20-update smoke-test configuration. See [PHASE3_TRAINING.md](PHASE3_TRAINING.md)
+a 20-update smoke-test configuration. See [PHASE3_TRAINING.md](docs/training/PHASE3_TRAINING.md)
 for preparation, image-build, upload and training commands. The first cloud
 LoRA test completed 20 updates and saved adapters: final training loss 2.881,
 validation loss 3.794 on 64 held-out examples, peak PyTorch allocation 18.01 GiB.
-See [the smoke-test review](training/SMOKE_REVIEW.md). The 1,000-update run
+See [the smoke-test review](docs/training/SMOKE_REVIEW.md). The 1,000-update run
 completed with checkpoints at 250/500/750/1000 and full 507-example validation.
 Validation loss largely plateaued after 500 updates. Live trials approach and
 close near the cube but have not completed pick-and-place. An 80-image matched
@@ -124,12 +132,12 @@ positions and yaw angles. The new cohort reserves entire scene combinations
 for validation/test. Existing demonstrations, uploaded data and model checkpoints
 remain intact. There are now **250 total trajectories** (176 train / 37 validation
 / 37 test). The new hand starts span 28.5 / 43.6 / 20.8 cm in X/Y/Z and about
-−66° to +66° yaw. See [BROAD_PANDA_DATASET.md](BROAD_PANDA_DATASET.md) for collection,
+−66° to +66° yaw. See [BROAD_PANDA_DATASET.md](docs/datasets/BROAD_PANDA_DATASET.md) for collection,
 audit and per-trajectory replay instructions.
 
 Remaining goals:
 
-1. Upload the locally verified `training_v2` RLDS bundle, keeping the original dataset and held-out splits intact. See [TRAINING_V2.md](TRAINING_V2.md).
+1. Upload the locally verified `training_v2` RLDS bundle, keeping the original dataset and held-out splits intact. See [TRAINING_V2.md](docs/datasets/TRAINING_V2.md).
 2. Train and compare checkpoints on the expanded dataset, checking both generated actions and validation loss.
 3. Evaluate the adapted model on fixed held-out pick-and-place scenarios against the pretrained baseline, with separate results for legacy and broad starting poses.
 
@@ -139,7 +147,7 @@ and the adapted model has been observed and evaluated live on held-out scenarios
 with results compared with the pretrained baseline. Document limited success
 honestly; perfect performance is not a prerequisite for assessing the experiment.
 Training and exploratory live evaluation have run; controlled held-out task-success assessment remains. See
-[PANDA_DEMONSTRATIONS.md](PANDA_DEMONSTRATIONS.md) for the current data workflow.
+[PANDA_DEMONSTRATIONS.md](docs/datasets/PANDA_DEMONSTRATIONS.md) for the current data workflow.
 
 ### Phase 4 — planned: broader tasks and transfer
 
@@ -169,55 +177,55 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | File | Purpose |
 | --- | --- |
 | `scene.xml` | Panda scene, floor, table, cube, camera, and `scene_home` starting state. |
-| `panda_actions.py` | Shared Panda action bounds, rotation rule, grasp point, gripper conversion and fixed interval. |
-| `collect_panda_expansion.py` | Collects 40 additional scenes with placement, approach, yaw and starting-pose variation; combines only training episodes for statistics. |
-| `collect_panda_pilot.py` | Records a predeclared ten-scene pick-and-place pilot with 6 training / 2 validation / 2 test episodes; only training episodes enter staging normalization. |
-| `panda_demonstrations.py` | Records expert image/action transitions and verifies sequential contact-physics replay. |
-| `prepare_panda_dataset.py` | Validates replayed expert episodes and exports JSONL plus Panda statistics. |
-| `test_panda_demonstrations.py` / `PANDA_DEMONSTRATIONS.md` | Recording/replay, dataset eligibility tests and usage guide. |
+| `simulation/panda_actions.py` | Shared Panda action bounds, rotation rule, grasp point, gripper conversion and fixed interval. |
+| `data_tools/collect_panda_expansion.py` | Collects 40 additional scenes with placement, approach, yaw and starting-pose variation; combines only training episodes for statistics. |
+| `data_tools/collect_panda_pilot.py` | Records a predeclared ten-scene pick-and-place pilot with 6 training / 2 validation / 2 test episodes; only training episodes enter staging normalization. |
+| `data_tools/panda_demonstrations.py` | Records expert image/action transitions and verifies sequential contact-physics replay. |
+| `data_tools/prepare_panda_dataset.py` | Validates replayed expert episodes and exports JSONL plus Panda statistics. |
+| `tests/test_panda_demonstrations.py` / `docs/datasets/PANDA_DEMONSTRATIONS.md` | Recording/replay, dataset eligibility tests and usage guide. |
 | `launch_sim.py` | Opens the scene in the standard MuJoCo viewer with actuator controls. |
 | `end_effector_demo.py` | Opens a simulator with keyboard control of the seven action components. |
-| `panda_controller.py` | Implements the action interface, inverse kinematics, joint targets, and physics stepping. |
-| `panda_env.py` | Reusable simulation wrapper with reset, camera observation, and action/step methods. |
-| `move_joint_demo.py` | Demonstrates a small movement of one joint. |
-| `pick_place_demo.py` | Scripted cube pick-and-place; the movements are not predicted by OpenVLA. |
-| `capture_camera.py` | Saves the fixed-camera view to `camera_image.png`; also provides a PNG writer. |
-| `try_openvla_mac.py` | Runs the GPU check, checkpoint download/cache check, and one action prediction; updates status and logs. |
+| `simulation/panda_controller.py` | Implements the action interface, inverse kinematics, joint targets, and physics stepping. |
+| `simulation/panda_env.py` | Reusable simulation wrapper with reset, camera observation, and action/step methods. |
+| `simulation/demos/move_joint_demo.py` | Demonstrates a small movement of one joint. |
+| `simulation/demos/pick_place_demo.py` | Scripted cube pick-and-place; the movements are not predicted by OpenVLA. |
+| `simulation/capture_camera.py` | Saves the fixed-camera view to `camera_image.png`; also provides a PNG writer. |
+| `inference/examples/try_openvla_mac.py` | Runs the GPU check, checkpoint download/cache check, and one action prediction; updates status and logs. |
 | `openvla_mac.py` | Local inference entry point: loads the processor/model, processes image and instruction, calls `predict_action()`, and saves the result. |
-| `openvla_single_action.py` | Captures a fresh scene, predicts one action, executes a bounded command, and saves before/after images and a movement report. |
-| `openvla_loop.py` | Runs three successive observation/action cycles while loading OpenVLA once; saves each image, prediction, movement, and timing. |
-| `requirements-openvla-mac.txt` | Dependencies for the isolated OpenVLA environment. |
-| `requirements-openvla.txt` | Shared pinned inference dependencies for Mac and Linux. |
-| `requirements-sim-linux.txt` | Linux/Python 3.11 simulation dependencies for cloud runs. |
-| `CLOUD_SETUP.md` | Linux NVIDIA GPU setup, headless rendering checks, and the CUDA loop benchmark. |
-| `cloud_startup_metrics.py` | Records checkpoint preparation, mount and host information for session startup reports. |
+| `inference/openvla_single_action.py` | Captures a fresh scene, predicts one action, executes a bounded command, and saves before/after images and a movement report. |
+| `inference/openvla_loop.py` | Runs three successive observation/action cycles while loading OpenVLA once; saves each image, prediction, movement, and timing. |
+| `requirements/requirements-openvla-mac.txt` | Dependencies for the isolated OpenVLA environment. |
+| `requirements/requirements-openvla.txt` | Shared pinned inference dependencies for Mac and Linux. |
+| `requirements/requirements-sim-linux.txt` | Linux/Python 3.11 simulation dependencies for cloud runs. |
+| `docs/cloud/CLOUD_SETUP.md` | Linux NVIDIA GPU setup, headless rendering checks, and the CUDA loop benchmark. |
+| `cloud/cloud_startup_metrics.py` | Records checkpoint preparation, mount and host information for session startup reports. |
 | `cloud_session.py` | One Mac command to prepare a GPU host, open the SSH tunnel, wait for model readiness, and launch repeated local trials. |
 | `scripts/cloud_start.sh` / `scripts/cloud_stop.sh` | Linux setup and recorded server lifecycle; reuse preinstalled Docker dependencies or install the tested environment. |
-| `Dockerfile` / `.github/workflows/build-cloud-image.yml` | Dependency image and manual GitHub Container Registry build/publication workflow; weights remain on the external volume. |
-| `CLOUD_QUICKSTART.md` | Simplified session instructions and one-time Docker publication/template setup. |
-| `test_cloud_session.py` | SSH input, readiness, and lifecycle orchestration tests without a GPU or remote connection. |
-| `connection_server.py` | HTTP server with fixed-action test mode and explicit resident OpenVLA inference mode. |
-| `connection_client.py` | Captures a MuJoCo image, sends it with an instruction, and saves returned test/model actions and timings; never moves the arm. |
-| `requirements-connection-server.txt` | Pillow dependency for the lightweight connection server. |
-| `CONNECTION_TEST.md` | Local connection-test commands, later SSH-tunnel setup, output files, and timing interpretation. |
-| `openvla_backend.py` | Loads OpenVLA once and predicts actions with processor and synchronized GPU inference timings. |
-| `prepare_cloud_model.py` | Downloads the pinned model locally and exports regular files to Global storage for reuse. |
-| `REMOTE_INFERENCE.md` | Cloud model setup and one real prediction through an SSH tunnel, without robot movement. |
-| `RUNPOD_CONNECTION_GUIDE.md` | Copyable session checklist for pod setup, SSH login, three terminal roles, model reuse, prediction, and shutdown. |
-| `run_report.py` | Automatically writes each trial’s RUN_REPORT.md with startup/GPU/storage details and full-cycle timing before detailed breakdowns; can regenerate reports for existing runs. |
-| `replay_run.py` / `REPLAY.md` | Offline saved-run viewer with pause/resume and speed control; new run folders include `replay.py` and sampled motion frames. |
-| `remote_loop.py` | Repeats cloud predictions and bounded local movements with a live viewer, Space pause/resume, a default 100-action budget, per-step artifacts, and a runtime limit excluding pauses, IK size retries, and bounded hold/re-predict recovery. |
-| `test_ik_retries.py` / `tests/fixtures/ik_step*.json` | Saved real step-96/97 regressions: size recovery, target restoration, and offline solver analysis. |
-| `control_diagnostics.py` / `analyze_remote_run.py` | Read-only pose metrics and offline trajectory/IK investigation without a GPU. |
-| `CONTROL_FINDINGS.md` | Measured drift, solver findings, bounded recovery design, checks, and next calibration work. |
-| `calibrate_controls.py` / `CONTROL_CALIBRATION.md` | Local known-command movement, rotation, gripper and camera checks with before/after images; comparison with upstream conventions. |
-| `preview_model_input.py` | Saves the actual cached image processor's backbone inputs without loading weights or predicting actions. |
-| `test_remote_loop.py` | Real MuJoCo and HTTP fixture checks for repeated observations, stop/runtime limits, and failure handling. |
-| `remote_single_action.py` | Requests one cloud prediction from a preserved local scene, executes a bounded command, saves before/after images and movement timings, and optionally shows the final scene. |
-| `REMOTE_SINGLE_ACTION.md` | Cloud-to-movement run instructions, output files, limits, and verification status. |
-| `test_remote_single_action.py` | Real MuJoCo movement and rejection checks against local HTTP fixture responses. |
-| `test_remote_inference.py` | Contract tests using substituted model objects; does not run the real 7B checkpoint. |
-| `robot_controls.py` | Earlier browser-based control panel; the current keyboard demo does not use it. |
+| `docker/Dockerfile` / `.github/workflows/build-cloud-image.yml` | Dependency image and manual GitHub Container Registry build/publication workflow; weights remain on the external volume. |
+| `docs/cloud/CLOUD_QUICKSTART.md` | Simplified session instructions and one-time Docker publication/template setup. |
+| `tests/test_cloud_session.py` | SSH input, readiness, and lifecycle orchestration tests without a GPU or remote connection. |
+| `cloud/connection_server.py` | HTTP server with fixed-action test mode and explicit resident OpenVLA inference mode. |
+| `cloud/connection_client.py` | Captures a MuJoCo image, sends it with an instruction, and saves returned test/model actions and timings; never moves the arm. |
+| `requirements/requirements-connection-server.txt` | Pillow dependency for the lightweight connection server. |
+| `docs/cloud/CONNECTION_TEST.md` | Local connection-test commands, later SSH-tunnel setup, output files, and timing interpretation. |
+| `inference/openvla_backend.py` | Loads OpenVLA once and predicts actions with processor and synchronized GPU inference timings. |
+| `cloud/prepare_cloud_model.py` | Downloads the pinned model locally and exports regular files to Global storage for reuse. |
+| `docs/cloud/REMOTE_INFERENCE.md` | Cloud model setup and one real prediction through an SSH tunnel, without robot movement. |
+| `docs/cloud/RUNPOD_CONNECTION_GUIDE.md` | Copyable session checklist for pod setup, SSH login, three terminal roles, model reuse, prediction, and shutdown. |
+| `analysis/run_report.py` | Automatically writes each trial’s RUN_REPORT.md with startup/GPU/storage details and full-cycle timing before detailed breakdowns; can regenerate reports for existing runs. |
+| `replay_run.py` / `docs/simulation/REPLAY.md` | Offline saved-run viewer with pause/resume and speed control; new run folders include `replay.py` and sampled motion frames. |
+| `inference/remote_loop.py` | Repeats cloud predictions and bounded local movements with a live viewer, Space pause/resume, a default 100-action budget, per-step artifacts, and a runtime limit excluding pauses, IK size retries, and bounded hold/re-predict recovery. |
+| `tests/test_ik_retries.py` / `tests/fixtures/ik_step*.json` | Saved real step-96/97 regressions: size recovery, target restoration, and offline solver analysis. |
+| `simulation/control_diagnostics.py` / `analysis/analyze_remote_run.py` | Read-only pose metrics and offline trajectory/IK investigation without a GPU. |
+| `docs/simulation/CONTROL_FINDINGS.md` | Measured drift, solver findings, bounded recovery design, checks, and next calibration work. |
+| `simulation/calibrate_controls.py` / `docs/simulation/CONTROL_CALIBRATION.md` | Local known-command movement, rotation, gripper and camera checks with before/after images; comparison with upstream conventions. |
+| `analysis/preview_model_input.py` | Saves the actual cached image processor's backbone inputs without loading weights or predicting actions. |
+| `tests/test_remote_loop.py` | Real MuJoCo and HTTP fixture checks for repeated observations, stop/runtime limits, and failure handling. |
+| `inference/remote_single_action.py` | Requests one cloud prediction from a preserved local scene, executes a bounded command, saves before/after images and movement timings, and optionally shows the final scene. |
+| `docs/cloud/REMOTE_SINGLE_ACTION.md` | Cloud-to-movement run instructions, output files, limits, and verification status. |
+| `tests/test_remote_single_action.py` | Real MuJoCo movement and rejection checks against local HTTP fixture responses. |
+| `tests/test_remote_inference.py` | Contract tests using substituted model objects; does not run the real 7B checkpoint. |
+| `simulation/robot_controls.py` | Earlier browser-based control panel; the current keyboard demo does not use it. |
 | `mujoco_menagerie/` | Cloned upstream robot models and mesh assets. |
 | `.venv/` | Simulation Python environment. |
 | `.venv-openvla/` | Separate Python environment containing PyTorch, Transformers, and OpenVLA inference dependencies. |
@@ -228,7 +236,7 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 
 For cloud sessions, use `.venv/bin/python cloud_session.py` on the Mac and paste
 the current RunPod SSH command when prompted. It prepares the server/tunnel and
-opens the paused 100-step simulator. See [CLOUD_QUICKSTART.md](CLOUD_QUICKSTART.md)
+opens the paused 100-step simulator. See [CLOUD_QUICKSTART.md](docs/cloud/CLOUD_QUICKSTART.md)
 for the one-time Docker build and session shutdown. The Docker image was built and tested on an A40; set `PUBLIC_KEY` in the
 custom template so its startup script enables SSH.
 
@@ -246,7 +254,7 @@ For simulation, install Python 3.14 and create the local environment:
 
 ```bash
 python3.14 -m venv .venv
-.venv/bin/python -m pip install -r requirements-sim.txt
+.venv/bin/python -m pip install -r requirements/requirements-sim.txt
 .venv/bin/python launch_sim.py
 ```
 
@@ -254,18 +262,18 @@ For the current Mac OpenVLA test, install Python 3.11 separately:
 
 ```bash
 python3.11 -m venv .venv-openvla
-.venv-openvla/bin/python -m pip install -r requirements-openvla-mac.txt
-.venv/bin/python capture_camera.py
-.venv-openvla/bin/python try_openvla_mac.py
+.venv-openvla/bin/python -m pip install -r requirements/requirements-openvla-mac.txt
+.venv/bin/python -m simulation.capture_camera
+.venv-openvla/bin/python -m inference.examples.try_openvla_mac
 ```
 
-The first OpenVLA run needs internet access and downloads approximately 15 GB of weights from Hugging Face into `.cache-openvla/`. It then attempts inference using the Mac's MPS GPU. Subsequent runs reuse downloaded checkpoint files. Model loading and inference also require substantial memory. These setup commands describe the tested Mac path; use [CLOUD_SETUP.md](CLOUD_SETUP.md) for Linux/CUDA. The Mac inference wrapper does not move the robot.
+The first OpenVLA run needs internet access and downloads approximately 15 GB of weights from Hugging Face into `.cache-openvla/`. It then attempts inference using the Mac's MPS GPU. Subsequent runs reuse downloaded checkpoint files. Model loading and inference also require substantial memory. These setup commands describe the tested Mac path; use [CLOUD_SETUP.md](docs/cloud/CLOUD_SETUP.md) for Linux/CUDA. The Mac inference wrapper does not move the robot.
 
 Missing environments must be installed before running scripts, and missing submodule assets will prevent the Panda scene from loading. A fresh clone will not contain the original machine's result files; generate your own camera image and inference result with the commands above.
 
 ### Run individual demos
 
-Open the desired script in VS Code and choose **Run Python File**. Select `.venv/bin/python` for simulation scripts. The OpenVLA wrapper `try_openvla_mac.py` selects `.venv-openvla/bin/python` itself.
+Open the desired script in VS Code and choose **Run Python File**. Select `.venv/bin/python` for simulation scripts. The OpenVLA wrapper `inference/examples/try_openvla_mac.py` selects `.venv-openvla/bin/python` itself.
 
 Each viewer script launches its own window; **do not run `launch_sim.py` first** when using another demo.
 
@@ -274,9 +282,9 @@ From a terminal in this workspace:
 ```bash
 .venv/bin/python launch_sim.py
 .venv/bin/python end_effector_demo.py
-.venv/bin/python pick_place_demo.py
-.venv/bin/python capture_camera.py
-.venv-openvla/bin/python try_openvla_mac.py
+.venv/bin/python -m simulation.demos.pick_place_demo
+.venv/bin/python -m simulation.capture_camera
+.venv-openvla/bin/python -m inference.examples.try_openvla_mac
 ```
 
 These are separate options, not a sequence that must all be run. To run inference directly from the already downloaded checkpoint:
@@ -289,10 +297,10 @@ The direct command saves the action but does not update the wrapper's status fil
 
 ### One model-predicted movement
 
-Run `openvla_single_action.py` in VS Code, or use:
+Run `inference/openvla_single_action.py` in VS Code, or use:
 
 ```bash
-.venv/bin/python openvla_single_action.py
+.venv/bin/python -m inference.openvla_single_action
 ```
 
 It launches the simulation and inference stages in their respective environments. After fresh inference finishes, it restores the scene state that produced the input image, executes one bounded command, and opens the final scene in the standard viewer. No simulation advances during inference. Use `--no-view` to save results without opening the final viewer. You do not need to launch another simulator first.
@@ -303,10 +311,10 @@ This is a provisional plumbing test using `bridge_orig` statistics and an identi
 
 ### Three-action feedback loop
 
-Run `openvla_loop.py` in VS Code, or:
+Run `inference/openvla_loop.py` in VS Code, or:
 
 ```bash
-.venv/bin/python openvla_loop.py
+.venv/bin/python -m inference.openvla_loop
 ```
 
 It loads OpenVLA once, predicts an action from the first image, advances the simulation, and feeds the resulting image into the next prediction. It stops after three actions. No final viewer is opened; inspect the saved images. Physics stays frozen during inference, and the same provisional mapping and per-action bounds apply. The simulated state is carried forward rather than reset between actions.
@@ -324,7 +332,7 @@ Results are saved in `outputs/openvla_loop_<timestamp>/`:
 
 In `end_effector_demo.py`, click inside the simulator window to give it keyboard focus.
 
-The manual viewer now uses `scene_bowl.xml`: a red cube and a blue bowl
+The manual viewer now uses `simulation/scenes/scene_bowl.xml`: a red cube and a blue bowl
 on the table. The task is **"pick up the red cube and place it in the blue
 bowl"**. On every launch, cube and bowl positions and the arm's starting
 position/yaw are randomized. Starts are settled and collision checked; object
@@ -344,7 +352,7 @@ the fixed workspace camera initially and is the recommended manual interface.
 The bowl is fixed in place during each trial, with a physical floor and walls.
 The new scene uses stronger closing pressure and higher-friction finger pads;
 grasping still depends on alignment and physical contact. See
-[BOWL_SCENE.md](BOWL_SCENE.md) for settings and verification.
+[BOWL_SCENE.md](docs/simulation/BOWL_SCENE.md) for settings and verification.
 The original `scene.xml` remains available for existing recordings and replays.
 
 | Key | Move mode | Rotate mode |
@@ -366,7 +374,7 @@ The camera can also be switched using `]`. The passive-viewer demos step physics
 
 Our entry point is **`openvla_mac.py`**. The neural-network implementation is official OpenVLA code downloaded from Hugging Face using `trust_remote_code=True`; the OpenVLA GitHub repository has not been cloned into this workspace.
 
-For remote serving, **`openvla_backend.py`** loads the same official model implementation and processor. **`connection_server.py --mode openvla`** keeps them loaded between HTTP requests. Cloud weights can be stored as regular files in `/workspace/openvla-7b` using `prepare_cloud_model.py`; the original Mac cache paths below remain unchanged.
+For remote serving, **`inference/openvla_backend.py`** loads the same official model implementation and processor. **`connection_server.py --mode openvla`** keeps them loaded between HTTP requests. Cloud weights can be stored as regular files in `/workspace/openvla-7b` using `cloud/prepare_cloud_model.py`; the original Mac cache paths below remain unchanged.
 
 The pinned model snapshot is:
 
@@ -426,9 +434,9 @@ budgeted fine-tuning experiment. The successful scripted episode is the data
 pipeline's first check. See [Project phases](#project-phases) for completed work,
 remaining goals, and the planned Phase 4 expansion.
 
-Use [CLOUD_QUICKSTART.md](CLOUD_QUICKSTART.md) for existing remote sessions and
-[PANDA_DEMONSTRATIONS.md](PANDA_DEMONSTRATIONS.md) for local recording/replay.
+Use [CLOUD_QUICKSTART.md](docs/cloud/CLOUD_QUICKSTART.md) for existing remote sessions and
+[PANDA_DEMONSTRATIONS.md](docs/datasets/PANDA_DEMONSTRATIONS.md) for local recording/replay.
 Running both simulation and inference in the cloud remains an optional separate
-path described in [CLOUD_SETUP.md](CLOUD_SETUP.md), rather than a Phase 2 requirement.
+path described in [CLOUD_SETUP.md](docs/cloud/CLOUD_SETUP.md), rather than a Phase 2 requirement.
 
 Upstream references: [OpenVLA](https://github.com/openvla/openvla), [checkpoint](https://huggingface.co/openvla/openvla-7b), [LoRA fine-tuning](https://github.com/openvla/openvla#fine-tuning-openvla-via-lora), [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie).

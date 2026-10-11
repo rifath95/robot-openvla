@@ -8,8 +8,8 @@ import subprocess
 import sys
 import time
 
-from download_training_dataset import verify_bundle
-from prepare_cloud_model import MODEL_ID,REVISION
+from cloud.download_training_dataset import verify_bundle
+from cloud.prepare_cloud_model import MODEL_ID,REVISION
 from training.detached_run import ROOT,api_request
 from training.pod_environment import recover_pod_environment
 
@@ -105,7 +105,7 @@ def main():
     metadata_path=LOCAL_ROOT/'input_staging.json'
     metadata_path.write_text(json.dumps(metadata,indent=2)+'\n')
     os.environ['PANDA_BENCHMARK_STAGING_METADATA']=str(metadata_path)
-    command=[sys.executable,'-u',str(ROOT/'benchmark_training_batches.py'),
+    command=[sys.executable,'-u',"-m", 'training.benchmark_training_batches',
              '--dataset',str(dataset),'--model',str(model),
              '--output-root',str(LOCAL_ROOT/'batch-benchmarks'),'--max-batch',str(args.max_batch)]
     if not args.controlled:command.append('--find-capacity')

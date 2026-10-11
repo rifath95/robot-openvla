@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 if [[ -s outputs/cloud_server.pid ]]; then
   pid="$(cat outputs/cloud_server.pid)"
-  if [[ "$pid" =~ ^[0-9]+$ ]] && [[ -r "/proc/$pid/cmdline" ]] && tr '\0' ' ' < "/proc/$pid/cmdline" | grep -q 'connection_server.py'; then
+  if [[ "$pid" =~ ^[0-9]+$ ]] && [[ -r "/proc/$pid/cmdline" ]] && tr '\0' ' ' < "/proc/$pid/cmdline" | grep -Eq 'connection_server.py|cloud.connection_server'; then
     kill "$pid"
     echo 'Model server stopped. The pod still bills until stopped in the portal.'
   fi

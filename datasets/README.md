@@ -37,9 +37,9 @@ verification is a separate sequential replay check.
 Future collection defaults:
 
 ```bash
-.venv/bin/python collect_panda_pilot.py
-.venv/bin/python panda_demonstrations.py
-.venv/bin/python prepare_panda_dataset.py datasets/panda_pick_place/episodes/<EPISODE>
+.venv/bin/python -m data_tools.collect_panda_pilot
+.venv/bin/python -m data_tools.panda_demonstrations
+.venv/bin/python -m data_tools.prepare_panda_dataset datasets/panda_pick_place/episodes/<EPISODE>
 ```
 
 The pilot collector creates a timestamped batch under `datasets/panda_pick_place/`
@@ -53,11 +53,11 @@ JSONL exports reference absolute
 local image paths: after copying to another machine, regenerate exports there.
 Replay launchers locate the repository among their parent directories; moving
 an episode outside this repository requires the repository to remain available.
-See [PANDA_DEMONSTRATIONS.md](../PANDA_DEMONSTRATIONS.md) for eligibility checks.
+See [PANDA_DEMONSTRATIONS.md](../docs/datasets/PANDA_DEMONSTRATIONS.md) for eligibility checks.
 
 ## Expanded collection
 
-`collect_panda_expansion.py` adds a reproducible 40-scene plan (30 train / 5
+`data_tools/collect_panda_expansion.py` adds a reproducible 40-scene plan (30 train / 5
 validation / 5 test) under `panda_pick_place/panda_expansion_<timestamp>/`. It
 combines successful training episodes with the pilot in `combined_train_staging/`
 and lists all selected scenes in `combined_manifest.json`; the earlier seed is
@@ -81,7 +81,7 @@ files are excluded from GitHub.
 in TFRecords; no Mac paths are needed in the cloud. Training-only statistics,
 split manifest, verification, input checks and upload checksums accompany it.
 This package is generated and ignored by Git. See
-[PHASE3_TRAINING.md](../PHASE3_TRAINING.md) for checks and cloud instructions.
+[PHASE3_TRAINING.md](../docs/training/PHASE3_TRAINING.md) for checks and cloud instructions.
 
 ## Broad starting-pose collection
 
@@ -96,9 +96,9 @@ splits. All 200 passed task execution, replay and the saved-pose audit. The orig
 index links all 250. New and combined training-only staging data are included;
 The expanded RLDS package is now in `panda_pick_place/training_v2/`, with its own
 training-only statistics, portable images/labels and upload checksums. Upload
-and a new training run have not been performed. See [TRAINING_V2.md](../TRAINING_V2.md).
+and a new training run have not been performed. See [TRAINING_V2.md](../docs/datasets/TRAINING_V2.md).
 
-See [BROAD_PANDA_DATASET.md](../BROAD_PANDA_DATASET.md) for commands and checks.
+See [BROAD_PANDA_DATASET.md](../docs/datasets/BROAD_PANDA_DATASET.md) for commands and checks.
 Use the batch's `WATCH_TRAJECTORIES.md` to find accepted episodes, including
 successful retries. `COLLECTION_SUMMARY.md` reports actual measured diversity
 and task/replay checks. Each trajectory includes its own `replay.py`.
