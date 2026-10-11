@@ -302,6 +302,8 @@ recorded in [PIPELINE_AUDIT.md](PIPELINE_AUDIT.md).
 The subsequent approach-error analysis and recommendation for a matched
 teacher-forced/generated-action check are in
 [PHASE3_LEARNING_REVIEW.md](PHASE3_LEARNING_REVIEW.md).
+The paired diagnostic is implemented and documented in
+[MATCHED_EVALUATION.md](MATCHED_EVALUATION.md); actual GPU results are pending.
 
 For a saved-demonstration diagnostic before more training, follow
 [EXPERT_EVALUATION.md](EXPERT_EVALUATION.md). It compares real HTTP-generated

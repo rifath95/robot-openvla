@@ -30,7 +30,7 @@ def capture_png(path):
 
 def request_prediction(image_path, instruction, *, server_url="http://127.0.0.1:8000",
                        expected_mode="openvla", timeout_seconds=180,
-                       request_id=None, progress=None):
+                       request_id=None, progress=None, expert_action=None):
     """Request and validate one action, without touching any simulation state."""
     url = urlsplit(server_url)
     if url.scheme != "http" or not url.hostname or url.path not in ("", "/") or url.query or url.fragment or url.username:
@@ -41,8 +41,15 @@ def request_prediction(image_path, instruction, *, server_url="http://127.0.0.1:
         raise ValueError("Unknown expected server mode")
     request_id = request_id or uuid.uuid4().hex
     started = time.perf_counter()
-    body = json.dumps({"request_id": request_id, "instruction": instruction,
-                       "image_png_base64": base64.b64encode(Path(image_path).read_bytes()).decode("ascii")}).encode()
+    payload = {"request_id": request_id, "instruction": instruction,
+               "image_png_base64": base64.b64encode(Path(image_path).read_bytes()).decode("ascii")}
+    if expert_action is not None:
+        if (expected_mode != 'openvla' or not isinstance(expert_action, list) or len(expert_action) != 7
+                or any(type(x) not in (int, float) or not math.isfinite(x) for x in expert_action)
+                or not 0 <= expert_action[6] <= 1):
+            raise ValueError('Matched diagnostic requires seven finite expert values and OpenVLA mode')
+        payload['expert_action'] = expert_action
+    body = json.dumps(payload, allow_nan=False).encode()
     encoded = time.perf_counter()
     if progress:
         progress("Sending image")
@@ -51,7 +58,8 @@ def request_prediction(image_path, instruction, *, server_url="http://127.0.0.1:
         connect_started = time.perf_counter()
         connection.connect()
         connected = time.perf_counter()
-        connection.request("POST", "/predict", body=body, headers={"Content-Type": "application/json"})
+        connection.request("POST", "/diagnose" if expert_action is not None else "/predict",
+                           body=body, headers={"Content-Type": "application/json"})
         sent = time.perf_counter()
         if progress:
             progress("Waiting for OpenVLA prediction" if expected_mode == "openvla" else "Waiting for test response")
@@ -71,6 +79,23 @@ def request_prediction(image_path, instruction, *, server_url="http://127.0.0.1:
         action = result.get("action")
         if not isinstance(action, list) or len(action) != 7 or any(type(x) not in (int, float) or not math.isfinite(x) for x in action):
             raise ValueError("Response must contain seven finite action numbers")
+        if expert_action is not None:
+            teacher = result.get('teacher_forced', {})
+            action = teacher.get('action')
+            if (not isinstance(action, list) or len(action) != 7
+                    or any(type(x) not in (int, float) or not math.isfinite(x) for x in action)
+                    or teacher.get('prompt_and_pixels_match_generation') is not True
+                    or teacher.get('supervised_tokens') != 8):
+                raise ValueError('Missing or invalid matched teacher-forced result')
+            for field in ('action_token_accuracy', 'normalized_l1_token_targets', 'loss_including_stop'):
+                value = teacher.get(field)
+                if type(value) not in (int, float) or not math.isfinite(value):
+                    raise ValueError(f'Invalid teacher-forced metric: {field}')
+            for field, value_type in (('token_matches', bool), ('invalid_action_tokens', bool),
+                                      ('predicted_token_ids', int), ('target_token_ids', int)):
+                values = teacher.get(field)
+                if not isinstance(values, list) or len(values) != 7 or any(type(x) is not value_type for x in values):
+                    raise ValueError(f'Invalid teacher-forced components: {field}')
         result["client_timings_seconds"] = {
             "encode_request": encoded - started,
             "connect": connected - connect_started,

@@ -21,7 +21,7 @@ def official_batch_transform(processor):
     import torch
     from transformers import PreTrainedTokenizerBase
     from training.upstream.prompting import PurePromptBuilder
-    root=Path('training/upstream')
+    root=Path(__file__).resolve().parent/'training/upstream'
     tokenizer_scope={'np':np,'List':list,'Union':__import__('typing').Union,
                      'PreTrainedTokenizerBase':PreTrainedTokenizerBase}
     exec(compile((root/'action_tokenizer.py').read_text(),str(root/'action_tokenizer.py'),'exec'),tokenizer_scope)

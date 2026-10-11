@@ -44,10 +44,11 @@ class Handler(BaseHTTPRequestHandler):
         self.send_json(200, {"status": "ready", "mode": self.server.mode,
                              "model_loaded": self.server.predictor is not None,
                              "model_load_seconds": getattr(self.server.predictor, "load_seconds", None),
-                             "startup_info": getattr(self.server.predictor, "startup_info", {})})
+                             "startup_info": getattr(self.server.predictor, "startup_info", {}),
+                             "matched_diagnostic_available": callable(getattr(self.server.predictor, 'diagnose', None))})
 
     def do_POST(self):
-        if self.path != "/predict":
+        if self.path not in ("/predict", "/diagnose"):
             self.send_json(404, {"error": "Unknown endpoint"})
             return
         started = time.perf_counter()
@@ -75,6 +76,12 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("instruction must be nonempty and at most 4096 characters")
             if not isinstance(encoded, str):
                 raise ValueError("image_png_base64 must be a string")
+            expert_action = payload.get('expert_action')
+            if self.path == '/diagnose':
+                if (not isinstance(expert_action, list) or len(expert_action) != 7
+                        or any(type(x) not in (int, float) or not math.isfinite(x) for x in expert_action)
+                        or not 0 <= expert_action[6] <= 1):
+                    raise ValueError('Diagnostic requires seven finite expert action values, gripper in [0,1]')
             png = base64.b64decode(encoded, validate=True)
             with warnings.catch_warnings():
                 warnings.simplefilter("error", Image.DecompressionBombWarning)
@@ -92,12 +99,16 @@ class Handler(BaseHTTPRequestHandler):
         inference = {"action": TEST_ACTION,
                      "action_convention": "Panda controller: world XYZ metres, rotation radians, gripper -1 closed / +1 open",
                      "timings_seconds": {"processor_and_device_transfer": None, "model_inference": None}}
+        if self.path == '/diagnose' and not callable(getattr(self.server.predictor, 'diagnose', None)):
+            self.send_json(409, {'error': 'Matched diagnostic requires an updated loaded OpenVLA server'})
+            return
         if self.server.predictor is not None:
             if not self.server.prediction_lock.acquire(blocking=False):
                 self.send_json(503, {"error": "Model is busy; wait for the current prediction to finish", "request_id": request_id})
                 return
             try:
-                inference = self.server.predictor.predict(rgb, instruction)
+                inference = (self.server.predictor.diagnose(rgb, instruction, expert_action)
+                             if self.path == '/diagnose' else self.server.predictor.predict(rgb, instruction))
             except Exception as exc:
                 self.log_error("Prediction failed: %s", exc)
                 self.send_json(500, {"error": "OpenVLA prediction failed; inspect the server log", "request_id": request_id})

@@ -160,6 +160,60 @@ def save_report(output, plan, rows, phase, error=None):
     if error:
         lines.extend(['', f'Error: {error}'])
     (output / 'EVALUATION_REPORT.md').write_text('\n'.join(lines)+'\n')
+    if plan.get('matched_diagnostic'):
+        save_matched_report(output, plan, rows, phase, error)
+
+
+def save_matched_report(output, plan, rows, phase, error=None):
+    """Both action errors use the same physical labels and normalization bounds."""
+    def metrics(selected):
+        if not selected:
+            return {'examples': 0}
+        teacher_rows = [dict(comparison=r['teacher_forced_comparison']) for r in selected]
+        teacher = [r['prediction']['teacher_forced'] for r in selected]
+        return dict(examples=len(selected), generated=aggregate(selected), teacher_forced=aggregate(teacher_rows),
+                    teacher_action_token_accuracy=float(np.mean([t['action_token_accuracy'] for t in teacher])),
+                    teacher_loss_including_stop=float(np.mean([t['loss_including_stop'] for t in teacher])),
+                    teacher_normalized_l1_token_targets=float(np.mean([t['normalized_l1_token_targets'] for t in teacher])),
+                    teacher_invalid_action_token_count=sum(sum(t['invalid_action_tokens']) for t in teacher),
+                    teacher_token_accuracy_per_component=np.mean([t['token_matches'] for t in teacher],axis=0).tolist())
+    groups = {g: metrics([r for r in rows if r['group'] == g]) for g in plan['population_counts']}
+    result = dict(phase=phase, error=error, completed=len(rows), planned=len(plan['samples']),
+                  overall=metrics(rows), groups=groups, robot_moved=False)
+    (output/'matched_summary.json').write_text(json.dumps(result,indent=2,allow_nan=False)+'\n')
+    lines = ['# Matched teacher-forced and generated-action diagnostic', '',
+             f'Status: **{phase}**. Completed {len(rows)}/{len(plan["samples"])} examples.', '',
+             f'Checkpoint: `{plan["expected_adapter"]}`. Split: `{plan["split"]}`.', '',
+             'Each image/instruction is evaluated both ways with the same resident model. '
+             'Normal generation runs first and never receives the expert action. '
+             'Teacher forcing supplies preceding expert action tokens within this one action; '
+             'it does not supply history of robot steps. No training or robot movement occurs.', '',
+             'Both translation errors and normalized L1 below compare with the same original expert command. '
+             'The separate teacher normalized_l1_token_targets field follows the training metric, comparing '
+             'decoded action-token bin centers. Cross entropy includes the stop token; action accuracy excludes it.', '',
+             '| Group | N | Generated XYZ error (mm) | Teacher XYZ error (mm) | Generated normalized L1 | Teacher normalized L1 | Teacher action-token accuracy |',
+             '|---|---:|---:|---:|---:|---:|---:|']
+    for name, m in [('Overall',result['overall']), *groups.items()]:
+        if not m['examples']:
+            continue
+        g,t = m['generated'],m['teacher_forced']
+        lines.append(f'| {name} | {m["examples"]} | {g["mean_translation_l2_error_mm"]:.3f} | '
+                     f'{t["mean_translation_l2_error_mm"]:.3f} | {g["normalized_l1"]:.4f} | '
+                     f'{t["normalized_l1"]:.4f} | {m["teacher_action_token_accuracy"]:.1%} |')
+    lines += ['', 'Per-component errors, gripper/upward agreement, teacher loss and invalid-token counts: '
+              '`matched_summary.json`. Per-example token IDs, physical actions, image hashes and timings: '
+              '`predictions.jsonl`. GPU, model loading, adapter provenance and storage metadata: '
+              '`server_health.json`. Total elapsed time: `timing.json`.', '',
+              'Teacher argmax uses the full vocabulary, matching training. Non-action predictions are flagged; '
+              'the official decoder clips them to action bins, which can make their physical errors misleading.', '',
+              'The balanced training-image subset is not a held-out success rate. '
+              'This uses the merged resident inference checkpoint, not an exact replay of unmerged training '
+              'weights, batches or autocast numerics. Good teacher forcing with poor generation suggests '
+              'difficulty generating components without expert preceding tokens; errors in both indicate '
+              'that these expert inputs are not reproduced reliably. Neither alone identifies the root cause.']
+    if error:
+        lines += ['',f'Error: {error}']
+    (output/'MATCHED_REPORT.md').write_text('\n'.join(lines)+'\n')
 
 
 def main():
@@ -174,6 +228,7 @@ def main():
     parser.add_argument('--timeout-seconds', type=float, default=180)
     parser.add_argument('--output-dir', type=Path)
     parser.add_argument('--dry-run', action='store_true', help='Verify data and save a plan without contacting a server')
+    parser.add_argument('--matched', action='store_true', help='Compare teacher forcing and normal generation on each example')
     args = parser.parse_args()
     if args.per_group <= 0 or not np.isfinite(args.timeout_seconds) or args.timeout_seconds <= 0:
         parser.error('Sample count and timeout must be positive')
@@ -187,11 +242,13 @@ def main():
     except ValueError:
         parser.error('Specify a valid localhost port')
     samples, stats, counts = prepare_samples(args.source_manifest, args.dataset, args.split, args.selection, args.per_group)
-    output = args.output_dir or ROOT / 'outputs' / f'expert_evaluation_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}'
+    prefix = 'matched_evaluation' if args.matched else 'expert_evaluation'
+    output = args.output_dir or ROOT / 'outputs' / f'{prefix}_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}'
     output.mkdir(parents=True, exist_ok=False)
     plan = dict(split=args.split, selection=args.selection, expected_adapter=args.expected_adapter,
                 source_manifest=str(args.source_manifest.resolve()), dataset=str(args.dataset.resolve()),
-                population_counts=counts, samples=samples, robot_moved=False)
+                population_counts=counts, samples=samples, robot_moved=False,
+                matched_diagnostic=args.matched)
     (output / 'plan.json').write_text(json.dumps(plan, indent=2)+'\n')
     (output / 'dataset_statistics.json').write_text(json.dumps(stats, indent=2)+'\n')
     print(f'Evaluation outputs: {output}', flush=True)
@@ -206,14 +263,22 @@ def main():
             health = json.load(response)
         (output / 'server_health.json').write_text(json.dumps(health, indent=2)+'\n')
         check_server(health, stats, args.expected_adapter)
+        if args.matched and (health.get('matched_diagnostic_available') is not True
+                             or health.get('startup_info',{}).get('instruction_processing') !=
+                             'lowercase to match official RLDSBatchTransform'):
+            raise ValueError('Restart the server with the latest matched-diagnostic code')
         save_report(output, plan, rows, 'running')
         for i, sample in enumerate(samples, 1):
+            options = {'expert_action': sample['expert_action']} if args.matched else {}
             prediction = request_prediction(sample['image'], sample['instruction'], server_url=args.server_url,
-                                            expected_mode='openvla', timeout_seconds=args.timeout_seconds)
+                                            expected_mode='openvla', timeout_seconds=args.timeout_seconds, **options)
             if prediction.get('unnorm_key') != 'panda_grasp_v1':
                 raise ValueError('Prediction used unexpected normalization')
             row = dict(**sample, image_sha256=hashlib.sha256(Path(sample['image']).read_bytes()).hexdigest(),
                        prediction=prediction, comparison=compare_actions(sample['expert_action'], prediction['action'], stats))
+            if args.matched:
+                row['teacher_forced_comparison'] = compare_actions(
+                    sample['expert_action'], prediction['teacher_forced']['action'], stats)
             with (output / 'predictions.jsonl').open('a') as file:
                 file.write(json.dumps(row, allow_nan=False)+'\n')
             rows.append(row)
@@ -226,7 +291,8 @@ def main():
         return 1
     save_report(output, plan, rows, 'completed')
     (output / 'timing.json').write_text(json.dumps(dict(elapsed_seconds=time.monotonic()-started), indent=2)+'\n')
-    print(f'Completed. Read {output / "EVALUATION_REPORT.md"}. No robot moved.', flush=True)
+    report = 'MATCHED_REPORT.md' if args.matched else 'EVALUATION_REPORT.md'
+    print(f'Completed. Read {output / report}. No robot moved.', flush=True)
     return 0
 
 

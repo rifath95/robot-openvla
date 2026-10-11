@@ -105,9 +105,9 @@ and need repeating. See [PIPELINE_AUDIT.md](PIPELINE_AUDIT.md) for the local che
 These are **generated-action errors**, not the teacher-forced cross-entropy,
 token accuracy, or normalized L1 printed during training. Teacher forcing gives
 the model preceding expert action tokens; normal inference generates those
-tokens itself. Comparing those two procedures requires an additional matched
-teacher-forced evaluation; this diagnostic does not claim to reproduce the
-training metrics or complete that entire official sanity check.
+tokens itself. For the paired teacher-forced/generated-action diagnostic, use
+[MATCHED_EVALUATION.md](MATCHED_EVALUATION.md). The default evaluation here is
+generation only and does not claim to reproduce the training metrics.
 
 The balanced diagnostic sample's overall average is not an estimate of the
 full dataset average. Group results reveal specific difficulties; a full-split

@@ -116,3 +116,45 @@ class OpenVLAPredictor:
                 "model_inference": predicted - prepared,
             },
         }
+
+    def diagnose(self, image, instruction, expert_action):
+        """Generate without labels first, then evaluate the same image with teacher forcing."""
+        if self.unnorm_key != 'panda_grasp_v1':
+            raise ValueError('Matched diagnostic requires the Panda training convention')
+        # The expert action is never passed to normal generation.
+        generated = self.predict(image, instruction)
+        import numpy as np
+        from check_training_inputs import official_batch_transform
+        from prepare_training_dataset import normalize
+        from training.upstream.action_tokenizer import ActionTokenizer
+        from matched_diagnostic import teacher_forced_metrics
+        torch = self.torch
+        started = time.perf_counter()
+        statistics = self.model.norm_stats[self.unnorm_key]
+        batch = official_batch_transform(self.processor)({
+            'dataset_name': b'panda_grasp_v1',
+            'action': normalize(expert_action, {self.unnorm_key: statistics})[None, :],
+            'observation': {'image_primary': np.asarray(image.convert('RGB'))[None, ...]},
+            'task': {'language_instruction': instruction.encode()},
+        })
+        # Verify the supervised prefix really matches the deployed prompt.
+        inputs = self.processor(action_prompt(instruction), image)
+        ids = inputs['input_ids'][0]
+        if ids[-1] != 29871:
+            ids = torch.cat([ids, ids.new_tensor([29871])])
+        if not torch.equal(ids, batch['input_ids'][batch['labels'] == -100]):
+            raise ValueError('Teacher-forced and generation prompt prefixes differ')
+        if not torch.equal(inputs['pixel_values'][0], batch['pixel_values']):
+            raise ValueError('Teacher-forced and generation image tensors differ')
+        input_ids = batch['input_ids'][None, :].to(self.device)
+        labels = batch['labels'][None, :].to(self.device)
+        with torch.inference_mode():
+            output = self.model(input_ids=input_ids, attention_mask=torch.ones_like(input_ids),
+                                pixel_values=batch['pixel_values'][None, ...].to(self.device, dtype=self.dtype),
+                                labels=labels, use_cache=False)
+        self.synchronize()
+        generated['teacher_forced'] = teacher_forced_metrics(
+            output.logits, labels, ActionTokenizer(self.processor.tokenizer), statistics['action'], output.loss)
+        generated['teacher_forced']['prompt_and_pixels_match_generation'] = True
+        generated['timings_seconds']['teacher_forced_processing'] = time.perf_counter() - started
+        return generated
