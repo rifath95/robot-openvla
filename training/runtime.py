@@ -57,15 +57,8 @@ class Metrics:
         if 'validation_loss' in values:self.plot()
 
     def plot(self):
-        import matplotlib
-        matplotlib.use('Agg')
-        import matplotlib.pyplot as plt
-        fig,ax=plt.subplots()
-        for field,label in [('train_loss','Training'),('validation_loss','Validation')]:
-            rows=[r for r in self.rows if field in r]
-            if rows:ax.plot([r['update'] for r in rows],[r[field] for r in rows],label=label)
-        ax.set(xlabel='Parameter updates',ylabel='Action-token cross entropy',title='OpenVLA Panda LoRA')
-        ax.legend();fig.tight_layout();fig.savefig(self.directory/'loss.png');plt.close(fig)
+        from training.loss_plots import write_loss_plots
+        write_loss_plots(self.rows,self.directory)
 
 
 metrics=Metrics()

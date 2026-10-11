@@ -66,6 +66,7 @@ class TrainingRuntimeTests(unittest.TestCase):
                 metrics.log({'train_loss':2.0},step=1)
                 metrics.log({'validation_loss':2.5,'validation_examples':64,'validation_complete':False},step=10)
                 self.assertTrue((Path(directory)/'loss.png').is_file())
+                self.assertTrue((Path(directory)/'loss_smoothed.png').is_file())
                 self.assertTrue(any((Path(directory)/'tensorboard').glob('events*')))
                 rows=[json.loads(line) for line in (Path(directory)/'metrics.jsonl').read_text().splitlines()]
                 self.assertFalse(rows[-1]['validation_complete'])

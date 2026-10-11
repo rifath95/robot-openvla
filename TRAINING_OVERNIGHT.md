@@ -145,6 +145,7 @@ Each job gets a unique directory:
   runs/training/
     metrics.jsonl
     loss.png
+    loss_smoothed.png
     experiment.json
     model_info.json
     tensorboard/
@@ -158,6 +159,18 @@ Each job gets a unique directory:
 
 Checkpoints exist only if training reached those updates. Training starts a fresh
 adapter and leaves the original base model and smoke checkpoint unchanged.
+
+`loss.png` retains the raw curve. `loss_smoothed.png` adds a centered 100-update
+neighborhood average of training loss, with raw training faintly visible and
+validation shown as measured points. Edge neighborhoods contain fewer samples;
+validation values are not averaged. Future runs generate both plots at each
+validation. To regenerate both from a downloaded run in the local workspace:
+
+```bash
+.venv-training/bin/python -m training.loss_plots outputs/PATH_TO_RUN/metrics.jsonl
+```
+
+Replace `outputs/PATH_TO_RUN` with the folder containing the run's metrics.
 `status.json` records the exit code, final update, missing artifacts, full-final-
 validation status, and stop-request state. A zero process exit alone does not
 mean all 5,000 updates completed: the training runtime guard may finish earlier.
