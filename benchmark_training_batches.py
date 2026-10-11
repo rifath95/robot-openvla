@@ -125,6 +125,8 @@ def main():
     metadata=dict(mode=mode,dataset=str(args.dataset.resolve()),model=str(args.model.resolve()),
         max_batch=args.max_batch,updates_per_candidate=25,warmup_updates=5,context=context,
         checkpoint_saving=False)
+    if os.environ.get('PANDA_BENCHMARK_STAGING_METADATA'):
+        metadata['storage']=json.loads(Path(os.environ['PANDA_BENCHMARK_STAGING_METADATA']).read_text())
     def report(outcome='running'):
         metadata.update(benchmark_elapsed_seconds=time.monotonic()-benchmark_started,benchmark_outcome=outcome)
         (root/'benchmark_metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')

@@ -74,12 +74,13 @@ def extract_reports(archive_path, destination):
                 while chunk:=source.read(1024**2): output.write(chunk)
 
 
-def fetch_reports(ssh, local_root, workspace_report):
+def fetch_reports(ssh, local_root, workspace_report,volume_root='/workspace'):
     local_root.mkdir(parents=True,exist_ok=True)
     print('Downloading benchmark reports, JSON measurements and logs (excluding adapter weights)...',flush=True)
     with tempfile.TemporaryDirectory(prefix='benchmark-download-',dir=local_root) as temp:
         archive_path=Path(temp)/'reports.tar.gz'
-        remote='/opt/openvla/bin/python -c '+shlex.quote(ARCHIVE_SCRIPT)
+        archive_script=ARCHIVE_SCRIPT.replace("Path('/workspace/panda-training/batch-benchmarks')",repr_path(volume_root))
+        remote='/opt/openvla/bin/python -c '+shlex.quote(archive_script)
         with archive_path.open('wb') as output:
             subprocess.run(ssh+[remote],stdout=output,check=True)
         extract_reports(archive_path,local_root)
@@ -99,20 +100,32 @@ def fetch_reports(ssh, local_root, workspace_report):
     print(f'Updated {workspace_report} with {count} saved benchmark runs.',flush=True)
 
 
-def remote_benchmark_script(dataset, maximum, controlled=False, auto_stop=False, prepare_only=False, hard_limit=3600):
-    if not re.fullmatch(r'/workspace/panda-training/[A-Za-z0-9][A-Za-z0-9_-]*',dataset):
+def repr_path(volume_root):
+    if volume_root not in ('/workspace','/workspace-global'):raise ValueError('Invalid global-volume mount')
+    return 'Path('+repr(volume_root+'/panda-training/batch-benchmarks')+')'
+
+
+def remote_benchmark_script(dataset, maximum, controlled=False, auto_stop=False, prepare_only=False, hard_limit=3600,global_volume=None):
+    volume_root=global_volume or '/workspace'
+    repr_path(volume_root)
+    if not re.fullmatch(re.escape(volume_root)+r'/panda-training/[A-Za-z0-9][A-Za-z0-9_-]*',dataset):
         raise ValueError('Dataset must be a named bundle directly inside /workspace/panda-training')
     if hard_limit<1:raise ValueError('Outer timeout must be positive')
     if maximum<1:
         raise ValueError('Maximum batch must be positive')
     mode='' if controlled else '--find-capacity'
     check='/opt/openvla/bin/python -m training.benchmark_stop --check-only' if auto_stop else ''
+    global_option=' --global-volume '+shlex.quote(global_volume) if global_volume else ''
+    check+=global_option if check else ''
     benchmark='' if prepare_only else f'/opt/openvla/bin/python -u benchmark_training_batches.py {mode} --max-batch {maximum} --dataset {shlex.quote(dataset)}'
     if auto_stop and not prepare_only:
         benchmark=f'/opt/openvla/bin/python -u -m training.benchmark_supervisor --launch --max-batch {maximum} --dataset {shlex.quote(dataset)} --hard-limit-seconds {hard_limit}'
+        benchmark+=global_option
         if controlled:benchmark+=' --controlled'
+    if global_volume and not auto_stop and not prepare_only:
+        raise ValueError('Global benchmarks require the watchdog; omit --keep-pod-running')
     return f'''set -euo pipefail
-mountpoint -q /workspace
+mountpoint -q {shlex.quote(volume_root)}
 test -x /opt/openvla/bin/python
 if [[ ! -d /root/robot-openvla ]]; then
   git clone {shlex.quote(REPOSITORY)} /root/robot-openvla
@@ -136,13 +149,16 @@ def main():
     p.add_argument('--fetch-only',action='store_true',help='Download saved results without running any GPU training')
     p.add_argument('--keep-pod-running',action='store_true',help='Disable automatic stop after a new benchmark')
     p.add_argument('--stop-after-fetch',action='store_true',help='Also request a pod stop after --fetch-only, including download errors')
+    p.add_argument('--global-volume',choices=('/workspace','/workspace-global'),help='Global mount: stage inputs locally and publish reports before stop')
     args=p.parse_args()
     try:
         host,port,key=parse_ssh(args.ssh,args.key)
         auto_stop=(not args.fetch_only and not args.keep_pod_running) or args.stop_after_fetch
         if args.keep_pod_running and args.stop_after_fetch:
             p.error('--keep-pod-running conflicts with --stop-after-fetch')
-        script=remote_benchmark_script(args.dataset,args.max_batch,args.controlled,auto_stop,hard_limit=args.hard_limit_seconds)
+        if args.global_volume=='/workspace-global' and args.dataset=='/workspace/panda-training/training_v1':
+            args.dataset='/workspace-global/panda-training/training_v1'
+        script=remote_benchmark_script(args.dataset,args.max_batch,args.controlled,auto_stop,prepare_only=args.fetch_only,hard_limit=args.hard_limit_seconds,global_volume=args.global_volume)
     except ValueError as exc:
         p.error(str(exc))
     ssh=ssh_arguments(host,port,key)
@@ -153,7 +169,7 @@ def main():
     error=None
     try:
         if args.fetch_only and auto_stop:
-            setup=remote_benchmark_script(args.dataset,args.max_batch,args.controlled,True,prepare_only=True)
+            setup=remote_benchmark_script(args.dataset,args.max_batch,args.controlled,True,prepare_only=True,global_volume=args.global_volume)
             subprocess.run(ssh+['bash -s'],input=setup,text=True,check=True)
         if not args.fetch_only:
             result=subprocess.run(ssh+['bash -s'],input=script,text=True)
@@ -162,7 +178,9 @@ def main():
                 raise SystemExit('Another benchmark supervisor is running. It was left running; this launch did not stop it.')
             if code:
                 print('Cloud command ended with an error; attempting to collect saved diagnostics.',flush=True)
-        fetch_reports(ssh,ROOT/'outputs/gpu-benchmarks',ROOT/'GPU_BATCH_COMPARISON.md')
+        if args.global_volume:
+            fetch_reports(ssh,ROOT/'outputs/gpu-benchmarks',ROOT/'GPU_BATCH_COMPARISON.md',args.global_volume)
+        else:fetch_reports(ssh,ROOT/'outputs/gpu-benchmarks',ROOT/'GPU_BATCH_COMPARISON.md')
     except (OSError,ValueError,subprocess.CalledProcessError,tarfile.TarError) as exc:
         error=f'Results were not fully synchronized: {exc}. Saved results remain on the volume.'
     except KeyboardInterrupt:
@@ -174,6 +192,7 @@ def main():
     if auto_stop:
         print('Requesting pod stop (including when the benchmark or download failed)...',flush=True)
         stop_command='cd /root/robot-openvla && /opt/openvla/bin/python -m training.benchmark_stop'
+        if args.global_volume:stop_command+=' --global-volume '+shlex.quote(args.global_volume)
         try:
             stopped=subprocess.run(ssh+[stop_command],timeout=100)
             if stopped.returncode:

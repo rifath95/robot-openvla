@@ -43,15 +43,23 @@ def kill_benchmark_tree(process,proc_root=Path('/proc')):
     except subprocess.TimeoutExpired:pass  # Proceed to the pod stop even if a worker is stuck.
 
 
-def supervise(command,directory,pod_id,key,*,hard_limit=3600,sync_grace=120):
+def supervise(command,directory,pod_id,key,*,hard_limit=3600,sync_grace=120,persistent_root=None):
     started=time.monotonic()
     status=dict(started_at_utc=datetime.now(timezone.utc).isoformat(),pod_id=pod_id,
                 hard_limit_seconds=hard_limit,sync_grace_seconds=sync_grace,
                 phase='benchmarking',stop_state='not_requested',command=command)
     path=directory/'status.json'
     process=None
+    def publish():
+        if persistent_root is None:return
+        copy_command=[sys.executable,'-m','training.global_benchmark_storage',
+                      '--sync-source',str(directory.parent.parent),
+                      '--sync-destination',str(persistent_root)]
+        subprocess.run(copy_command,cwd=ROOT,check=True,
+                       timeout=max(1,min(90,hard_limit-(time.monotonic()-started))))
     try:
         write_status(path,status)
+        publish()
         env=os.environ.copy();env.pop('RUNPOD_API_KEY',None)
         with (directory/'console.log').open('w',buffering=1) as log:
             process=subprocess.Popen(command,cwd=ROOT,env=env,stdout=log,
@@ -63,8 +71,11 @@ def supervise(command,directory,pod_id,key,*,hard_limit=3600,sync_grace=120):
                 # Kill the benchmark process group, including the training workers.
                 kill_benchmark_tree(process)
                 status.update(exit_code=process.returncode,outcome='wall_limit_reached')
-        status.update(phase='awaiting_sync',benchmark_finished_at_utc=datetime.now(timezone.utc).isoformat(),
+        status.update(phase='publishing',benchmark_finished_at_utc=datetime.now(timezone.utc).isoformat(),
                       elapsed_seconds=time.monotonic()-started)
+        write_status(path,status)
+        publish()
+        status['phase']='awaiting_sync'
         write_status(path,status)
         # Leave a bounded chance to fetch reports. The outer deadline still wins.
         deadline=min(started+hard_limit,time.monotonic()+sync_grace)
@@ -80,11 +91,17 @@ def supervise(command,directory,pod_id,key,*,hard_limit=3600,sync_grace=120):
                       elapsed_seconds=time.monotonic()-started,stop_state='requested')
         try:write_status(path,status)
         except OSError:pass
+        try:publish()
+        except (OSError,ValueError,subprocess.SubprocessError) as exc:
+            status['report_publication_error']=type(exc).__name__
+            print('Global report copy failed; local reports remain. Still requesting pod stop.',flush=True)
         result=stop_pod(pod_id,key,directory/'pod_stop_status.json',
                         reason=f"Benchmark supervisor cleanup: {status.get('outcome','wrapper_failed')}")
         status.update(phase='finished',stop_state='accepted' if result==0 else 'failed')
         try:write_status(path,status)
         except OSError:pass
+        try:publish()
+        except (OSError,ValueError,subprocess.SubprocessError):pass
     return 0 if status.get('outcome')=='completed' and status['stop_state']=='accepted' else 1
 
 
@@ -107,6 +124,7 @@ def watch(directory):
 
 
 def main():
+    global BENCHMARK_ROOT
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--launch',action='store_true')
     p.add_argument('--session-dir',type=Path)
@@ -116,12 +134,16 @@ def main():
     p.add_argument('--controlled',action='store_true')
     p.add_argument('--hard-limit-seconds',type=int,default=3600)
     p.add_argument('--sync-grace-seconds',type=int,default=120)
+    p.add_argument('--global-volume',type=Path)
     args=p.parse_args()
     if args.hard_limit_seconds<1 or args.sync_grace_seconds<0 or args.max_batch<1:
         p.error('Timeout/batch limit must be positive; sync grace cannot be negative')
     try:
+        if args.global_volume:
+            from training.global_benchmark_storage import LOCAL_ROOT,global_preflight
+            BENCHMARK_ROOT=LOCAL_ROOT/'batch-benchmarks'
         if args.launch:
-            pod_id,key=preflight()
+            pod_id,key=global_preflight(args.global_volume) if args.global_volume else preflight()
             BENCHMARK_ROOT.mkdir(parents=True,exist_ok=True)
             lock=(BENCHMARK_ROOT/'supervisor.lock').open('a')
             try:fcntl.flock(lock,fcntl.LOCK_EX|fcntl.LOCK_NB)
@@ -137,6 +159,7 @@ def main():
                     '--hard-limit-seconds',str(args.hard_limit_seconds),
                     '--sync-grace-seconds',str(args.sync_grace_seconds)]
             if args.controlled:worker.append('--controlled')
+            if args.global_volume:worker.extend(['--global-volume',str(args.global_volume)])
             with (directory/'supervisor.log').open('w') as log:
                 subprocess.Popen(worker,cwd=ROOT,stdin=subprocess.DEVNULL,stdout=log,
                                  stderr=subprocess.STDOUT,start_new_session=True,pass_fds=(lock.fileno(),))
@@ -155,8 +178,15 @@ def main():
         command=[sys.executable,'-u',str(ROOT/'benchmark_training_batches.py'),
                  '--dataset',args.dataset,'--max-batch',str(args.max_batch)]
         if not args.controlled:command.append('--find-capacity')
+        persistent_root=None
+        if args.global_volume:
+            command=[sys.executable,'-u','-m','training.global_benchmark_storage',
+                     '--volume',str(args.global_volume),'--dataset',args.dataset,
+                     '--max-batch',str(args.max_batch)]
+            if args.controlled:command.append('--controlled')
+            persistent_root=args.global_volume/'panda-training/batch-benchmarks'
         return supervise(command,directory,pod_id,key,hard_limit=args.hard_limit_seconds,
-                         sync_grace=args.sync_grace_seconds)
+                         sync_grace=args.sync_grace_seconds,persistent_root=persistent_root)
     except (RuntimeError,OSError,ValueError,subprocess.CalledProcessError) as exc:
         print(f'Benchmark not started: {exc}. Check and stop the pod manually if still running.',file=sys.stderr)
         return 75 if isinstance(exc,BenchmarkAlreadyRunning) else 1

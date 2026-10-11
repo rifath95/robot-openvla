@@ -66,17 +66,47 @@ command does not stop a rented pod and does not start a GPU benchmark.
 
 ## Benchmarking after preparation
 
-Global storage does not provide the locking/atomic-renaming behavior expected
-by the current regional-network benchmark supervisor. The current automatic
-benchmark launcher also checks for a regional network-volume ID. **Do not use
-that launcher unchanged on a global-volume-only pod.**
+From the Mac workspace, use the current SSH command from RunPod → Pod → Connect:
 
-Before the first global benchmark, adapt and verify the launcher against the
-preparation pod's actual mounts/API metadata. Run benchmark working files and
-locks on container disk, and copy completed reports to the global volume before
-stopping the pod. Stage the dataset locally so storage speed does not dominate
-training throughput. Keep setup/model-loading time separate from measured update
-throughput. Future benchmarks already disable adapter checkpoint saving.
+```bash
+caffeinate -i .venv/bin/python benchmark_cloud_session.py \
+  --ssh 'ssh root@POD_IP -p POD_PORT -i ~/.ssh/id_ed25519' \
+  --global-volume /workspace \
+  --dataset /workspace/panda-training/training_v1
+```
 
-The preparation command requires no Docker rebuild. New GPU architectures may
-require a compatible CUDA/PyTorch image; verify that before benchmarking them.
+Use `/workspace-global` in both paths if that is the actual mount. The launcher
+selects your configured personal SSH key. Include `RUNPOD_API_KEY` through the
+existing stop secret in the template. No Docker rebuild is required.
+
+Global mode verifies the mount, pod API access, model completion record and
+all dataset checksums. It stages inputs on container disk under
+`/root/robot-openvla/.benchmark-local`, where benchmark locks and working files
+also live. On the preparation pod, the pinned local download cache can supply
+the model copy; subsequent pods read the model from the global volume. The
+recorded staging metadata distinguishes those cases. Training throughput uses
+local inputs and excludes setup, staging and model loading.
+
+The detached supervisor has a **60-minute outer limit**, beginning at supervisor
+startup and including input staging and all candidate tests. Initial volume
+population is a separate command outside that limit. Adapter checkpoint saving
+is disabled. Reports and logs are copied to
+`/workspace/panda-training/batch-benchmarks` before the supervisor requests a pod
+stop after completion, failure or timeout. An API/network failure can prevent
+stopping; confirm the stopped state in RunPod.
+
+If the Mac stays connected, reports download automatically to
+`outputs/gpu-benchmarks` and refresh the local `GPU_BATCH_COMPARISON.md`. If it
+sleeps or disconnects, the cloud supervisor continues, saves reports and requests
+a stop. Launch/resume a pod attached to the same volume and fetch later with:
+
+```bash
+.venv/bin/python benchmark_cloud_session.py \
+  --ssh 'ssh root@POD_IP -p POD_PORT -i ~/.ssh/id_ed25519' \
+  --global-volume /workspace --fetch-only --stop-after-fetch
+```
+
+Use one benchmark writer at a time on this global volume. Global storage does not
+provide the locking and atomic rename behavior used on regional network volumes;
+the global mode keeps those operations on container disk and publishes regular
+report files. New GPU architectures may require a compatible CUDA/PyTorch image.

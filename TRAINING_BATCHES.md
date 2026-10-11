@@ -246,3 +246,11 @@ report preserves them. Add a new run's actual rate after confirming it in
 RunPod; rates are not guessed or inherited solely from a GPU name. Cost estimates
 exclude setup/loading, validation/saving, idle time and storage. They compare
 example-processing cost, not equal training quality.
+
+## Benchmark on global storage
+
+Use the explicit `--global-volume` mode described in
+[GLOBAL_BENCHMARK_SETUP.md](GLOBAL_BENCHMARK_SETUP.md). It stages inputs and keeps
+locks on container disk, publishes reports to global storage, and retains the
+detached 60-minute watchdog and automatic stop behavior. Regional network-volume
+benchmark commands remain unchanged.

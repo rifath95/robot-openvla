@@ -36,15 +36,23 @@ def stop_pod(pod_id,key,status_path,*,reason='Benchmark reports synchronized to 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--check-only',action='store_true')
+    p.add_argument('--global-volume',type=Path)
     args=p.parse_args()
     try:
-        pod_id,key=preflight()
+        if args.global_volume:
+            from training.global_benchmark_storage import global_preflight
+            pod_id,key=global_preflight(args.global_volume)
+        else:pod_id,key=preflight()
         if args.check_only:
             print('Benchmark API and network-volume checks passed. Pod has not been stopped.',flush=True)
             return 0
-        directory=Path('/workspace/panda-training/batch-benchmarks')
+        directory=(args.global_volume or Path('/workspace'))/'panda-training/batch-benchmarks'
         try:directory.mkdir(parents=True,exist_ok=True)
         except OSError:pass  # A full/unavailable volume must not prevent the stop request.
+        if args.global_volume:
+            # Keep atomic status writes on local disk; global report copies are regular files.
+            from training.global_benchmark_storage import LOCAL_ROOT
+            directory=LOCAL_ROOT/'batch-benchmarks'
         return stop_pod(pod_id,key,directory/'pod_stop_status.json')
     except (RuntimeError,OSError) as exc:
         print(f'Automatic stop unavailable: {exc}. Stop the pod manually in RunPod.',flush=True)
