@@ -9,11 +9,11 @@ Measured update time includes data loading, image/text processing, forward/backw
 The speed columns describe the fastest tested candidate passing the 4 GiB memory-headroom screen. That candidate may differ from the largest fitting batch.
 A fitting batch completed 25 real updates. The short-run capacity applies to tested inputs/settings; confirm it on the final dataset and a longer trial.
 
-| GPU | VRAM GiB | Dataset | Mode | Fitting capacity | First OOM | Suggested microbatch / accumulation | Seconds/update | Examples/s | Peak allocated / reserved GiB | Run / details |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| NVIDIA A40 | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 8 / 1 | 2.140 | 3.74 | 40.25 / 42.71 | [20261011_054257_777818](outputs/gpu-benchmarks/20261011_054257_777818/BATCH_BENCHMARK.md) |
-| NVIDIA H100 80GB HBM3 | 79.2 | training_v2 | capacity | 18 (boundary found) | 19 | 16 / 1 | 1.606 | 9.96 | 65.55 / 71.64 | [20261011_071323_382964](outputs/gpu-benchmarks/20261011_071323_382964/BATCH_BENCHMARK.md) |
-| NVIDIA RTX A6000 | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 4 / 1 | 5.295 | 0.76 | 27.59 / 28.42 | [20261011_095911_435567](outputs/gpu-benchmarks/20261011_095911_435567/BATCH_BENCHMARK.md) |
+| GPU | ECC current | VRAM GiB | Dataset | Mode | Fitting capacity | First OOM | Suggested microbatch / accumulation | Seconds/update | Examples/s | Peak allocated / reserved GiB | Run / details |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| NVIDIA A40 | Unknown | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 8 / 1 | 2.140 | 3.74 | 40.25 / 42.71 | [20261011_054257_777818](outputs/gpu-benchmarks/20261011_054257_777818/BATCH_BENCHMARK.md) |
+| NVIDIA H100 80GB HBM3 | Unknown | 79.2 | training_v2 | capacity | 18 (boundary found) | 19 | 16 / 1 | 1.606 | 9.96 | 65.55 / 71.64 | [20261011_071323_382964](outputs/gpu-benchmarks/20261011_071323_382964/BATCH_BENCHMARK.md) |
+| NVIDIA RTX A6000 | Unknown | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 4 / 1 | 5.295 | 0.76 | 27.59 / 28.42 | [20261011_095911_435567](outputs/gpu-benchmarks/20261011_095911_435567/BATCH_BENCHMARK.md) |
 
 ## Cost for the same amount of training
 
@@ -41,6 +41,7 @@ Future report refreshes retain the confirmed rates. Record each new run’s actu
 Dataset: `/workspace/panda-training/training_v1`. Model: `/workspace/openvla-7b`.
 Mode: capacity; PyTorch: 2.2.2+cu121; LoRA rank: 32; quantization: False; image augmentation: False.
 Total benchmark time: **11 min 42 sec** (sum of batch-test wall times).
+GPU ECC: **Unknown** (current); pending mode: **Unknown**.
 Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.
 Capacity finding: **9 (boundary found)**.
 Fastest candidate with headroom: **microbatch 8, accumulation 1**, 3.74 examples/s.
@@ -63,6 +64,7 @@ Fastest candidate with headroom: **microbatch 8, accumulation 1**, 3.74 examples
 Dataset: `/workspace/panda-training/training_v2`. Model: `/workspace/openvla-7b`.
 Mode: capacity; PyTorch: 2.2.2+cu121; LoRA rank: 32; quantization: False; image augmentation: False.
 Total benchmark time: **13 min 10 sec**.
+GPU ECC: **Unknown** (current); pending mode: **Unknown**.
 Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.
 Capacity finding: **18 (boundary found)**.
 Fastest candidate with headroom: **microbatch 16, accumulation 1**, 9.96 examples/s.
@@ -88,6 +90,7 @@ Fastest candidate with headroom: **microbatch 16, accumulation 1**, 9.96 example
 Dataset: `/root/robot-openvla/.benchmark-local/inputs/training_v1`. Model: `/root/robot-openvla/.benchmark-local/inputs/openvla-7b`.
 Mode: capacity; PyTorch: 2.2.2+cu121; LoRA rank: 32; quantization: False; image augmentation: False.
 Total benchmark time: **35 min 05 sec**.
+GPU ECC: **Unknown** (current); pending mode: **Unknown**.
 Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.
 Capacity finding: **9 (boundary found)**.
 Fastest candidate with headroom: **microbatch 4, accumulation 1**, 0.76 examples/s.
@@ -113,6 +116,7 @@ CPU and GPU snapshot diagnostics: `batch_host_context.json` in this run’s outp
 - “Boundary found” means adjacent sizes were tested: N fitted and N+1 ran out of memory. Intermediate untested sizes are inferred using approximately monotonic memory demand.
 - “Boundary not established” means the search is incomplete or its ceiling fitted. It is a lower bound, not a measured maximum.
 - Suggested batches leave at least 4 GiB by peak reserved and sampled free VRAM. This is a screening rule, not a stability guarantee.
+- ECC reports the current NVIDIA error-correction mode; pending mode is shown in each run section. Unknown means it was not recorded or could not be queried. Unavailable (N/A) is not treated as disabled. The benchmark does not change ECC settings.
 - Capacity mode uses accumulation one; effective batch changes. Controlled mode keeps effective batch four. These speed tests do not compare learning quality.
 - After capacity search, speed refinement tests missing integer sizes from the largest tested power-of-two batch passing the headroom screen up to fitting capacity. Earlier runs refined only the final capacity interval and may have missed sizes below a fitting batch without headroom. Skipping smaller sizes is a search-cost heuristic, not a guarantee that powers of two are faster. Recommendations describe the fastest tested candidate with headroom.
 - Compare GPUs with the same dataset, model, LoRA rank, precision and attention settings. A100 40 GB and 80 GB variants should be recorded as separate runs.

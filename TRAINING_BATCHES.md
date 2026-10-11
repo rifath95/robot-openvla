@@ -38,6 +38,13 @@ It is not necessary to manually copy results or edit the table. Each GPU run
 section also includes total benchmark time, outside the summary table. Future
 runs use a full benchmark timer; older runs use summed batch-test wall times.
 
+Future runs also record the GPU's current and pending ECC modes through a
+read-only `nvidia-smi` query. The comparison table shows current ECC beside the
+GPU name; individual report sections include pending mode. The raw query is
+saved in `benchmark_metadata.json`. Missing historical measurements show
+`Unknown`, and unsupported/unavailable values are not reported as disabled.
+No ECC settings are changed. This reporting update needs no Docker rebuild.
+
 The default launcher starts a detached **cloud benchmark supervisor**. Keep the
 Mac awake and connected if you want automatic report downloads; disconnecting
 the Mac does not cancel the supervisor or its stop attempts. No tmux installation

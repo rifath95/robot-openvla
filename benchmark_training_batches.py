@@ -84,6 +84,15 @@ def write_report(root, results, mode='controlled', maximum=64):
         'These short runs measure throughput, not model quality. No benchmark adapter is promoted.', '',
         '| Microbatch | Accumulation | Effective batch | Status | Seconds/update | Examples/s | Peak allocated GiB | Peak reserved GiB | Headroom screen |',
         '| --- | --- | --- | --- | --- | --- | --- | --- | --- |']
+    metadata_path=root/'benchmark_metadata.json'
+    metadata=json.loads(metadata_path.read_text()) if metadata_path.exists() else {}
+    from training.gpu_ecc import ecc_details
+    gpu=(metadata.get('context') or {}).get('gpu')
+    if not gpu:
+        info_path=next(iter(sorted(root.glob('batch_*/model_info.json'))),None)
+        gpu=json.loads(info_path.read_text()).get('gpu') if info_path else None
+    lines[2:2]=[f"GPU: **{gpu or 'Unknown'}**.",
+                ecc_details(metadata.get('gpu_ecc')), '']
     for row in results:
         if row['status']=='completed':
             lines.append(f"| {row['microbatch']} | {row['accumulation']} | {row['effective_batch']} | completed | {row['seconds_per_update']:.3f} | {row['examples_per_second']:.2f} | {row['gpu_peak_allocated_gib']:.2f} | {row['gpu_peak_reserved_gib']:.2f} | {row['headroom_screen_passed']} |")
@@ -127,9 +136,12 @@ def main():
     mode='capacity' if args.find_capacity else 'controlled'
     from training.batch_policy import benchmark_context
     context=benchmark_context(config,args.dataset,args.model)
+    from training.gpu_ecc import collect_ecc
+    import torch
+    gpu_uuid=getattr(torch.cuda.get_device_properties(0),'uuid',None)
     metadata=dict(mode=mode,dataset=str(args.dataset.resolve()),model=str(args.model.resolve()),
         max_batch=args.max_batch,updates_per_candidate=25,warmup_updates=5,context=context,
-        checkpoint_saving=False,
+        checkpoint_saving=False,gpu_ecc=collect_ecc(str(gpu_uuid) if gpu_uuid else None),
         speed_refinement_policy='largest_headroom_power_of_two_to_capacity' if args.find_capacity else None)
     if os.environ.get('PANDA_BENCHMARK_STAGING_METADATA'):
         metadata['storage']=json.loads(Path(os.environ['PANDA_BENCHMARK_STAGING_METADATA']).read_text())

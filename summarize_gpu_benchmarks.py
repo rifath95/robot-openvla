@@ -4,6 +4,7 @@ import json
 import math
 import os
 from pathlib import Path
+from training.gpu_ecc import ecc_label,ecc_details
 
 
 def cell(value):
@@ -80,8 +81,8 @@ def comparison(root, output, gpu_filter=None):
         'Measured update time includes data loading, image/text processing, forward/backward, optimizer, and ordinary training logging. Model loading, final validation, and checkpoint saving are excluded.', '',
         'The speed columns describe the fastest tested candidate passing the 4 GiB memory-headroom screen. That candidate may differ from the largest fitting batch.',
         'A fitting batch completed 25 real updates. The short-run capacity applies to tested inputs/settings; confirm it on the final dataset and a longer trial.', '',
-        '| GPU | VRAM GiB | Dataset | Mode | Fitting capacity | First OOM | Suggested microbatch / accumulation | Seconds/update | Examples/s | Peak allocated / reserved GiB | Run / details |',
-        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |']
+        '| GPU | ECC current | VRAM GiB | Dataset | Mode | Fitting capacity | First OOM | Suggested microbatch / accumulation | Seconds/update | Examples/s | Peak allocated / reserved GiB | Run / details |',
+        '| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |']
     paths=sorted(root.rglob('benchmark.json')) if root.exists() else []
     groups={}
     selected=0
@@ -115,7 +116,7 @@ def comparison(root, output, gpu_filter=None):
         selected+=1
         vram=info.get('total_vram_gib')
         reference=os.path.relpath(path.parent/'BATCH_BENCHMARK.md',output.parent).replace(os.sep,'/')
-        values=[gpu,f'{vram:.1f}' if vram is not None else '—',
+        values=[gpu,ecc_label(metadata.get('gpu_ecc')),f'{vram:.1f}' if vram is not None else '—',
             Path(metadata.get('dataset','unknown')).name,mode,capacity,min(failures) if failures else 'Not observed',
             f"{best['microbatch']} / {best['accumulation']}" if best else 'None with headroom',
             f"{best['seconds_per_update']:.3f}" if best else '—',
@@ -126,8 +127,8 @@ def comparison(root, output, gpu_filter=None):
         cost_runs.append((gpu,path,best))
         groups.setdefault((gpu,vram),[]).append((path,rows,metadata,info,capacity,best))
     if not selected:
-        lines+=['| NVIDIA A40 | — | — | Planned | Not measured | — | — | — | — | — | Pending |',
-                '| NVIDIA A100 (variant to be recorded) | — | — | Planned | Not measured | — | — | — | — | — | Pending |']
+        lines+=['| NVIDIA A40 | Unknown | — | — | Planned | Not measured | — | — | — | — | — | Pending |',
+                '| NVIDIA A100 (variant to be recorded) | Unknown | — | — | Planned | Not measured | — | — | — | — | — | Pending |']
     if cost_runs:lines+=cost_section(cost_runs)
     for (gpu,vram),runs in groups.items():
         lines+=['',f'## {cell(gpu)}'+(f' — {vram:.1f} GiB' if vram is not None else ''),'']
@@ -137,6 +138,7 @@ def comparison(root, output, gpu_filter=None):
                 f"Dataset: `{metadata.get('dataset','unknown')}`. Model: `{metadata.get('model','unknown')}`.",
                 f"Mode: {metadata.get('mode','unknown')}; PyTorch: {info.get('torch_version','unknown')}; LoRA rank: {config.get('lora_rank','unknown')}; quantization: {config.get('use_quantization','unknown')}; image augmentation: {config.get('image_aug','unknown')}.",
                 duration_line(rows,metadata),
+                ecc_details(metadata.get('gpu_ecc')),
                 'Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.',
                 f'Capacity finding: **{capacity}**.',
                 (f"Fastest candidate with headroom: **microbatch {best['microbatch']}, accumulation {best['accumulation']}**, {best['examples_per_second']:.2f} examples/s." if best else 'No candidate passed the headroom screen.'),'',
@@ -169,6 +171,7 @@ def comparison(root, output, gpu_filter=None):
         '- “Boundary found” means adjacent sizes were tested: N fitted and N+1 ran out of memory. Intermediate untested sizes are inferred using approximately monotonic memory demand.',
         '- “Boundary not established” means the search is incomplete or its ceiling fitted. It is a lower bound, not a measured maximum.',
         '- Suggested batches leave at least 4 GiB by peak reserved and sampled free VRAM. This is a screening rule, not a stability guarantee.',
+        '- ECC reports the current NVIDIA error-correction mode; pending mode is shown in each run section. Unknown means it was not recorded or could not be queried. Unavailable (N/A) is not treated as disabled. The benchmark does not change ECC settings.',
         '- Capacity mode uses accumulation one; effective batch changes. Controlled mode keeps effective batch four. These speed tests do not compare learning quality.',
         '- After capacity search, speed refinement tests missing integer sizes from the largest tested power-of-two batch passing the headroom screen up to fitting capacity. Earlier runs refined only the final capacity interval and may have missed sizes below a fitting batch without headroom. Skipping smaller sizes is a search-cost heuristic, not a guarantee that powers of two are faster. Recommendations describe the fastest tested candidate with headroom.',
         '- Compare GPUs with the same dataset, model, LoRA rank, precision and attention settings. A100 40 GB and 80 GB variants should be recorded as separate runs.',
