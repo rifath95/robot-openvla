@@ -1,21 +1,25 @@
-"""Launch the Phase 1 Panda scene in MuJoCo's interactive viewer."""
+"""Launch the randomized cube-to-plate scene with MuJoCo actuator controls."""
 
-from pathlib import Path
+import argparse
+import json
+import numpy as np
 
 import mujoco
 import mujoco.viewer
 
 
-SCENE_PATH = Path(__file__).with_name("scene.xml")
+from plate_scene import SCENE_PATH, randomize_scene
 
 
 def main() -> None:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument('--seed', type=int, help='Reproduce the same starting scene')
+    args = parser.parse_args()
     model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
     data = mujoco.MjData(model)
 
-    home_key = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_KEY, "scene_home")
-    mujoco.mj_resetDataKeyframe(model, data, home_key)
-    mujoco.mj_forward(model, data)
+    _, specification = randomize_scene(model, data, np.random.default_rng(args.seed))
+    print(json.dumps(specification, indent=2), flush=True)
 
     mujoco.viewer.launch(model, data)
 

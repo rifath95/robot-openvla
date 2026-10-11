@@ -2,7 +2,7 @@
 
 A robotics workspace for connecting a simulated Franka Panda arm to OpenVLA. Development currently runs on a MacBook using Python and MuJoCo 3.14.0, without ROS.
 
-Last updated: 2026-10-11. Update this document as milestones, run instructions, and model locations change.
+Last updated: 2026-10-12. Update this document as milestones, run instructions, and model locations change.
 
 For the planned A40 microbatch speed/memory comparison, see
 [TRAINING_BATCHES.md](TRAINING_BATCHES.md). GPU benchmarking is pending; the
@@ -324,6 +324,26 @@ Results are saved in `outputs/openvla_loop_<timestamp>/`:
 
 In `end_effector_demo.py`, click inside the simulator window to give it keyboard focus.
 
+The manual viewer now uses `scene_plate.xml`: a red cube and a blue-bordered
+plate on the table. The task is **"pick up the red cube and place it on the blue
+plate"**. On every launch, cube and plate positions and the arm's starting
+position/yaw are randomized. Starts are settled and collision checked; object
+locations are sampled independently within the reachable table interior, with
+enough separation that the cube does not start on the plate. This is a scene
+preview and manual control update; the new 250-trajectory dataset has not been
+generated yet. Existing inference/collection scripts still use the original scene.
+
+```bash
+.venv/bin/python end_effector_demo.py
+```
+
+Use `--seed 42` to reproduce a scene and its sequence of random resets.
+`launch_sim.py` also starts with the randomized plate scene and supports `--seed`;
+its standard MuJoCo viewer exposes actuator controls. The keyboard demo uses
+the fixed workspace camera initially and is the recommended manual interface.
+The plate is fixed in place during each trial, with a physical support surface.
+The original `scene.xml` remains available for existing recordings and replays.
+
 | Key | Move mode | Rotate mode |
 | --- | --- | --- |
 | Up / Down | +X / -X | +Roll / -Roll |
@@ -332,6 +352,7 @@ In `end_effector_demo.py`, click inside the simulator window to give it keyboard
 
 - **Space:** switch Move/Rotate mode.
 - **Enter:** toggle gripper open/closed.
+- **N:** reset to new randomized arm, cube and plate positions, with the gripper open.
 - **Fn + Left / Fn + Right:** Home/End on a Mac keyboard.
 - **Esc:** return to the free camera.
 - **Close the window:** quit.
