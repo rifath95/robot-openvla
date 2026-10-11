@@ -139,7 +139,9 @@ space. The reviewed recommendation is microbatch **8**, accumulation **1**:
 the 13,812 training steps. Sampling can repeat examples; this is not a guarantee
 of complete coverage or task success. Validation/test examples are not trained on.
 
-Checkpoints and full validation occur every **1,000 updates**. The inner training
+Full validation also runs at **update 0**, before training, to establish the
+initial loss-curve baseline. Checkpoints and full validation then occur every
+**1,000 updates**. The inner training
 limit is **4 hours**, and the outer supervisor limit is **5 hours**. Results are
 saved on the network volume and the wrapper requests a pod stop. Mac sleep does
 not stop the detached cloud job. Confirm stopped status in the portal afterward.

@@ -94,12 +94,18 @@ The no-argument command still selects the historical v1/1,000-update profile.
 | Optimizer updates | 5,000 |
 | Effective batch | 8 training steps per update |
 | Training examples presented | 40,000, about 2.9 passes over 13,812 train examples |
-| Checkpoints and full validation | Every 1,000 updates |
+| Full validation | Before training (update 0), then every 1,000 updates |
+| Checkpoints | Every 1,000 updates |
 | Inner training limit | 14,400 seconds (4 hours) |
 | Outer supervisor limit | 18,000 seconds (5 hours) |
 
 Repeated/shuffled sampling does not guarantee each example appears equally often.
 Validation and test trajectories are excluded from gradient updates.
+The update-0 evaluation writes the initial validation loss to `metrics.jsonl`,
+TensorBoard, and `loss.png` before the first training update. It uses the same
+validation split as later evaluations, with no gradients or weight updates.
+For adapter continuation, this baseline evaluates the loaded adapter. Initial
+validation counts toward both runtime limits; no update-0 checkpoint is saved.
 
 Use the printed `tail -F .../console.log` command to see initial progress. Ctrl+C
 stops **tail**, not the training job. Wait until actual training updates appear

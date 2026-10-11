@@ -21,6 +21,10 @@ def integrated_source():
     replace('        vla.print_trainable_parameters()',
             '        vla.print_trainable_parameters()\n        record_model(vla, cfg)')
     replace('vla_dataset = RLDSDataset(', 'vla_dataset = PandaRLDSDataset(')
+    replace('    # Train!',
+            '    # Record the validation baseline before any optimizer updates.\n'
+            '    validate(vla, cfg, batch_transform, collator, device_id, 0)\n'
+            '    wandb.plot()\n\n    # Train!')
     replace('gradient_step_idx = batch_idx // cfg.grad_accumulation_steps',
             'gradient_step_idx = (batch_idx + 1) // cfg.grad_accumulation_steps')
     replace('                        "train_loss": smoothened_loss,',

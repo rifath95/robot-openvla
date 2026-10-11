@@ -28,6 +28,10 @@ class TrainingPreparationTests(unittest.TestCase):
         self.assertIn('(batch_idx + 1) // cfg.grad_accumulation_steps',source)
         self.assertIn('gradient_step_idx >= cfg.max_steps',source)
         self.assertNotIn('merged_vla =',source)
+        baseline=source.index('validate(vla, cfg, batch_transform, collator, device_id, 0)')
+        self.assertLess(source.index('wandb.init('),baseline)
+        self.assertLess(baseline,source.index('    # Train!'))
+        self.assertIn('wandb.plot()',source[baseline:source.index('    # Train!')])
 
 
 if __name__=='__main__':unittest.main()
