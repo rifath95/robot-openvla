@@ -101,6 +101,31 @@ class BatchPolicyTests(unittest.TestCase):
             self.assertEqual(config,self.config)
             self.assertEqual(record['source'],'configured_fallback')
 
+    def test_smaller_a40_vram_selects_four_and_preserves_effective_batch_eight(self):
+        settings=dict(lora_rank=32,lora_dropout=0.,use_lora=True,use_quantization=False,image_aug=False)
+        context=dict(self.context,settings=settings,total_vram_bytes=44.42193603515625*2**30,
+                     model_path='/workspace/openvla-7b',transformers_version='4.40.1',cuda_runtime='12.1',
+                     precision='bfloat16',attention='eager',
+                     input_contract=dict(pixel_shape=[6,224,224],supervised_tokens=8))
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);run=root/'20261011_054257_777818';run.mkdir()
+            (run/'benchmark_metadata.json').write_text(json.dumps(dict(mode='capacity',model=context['model_path'])))
+            rows=[]
+            for batch,reserved,free,speed in [(4,28.3125,18.41632080078125,3.6867),(8,42.705078125,4.02374267578125,3.738)]:
+                candidate=run/f'batch_{batch}_accum_1';candidate.mkdir()
+                (candidate/'model_info.json').write_text(json.dumps(dict(gpu=context['gpu'],
+                    torch_version=context['torch_version'],total_vram_gib=47.40179443359375,
+                    config=dict(settings,vla_path=context['model_path'],batch_size=batch,
+                                grad_accumulation_steps=1,dataset_name='panda_grasp_v1'))))
+                rows.append(dict(microbatch=batch,accumulation=1,status='completed',headroom_screen_passed=True,
+                                 examples_per_second=speed,gpu_peak_reserved_gib=reserved,minimum_logged_free_gib=free))
+            (run/'benchmark.json').write_text(json.dumps(rows))
+            config,record=choose_batch(dict(self.config,target_effective_batch=8),context,root)
+            self.assertEqual((config['batch_size'],config['grad_accumulation_steps']),(4,2))
+            self.assertEqual(record['effective_batch'],8)
+            self.assertEqual(record['source'],'compatible_benchmark')
+            self.assertEqual(choose_batch(self.config,dict(context,gpu='other GPU'),root)[1]['source'],'configured_fallback')
+
     def test_fixed_effective_batch_benchmarks_are_not_used_as_capacity_policy(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);self.benchmark(root/'run',mode='controlled')

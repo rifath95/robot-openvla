@@ -122,7 +122,7 @@ stop behavior remain. Confirm stopped status in RunPod after any cloud work.
 No repeat benchmark or Docker rebuild is needed for v2. Both bundles use
 processed images of shape `[6, 224, 224]` and eight supervised tokens (seven
 action tokens plus the stop token). The existing reviewed A40 benchmark selects
-microbatch **8**, accumulation **1**, when its original files are present on the
+microbatch **8**, accumulation **1** on a 47.4 GiB A40, when its original files are present on the
 network volume and the GPU/training settings match. Selection is printed and
 saved in `batch_selection.json`; a missing/incompatible result uses the
 configured fallback and prints its reason.
@@ -132,6 +132,9 @@ For the agreed next run, launch the **5,000-update A40 profile**:
 ```bash
 bash scripts/train_detached.sh training/pick_place_v2_5000.json /workspace/panda-training/training_v2
 ```
+
+On a 44.4 GiB A40, selection instead uses microbatch **4**, accumulation **2**,
+retaining effective batch **8** while screening the projected memory margin.
 
 It requires a compatible saved A40 benchmark and at least 3 GiB of free volume
 space. The reviewed recommendation is microbatch **8**, accumulation **1**:

@@ -84,7 +84,11 @@ path. No Python training parameters need to be pasted: it uses
 `training/pick_place_v2_5000.json` with the expanded dataset and original base model.
 This profile requires the A40 and a compatible saved benchmark; it rejects a
 missing recommendation instead of silently using a fallback. The reviewed A40
-result selects microbatch 8 and accumulation 1. Allow at least 3 GiB free on the
+result selects microbatch 8 and accumulation 1 on a 47.4 GiB A40. On a
+44.4 GiB A40, the same measurements select microbatch 4 and accumulation 2
+to preserve effective batch 8 and the 4 GiB memory margin. Memory projection
+uses saved peak reserved memory and minimum logged free memory; its throughput
+is an earlier benchmark measurement, not a new measurement on this pod. Allow at least 3 GiB free on the
 network volume for five adapter checkpoints and logs; the launcher checks this.
 The no-argument command still selects the historical v1/1,000-update profile.
 
