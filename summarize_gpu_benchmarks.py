@@ -5,6 +5,7 @@ import math
 import os
 from pathlib import Path
 from training.gpu_ecc import ecc_label,ecc_details
+from training.benchmark_software import software_lines
 
 
 def cell(value):
@@ -147,7 +148,7 @@ def comparison(root, output, gpu_filter=None):
             storage=metadata.get('storage',{})
             context_path=path.parent/'batch_host_context.json'
             context=json.loads(context_path.read_text()) if context_path.exists() else {}
-            notes=[]
+            notes=software_lines(metadata,info,context)
             if storage:
                 notes.append(f"Input storage: **{cell(storage.get('source_storage','unknown'))}** at `{cell(storage.get('volume_mount','unknown'))}`; training reads staged inputs from **{cell(storage.get('training_reads','unknown'))}**.")
                 staging=storage.get('input_staging_seconds')
@@ -174,7 +175,7 @@ def comparison(root, output, gpu_filter=None):
         '- ECC reports the current NVIDIA error-correction mode; pending mode is shown in each run section. Unknown means it was not recorded or could not be queried. Unavailable (N/A) is not treated as disabled. The benchmark does not change ECC settings.',
         '- Capacity mode uses accumulation one; effective batch changes. Controlled mode keeps effective batch four. These speed tests do not compare learning quality.',
         '- After capacity search, speed refinement tests missing integer sizes from the largest tested power-of-two batch passing the headroom screen up to fitting capacity. Earlier runs refined only the final capacity interval and may have missed sizes below a fitting batch without headroom. Skipping smaller sizes is a search-cost heuristic, not a guarantee that powers of two are faster. Recommendations describe the fastest tested candidate with headroom.',
-        '- Compare GPUs with the same dataset, model, LoRA rank, precision and attention settings. A100 40 GB and 80 GB variants should be recorded as separate runs.',
+        '- Compare GPUs with the same dataset, model, LoRA rank, precision, attention and software stack. Changing PyTorch/CUDA or other libraries can affect throughput; comparisons across stacks do not isolate GPU hardware. A100 40 GB and 80 GB variants should be recorded as separate runs.',
         '- Total benchmark time in each run section covers setup/loading and all batch tests, excluding pod deployment, report downloading and the supervisor shutdown window. Older runs use summed batch-test wall times, which omit between-test overhead.',
         '- Each linked report has per-batch timings and memory. Its sibling benchmark_metadata.json, benchmark.json, and model_info.json inside candidate folders preserve the exact settings and GPU details.', '',
         '## Updating this file','',

@@ -45,6 +45,14 @@ saved in `benchmark_metadata.json`. Missing historical measurements show
 `Unknown`, and unsupported/unavailable values are not reported as disabled.
 No ECC settings are changed. This reporting update needs no Docker rebuild.
 
+Each run also saves `software_stack` in `benchmark_metadata.json` and prints a
+software table in both individual and comparison reports: Python, PyTorch,
+torchvision, Transformers, tokenizers, PEFT, accelerate, timm, NumPy, TensorFlow,
+TFDS, dlimp, Hugging Face Hub, PyTorch CUDA runtime, NVIDIA driver, precision,
+attention implementation and benchmark code commit. Actual installed versions
+are recorded instead of assuming the template's intended dependency versions.
+Historical reports use available saved fields and mark missing values `Unknown`.
+
 The default launcher starts a detached **cloud benchmark supervisor**. Keep the
 Mac awake and connected if you want automatic report downloads; disconnecting
 the Mac does not cancel the supervisor or its stop attempts. No tmux installation

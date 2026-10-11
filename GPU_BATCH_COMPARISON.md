@@ -46,6 +46,31 @@ Training uses BF16 autocast and eager attention. See the saved candidate configs
 Capacity finding: **9 (boundary found)**.
 Fastest candidate with headroom: **microbatch 8, accumulation 1**, 3.74 examples/s.
 
+Software stack (recorded versions; missing historical values are Unknown):
+
+| Component | Version / setting |
+| --- | --- |
+| Python | Unknown |
+| torch | 2.2.2+cu121 |
+| torchvision | Unknown |
+| transformers | Unknown |
+| tokenizers | Unknown |
+| peft | Unknown |
+| accelerate | Unknown |
+| timm | Unknown |
+| numpy | Unknown |
+| tensorflow | Unknown |
+| tensorflow-datasets | Unknown |
+| dlimp | Unknown |
+| huggingface-hub | Unknown |
+| PyTorch CUDA runtime | Unknown |
+| NVIDIA driver | Unknown |
+| Precision | Unknown |
+| Attention | Unknown |
+| Benchmark code commit | Unknown |
+
+
+
 | Microbatch | Accumulation | Phase | Status | Seconds/update | Examples/s | Peak allocated / reserved GiB | Headroom screen |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 1 | capacity | completed | 0.416 | 2.41 | 18.01 / 26.54 | True |
@@ -68,6 +93,31 @@ GPU ECC: **Unknown** (current); pending mode: **Unknown**.
 Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.
 Capacity finding: **18 (boundary found)**.
 Fastest candidate with headroom: **microbatch 16, accumulation 1**, 9.96 examples/s.
+
+Software stack (recorded versions; missing historical values are Unknown):
+
+| Component | Version / setting |
+| --- | --- |
+| Python | Unknown |
+| torch | 2.2.2+cu121 |
+| torchvision | Unknown |
+| transformers | 4.40.1 |
+| tokenizers | Unknown |
+| peft | Unknown |
+| accelerate | Unknown |
+| timm | Unknown |
+| numpy | Unknown |
+| tensorflow | Unknown |
+| tensorflow-datasets | Unknown |
+| dlimp | Unknown |
+| huggingface-hub | Unknown |
+| PyTorch CUDA runtime | 12.1 |
+| NVIDIA driver | Unknown |
+| Precision | bfloat16 |
+| Attention | eager |
+| Benchmark code commit | Unknown |
+
+
 
 | Microbatch | Accumulation | Phase | Status | Seconds/update | Examples/s | Peak allocated / reserved GiB | Headroom screen |
 | --- | --- | --- | --- | --- | --- | --- | --- |
@@ -94,6 +144,30 @@ GPU ECC: **Unknown** (current); pending mode: **Unknown**.
 Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.
 Capacity finding: **9 (boundary found)**.
 Fastest candidate with headroom: **microbatch 4, accumulation 1**, 0.76 examples/s.
+
+Software stack (recorded versions; missing historical values are Unknown):
+
+| Component | Version / setting |
+| --- | --- |
+| Python | Unknown |
+| torch | 2.2.2+cu121 |
+| torchvision | Unknown |
+| transformers | 4.40.1 |
+| tokenizers | Unknown |
+| peft | Unknown |
+| accelerate | Unknown |
+| timm | Unknown |
+| numpy | Unknown |
+| tensorflow | Unknown |
+| tensorflow-datasets | Unknown |
+| dlimp | Unknown |
+| huggingface-hub | Unknown |
+| PyTorch CUDA runtime | 12.1 |
+| NVIDIA driver | 595.91.07 |
+| Precision | bfloat16 |
+| Attention | eager |
+| Benchmark code commit | Unknown |
+
 Input storage: **global_volume** at `/workspace`; training reads staged inputs from **container_disk**.
 Input staging: **7.11 seconds**, excluded from total benchmark time above. Model staging read source: `local_pinned_download_cache`.
 Pod CPU: AMD EPYC 7543 32-Core Processor; CPU quota (`cpu.max`): `680000 100000`.
@@ -119,7 +193,7 @@ CPU and GPU snapshot diagnostics: `batch_host_context.json` in this run’s outp
 - ECC reports the current NVIDIA error-correction mode; pending mode is shown in each run section. Unknown means it was not recorded or could not be queried. Unavailable (N/A) is not treated as disabled. The benchmark does not change ECC settings.
 - Capacity mode uses accumulation one; effective batch changes. Controlled mode keeps effective batch four. These speed tests do not compare learning quality.
 - After capacity search, speed refinement tests missing integer sizes from the largest tested power-of-two batch passing the headroom screen up to fitting capacity. Earlier runs refined only the final capacity interval and may have missed sizes below a fitting batch without headroom. Skipping smaller sizes is a search-cost heuristic, not a guarantee that powers of two are faster. Recommendations describe the fastest tested candidate with headroom.
-- Compare GPUs with the same dataset, model, LoRA rank, precision and attention settings. A100 40 GB and 80 GB variants should be recorded as separate runs.
+- Compare GPUs with the same dataset, model, LoRA rank, precision, attention and software stack. Changing PyTorch/CUDA or other libraries can affect throughput; comparisons across stacks do not isolate GPU hardware. A100 40 GB and 80 GB variants should be recorded as separate runs.
 - Total benchmark time in each run section covers setup/loading and all batch tests, excluding pod deployment, report downloading and the supervisor shutdown window. Older runs use summed batch-test wall times, which omit between-test overhead.
 - Each linked report has per-batch timings and memory. Its sibling benchmark_metadata.json, benchmark.json, and model_info.json inside candidate folders preserve the exact settings and GPU details.
 
