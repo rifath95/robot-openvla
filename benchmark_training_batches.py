@@ -111,6 +111,7 @@ def main():
     args=p.parse_args()
     if args.max_batch<1:
         p.error('--max-batch must be positive')
+    benchmark_started=time.monotonic()
     verification=args.dataset/'verification.json'
     if not verification.is_file() or not json.loads(verification.read_text()).get('passed'):
         p.error(f'Download and verify the selected dataset first: {args.dataset}')
@@ -121,10 +122,11 @@ def main():
     mode='capacity' if args.find_capacity else 'controlled'
     from training.batch_policy import benchmark_context
     context=benchmark_context(config,args.dataset,args.model)
-    (root/'benchmark_metadata.json').write_text(json.dumps(dict(mode=mode,
-        dataset=str(args.dataset.resolve()),model=str(args.model.resolve()),
-        max_batch=args.max_batch,updates_per_candidate=25,warmup_updates=5,context=context),indent=2)+'\n')
-    def report():
+    metadata=dict(mode=mode,dataset=str(args.dataset.resolve()),model=str(args.model.resolve()),
+        max_batch=args.max_batch,updates_per_candidate=25,warmup_updates=5,context=context)
+    def report(outcome='running'):
+        metadata.update(benchmark_elapsed_seconds=time.monotonic()-benchmark_started,benchmark_outcome=outcome)
+        (root/'benchmark_metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')
         write_report(root,results,mode,args.max_batch)
         from summarize_gpu_benchmarks import comparison
         comparison(args.output_root,args.output_root/'GPU_BATCH_COMPARISON.md')
@@ -167,8 +169,8 @@ def main():
             except subprocess.TimeoutExpired:
                 os.killpg(process.pid,signal.SIGKILL)
                 process.wait()
-                results.append(dict(microbatch=microbatch,accumulation=accumulation,status='timeout'))
-                report()
+                results.append(dict(microbatch=microbatch,accumulation=accumulation,status='timeout',wall_seconds=time.monotonic()-started))
+                report('timeout')
                 raise SystemExit('Benchmark timed out. Stop the pod; do not start another GPU job.')
             except KeyboardInterrupt:
                 os.killpg(process.pid,signal.SIGTERM)
@@ -183,7 +185,7 @@ def main():
         if status=='completed':
             rows=[json.loads(line) for line in (root/name/'metrics.jsonl').read_text().splitlines()]
             if max((r['update'] for r in rows if 'train_loss' in r),default=0)!=25:
-                results.append(dict(row,status='incomplete'));report()
+                results.append(dict(row,status='incomplete'));report('incomplete')
                 raise SystemExit('Candidate ended before 25 updates; capacity was not established.')
             row.update(summarize(rows,microbatch,accumulation))
             info=json.loads((root/name/'model_info.json').read_text())
@@ -193,10 +195,11 @@ def main():
             if 'CUDA out of memory' in log_text or 'torch.cuda.OutOfMemoryError' in log_text:
                 row['status']='out_of_memory'
             else:
-                results.append(row);report()
+                results.append(row);report('failed')
                 raise SystemExit(f'Benchmark failed; inspect {root / (name + ".log")}')
         results.append(row);report()
         print(json.dumps(row),flush=True)
+    report('completed')
     print(f'Report: {root / "BATCH_BENCHMARK.md"}',flush=True)
 
 

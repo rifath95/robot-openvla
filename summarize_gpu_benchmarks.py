@@ -1,12 +1,32 @@
 """Build a readable GPU comparison from saved batch benchmark directories."""
 import argparse
 import json
+import math
 import os
 from pathlib import Path
 
 
 def cell(value):
     return str(value).replace('|','/').replace('\n',' ')
+
+
+
+def duration_line(rows,metadata):
+    seconds=metadata.get('benchmark_elapsed_seconds')
+    recorded=metadata.get('benchmark_outcome')
+    if seconds is None:
+        values=[row.get('wall_seconds') for row in rows]
+        if not values or any(not isinstance(v,(int,float)) or not math.isfinite(v) or v<0 for v in values):
+            return 'Total benchmark time: **not recorded**.'
+        seconds=sum(values)
+        note=' (sum of batch-test wall times).'
+    else:
+        if not isinstance(seconds,(int,float)) or not math.isfinite(seconds) or seconds<0:
+            return 'Total benchmark time: **not recorded**.'
+        note='.'
+    minutes,remainder=divmod(round(seconds),60)
+    label='Benchmark time recorded so far' if recorded=='running' else 'Total benchmark time'
+    return f'{label}: **{minutes} min {remainder:02d} sec**'+note
 
 
 def comparison(root, output, gpu_filter=None):
@@ -70,6 +90,7 @@ def comparison(root, output, gpu_filter=None):
             lines += [f'### Run {path.parent.name}','',
                 f"Dataset: `{metadata.get('dataset','unknown')}`. Model: `{metadata.get('model','unknown')}`.",
                 f"Mode: {metadata.get('mode','unknown')}; PyTorch: {info.get('torch_version','unknown')}; LoRA rank: {config.get('lora_rank','unknown')}; quantization: {config.get('use_quantization','unknown')}; image augmentation: {config.get('image_aug','unknown')}.",
+                duration_line(rows,metadata),
                 'Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.',
                 f'Capacity finding: **{capacity}**.',
                 (f"Fastest candidate with headroom: **microbatch {best['microbatch']}, accumulation {best['accumulation']}**, {best['examples_per_second']:.2f} examples/s." if best else 'No candidate passed the headroom screen.'),'',
@@ -90,15 +111,16 @@ def comparison(root, output, gpu_filter=None):
         '- Capacity mode uses accumulation one; effective batch changes. Controlled mode keeps effective batch four. These speed tests do not compare learning quality.',
         '- After capacity search, missed fitting sizes in the final doubling interval are timed too. The recommendation is the fastest tested candidate with headroom; smaller sizes outside that interval are not exhaustively scanned.',
         '- Compare GPUs with the same dataset, model, LoRA rank, precision and attention settings. A100 40 GB and 80 GB variants should be recorded as separate runs.',
+        '- Total benchmark time in each run section covers setup/loading and all batch tests, excluding pod deployment, report downloading and the supervisor shutdown window. Older runs use summed batch-test wall times, which omit between-test overhead.',
         '- Each linked report has per-batch timings and memory. Its sibling benchmark_metadata.json, benchmark.json, and model_info.json inside candidate folders preserve the exact settings and GPU details.', '',
         '## Updating this file','',
         'Use the local launcher for automatic cloud execution, report download and workspace refresh:', '',
         '```bash','.venv/bin/python benchmark_cloud_session.py \\',
         "  --ssh 'ssh root@POD_IP -p POD_PORT -i ~/.ssh/id_ed25519'",'```','',
         'Get POD_IP and POD_PORT from RunPod → Pod → Connect → SSH over exposed TCP. The launcher selects this Mac\'s existing private key.',
-        'Keep the Mac awake and connected. By default the launcher requests a pod stop after local report synchronization. It uses the RUNPOD_API_KEY secret already configured on the pod. Confirm stopped status in RunPod.',
+        'Keep the Mac awake and connected. By default a detached cloud supervisor requests a pod stop after completion, failure, or its 60-minute outer limit; the Mac downloads reports and also requests a stop. It uses the RUNPOD_API_KEY secret already configured on the pod. Confirm stopped status in RunPod.',
         'Use `--keep-pod-running` to disable that stop. For an existing run or interrupted download, use `--fetch-only`; add `--stop-after-fetch` to stop after retrieval. No benchmark is run in fetch-only mode.',
-        'If synchronization or the stop API fails, stop the pod manually. An interrupted Mac connection can prevent the automatic stop.',
+        'If the Mac disconnects, the cloud supervisor continues and saved reports can be fetched later. If stop requests fail, stop the pod manually in RunPod.',
         'The download includes all saved benchmark reports, JSON measurements, configs and logs on the attached volume; adapter weights are excluded.',
         'Timestamped report folders and a combined report are saved in outputs/gpu-benchmarks. This workspace file is rebuilt automatically from the downloaded JSON.',
         'For report folders already downloaded, the standalone refresh command remains available:', '',

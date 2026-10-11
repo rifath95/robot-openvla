@@ -6,7 +6,7 @@ import unittest
 
 from benchmark_training_batches import summarize,write_report,next_capacity_batch,missed_speed_candidates
 from training.integrate_upstream import integrated_source
-from summarize_gpu_benchmarks import comparison
+from summarize_gpu_benchmarks import comparison,duration_line
 
 
 class BatchBenchmarkTests(unittest.TestCase):
@@ -84,7 +84,7 @@ class BatchBenchmarkTests(unittest.TestCase):
                             headroom_screen_passed=False)
                 rows=[safe,unsafe,dict(microbatch=7,accumulation=1,status='out_of_memory')]
                 (run/'benchmark.json').write_text(json.dumps(rows))
-                (run/'benchmark_metadata.json').write_text(json.dumps(dict(mode=mode,dataset='/workspace/training_v1')))
+                (run/'benchmark_metadata.json').write_text(json.dumps(dict(mode=mode,dataset='/workspace/training_v1',benchmark_elapsed_seconds=702.49,benchmark_outcome='completed')))
                 candidate=run/'batch_2_accum_1';candidate.mkdir()
                 (candidate/'model_info.json').write_text(json.dumps(dict(gpu=gpu,total_vram_gib=vram)))
             self.assertEqual(comparison(root,output),2)
@@ -100,8 +100,18 @@ class BatchBenchmarkTests(unittest.TestCase):
             self.assertIn('## NVIDIA A40',text)
             self.assertIn('## NVIDIA A100-SXM4-80GB',text)
             self.assertIn('Capacity finding:',text)
+            self.assertEqual(text.count('Total benchmark time: **11 min 42 sec**.'),2)
             self.assertEqual(comparison(root,output,gpu_filter='NVIDIA A40'),1)
             self.assertNotIn('NVIDIA A100-SXM4-80GB',output.read_text())
+
+    def test_total_duration_uses_full_timer_or_all_legacy_tests_including_oom(self):
+        rows=[dict(wall_seconds=167.24),dict(wall_seconds=535.25,status='out_of_memory')]
+        self.assertIn('11 min 42 sec',duration_line(rows,{}))
+        self.assertIn('sum of batch-test wall times',duration_line(rows,{}))
+        self.assertEqual(duration_line(rows,dict(benchmark_elapsed_seconds=720,benchmark_outcome='completed')),
+                         'Total benchmark time: **12 min 00 sec**.')
+        self.assertIn('so far',duration_line(rows,dict(benchmark_elapsed_seconds=720,benchmark_outcome='running')))
+        self.assertIn('not recorded',duration_line([{}],{}))
 
     def test_empty_comparison_does_not_invent_measurements(self):
         with tempfile.TemporaryDirectory() as directory:

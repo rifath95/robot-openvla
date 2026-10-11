@@ -11,7 +11,7 @@ A fitting batch completed 25 real updates. The short-run capacity applies to tes
 
 | GPU | VRAM GiB | Dataset | Mode | Fitting capacity | First OOM | Suggested microbatch / accumulation | Seconds/update | Examples/s | Peak allocated / reserved GiB | Run / details |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| NVIDIA A40 | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 8 / 1 | 2.140 | 3.74 | 40.25 / 42.71 | [20261011_054257_777818](outputs/gpu-benchmarks/A40_COMPARISON.md#run-20261011_054257_777818) |
+| NVIDIA A40 | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 8 / 1 | 2.140 | 3.74 | 40.25 / 42.71 | [20261011_054257_777818](outputs/gpu-benchmarks/20261011_054257_777818/BATCH_BENCHMARK.md) |
 
 ## NVIDIA A40 — 47.4 GiB
 
@@ -19,6 +19,7 @@ A fitting batch completed 25 real updates. The short-run capacity applies to tes
 
 Dataset: `/workspace/panda-training/training_v1`. Model: `/workspace/openvla-7b`.
 Mode: capacity; PyTorch: 2.2.2+cu121; LoRA rank: 32; quantization: False; image augmentation: False.
+Total benchmark time: **11 min 42 sec** (sum of batch-test wall times).
 Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.
 Capacity finding: **9 (boundary found)**.
 Fastest candidate with headroom: **microbatch 8, accumulation 1**, 3.74 examples/s.
@@ -42,6 +43,7 @@ Fastest candidate with headroom: **microbatch 8, accumulation 1**, 3.74 examples
 - Capacity mode uses accumulation one; effective batch changes. Controlled mode keeps effective batch four. These speed tests do not compare learning quality.
 - After capacity search, missed fitting sizes in the final doubling interval are timed too. The recommendation is the fastest tested candidate with headroom; smaller sizes outside that interval are not exhaustively scanned.
 - Compare GPUs with the same dataset, model, LoRA rank, precision and attention settings. A100 40 GB and 80 GB variants should be recorded as separate runs.
+- Total benchmark time in each run section covers setup/loading and all batch tests, excluding pod deployment, report downloading and the supervisor shutdown window. Older runs use summed batch-test wall times, which omit between-test overhead.
 - Each linked report has per-batch timings and memory. Its sibling benchmark_metadata.json, benchmark.json, and model_info.json inside candidate folders preserve the exact settings and GPU details.
 
 ## Updating this file
@@ -54,9 +56,9 @@ Use the local launcher for automatic cloud execution, report download and worksp
 ```
 
 Get POD_IP and POD_PORT from RunPod → Pod → Connect → SSH over exposed TCP. The launcher selects this Mac's existing private key.
-Keep the Mac awake and connected. By default the launcher requests a pod stop after local report synchronization. It uses the RUNPOD_API_KEY secret already configured on the pod. Confirm stopped status in RunPod.
+Keep the Mac awake and connected. By default a detached cloud supervisor requests a pod stop after completion, failure, or its 60-minute outer limit; the Mac downloads reports and also requests a stop. It uses the RUNPOD_API_KEY secret already configured on the pod. Confirm stopped status in RunPod.
 Use `--keep-pod-running` to disable that stop. For an existing run or interrupted download, use `--fetch-only`; add `--stop-after-fetch` to stop after retrieval. No benchmark is run in fetch-only mode.
-If synchronization or the stop API fails, stop the pod manually. An interrupted Mac connection can prevent the automatic stop.
+If the Mac disconnects, the cloud supervisor continues and saved reports can be fetched later. If stop requests fail, stop the pod manually in RunPod.
 The download includes all saved benchmark reports, JSON measurements, configs and logs on the attached volume; adapter weights are excluded.
 Timestamped report folders and a combined report are saved in outputs/gpu-benchmarks. This workspace file is rebuilt automatically from the downloaded JSON.
 For report folders already downloaded, the standalone refresh command remains available:

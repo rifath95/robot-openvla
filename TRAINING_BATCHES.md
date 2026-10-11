@@ -22,7 +22,9 @@ Local results go into `outputs/gpu-benchmarks/<cloud-run-timestamp>/` along with
 `GPU_BATCH_COMPARISON.md` is automatically rebuilt too, retaining all downloaded
 GPU runs. Per-GPU copies such as `A40_COMPARISON.md` are refreshed in that output
 folder too; A100 filenames include the actual variant name reported by CUDA.
-It is not necessary to manually copy results or edit the table.
+It is not necessary to manually copy results or edit the table. Each GPU run
+section also includes total benchmark time, outside the summary table. Future
+runs use a full benchmark timer; older runs use summed batch-test wall times.
 
 The default launcher starts a detached **cloud benchmark supervisor**. Keep the
 Mac awake and connected if you want automatic report downloads; disconnecting
