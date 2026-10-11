@@ -21,6 +21,11 @@
       "gpu": "NVIDIA H200",
       "hourly_rate_usd": 5.29,
       "confirmed_on": "2026-10-11"
+    },
+    "20261011_115921_878754": {
+      "gpu": "NVIDIA A100-SXM4-80GB",
+      "hourly_rate_usd": 1.79,
+      "confirmed_on": "2026-10-11"
     }
   }
 }
