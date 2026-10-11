@@ -11,8 +11,28 @@ A fitting batch completed 25 real updates. The short-run capacity applies to tes
 
 | GPU | VRAM GiB | Dataset | Mode | Fitting capacity | First OOM | Suggested microbatch / accumulation | Seconds/update | Examples/s | Peak allocated / reserved GiB | Run / details |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| NVIDIA A40 | — | — | Planned | Not measured | — | — | — | — | — | Pending |
-| NVIDIA A100 (variant to be recorded) | — | — | Planned | Not measured | — | — | — | — | — | Pending |
+| NVIDIA A40 | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 8 / 1 | 2.140 | 3.74 | 40.25 / 42.71 | [20261011_054257_777818](outputs/gpu-benchmarks/A40_COMPARISON.md#run-20261011_054257_777818) |
+
+## NVIDIA A40 — 47.4 GiB
+
+### Run 20261011_054257_777818
+
+Dataset: `/workspace/panda-training/training_v1`. Model: `/workspace/openvla-7b`.
+Mode: capacity; PyTorch: 2.2.2+cu121; LoRA rank: 32; quantization: False; image augmentation: False.
+Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.
+Capacity finding: **9 (boundary found)**.
+Fastest candidate with headroom: **microbatch 8, accumulation 1**, 3.74 examples/s.
+
+| Microbatch | Accumulation | Phase | Status | Seconds/update | Examples/s | Peak allocated / reserved GiB | Headroom screen |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 1 | capacity | completed | 0.416 | 2.41 | 18.01 / 26.54 | True |
+| 2 | 1 | capacity | completed | 0.632 | 3.16 | 21.25 / 25.71 | True |
+| 4 | 1 | capacity | completed | 1.085 | 3.69 | 27.57 / 28.31 | True |
+| 8 | 1 | capacity | completed | 2.140 | 3.74 | 40.25 / 42.71 | True |
+| 9 | 1 | capacity | completed | 2.282 | 3.94 | 43.33 / 46.33 | False |
+| 10 | 1 | capacity | out_of_memory | — | — | — | — |
+| 12 | 1 | capacity | out_of_memory | — | — | — | — |
+| 16 | 1 | capacity | out_of_memory | — | — | — | — |
 
 ## Reading the results
 
@@ -26,12 +46,25 @@ A fitting batch completed 25 real updates. The short-run capacity applies to tes
 
 ## Updating this file
 
-Every cloud benchmark refreshes a comparison file in the network-volume benchmark directory. To refresh this workspace copy after downloading benchmark folders into outputs/gpu-benchmarks:
+The cloud copy updates automatically after each benchmark candidate. The workspace
+copy does not synchronize automatically across SSH. Download results to the Mac
+before updating this file.
+
+This A40 entry was imported from `outputs/gpu-benchmarks/A40_COMPARISON.md`.
+Only that Markdown report has been downloaded so far; the underlying JSON,
+configs, and logs remain on the network volume. The summary link opens the local
+report instead of pointing to an undownloaded candidate folder.
+
+When full benchmark folders have been downloaded into `outputs/gpu-benchmarks`,
+regenerate the combined workspace report using:
 
 ```bash
 .venv-training/bin/python summarize_gpu_benchmarks.py \
   --root outputs/gpu-benchmarks \
   --output GPU_BATCH_COMPARISON.md
 ```
+
+That command reads `benchmark.json` files. A Markdown-only download is insufficient
+to rebuild the combined report, so do not run it until the JSON files are present.
 
 Historical training memory usage alone does not establish maximum batch capacity.
