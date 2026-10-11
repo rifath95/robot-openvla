@@ -1,5 +1,8 @@
 # Measure training microbatch size on the A40
 
+For the separate B300/Blackwell image and its compatibility checks, see
+[Blackwell training setup](BLACKWELL_TRAINING_SETUP.md).
+
 ## Automatic launch and local results
 
 Use this command in a **local Mac terminal inside the workspace**. Paste the SSH

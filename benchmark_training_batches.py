@@ -141,6 +141,16 @@ def main():
         comparison(args.output_root,args.output_root/'GPU_BATCH_COMPARISON.md')
     print(f'Benchmark outputs: {root}',flush=True)
     print('This benchmark alone does not stop the pod; the Mac launcher handles download and automatic stop when enabled.',flush=True)
+    if (os.environ.get('OPENVLA_TRAINING_STACK')=='blackwell'
+            or Path('/opt/training/build_stack_check.json').is_file()):
+        print('Checking Blackwell training dependencies and a tiny CUDA LoRA update...',flush=True)
+        try:
+            subprocess.run([sys.executable,str(Path(__file__).parent/'training/check_training_stack.py'),
+                            '--device','cuda','--expect-blackwell-stack',
+                            '--output',str(root/'batch_stack_check.json')],check=True)
+        except subprocess.CalledProcessError:
+            report('stack_check_failed')
+            raise
     controlled=iter(((1,4),(2,2),(4,1)))
     speed_candidates=None
     while True:

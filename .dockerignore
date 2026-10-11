@@ -8,3 +8,8 @@
 !training/fetch_upstream.py
 !training/upstream/
 !training/upstream/**
+
+!Dockerfile.training.blackwell
+!requirements-openvla-blackwell.txt
+!requirements-training-blackwell.txt
+!training/check_training_stack.py

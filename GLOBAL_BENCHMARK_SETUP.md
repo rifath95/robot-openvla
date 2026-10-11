@@ -1,5 +1,8 @@
 # Global-volume inputs for GPU benchmarks
 
+For B300 and other Blackwell GPUs, build and test the separate candidate image
+using [Blackwell training setup](BLACKWELL_TRAINING_SETUP.md).
+
 The global volume is named **robot-openvla-global-volume**. It is separate from
 the regional network volume used by the running 5,000-update fine-tuning job.
 Do not modify or stop that training pod while preparing this new storage.
