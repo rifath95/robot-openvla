@@ -49,7 +49,8 @@ def check(dataset, source, processor_path=None):
         for ep in tfds.as_numpy(builder.as_dataset(split=split,shuffle_files=False)):
             source_episode=expected[ep['episode_id'].decode()]
             if source_episode['split']!=split:raise ValueError('Changed split')
-            rows=[row for row in ep['steps'] if row['is_action_valid']]
+            all_rows=list(ep['steps'])
+            rows=[row for row in all_rows if row['is_action_valid']]
             if len(rows)!=len(source_episode['rows']):raise ValueError('Dropped or duplicated steps')
             for row,original in zip(rows,source_episode['rows']):
                 with Image.open(source_episode['path']/original['observation']) as im:
@@ -58,6 +59,13 @@ def check(dataset, source, processor_path=None):
                 if (not np.array_equal(row['action'],np.asarray(original['action'],np.float32))
                         or row['language_instruction'].decode()!=original['instruction']):
                     raise ValueError('Label/instruction mismatch')
+            terminal=all_rows[-1]
+            with Image.open(source_episode['path']/source_episode['rows'][-1]['next_observation']) as im:
+                if not np.array_equal(terminal['observation']['image'],np.asarray(im)):
+                    raise ValueError('Terminal observation does not match final after-image')
+            if (terminal['is_action_valid'] or not terminal['is_terminal']
+                    or terminal['language_instruction'].decode()!=source_episode['rows'][-1]['instruction']):
+                raise ValueError('Invalid terminal image/instruction boundary')
             samples[split]=rows[0]
     result['all_source_images_actions_instructions_match']=True
     if processor_path is not None:

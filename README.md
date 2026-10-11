@@ -121,7 +121,7 @@ audit and per-trajectory replay instructions.
 
 Remaining goals:
 
-1. Audit the broader demonstration coverage and package the expanded dataset as a new RLDS version, keeping rejected episodes and held-out splits out of training statistics.
+1. Upload the locally verified `training_v2` RLDS bundle, keeping the original dataset and held-out splits intact. See [TRAINING_V2.md](TRAINING_V2.md).
 2. Train and compare checkpoints on the expanded dataset, checking both generated actions and validation loss.
 3. Evaluate the adapted model on fixed held-out pick-and-place scenarios against the pretrained baseline, with separate results for legacy and broad starting poses.
 

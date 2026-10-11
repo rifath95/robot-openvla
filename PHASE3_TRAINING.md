@@ -1,5 +1,11 @@
 # Phase 3: prepare, fine-tune, and evaluate OpenVLA
 
+The expanded **250-trajectory** package is now ready locally as `training_v2`
+(176 train / 37 validation / 37 test; 19,625 valid action examples). Use
+[TRAINING_V2.md](TRAINING_V2.md) for its upload and explicit dataset selection.
+The `training_v1` preparation and completed runs described below are retained
+as the original 50-trajectory experiment. New training has not been launched.
+
 The local preparation milestone packages all 50 expert trajectories into a
 portable TFDS/RLDS dataset at `datasets/panda_pick_place/training_v1`. Local
 preparation has passed, and the first 20-update cloud training test has

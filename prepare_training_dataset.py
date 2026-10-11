@@ -22,6 +22,9 @@ def load_episodes(manifest, *, verify_images=True):
             raise ValueError('Duplicate, invalid split, or unsuccessful episode')
         seen.add(path)
         metadata = json.loads((path/'episode.json').read_text())
+        scenario = metadata.get('scenario') or {}
+        if scenario.get('id',entry['id']) != entry['id'] or scenario.get('split',entry['split']) != entry['split']:
+            raise ValueError('Source manifest changes the predeclared episode identity or split')
         replay = json.loads((path/'replay.json').read_text())
         if (metadata['action_contract'] != action_contract() or not metadata['success']
                 or not metadata['training_eligible'] or not replay['passed']
@@ -41,11 +44,20 @@ def load_episodes(manifest, *, verify_images=True):
                     if im.mode != 'RGB' or im.size != (640, 480):
                         raise ValueError('Unexpected camera image')
         episodes.append(dict(id=entry['id'], split=entry['split'], path=path, rows=rows,
-                             fingerprint=replay['episode_sha256']))
+                             fingerprint=replay['episode_sha256'],
+                             cohort=entry.get('cohort', 'legacy'),
+                             combination=(metadata.get('scenario') or {}).get('combination')))
     if len({ep['id'] for ep in episodes}) != len(episodes):
         raise ValueError('Episode IDs must be unique')
     if any(not any(ep['split'] == split for ep in episodes) for split in ('train','validation','test')):
         raise ValueError('All three splits are required')
+    combinations = {}
+    for episode in episodes:
+        if episode['combination'] is not None:
+            combination = tuple(episode['combination'])
+            previous = combinations.setdefault(combination, episode['split'])
+            if previous != episode['split']:
+                raise ValueError('Broad starting-pose combination crosses dataset splits')
     return episodes
 
 
@@ -126,13 +138,48 @@ def build(manifest, output):
     report=dict(schema_version=1, dataset_name='panda_pick_place', action_key=CONVENTION_ID,
         builder_directory='rlds/panda_pick_place/1.0.0',action_contract=action_contract(),
         normalization='Training-only q01/q99, clipped to [-1,1]; gripper stays [0,1].',
-        episodes=[dict(id=e['id'],split=e['split'],transitions=len(e['rows']),sha256=e['fingerprint']) for e in episodes],
+        source_manifest_sha256=hashlib.sha256(Path(manifest).read_bytes()).hexdigest(),
+        episodes=[dict(id=e['id'],split=e['split'],transitions=len(e['rows']),sha256=e['fingerprint'],
+                       cohort=e['cohort'], combination=e['combination']) for e in episodes],
         split_counts={s:dict(episodes=sum(e['split']==s for e in episodes),
             transitions=sum(len(e['rows']) for e in episodes if e['split']==s)) for s in ('train','validation','test')},
         training_executed=False)
     (output/'manifest.json').write_text(json.dumps(report,indent=2)+'\n')
     verify(output)
     return report
+
+
+def write_package_report(output):
+    output = Path(output)
+    report = json.loads((output / 'manifest.json').read_text())
+    verification = json.loads((output / 'verification.json').read_text())
+    counts = verification['split_counts']
+    input_check = json.loads((output/'input_check.json').read_text()) if (output/'input_check.json').exists() else {}
+    table = ['# Training dataset package', '',
+             f'Bundle: **{output.name}**. Dataset schema: **{report["dataset_name"]} / 1.0.0**.', '',
+             '| Split | Trajectories | Valid action examples |', '|---|---:|---:|']
+    table.extend(f'| {s} | {counts[s]["episodes"]} | {counts[s]["transitions"]} |'
+                 for s in ('train', 'validation', 'test'))
+    table.extend(['', 'RGB PNG images are embedded in TFRecords. Instructions remain text and '
+                  'actions remain seven float32 values; tokenization happens during training.', '',
+                  'Each trajectory has one additional terminal after-image with no valid outgoing '
+                  'action. Terminal records are excluded from the example counts above.', '',
+                  'Normalization statistics use training episodes only. Source episode hashes, '
+                  'cohort labels and broad scene combinations are recorded in manifest.json.', '',
+                  f'Portable export/count checks passed: **{verification["passed"]}**.',
+                  f'All source images/actions/instructions checked: '
+                  f'**{input_check.get("all_source_images_actions_instructions_match", False)}**.',
+                  f'Official processor batches checked: **{bool(input_check.get("official_processor_batches"))}**.', '',
+                  'See verification.json and input_check.json for detailed checks; SHA256SUMS '
+                  'covers the upload files. No cloud upload or training was performed by packaging.', ''])
+    (output/'PACKAGE_REPORT.md').write_text('\n'.join(table))
+
+
+def write_upload_checksums(output):
+    output = Path(output)
+    files=sorted(p for p in output.rglob('*') if p.is_file() and p.name!='SHA256SUMS')
+    (output/'SHA256SUMS').write_text(''.join(
+        hashlib.sha256(p.read_bytes()).hexdigest()+'  '+p.relative_to(output).as_posix()+'\n' for p in files))
 
 
 def verify(output):
@@ -163,9 +210,8 @@ def verify(output):
     if counts!=report['split_counts']: raise ValueError('Export count mismatch')
     result=dict(passed=True,split_counts=counts, portable=True)
     (output/'verification.json').write_text(json.dumps(result,indent=2)+'\n')
-    files=sorted(p for p in output.rglob('*') if p.is_file() and p.name!='SHA256SUMS')
-    (output/'SHA256SUMS').write_text(''.join(
-        hashlib.sha256(p.read_bytes()).hexdigest()+'  '+p.relative_to(output).as_posix()+'\n' for p in files))
+    write_package_report(output)
+    write_upload_checksums(output)
     return result
 
 

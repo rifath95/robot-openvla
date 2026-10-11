@@ -149,6 +149,7 @@ def main():
     parser.add_argument('--check-only', action='store_true')
     parser.add_argument('--session-dir', type=Path)
     parser.add_argument('--config', type=Path, default=ROOT / 'training/pick_place_1000.json')
+    parser.add_argument('--dataset', type=Path, default=Path('/workspace/panda-training/training_v1'))
     parser.add_argument('--hard-limit-seconds', type=int, default=5400)
     args = parser.parse_args()
     if args.hard_limit_seconds <= 0:
@@ -157,9 +158,15 @@ def main():
         config = json.loads(args.config.read_text())
         if config['max_steps'] < 1 or config['validation_max_batches'] < 0:
             raise ValueError('Invalid update count or validation limit')
+        dataset = args.dataset.resolve()
+        if dataset.parent != Path('/workspace/panda-training'):
+            raise ValueError('Select a dataset directory directly inside /workspace/panda-training')
+        verification = json.loads((dataset / 'verification.json').read_text())
+        if not verification.get('passed'):
+            raise ValueError('Selected dataset has not passed verification')
         pod_id, key = preflight()
         if args.check_only:
-            print('API and network-volume checks passed. This did not stop the pod.')
+            print(f'API, network-volume and dataset checks passed: {dataset}. This did not stop the pod.')
             return 0
         if args.session_dir is None:
             parser.error('--session-dir is required')
@@ -168,7 +175,7 @@ def main():
             parser.error('Session directory must be inside /workspace/panda-training/sessions')
         directory.mkdir(parents=True, exist_ok=False)
         command = [sys.executable, '-u', str(ROOT / 'train_panda.py'),
-                   '--dataset', '/workspace/panda-training/training_v1',
+                   '--dataset', str(dataset),
                    '--model', '/workspace/openvla-7b', '--config', str(args.config.resolve()),
                    '--output-root', str(directory / 'runs'),
                    '--run-name', 'training']

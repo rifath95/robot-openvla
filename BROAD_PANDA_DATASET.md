@@ -21,7 +21,8 @@ unreachable candidates were excluded and replaced within their preassigned group
 
 Local evidence: `datasets/panda_pick_place/panda_broad_20261011/COLLECTION_SUMMARY.md`
 and `coverage_audit.json`. Combined splits: **176 train / 37 validation / 37 test**.
-The actual dataset has not yet been converted to a new RLDS package or uploaded.
+The expanded RLDS package is now generated as `training_v2`; upload and another
+training run are separate steps. See [TRAINING_V2.md](TRAINING_V2.md).
 
 The first 20 episodes count toward the 200. Their recorded initial states passed
 task success, deterministic replay and sampled path-contact checks. Measured
@@ -123,8 +124,9 @@ motion frames, with no pod needed. Images, instructions, actual executed command
 physics states and motion frames are saved for each action.
 
 Generated images and data are ignored by Git. The code and this guide are pushed;
-the actual dataset remains on this Mac. RLDS packaging, upload and another training
-run are subsequent steps; the original uploaded dataset/checkpoints are untouched.
+the actual dataset remains on this Mac. See [TRAINING_V2.md](TRAINING_V2.md) for
+the expanded RLDS package. Upload and another training run are subsequent steps;
+the original uploaded dataset/checkpoints are untouched.
 
 Combined files are generated at completion when the original 50-episode manifest
 is present locally. They contain 176 train / 37 validation / 37 test trajectories.

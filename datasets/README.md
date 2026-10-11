@@ -94,7 +94,9 @@ splits. All 200 passed task execution, replay and the saved-pose audit. The orig
 50 episodes and portable `training_v1` are retained. The combined manifest lists
 250 trajectories (176 train / 37 validation / 37 test), and the root trajectory
 index links all 250. New and combined training-only staging data are included;
-RLDS packaging/upload of the expanded dataset has not been performed yet.
+The expanded RLDS package is now in `panda_pick_place/training_v2/`, with its own
+training-only statistics, portable images/labels and upload checksums. Upload
+and a new training run have not been performed. See [TRAINING_V2.md](../TRAINING_V2.md).
 
 See [BROAD_PANDA_DATASET.md](../BROAD_PANDA_DATASET.md) for commands and checks.
 Use the batch's `WATCH_TRAJECTORIES.md` to find accepted episodes, including
