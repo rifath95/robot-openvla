@@ -50,6 +50,10 @@ class BenchmarkSyncTests(unittest.TestCase):
         script=remote_benchmark_script('/workspace/panda-training/training_v2',32)
         self.assertIn('--find-capacity --max-batch 32 --dataset /workspace/panda-training/training_v2',script)
         self.assertIn('pull --ff-only',script)
+        supervised=remote_benchmark_script('/workspace/panda-training/training_v2',32,auto_stop=True,hard_limit=3600)
+        self.assertIn('training.benchmark_supervisor --launch',supervised)
+        self.assertIn('--hard-limit-seconds 3600',supervised)
+        with self.assertRaises(ValueError):remote_benchmark_script('/workspace/panda-training/training_v2',32,hard_limit=0)
         with self.assertRaises(ValueError):
             remote_benchmark_script('/workspace/panda-training/a;echo bad',64)
 

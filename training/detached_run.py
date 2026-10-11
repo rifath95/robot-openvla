@@ -34,8 +34,8 @@ def api_request(pod_id, key, *, stop=False):
 
 
 def preflight():
-    pod_id = os.environ.get('RUNPOD_POD_ID', '')
-    key = os.environ.get('RUNPOD_API_KEY', '')
+    from training.pod_environment import recover_pod_environment
+    pod_id, key = recover_pod_environment()
     if not re.fullmatch(r'[A-Za-z0-9_-]+', pod_id) or not key:
         raise RuntimeError('RUNPOD_POD_ID and RUNPOD_API_KEY must be set on the pod')
     mount = subprocess.run(['findmnt', '-n', '-o', 'TARGET', '-T', '/workspace'],

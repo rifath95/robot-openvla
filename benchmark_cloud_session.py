@@ -1,7 +1,7 @@
 """Run a cloud GPU benchmark and automatically sync its reports to this Mac.
 
 Requires an already-running training-image pod with its network volume attached.
-By default it requests a pod stop after reports have synchronized successfully.
+A detached cloud supervisor stops the pod on completion, failure, or timeout.
 """
 import argparse
 import json
@@ -36,6 +36,10 @@ for run in sorted(root.iterdir()):
         if not candidate.is_dir(): continue
         for name in ('metrics.jsonl','model_info.json','experiment.json'):
             if (candidate/name).is_file(): files.append(candidate/name)
+for session in (root/'sessions').glob('*'):
+    if not session.is_dir():continue
+    for name in ('status.json','console.log','supervisor.log','pod_stop_status.json'):
+        if (session/name).is_file():files.append(session/name)
 if not files:
     raise SystemExit('No saved benchmark results to download')
 with tarfile.open(fileobj=sys.stdout.buffer,mode='w|gz') as archive:
@@ -55,7 +59,9 @@ def extract_reports(archive_path, destination):
             path=PurePosixPath(member.name)
             if (not member.isfile() or path.is_absolute() or '..' in path.parts
                 or len(path.parts) not in (2,3)
-                or not re.fullmatch(r'\d{8}_\d{6}_\d{6}',path.parts[0])
+                or not (re.fullmatch(r'\d{8}_\d{6}_\d{6}',path.parts[0])
+                        or (len(path.parts)==3 and path.parts[0]=='sessions'
+                            and re.fullmatch(r'\d{8}_\d{6}_\d{6}',path.parts[1])))
                 or path.suffix not in ('.json','.jsonl','.md','.log')):
                 raise ValueError(f'Unexpected report archive entry: {member.name}')
             target=destination.joinpath(*path.parts)
@@ -93,14 +99,18 @@ def fetch_reports(ssh, local_root, workspace_report):
     print(f'Updated {workspace_report} with {count} saved benchmark runs.',flush=True)
 
 
-def remote_benchmark_script(dataset, maximum, controlled=False, auto_stop=False, prepare_only=False):
+def remote_benchmark_script(dataset, maximum, controlled=False, auto_stop=False, prepare_only=False, hard_limit=3600):
     if not re.fullmatch(r'/workspace/panda-training/[A-Za-z0-9][A-Za-z0-9_-]*',dataset):
         raise ValueError('Dataset must be a named bundle directly inside /workspace/panda-training')
+    if hard_limit<1:raise ValueError('Outer timeout must be positive')
     if maximum<1:
         raise ValueError('Maximum batch must be positive')
     mode='' if controlled else '--find-capacity'
     check='/opt/openvla/bin/python -m training.benchmark_stop --check-only' if auto_stop else ''
     benchmark='' if prepare_only else f'/opt/openvla/bin/python -u benchmark_training_batches.py {mode} --max-batch {maximum} --dataset {shlex.quote(dataset)}'
+    if auto_stop and not prepare_only:
+        benchmark=f'/opt/openvla/bin/python -u -m training.benchmark_supervisor --launch --max-batch {maximum} --dataset {shlex.quote(dataset)} --hard-limit-seconds {hard_limit}'
+        if controlled:benchmark+=' --controlled'
     return f'''set -euo pipefail
 mountpoint -q /workspace
 test -x /opt/openvla/bin/python
@@ -121,24 +131,26 @@ def main():
     p.add_argument('--key',type=Path,help='Optional override of the Mac private-key path')
     p.add_argument('--dataset',default='/workspace/panda-training/training_v1')
     p.add_argument('--max-batch',type=int,default=64)
+    p.add_argument('--hard-limit-seconds',type=int,default=3600,help='Cloud supervisor outer limit (default: 60 minutes)')
     p.add_argument('--controlled',action='store_true',help='Use fixed effective-batch-four comparison instead')
     p.add_argument('--fetch-only',action='store_true',help='Download saved results without running any GPU training')
     p.add_argument('--keep-pod-running',action='store_true',help='Disable automatic stop after a new benchmark')
-    p.add_argument('--stop-after-fetch',action='store_true',help='Also stop the pod after --fetch-only succeeds')
+    p.add_argument('--stop-after-fetch',action='store_true',help='Also request a pod stop after --fetch-only, including download errors')
     args=p.parse_args()
     try:
         host,port,key=parse_ssh(args.ssh,args.key)
         auto_stop=(not args.fetch_only and not args.keep_pod_running) or args.stop_after_fetch
         if args.keep_pod_running and args.stop_after_fetch:
             p.error('--keep-pod-running conflicts with --stop-after-fetch')
-        script=remote_benchmark_script(args.dataset,args.max_batch,args.controlled,auto_stop)
+        script=remote_benchmark_script(args.dataset,args.max_batch,args.controlled,auto_stop,hard_limit=args.hard_limit_seconds)
     except ValueError as exc:
         p.error(str(exc))
     ssh=ssh_arguments(host,port,key)
     print(f'Connecting to {host}:{port}. The pod must already be running.',flush=True)
-    print('Automatic stop after successful report synchronization.' if auto_stop else
+    print('Automatic stop after completion, failure, or cloud outer timeout.' if auto_stop else
           'Automatic stop disabled. Stop the pod manually in RunPod afterward.',flush=True)
     code=0
+    error=None
     try:
         if args.fetch_only and auto_stop:
             setup=remote_benchmark_script(args.dataset,args.max_batch,args.controlled,True,prepare_only=True)
@@ -146,21 +158,31 @@ def main():
         if not args.fetch_only:
             result=subprocess.run(ssh+['bash -s'],input=script,text=True)
             code=result.returncode
+            if code==75:
+                raise SystemExit('Another benchmark supervisor is running. It was left running; this launch did not stop it.')
             if code:
                 print('Cloud command ended with an error; attempting to collect saved diagnostics.',flush=True)
         fetch_reports(ssh,ROOT/'outputs/gpu-benchmarks',ROOT/'GPU_BATCH_COMPARISON.md')
-        if auto_stop:
-            print('Local reports saved. Requesting pod stop...',flush=True)
-            stop_command='cd /root/robot-openvla && /opt/openvla/bin/python -m training.benchmark_stop'
-            stopped=subprocess.run(ssh+[stop_command])
-            if stopped.returncode:
-                raise SystemExit('Stop could not be confirmed (SSH may close during shutdown). Check the RunPod portal and stop manually if still running.')
     except (OSError,ValueError,subprocess.CalledProcessError,tarfile.TarError) as exc:
-        raise SystemExit(f'Results were not fully synchronized: {exc}. Automatic stop was not requested. Reconnect and use --fetch-only --stop-after-fetch, or stop manually. The pod may still bill.')
+        error=f'Results were not fully synchronized: {exc}. Saved results remain on the volume.'
     except KeyboardInterrupt:
-        raise SystemExit('Local launcher interrupted. Reconnect and use --fetch-only for saved results. Check and stop the pod in RunPod.')
-    if code:
-        raise SystemExit(code)
+        # Leave the detached supervisor responsible for killing workers and stopping.
+        if auto_stop and not args.fetch_only:
+            raise SystemExit('Local watcher interrupted. If the cloud supervisor started, it continues and will request a pod stop after completion or its outer limit. Confirm stopped status in RunPod.')
+        raise SystemExit('Local launcher interrupted. Check and stop the pod manually in RunPod.')
+    if error:print(error,flush=True)
+    if auto_stop:
+        print('Requesting pod stop (including when the benchmark or download failed)...',flush=True)
+        stop_command='cd /root/robot-openvla && /opt/openvla/bin/python -m training.benchmark_stop'
+        try:
+            stopped=subprocess.run(ssh+[stop_command],timeout=100)
+            if stopped.returncode:
+                raise RuntimeError('Stop command did not confirm success')
+        except (OSError,RuntimeError,subprocess.TimeoutExpired):
+            raise SystemExit('Stop could not be confirmed. The cloud supervisor also attempts cleanup if it started. Check RunPod and stop manually if still running.')
+    if error:raise SystemExit(error)
+    if code:raise SystemExit(code)
+
 
 
 if __name__=='__main__':main()

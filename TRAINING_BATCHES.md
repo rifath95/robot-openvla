@@ -24,15 +24,60 @@ GPU runs. Per-GPU copies such as `A40_COMPARISON.md` are refreshed in that outpu
 folder too; A100 filenames include the actual variant name reported by CUDA.
 It is not necessary to manually copy results or edit the table.
 
-Keep the Mac connected and the lid open until synchronization completes. This
-is a foreground workflow, not the detached training wrapper. After successful
-download, the launcher requests a pod **stop** (not termination) automatically.
-It uses the existing `RUNPOD_API_KEY` secret on the pod and verifies API/network
-volume access before starting the benchmark. A GET check cannot guarantee stop
-permission; stop failures are retried and reported. Confirm stopped status in
-RunPod. Use `--keep-pod-running` when intentionally doing more work on the pod.
-If interrupted,
-reconnect to a running pod with the same volume and fetch already-saved results:
+The default launcher starts a detached **cloud benchmark supervisor**. Keep the
+Mac awake and connected if you want automatic report downloads; disconnecting
+the Mac does not cancel the supervisor or its stop attempts. No tmux installation
+or Docker rebuild is required for this benchmark supervisor.
+
+The supervisor requests a pod **stop**, not termination, after success, a
+benchmark error, or timeout. The Mac tries to download available results first
+and also requests a stop even if that download fails. After normal completion or
+failure, the cloud supervisor allows **up to two minutes** for this download,
+then stops independently if the Mac is absent. The overall deadline takes
+precedence over this download window; timed-out results may need fetching later.
+
+### Time limits
+
+- Per batch-size candidate: **10-minute training limit**, **15-minute hard limit**
+  including loading, training, validation and saving.
+- Entire supervised benchmark: **60-minute outer limit**. It starts when the
+  cloud worker starts, after repository checkout and credential preflight; pod
+  deployment and earlier idle time are not covered. All candidates and their
+  loading/setup are inside this limit. At expiry, the supervisor kills the
+  benchmark and its training-worker process groups, then requests a pod stop.
+- Stop API requests are retried three times with bounded request timeouts;
+  retrying can extend shutdown beyond the benchmark work deadline.
+
+Override the outer limit with `--hard-limit-seconds`, for example `3600` for one
+hour. `--keep-pod-running` intentionally disables this cloud supervisor and
+automatic stop; per-candidate limits still apply and you must stop manually.
+
+### Required pod environment
+
+The training template must include **`RUNPOD_API_KEY`**, with its value selected
+from your existing RunPod stop secret using the secret picker. RunPod normally
+supplies **`RUNPOD_POD_ID`** automatically; it must identify the current pod.
+Before starting GPU work, the launcher checks that the API identifies this pod
+and its attached network volume. If SSH omitted either variable, preflight
+recovers only those two variables from `/proc/1/environ`, without printing or
+saving credentials. A genuinely absent variable or unresolved secret placeholder
+is reported by name; correct the template/pod environment before trying again.
+A GET check cannot guarantee stop permission. Invalid permissions, API/network
+outages, or a failed supervisor can still prevent stopping; confirm stopped
+status in RunPod and stop manually if needed.
+
+### Saved diagnostics and reconnecting
+
+Benchmark measurements remain under
+`/workspace/panda-training/batch-benchmarks/<run-timestamp>/`. Supervisor timing,
+outcome and logs are stored under
+`/workspace/panda-training/batch-benchmarks/sessions/<session-timestamp>/`:
+`status.json`, `console.log`, `supervisor.log`, and `pod_stop_status.json`.
+The Mac downloads these alongside the benchmark reports. Direct Mac stop
+requests also record `batch-benchmarks/pod_stop_status.json`.
+
+If the pod has already stopped, resume it or attach the same volume to a new pod,
+then download saved results without rerunning the benchmark:
 
 ```bash
 .venv/bin/python benchmark_cloud_session.py \
@@ -40,12 +85,10 @@ reconnect to a running pod with the same volume and fetch already-saved results:
   --fetch-only --stop-after-fetch
 ```
 
-`--fetch-only` runs no benchmark or training. It can collect a prior run even
-from a new pod attached to the same volume. Fetch-only leaves the pod running
-unless `--stop-after-fetch` is supplied. Downloads/API failures or losing the Mac
-connection can prevent automatic stopping; stop manually in that case. No Docker
-rebuild needed. Stop status is saved on the volume in
-`/workspace/panda-training/batch-benchmarks/pod_stop_status.json`.
+`--fetch-only` leaves the pod running unless `--stop-after-fetch` is supplied.
+With that flag, a stop is attempted even if fetching fails. If the benchmark is
+still running, leave its supervisor to finish before using this stop-after-fetch
+command; otherwise it stops the pod and interrupts the active job.
 
 ## Automatic batch selection for training
 

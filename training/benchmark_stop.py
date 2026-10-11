@@ -8,22 +8,26 @@ import time
 from training.detached_run import api_request, preflight, write_status
 
 
-def stop_pod(pod_id,key,status_path):
+def stop_pod(pod_id,key,status_path,*,reason='Benchmark reports synchronized to the Mac'):
     status=dict(pod_id=pod_id,requested_at_utc=datetime.now(timezone.utc).isoformat(),
-                stop_state='requested',reason='Benchmark reports synchronized to the Mac')
-    write_status(status_path,status)
-    os.sync()
+                stop_state='requested',reason=reason)
+    def persist():
+        try:write_status(status_path,status)
+        except OSError:print('Could not save stop status; still attempting the RunPod stop.',flush=True)
+    persist()
+    try:os.sync()
+    except OSError:pass
     for attempt in range(1,4):
         status['stop_attempt']=attempt
         try:
             api_request(pod_id,key,stop=True)
             status['stop_state']='accepted'
-            write_status(status_path,status)
+            persist()
             print('RunPod accepted the stop request. Confirm stopped status in the portal.',flush=True)
             return 0
         except RuntimeError as exc:
             status.update(stop_state='failed',stop_error=str(exc))
-            write_status(status_path,status)
+            persist()
             if attempt<3:time.sleep(5)
     print('Automatic stop failed. Stop the pod manually in RunPod.',flush=True)
     return 1
@@ -39,7 +43,8 @@ def main():
             print('Benchmark API and network-volume checks passed. Pod has not been stopped.',flush=True)
             return 0
         directory=Path('/workspace/panda-training/batch-benchmarks')
-        directory.mkdir(parents=True,exist_ok=True)
+        try:directory.mkdir(parents=True,exist_ok=True)
+        except OSError:pass  # A full/unavailable volume must not prevent the stop request.
         return stop_pod(pod_id,key,directory/'pod_stop_status.json')
     except (RuntimeError,OSError) as exc:
         print(f'Automatic stop unavailable: {exc}. Stop the pod manually in RunPod.',flush=True)
