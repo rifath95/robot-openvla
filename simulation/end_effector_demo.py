@@ -16,7 +16,7 @@ import numpy as np
 import glfw
 
 from simulation.viewer import _restart_with_mjpython
-from simulation.bowl_scene import SCENE_PATH, randomize_scene
+from simulation.bowl_scene import CAMERA_NAME, SCENE_PATH, randomize_scene
 TRANSLATION_STEP = 0.025  # metres
 ROTATION_STEP = 0.10  # radians
 
@@ -41,7 +41,7 @@ def main() -> None:
         from simulation.capture_camera import save_rgb_png
         args.output_dir.mkdir(parents=True, exist_ok=True)
         with mujoco.Renderer(model, height=480, width=640) as renderer:
-            renderer.update_scene(data, camera='workspace_camera')
+            renderer.update_scene(data, camera=CAMERA_NAME)
             save_rgb_png(args.output_dir / 'scene.png', renderer.render())
         (args.output_dir / 'scene.json').write_text(json.dumps(specification, indent=2)+'\n')
         print(f'Preview saved: {args.output_dir / "scene.png"}')
@@ -89,7 +89,7 @@ def main() -> None:
         model, data, key_callback=on_key, show_right_ui=False
     ) as viewer:
         viewer.cam.type = mujoco.mjtCamera.mjCAMERA_FIXED
-        viewer.cam.fixedcamid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, 'workspace_camera')
+        viewer.cam.fixedcamid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, CAMERA_NAME)
         show_controls(viewer)
 
         while viewer.is_running():

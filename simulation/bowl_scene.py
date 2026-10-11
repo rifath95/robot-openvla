@@ -11,6 +11,7 @@ from simulation.panda_actions import make_controller
 from simulation.panda_start_poses import initialize_start_pose
 
 SCENE_PATH = (PROJECT_ROOT / 'simulation/scenes/scene_bowl.xml')
+CAMERA_NAME = 'bowl_camera'
 INSTRUCTION = 'pick up the red cube and place it in the blue bowl'
 BOWL_RADIUS = .085
 
@@ -85,7 +86,11 @@ def randomize_scene(model, data, rng, *, max_attempts=100):
         except ValueError:
             continue
         cube_body = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, 'cube')
+        camera = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, CAMERA_NAME)
         spec = dict(instruction=INSTRUCTION, sampling_attempt=attempt+1,
+                    camera=dict(name=CAMERA_NAME, position=model.cam_pos[camera].tolist(),
+                                quaternion_wxyz=model.cam_quat[camera].tolist(),
+                                fovy_degrees=float(model.cam_fovy[camera])),
                     cube_position=data.xpos[cube_body].tolist(),
                     bowl_position=data.xpos[bowl].tolist(), bowl_radius_metres=BOWL_RADIUS,
                     bowl_floor_height_metres=.259, bowl_rim_height_metres=.314,

@@ -9,6 +9,15 @@ to randomize the arm position/yaw, cube and bowl. Use `--seed 42` to reproduce
 the start and reset sequence. The keyboard controls are listed in the README.
 `launch_sim.py` uses the same scene with the standard actuator-control viewer.
 
+The keyboard demo opens the fixed `bowl_camera` view: position
+`[1.02, -0.85, 1.03]`, aimed at `[0.52, 0, 0.36]`, with a 45-degree vertical
+field of view. This slightly more sideways view improves visibility beneath
+the fingers while keeping the bowl interior visible. Camera settings are saved
+in the scene initialization metadata and remain fixed when pressing **N**.
+The inherited `workspace_camera` remains available; the original scene is unchanged.
+In a future bowl-task recorder, use `bowl_camera` consistently for demonstrations
+and inference.
+
 The fixed bowl has a 15 cm interior diameter, a floor at 0.259 m and a rim at
 0.314 m. Twenty-four overlapping convex wall segments create a hollow collision
 bowl. Bring the held cube above the rim before lowering it inside; release it

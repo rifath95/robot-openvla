@@ -2,6 +2,11 @@
   <include file="../../scene.xml"/>
   <compiler meshdir="../../mujoco_menagerie/franka_emika_panda/assets"/>
   <worldbody>
+    <!-- Fixed bowl-task view: aim at (0.52, 0, 0.36), with a 45 degree field
+         of view. Keep the inherited legacy camera available for old scenes. -->
+    <camera name="bowl_camera" pos="1.02 -0.85 1.03"
+      quat="0.852686028858814 0.451545837947678 0.12295967604097446 0.23219347641355872"
+      fovy="45"/>
     <!-- Fixed bowl: floor at 0.259 m and rim at 0.314 m. -->
     <body name="bowl" pos="0.55 0.17 0.254">
       <geom name="bowl_base" type="cylinder" size="0.085 0.004" rgba="0.12 0.35 0.9 1" friction="1 0.005 0.0001"/>
