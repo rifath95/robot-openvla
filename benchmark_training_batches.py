@@ -111,6 +111,8 @@ def main():
         max_batch=args.max_batch,updates_per_candidate=25,warmup_updates=5),indent=2)+'\n')
     def report():
         write_report(root,results,mode,args.max_batch)
+        from summarize_gpu_benchmarks import comparison
+        comparison(args.output_root,args.output_root/'GPU_BATCH_COMPARISON.md')
     print(f'Benchmark outputs: {root}',flush=True)
     print('This command does not stop the pod. Stop it in RunPod afterward.',flush=True)
     controlled=iter(((1,4),(2,2),(4,1)))

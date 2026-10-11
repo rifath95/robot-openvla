@@ -86,3 +86,9 @@ benchmark. GPU measurements are still pending; no capacity number is claimed yet
 Use the same command on an A100 to measure that GPU independently. Reports record
 its actual GPU name and VRAM; a batch limit measured on an A40 does not transfer
 automatically. Keep the cloud connection open and manually stop the pod when done.
+
+Every benchmark refreshes `/workspace/panda-training/batch-benchmarks/GPU_BATCH_COMPARISON.md`
+from all saved benchmark runs on that volume. The workspace copy is
+[GPU_BATCH_COMPARISON.md](GPU_BATCH_COMPARISON.md). Its refresh command and
+throughput definition are included in the file. Download benchmark directories
+to `outputs/gpu-benchmarks` to regenerate the workspace comparison across GPUs.

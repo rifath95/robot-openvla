@@ -7,6 +7,9 @@ Last updated: 2026-10-11. Update this document as milestones, run instructions, 
 For the planned A40 microbatch speed/memory comparison, see
 [TRAINING_BATCHES.md](TRAINING_BATCHES.md). GPU benchmarking is pending; the
 existing training batch configuration is unchanged.
+The cross-GPU capacity and throughput table is in
+[GPU_BATCH_COMPARISON.md](GPU_BATCH_COMPARISON.md); measured rows will be added
+after GPU benchmarking.
 
 **Phases 1 and 2 are complete. Phase 3 is the current focus:** collect and
 validate varied pick-and-place demonstrations, fine-tune OpenVLA for our Panda

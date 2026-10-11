@@ -6,6 +6,7 @@ import unittest
 
 from benchmark_training_batches import summarize,write_report,next_capacity_batch
 from training.integrate_upstream import integrated_source
+from summarize_gpu_benchmarks import comparison
 
 
 class BatchBenchmarkTests(unittest.TestCase):
@@ -64,6 +65,35 @@ class BatchBenchmarkTests(unittest.TestCase):
             report=(Path(directory)/'BATCH_BENCHMARK.md').read_text()
             self.assertIn('the maximum was not established',report)
             self.assertIn('effective batch changes',report)
+
+    def test_comparison_retains_gpus_and_uses_safe_candidate_speed(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)/'runs';output=Path(directory)/'comparison.md'
+            for name,gpu,vram,mode in [('a40','NVIDIA A40',44,'capacity'),
+                                      ('a100','NVIDIA A100-SXM4-80GB',80,'controlled')]:
+                run=root/name;run.mkdir(parents=True)
+                safe=dict(summarize(self.rows(),2,1),status='completed')
+                unsafe=dict(safe,microbatch=6,effective_batch=6,examples_per_second=99,
+                            headroom_screen_passed=False)
+                rows=[safe,unsafe,dict(microbatch=7,accumulation=1,status='out_of_memory')]
+                (run/'benchmark.json').write_text(json.dumps(rows))
+                (run/'benchmark_metadata.json').write_text(json.dumps(dict(mode=mode,dataset='/workspace/training_v1')))
+                candidate=run/'batch_2_accum_1';candidate.mkdir()
+                (candidate/'model_info.json').write_text(json.dumps(dict(gpu=gpu,total_vram_gib=vram)))
+            self.assertEqual(comparison(root,output),2)
+            text=output.read_text()
+            self.assertIn('NVIDIA A40',text)
+            self.assertIn('NVIDIA A100-SXM4-80GB',text)
+            self.assertIn('6 (boundary found)',text)
+            self.assertIn('≥6 (fixed candidates only)',text)
+            self.assertIn('| 2 / 1 | 2.000 | 1.00 |',text)
+            self.assertNotIn('99.00',text)
+
+    def test_empty_comparison_does_not_invent_measurements(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output=Path(directory)/'comparison.md'
+            self.assertEqual(comparison(Path(directory)/'missing',output),0)
+            self.assertIn('Not measured',output.read_text())
 
 
 if __name__=='__main__':unittest.main()
