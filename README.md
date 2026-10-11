@@ -2,7 +2,7 @@
 
 A robotics workspace for connecting a simulated Franka Panda arm to OpenVLA. Development currently runs on a MacBook using Python and MuJoCo 3.14.0, without ROS.
 
-Last updated: 2026-10-10. Update this document as milestones, run instructions, and model locations change.
+Last updated: 2026-10-11. Update this document as milestones, run instructions, and model locations change.
 
 **Phases 1 and 2 are complete. Phase 3 is the current focus:** collect and
 validate varied pick-and-place demonstrations, fine-tune OpenVLA for our Panda
@@ -12,8 +12,8 @@ tasks and transfer beyond the fine-tuning demonstrations.
 The Phase 3 foundation already includes the shared **`panda_grasp_v1`** action
 convention, expert recorder, sequential replay, and Panda dataset statistics.
 One 72-action scripted contact pick/place passed recording/replay (13.7 cm lift,
-2.0 mm placement error). This verifies data collection; OpenVLA has not yet been
-fine-tuned or demonstrated successful pick-and-place in this setup.
+2.0 mm placement error). This verifies data collection. OpenVLA has since been
+fine-tuned, but successful model-driven pick-and-place has not been demonstrated.
 See [PANDA_DEMONSTRATIONS.md](PANDA_DEMONSTRATIONS.md).
 
 ## Goal
@@ -38,7 +38,7 @@ The seven values are `[dx, dy, dz, droll, dpitch, dyaw, gripper]`: three positio
 | --- | --- | --- |
 | 1 | Establish local simulation, seven-value control, and OpenVLA inference. | **Completed** |
 | 2 | Connect local simulation to cloud OpenVLA and demonstrate a live repeated control loop. | **Completed** |
-| 3 | Adapt OpenVLA to our Panda setup for pick-and-place using validated demonstrations and held-out evaluation. | **Current — data pipeline foundation implemented; collection and training remain** |
+| 3 | Adapt OpenVLA to our Panda setup for pick-and-place using validated demonstrations and held-out evaluation. | **Current — first fine-tuning/evaluation complete; expanding dataset coverage** |
 | 4 | Expand to other tasks and measure transfer to tasks excluded from fine-tuning. | **Planned** |
 
 ### Phase 1 — completed: local foundation
@@ -104,24 +104,33 @@ a 20-update smoke-test configuration. See [PHASE3_TRAINING.md](PHASE3_TRAINING.m
 for preparation, image-build, upload and training commands. The first cloud
 LoRA test completed 20 updates and saved adapters: final training loss 2.881,
 validation loss 3.794 on 64 held-out examples, peak PyTorch allocation 18.01 GiB.
-See [the smoke-test review](training/SMOKE_REVIEW.md). A 1,000-update configuration
-with complete validation is prepared; longer training and model-driven task
-evaluation have not run yet.
+See [the smoke-test review](training/SMOKE_REVIEW.md). The 1,000-update run
+completed with checkpoints at 250/500/750/1000 and full 507-example validation.
+Validation loss largely plateaued after 500 updates. Live trials approach and
+close near the cube but have not completed pick-and-place. An 80-image matched
+diagnostic found errors in both normal generation and teacher forcing.
+
+The broader collection completed **200 new verified trajectories**, including
+an audited 20-trajectory pilot, with substantially different initial hand XYZ
+positions and yaw angles. The new cohort reserves entire scene combinations
+for validation/test. Existing demonstrations, uploaded data and model checkpoints
+remain intact. There are now **250 total trajectories** (176 train / 37 validation
+/ 37 test). The new hand starts span 28.5 / 43.6 / 20.8 cm in X/Y/Z and about
+−66° to +66° yaw. See [BROAD_PANDA_DATASET.md](BROAD_PANDA_DATASET.md) for collection,
+audit and per-trajectory replay instructions.
 
 Remaining goals:
 
-1. Collect varied successful pick-and-place demonstrations with different object starting positions, destinations, approaches, orientations, and instructions.
-2. Reserve separate validation/test scenes and demonstrations before training; exclude rejected, unsuccessful, or unverified episodes from expert training data.
-3. Finalize normalization, package the dataset for OpenVLA training (including RLDS integration), and verify image/action alignment.
-4. Run a small, budgeted LoRA fine-tuning experiment, inspect training/validation plots and save checkpoints, then expand only after measuring runtime, memory, and cost.
-5. Deploy the adapted checkpoint through the existing cloud pipeline and compare it with the pretrained baseline on held-out pick-and-place trials.
+1. Audit the broader demonstration coverage and package the expanded dataset as a new RLDS version, keeping rejected episodes and held-out splits out of training statistics.
+2. Train and compare checkpoints on the expanded dataset, checking both generated actions and validation loss.
+3. Evaluate the adapted model on fixed held-out pick-and-place scenarios against the pretrained baseline, with separate results for legacy and broad starting poses.
 
 Record success rate, grasp/lift/placement outcomes, IK rejections, latency, and
 cloud cost. Phase 3 is complete when the dataset and training path are reproducible
 and the adapted model has been observed and evaluated live on held-out scenarios,
 with results compared with the pretrained baseline. Document limited success
 honestly; perfect performance is not a prerequisite for assessing the experiment.
-The short custom-domain training test passed; task success has not been evaluated. See
+Training and exploratory live evaluation have run; controlled held-out task-success assessment remains. See
 [PANDA_DEMONSTRATIONS.md](PANDA_DEMONSTRATIONS.md) for the current data workflow.
 
 ### Phase 4 — planned: broader tasks and transfer

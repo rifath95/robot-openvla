@@ -48,7 +48,8 @@ standalone prepared exports go into `staging/`. Explicit `--output-dir` can over
 the defaults. Keep held-out episodes out of training and training normalization.
 
 The 10-trajectory pilot and separate seed are pipeline checks, not a complete
-fine-tuning corpus. Training has not started. JSONL exports reference absolute
+fine-tuning corpus. The later 50-trajectory package has been used for training.
+JSONL exports reference absolute
 local image paths: after copying to another machine, regenerate exports there.
 Replay launchers locate the repository among their parent directories; moving
 an episode outside this repository requires the repository to remain available.
@@ -69,8 +70,9 @@ The original pilot plus 40 successful additions yields 50 trajectories:
 36 train (2,595 transitions), 7 validation (507), and 7 test (507).
 Open [the combined trajectory index](panda_pick_place/WATCH_TRAJECTORIES.md)
 to watch all 50. Training JSONL/statistics are in the expansion's
-`combined_train_staging/`; earlier seed data remains separate. No fine-tuning
-has run. All generated data/index files are excluded from GitHub.
+`combined_train_staging/`; earlier seed data remains separate. This dataset
+supported the completed 20- and 1,000-update LoRA runs. All generated data/index
+files are excluded from GitHub.
 
 ## Training-ready package
 
@@ -80,3 +82,21 @@ in TFRecords; no Mac paths are needed in the cloud. Training-only statistics,
 split manifest, verification, input checks and upload checksums accompany it.
 This package is generated and ignored by Git. See
 [PHASE3_TRAINING.md](../PHASE3_TRAINING.md) for checks and cloud instructions.
+
+## Broad starting-pose collection
+
+The completed batch is `panda_pick_place/panda_broad_20261011/`: 200 additional
+successful trajectories (140 train / 30 validation / 30 test), including a
+verified 20-trajectory pilot. The hand starts in substantially different XYZ
+positions and yaw orientations; cube positions and destinations vary too.
+Entire hand-quadrant/cube-quadrant/yaw-sign combinations are withheld between
+splits. All 200 passed task execution, replay and the saved-pose audit. The original
+50 episodes and portable `training_v1` are retained. The combined manifest lists
+250 trajectories (176 train / 37 validation / 37 test), and the root trajectory
+index links all 250. New and combined training-only staging data are included;
+RLDS packaging/upload of the expanded dataset has not been performed yet.
+
+See [BROAD_PANDA_DATASET.md](../BROAD_PANDA_DATASET.md) for commands and checks.
+Use the batch's `WATCH_TRAJECTORIES.md` to find accepted episodes, including
+successful retries. `COLLECTION_SUMMARY.md` reports actual measured diversity
+and task/replay checks. Each trajectory includes its own `replay.py`.

@@ -65,7 +65,12 @@ def task_result(initial, destination, positions):
 
 
 def record_episode(folder, *, cube_xy=None, destination_offset=(0, 0.12), instruction=None, scenario=None,
-                   grasp_yaw_radians=None, approach_offset_xy=(0, 0), initial_joint1_radians=0):
+                   grasp_yaw_radians=None, approach_offset_xy=(0, 0), initial_joint1_radians=0,
+                   initial_tool_position=None, initial_yaw_radians=0):
+    if initial_tool_position is not None and initial_joint1_radians:
+        raise ValueError('Choose either a starting tool pose or legacy joint1 variation')
+    if initial_tool_position is None and initial_yaw_radians:
+        raise ValueError('A starting yaw requires a starting tool position')
     approach_offset = np.asarray(approach_offset_xy, dtype=float)
     if approach_offset.shape != (2,) or not np.isfinite(approach_offset).all() or np.linalg.norm(approach_offset) > .06:
         raise ValueError('Approach offset must be a finite XY vector no longer than 6 cm')
@@ -115,7 +120,13 @@ def record_episode(folder, *, cube_xy=None, destination_offset=(0, 0.12), instru
                 address = int(env.model.jnt_qposadr[joint])
                 env.data.qpos[address:address + 2] = cube_xy
                 mujoco.mj_forward(env.model, env.data)
-            env.controller.step(500)
+            if initial_tool_position is not None:
+                from panda_start_poses import initialize_start_pose
+                metadata['starting_pose'] = initialize_start_pose(
+                    env, initial_tool_position, initial_yaw_radians, reference_quaternion)
+                write_json(folder / 'episode.json', metadata)
+            else:
+                env.controller.step(500)
             initial = cube_position(env)
             destination = initial + [*offset, 0]
             positions = [initial]
@@ -141,6 +152,10 @@ def record_episode(folder, *, cube_xy=None, destination_offset=(0, 0.12), instru
                 motion_times = [float(env.data.time)]
                 for count in range(0, PHYSICS_STEPS, 20):
                     env.controller.step(min(20, PHYSICS_STEPS - count))
+                    if initial_tool_position is not None:
+                        from panda_start_poses import unsafe_motion_contacts
+                        if unsafe_motion_contacts(env.model, env.data):
+                            raise RuntimeError('Broad expert path has an unsafe sampled robot contact')
                     motion_poses.append(env.data.qpos.copy())
                     motion_times.append(float(env.data.time))
                 np.savez_compressed(directory / 'motion_frames.npz', qpos=motion_poses, time=motion_times)

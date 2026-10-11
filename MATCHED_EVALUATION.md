@@ -14,6 +14,12 @@ Neither updates weights or moves the robot. Both use the same resident merged
 model, image, lowercase prompt prefix and Panda normalization. The server checks
 that image tensors and prompt prefixes match before reporting paired metrics.
 
+The actual run `matched_evaluation_20261011_033855_bf5bb43a` completed 80/80
+examples in 133.78 s. Average XYZ command error was 3.008 mm normally versus
+2.187 mm with teacher forcing; first-lift upward agreement remained 6/8 in
+both. See [BROAD_PANDA_DATASET.md](BROAD_PANDA_DATASET.md) for the subsequent
+dataset-coverage experiment. No longer training run has been launched.
+
 ## Local preparation
 
 From the repository root with the generated dataset present:

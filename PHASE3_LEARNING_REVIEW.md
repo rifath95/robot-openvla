@@ -78,6 +78,16 @@ recorded in the existing training logs.
 
 ## Recommendation
 
+**Follow-up, 2026-10-11:** the matched diagnostic is now complete on the same
+80 expert images. XYZ command error improves from 3.008 mm to 2.187 mm with
+teacher forcing, but first-lift upward agreement remains 6/8 in both. Errors
+remain even with correct preceding action tokens. This does not establish that
+more training time is the solution. Given the validation plateau, the agreed
+next experiment is broader demonstration coverage: 200 additional episodes
+with substantially different initial hand positions/yaw and cube positions.
+See [BROAD_PANDA_DATASET.md](BROAD_PANDA_DATASET.md). The reasoning below is the
+earlier proposal that motivated the diagnostic, not a decision to retrain now.
+
 A controlled longer-training experiment is reasonable because the current model
 still fails to reproduce several training examples. It is **not** established
 that more updates alone will solve the task: validation has largely plateaued,

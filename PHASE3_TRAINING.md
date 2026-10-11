@@ -303,7 +303,15 @@ The subsequent approach-error analysis and recommendation for a matched
 teacher-forced/generated-action check are in
 [PHASE3_LEARNING_REVIEW.md](PHASE3_LEARNING_REVIEW.md).
 The paired diagnostic is implemented and documented in
-[MATCHED_EVALUATION.md](MATCHED_EVALUATION.md); actual GPU results are pending.
+[MATCHED_EVALUATION.md](MATCHED_EVALUATION.md). The actual 80-example GPU
+diagnostic completed: mean XYZ command error was 3.008 mm for normal generation
+and 2.187 mm with teacher forcing; first-lift upward agreement stayed 6/8 in
+both. Assistance helps but does not eliminate training-image errors.
+
+The next experiment expands starting-pose and object-position coverage, rather
+than assuming more updates on the narrow dataset will solve the plateau.
+See [BROAD_PANDA_DATASET.md](BROAD_PANDA_DATASET.md). New demonstrations are
+collected locally; RLDS export, upload and training will follow separately.
 
 For a saved-demonstration diagnostic before more training, follow
 [EXPERT_EVALUATION.md](EXPERT_EVALUATION.md). It compares real HTTP-generated
