@@ -24,6 +24,10 @@ def main():
     AutoProcessor.from_pretrained(str(args.base_model),trust_remote_code=True,local_files_only=True).save_pretrained(args.output)
     for file in args.base_model.glob('*.py'):shutil.copy2(file,args.output/file.name)
     shutil.copy2(args.adapter/'dataset_statistics.json',args.output/'dataset_statistics.json')
+    (args.output/'evaluation_provenance.json').write_text(json.dumps({
+        'adapter_checkpoint': str(args.adapter.resolve()),
+        'base_model': str(args.base_model.resolve()),
+    }, indent=2)+'\n')
     print('Merged model:',args.output,'; inference unnorm_key: panda_grasp_v1')
 
 

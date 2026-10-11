@@ -61,6 +61,10 @@ class OpenVLAPredictor:
         stats = self.model.norm_stats[unnorm_key]["action"]
         if len(stats["q01"]) != 7 or len(stats["q99"]) != 7:
             raise ValueError("This server requires a model with seven action components")
+        self.startup_info['action_statistics'] = stats
+        provenance = folder / 'evaluation_provenance.json'
+        if provenance.is_file():
+            self.startup_info['evaluation_provenance'] = json.loads(provenance.read_text())
 
     def synchronize(self):
         if self.device == "cuda":

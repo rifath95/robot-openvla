@@ -53,6 +53,8 @@ class RemoteInferenceTests(unittest.TestCase):
     def test_resident_model_processes_each_request_and_aligns_masks(self):
         with tempfile.TemporaryDirectory() as folder:
             Path(folder, 'config.json').write_text('{}')
+            Path(folder, 'evaluation_provenance.json').write_text(json.dumps({
+                'adapter_checkpoint': '/workspace/checkpoint_000500'}))
             processor = Processor()
             with patch('transformers.AutoProcessor.from_pretrained', return_value=processor) as load_processor, patch('transformers.AutoModelForVision2Seq.from_pretrained', return_value=Model()) as load_model:
                 predictor = OpenVLAPredictor(folder, device='cpu')
@@ -60,6 +62,9 @@ class RemoteInferenceTests(unittest.TestCase):
                 second = predictor.predict(Image.new('RGB', (30, 10)), 'place the cube')
             self.assertGreaterEqual(predictor.startup_info['model_load_seconds'], 0)
             self.assertEqual(predictor.startup_info['device'], 'cpu')
+            self.assertEqual(predictor.startup_info['action_statistics'], Model.norm_stats['bridge_orig']['action'])
+            self.assertEqual(predictor.startup_info['evaluation_provenance']['adapter_checkpoint'],
+                             '/workspace/checkpoint_000500')
             self.assertNotIn('gpu', predictor.startup_info)
             self.assertEqual(load_model.call_count, 1)
             self.assertEqual(load_processor.call_count, 1)

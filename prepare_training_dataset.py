@@ -6,13 +6,14 @@ import os
 from pathlib import Path
 
 import numpy as np
-from PIL import Image
 
 from panda_actions import CONVENTION_ID, action_contract
 from prepare_panda_dataset import fingerprint
 
 
-def load_episodes(manifest):
+def load_episodes(manifest, *, verify_images=True):
+    if verify_images:
+        from PIL import Image
     entries = json.loads(Path(manifest).read_text())['episodes']
     episodes, seen = [], set()
     for entry in entries:
@@ -35,9 +36,10 @@ def load_episodes(manifest):
             image = (path/row['observation']).resolve()
             if not image.is_relative_to(path):
                 raise ValueError('Image outside episode')
-            with Image.open(image) as im:
-                if im.mode != 'RGB' or im.size != (640, 480):
-                    raise ValueError('Unexpected camera image')
+            if verify_images:
+                with Image.open(image) as im:
+                    if im.mode != 'RGB' or im.size != (640, 480):
+                        raise ValueError('Unexpected camera image')
         episodes.append(dict(id=entry['id'], split=entry['split'], path=path, rows=rows,
                              fingerprint=replay['episode_sha256']))
     if len({ep['id'] for ep in episodes}) != len(episodes):
