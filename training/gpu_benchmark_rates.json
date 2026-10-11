@@ -1,0 +1,16 @@
+{
+  "currency": "USD",
+  "source": "Hourly GPU rates confirmed by the user for these specific pod runs; not live pricing.",
+  "runs": {
+    "20261011_054257_777818": {
+      "gpu": "NVIDIA A40",
+      "hourly_rate_usd": 0.59,
+      "confirmed_on": "2026-10-11"
+    },
+    "20261011_071323_382964": {
+      "gpu": "NVIDIA H100 80GB HBM3",
+      "hourly_rate_usd": 3.99,
+      "confirmed_on": "2026-10-11"
+    }
+  }
+}

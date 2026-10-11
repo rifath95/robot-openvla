@@ -227,3 +227,13 @@ from all saved benchmark runs on that volume. The workspace copy is
 [GPU_BATCH_COMPARISON.md](GPU_BATCH_COMPARISON.md). Its refresh command and
 throughput definition are included in the file. Download benchmark directories
 to `outputs/gpu-benchmarks` to regenerate the workspace comparison across GPUs.
+
+## Compare training costs
+
+`GPU_BATCH_COMPARISON.md` also estimates the time and GPU cost to process
+10,000 examples at each run's recommended microbatch. Confirmed hourly rates
+are saved per run in `training/gpu_benchmark_rates.json`, so regenerating the
+report preserves them. Add a new run's actual rate after confirming it in
+RunPod; rates are not guessed or inherited solely from a GPU name. Cost estimates
+exclude setup/loading, validation/saving, idle time and storage. They compare
+example-processing cost, not equal training quality.

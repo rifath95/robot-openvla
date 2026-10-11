@@ -29,6 +29,49 @@ def duration_line(rows,metadata):
     return f'{label}: **{minutes} min {remainder:02d} sec**'+note
 
 
+
+def cost_estimate(examples_per_second,hourly_rate,examples=10000):
+    if examples_per_second<=0 or hourly_rate<=0:raise ValueError('Throughput and hourly rate must be positive')
+    seconds=examples/examples_per_second
+    return seconds,seconds/3600*hourly_rate
+
+
+def cost_section(runs):
+    rate_file=Path(__file__).resolve().parent/'training/gpu_benchmark_rates.json'
+    rates=json.loads(rate_file.read_text())['runs'] if rate_file.exists() else {}
+    lines=['','## Cost for the same amount of training','',
+        'Estimates below process **10,000 training examples**, using the recommended microbatch and measured throughput for each run.',
+        'Time = examples ÷ examples/second. Cost = time in hours × hourly GPU rate.',
+        'Rates are the user-confirmed prices for these particular pod runs, saved in `training/gpu_benchmark_rates.json`; they are not live quotes and are not assumed for later runs.', '',
+        '| GPU | Run | GPU rate USD/hour | Examples/s | Time for 10,000 examples | Training cost USD |',
+        '| --- | --- | --- | --- | --- | --- |']
+    priced=[]
+    for gpu,path,best in runs:
+        rate=rates.get(path.parent.name,{})
+        hourly=rate.get('hourly_rate_usd') if rate.get('gpu')==gpu else None
+        if best and isinstance(hourly,(int,float)) and math.isfinite(hourly) and hourly>0:
+            seconds,cost=cost_estimate(best['examples_per_second'],hourly)
+            minutes,remainder=divmod(round(seconds),60)
+            values=[gpu,path.parent.name,f'${hourly:.2f}',f"{best['examples_per_second']:.2f}",
+                    f'{minutes} min {remainder:02d} sec',f'${cost:.2f}']
+            priced.append((cost,gpu,best['examples_per_second']))
+        else:
+            values=[gpu,path.parent.name,'Not recorded' if hourly is None else f'${hourly:.2f}',
+                    f"{best['examples_per_second']:.2f}" if best else '—','—','—']
+        lines.append('| '+' | '.join(cell(v) for v in values)+' |')
+    if priced:
+        cheapest=min(priced)
+        lines+=['',f'Lowest estimated training cost among these priced runs: **{cell(cheapest[1])}**, **${cheapest[0]:.2f} per 10,000 examples**.']
+        fastest=max(priced,key=lambda item:item[2])
+        if fastest!=cheapest:
+            lines+=[f'**{cell(fastest[1])}** processes examples **{fastest[2]/cheapest[2]:.2f}× faster** than {cell(cheapest[1])}, but costs **{fastest[0]/cheapest[0]:.2f}× as much per example**.']
+    lines+=['',
+        'These are training-only estimates, excluding deployment, model loading, validation, checkpoint saving, idle time, and storage charges. Total billed cost includes those additional items.',
+        'Different microbatches/effective batches and datasets were benchmarked. Equal examples processed does not guarantee equal model quality; a convergence comparison should match effective batch and training settings.',
+        'Future report refreshes retain the confirmed rates. Record each new run’s actual hourly rate before estimating its cost.']
+    return lines
+
+
 def comparison(root, output, gpu_filter=None):
     lines=['# GPU batch capacity and training throughput','',
         'This table collects measured OpenVLA LoRA batch benchmarks. Each row is one run; different datasets or settings remain separate.', '',
@@ -42,6 +85,7 @@ def comparison(root, output, gpu_filter=None):
     paths=sorted(root.rglob('benchmark.json')) if root.exists() else []
     groups={}
     selected=0
+    cost_runs=[]
     for path in paths:
         rows=json.loads(path.read_text())
         metadata_path=path.parent/'benchmark_metadata.json'
@@ -79,10 +123,12 @@ def comparison(root, output, gpu_filter=None):
             f"{best['gpu_peak_allocated_gib']:.2f} / {best['gpu_peak_reserved_gib']:.2f}" if best else '—',
             f'[{path.parent.name}]({reference})']
         lines.append('| '+' | '.join(cell(v) for v in values)+' |')
+        cost_runs.append((gpu,path,best))
         groups.setdefault((gpu,vram),[]).append((path,rows,metadata,info,capacity,best))
     if not selected:
         lines+=['| NVIDIA A40 | — | — | Planned | Not measured | — | — | — | — | — | Pending |',
                 '| NVIDIA A100 (variant to be recorded) | — | — | Planned | Not measured | — | — | — | — | — | Pending |']
+    if cost_runs:lines+=cost_section(cost_runs)
     for (gpu,vram),runs in groups.items():
         lines+=['',f'## {cell(gpu)}'+(f' — {vram:.1f} GiB' if vram is not None else ''),'']
         for path,rows,metadata,info,capacity,best in runs:

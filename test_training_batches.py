@@ -6,7 +6,7 @@ import unittest
 
 from benchmark_training_batches import summarize,write_report,next_capacity_batch,missed_speed_candidates
 from training.integrate_upstream import integrated_source
-from summarize_gpu_benchmarks import comparison,duration_line
+from summarize_gpu_benchmarks import comparison,duration_line,cost_estimate,cost_section
 
 
 class BatchBenchmarkTests(unittest.TestCase):
@@ -112,6 +112,19 @@ class BatchBenchmarkTests(unittest.TestCase):
                          'Total benchmark time: **12 min 00 sec**.')
         self.assertIn('so far',duration_line(rows,dict(benchmark_elapsed_seconds=720,benchmark_outcome='running')))
         self.assertIn('not recorded',duration_line([{}],{}))
+
+    def test_costs_use_equal_example_count_and_do_not_guess_new_run_prices(self):
+        seconds,cost=cost_estimate(3.74,.59)
+        self.assertAlmostEqual(seconds,10000/3.74)
+        self.assertAlmostEqual(cost,.438205585,places=7)
+        text='\n'.join(cost_section([
+            ('NVIDIA A40',Path('/runs/20261011_054257_777818/benchmark.json'),dict(examples_per_second=3.74)),
+            ('NVIDIA H100 80GB HBM3',Path('/runs/20261011_071323_382964/benchmark.json'),dict(examples_per_second=9.96)),
+            ('NVIDIA A40',Path('/runs/new/benchmark.json'),dict(examples_per_second=3.74))]))
+        self.assertIn('$0.44',text)
+        self.assertIn('$1.11',text)
+        self.assertIn('| NVIDIA A40 | new | Not recorded',text)
+        self.assertIn('Lowest estimated training cost',text)
 
     def test_empty_comparison_does_not_invent_measurements(self):
         with tempfile.TemporaryDirectory() as directory:
