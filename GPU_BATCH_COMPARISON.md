@@ -13,6 +13,7 @@ A fitting batch completed 25 real updates. The short-run capacity applies to tes
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | NVIDIA A40 | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 8 / 1 | 2.140 | 3.74 | 40.25 / 42.71 | [20261011_054257_777818](outputs/gpu-benchmarks/20261011_054257_777818/BATCH_BENCHMARK.md) |
 | NVIDIA H100 80GB HBM3 | 79.2 | training_v2 | capacity | 18 (boundary found) | 19 | 16 / 1 | 1.606 | 9.96 | 65.55 / 71.64 | [20261011_071323_382964](outputs/gpu-benchmarks/20261011_071323_382964/BATCH_BENCHMARK.md) |
+| NVIDIA RTX A6000 | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 4 / 1 | 5.295 | 0.76 | 27.59 / 28.42 | [20261011_095911_435567](outputs/gpu-benchmarks/20261011_095911_435567/BATCH_BENCHMARK.md) |
 
 ## Cost for the same amount of training
 
@@ -24,6 +25,7 @@ Rates are the user-confirmed prices for these particular pod runs, saved in `tra
 | --- | --- | --- | --- | --- | --- |
 | NVIDIA A40 | 20261011_054257_777818 | $0.59 | 3.74 | 44 min 35 sec | $0.44 |
 | NVIDIA H100 80GB HBM3 | 20261011_071323_382964 | $3.99 | 9.96 | 16 min 44 sec | $1.11 |
+| NVIDIA RTX A6000 | 20261011_095911_435567 | $0.59 | 0.76 | 220 min 37 sec | $2.17 |
 
 Lowest estimated training cost among these priced runs: **NVIDIA A40**, **$0.44 per 10,000 examples**.
 **NVIDIA H100 80GB HBM3** processes examples **2.67× faster** than NVIDIA A40, but costs **2.54× as much per example**.
@@ -78,6 +80,33 @@ Fastest candidate with headroom: **microbatch 16, accumulation 1**, 9.96 example
 | 20 | 1 | capacity | out_of_memory | — | — | — | — |
 | 24 | 1 | capacity | out_of_memory | — | — | — | — |
 | 32 | 1 | capacity | out_of_memory | — | — | — | — |
+
+## NVIDIA RTX A6000 — 47.4 GiB
+
+### Run 20261011_095911_435567
+
+Dataset: `/root/robot-openvla/.benchmark-local/inputs/training_v1`. Model: `/root/robot-openvla/.benchmark-local/inputs/openvla-7b`.
+Mode: capacity; PyTorch: 2.2.2+cu121; LoRA rank: 32; quantization: False; image augmentation: False.
+Total benchmark time: **35 min 05 sec**.
+Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.
+Capacity finding: **9 (boundary found)**.
+Fastest candidate with headroom: **microbatch 4, accumulation 1**, 0.76 examples/s.
+Input storage: **global_volume** at `/workspace`; training reads staged inputs from **container_disk**.
+Input staging: **7.11 seconds**, excluded from total benchmark time above. Model staging read source: `local_pinned_download_cache`.
+Pod CPU: AMD EPYC 7543 32-Core Processor; CPU quota (`cpu.max`): `680000 100000`.
+CPU and GPU snapshot diagnostics: `batch_host_context.json` in this run’s output folder. Throughput describes this deployment and can depend on host resources and software as well as the GPU.
+
+
+| Microbatch | Accumulation | Phase | Status | Seconds/update | Examples/s | Peak allocated / reserved GiB | Headroom screen |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 1 | capacity | completed | 1.585 | 0.63 | 18.19 / 26.76 | True |
+| 2 | 1 | capacity | completed | 2.811 | 0.71 | 21.25 / 26.85 | True |
+| 4 | 1 | capacity | completed | 5.295 | 0.76 | 27.59 / 28.42 | True |
+| 8 | 1 | capacity | completed | 9.869 | 0.81 | 40.25 / 42.86 | False |
+| 9 | 1 | capacity | completed | 11.481 | 0.78 | 43.33 / 46.22 | False |
+| 10 | 1 | capacity | out_of_memory | — | — | — | — |
+| 12 | 1 | capacity | out_of_memory | — | — | — | — |
+| 16 | 1 | capacity | out_of_memory | — | — | — | — |
 
 ## Reading the results
 

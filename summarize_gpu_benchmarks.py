@@ -142,6 +142,21 @@ def comparison(root, output, gpu_filter=None):
                 (f"Fastest candidate with headroom: **microbatch {best['microbatch']}, accumulation {best['accumulation']}**, {best['examples_per_second']:.2f} examples/s." if best else 'No candidate passed the headroom screen.'),'',
                 '| Microbatch | Accumulation | Phase | Status | Seconds/update | Examples/s | Peak allocated / reserved GiB | Headroom screen |',
                 '| --- | --- | --- | --- | --- | --- | --- | --- |']
+            storage=metadata.get('storage',{})
+            context_path=path.parent/'batch_host_context.json'
+            context=json.loads(context_path.read_text()) if context_path.exists() else {}
+            notes=[]
+            if storage:
+                notes.append(f"Input storage: **{cell(storage.get('source_storage','unknown'))}** at `{cell(storage.get('volume_mount','unknown'))}`; training reads staged inputs from **{cell(storage.get('training_reads','unknown'))}**.")
+                staging=storage.get('input_staging_seconds')
+                if isinstance(staging,(int,float)):
+                    notes.append(f"Input staging: **{staging:.2f} seconds**, excluded from total benchmark time above. Model staging read source: `{cell(storage.get('model_staging_reads','unknown'))}`.")
+            if context:
+                notes.append(f"Pod CPU: {cell(context.get('cpu_model','unknown'))}; CPU quota (`cpu.max`): `{cell(context.get('/sys/fs/cgroup/cpu.max','unknown'))}`.")
+                notes.append('CPU and GPU snapshot diagnostics: `batch_host_context.json` in this run’s output folder. Throughput describes this deployment and can depend on host resources and software as well as the GPU.')
+            if notes:
+                # Keep provenance before the candidate table, outside its Markdown rows.
+                lines[-3:-3]=notes+['']
             for row in sorted(rows,key=lambda r:(r['microbatch'],r['accumulation'])):
                 values=[row['microbatch'],row['accumulation'],row.get('phase','not recorded'),row['status']]
                 if row['status']=='completed':
