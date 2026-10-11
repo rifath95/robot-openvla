@@ -207,12 +207,17 @@ so this tests forward/backward and optimizer memory, not merely loading inputs.
 Failed subprocesses release their GPU allocations; an unexpected non-OOM error
 stops the search. Run it alone on the GPU.
 
-After finding capacity, it times all missed fitting integer sizes in the final
-doubling interval. For example, if 8 fits and 16 fails and the search narrows the
-boundary to 13/14, it then measures missed sizes 9, 10, and 11 (12/13 were already
-measured). It does not retest failed sizes 14–16. The recommended batch is the
-fastest tested candidate that passes the headroom screen. All measured candidates
-are retained, including OOMs and fast candidates with insufficient headroom.
+After finding capacity, speed refinement starts at the largest tested power-of-two
+batch that passes the 4 GiB headroom screen. It measures every missing integer size
+from that batch up to fitting capacity, reusing all existing measurements. For
+example, if 9 fits and 10 fails, but 8 lacks headroom and 4 passes, it tests 5, 6,
+and 7. If 8 passes instead, it skips untested sizes below 8. With a 13/14 boundary
+and a passing batch 8, it measures missed sizes 9, 10, and 11 (12/13 were already
+measured). If no power-of-two batch passes, refinement conservatively starts at 1.
+Skipping smaller sizes is a search-cost heuristic; powers of two do not guarantee
+better throughput. The recommended batch is the fastest tested candidate passing
+the screen. All measured candidates are retained, including OOMs and fast
+candidates with insufficient headroom. Accumulation remains one throughout.
 The combined report has a top summary table and detailed per-GPU/run sections.
 
 For finite runtime/cost, `--max-batch` bounds the search at 64 by default. If 64

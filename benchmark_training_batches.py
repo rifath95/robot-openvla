@@ -56,14 +56,19 @@ def next_capacity_batch(results, maximum=64):
 
 
 def missed_speed_candidates(results):
-    """Fill the final doubling interval, without repeating measured candidates."""
+    """Refine above the largest power of two passing the headroom screen.
+
+    Skipping smaller sizes is a search-cost heuristic, not a throughput guarantee.
+    Without a passing anchor, conservatively start at one.
+    """
     fitting=[r['microbatch'] for r in results if r['status']=='completed']
     if not fitting:
         return []
     largest=max(fitting)
-    failures=[r['microbatch'] for r in results if r['status']=='out_of_memory']
-    bound=min(failures) if failures else largest
-    lower=1 << ((bound-1).bit_length()-1) if bound>1 else 1
+    anchors=[r['microbatch'] for r in results
+             if r['status']=='completed' and r.get('headroom_screen_passed') is True
+             and r['microbatch']>0 and r['microbatch'] & (r['microbatch']-1)==0]
+    lower=max(anchors,default=1)
     tested={r['microbatch'] for r in results}
     return [batch for batch in range(lower,largest+1) if batch not in tested]
 
@@ -124,7 +129,8 @@ def main():
     context=benchmark_context(config,args.dataset,args.model)
     metadata=dict(mode=mode,dataset=str(args.dataset.resolve()),model=str(args.model.resolve()),
         max_batch=args.max_batch,updates_per_candidate=25,warmup_updates=5,context=context,
-        checkpoint_saving=False)
+        checkpoint_saving=False,
+        speed_refinement_policy='largest_headroom_power_of_two_to_capacity' if args.find_capacity else None)
     if os.environ.get('PANDA_BENCHMARK_STAGING_METADATA'):
         metadata['storage']=json.loads(Path(os.environ['PANDA_BENCHMARK_STAGING_METADATA']).read_text())
     def report(outcome='running'):
@@ -143,7 +149,7 @@ def main():
                 microbatch=next_capacity_batch(results,args.max_batch)
                 if microbatch is None:
                     speed_candidates=iter(missed_speed_candidates(results))
-                    print('Capacity search finished; measuring missed fitting sizes in the final interval...',flush=True)
+                    print('Capacity search finished; measuring missing sizes from the largest power-of-two batch with headroom up to capacity...',flush=True)
             if speed_candidates is not None:
                 microbatch=next(speed_candidates,None)
             if microbatch is None:break

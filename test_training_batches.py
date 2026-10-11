@@ -62,9 +62,29 @@ class BatchBenchmarkTests(unittest.TestCase):
     def test_speed_refinement_fills_only_missed_fitting_sizes(self):
         results=[]
         while (batch:=next_capacity_batch(results)) is not None:
-            results.append(dict(microbatch=batch,status='completed' if batch<=13 else 'out_of_memory'))
+            results.append(dict(microbatch=batch,status='completed' if batch<=13 else 'out_of_memory',
+                                headroom_screen_passed=batch<=13))
         self.assertEqual(missed_speed_candidates(results),[9,10,11])
         self.assertEqual(missed_speed_candidates([dict(microbatch=1,status='out_of_memory')]),[])
+
+    def test_speed_refinement_covers_gap_below_fitting_batch_without_headroom(self):
+        results=[dict(microbatch=batch,status='completed' if batch<=9 else 'out_of_memory',
+                      headroom_screen_passed=batch<=4)
+                 for batch in (1,2,4,8,16,12,10,9)]
+        self.assertEqual(missed_speed_candidates(results),[5,6,7])
+        # A previously measured refinement size is not run again.
+        results.append(dict(microbatch=6,status='completed',headroom_screen_passed=True))
+        self.assertEqual(missed_speed_candidates(results),[5,7])
+        # If eight passes, untested smaller sizes stay outside the search.
+        results[3]['headroom_screen_passed']=True
+        self.assertEqual(missed_speed_candidates(results),[])
+
+    def test_speed_refinement_at_search_ceiling_and_without_passing_anchor(self):
+        results=[dict(microbatch=batch,status='completed',headroom_screen_passed=batch<=4)
+                 for batch in (1,2,4,8)]
+        self.assertEqual(missed_speed_candidates(results),[5,6,7])
+        for row in results:row['headroom_screen_passed']=False
+        self.assertEqual(missed_speed_candidates(results),[3,5,6,7])
 
     def test_bound_is_reported_as_lower_bound_not_maximum(self):
         row=dict(summarize(self.rows(),8,1),status='completed')
