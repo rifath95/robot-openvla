@@ -75,7 +75,7 @@ class ContinuationTests(unittest.TestCase):
                 with patch('training.batch_policy.choose_batch',return_value=(selected,dict(source='compatible_benchmark',microbatch=8,accumulation=1))):
                     train_panda.main()
                 command=output.getvalue().split('Command:',1)[1]
-                for option in ('--hard_limit_seconds','--minimum_free_disk_gib','--require_benchmark','--expected_gpu','--target_effective_batch'):
+                for option in ('--hard_limit_seconds','--minimum_free_disk_gib','--require_benchmark','--expected_gpu'):
                     self.assertNotIn(option,command)
                 self.assertIn('--max_steps 5000',command)
                 run.assert_not_called()

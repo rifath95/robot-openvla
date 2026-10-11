@@ -237,19 +237,3 @@ report preserves them. Add a new run's actual rate after confirming it in
 RunPod; rates are not guessed or inherited solely from a GPU name. Cost estimates
 exclude setup/loading, validation/saving, idle time and storage. They compare
 example-processing cost, not equal training quality.
-
-## A40 pods with less usable VRAM
-
-The reviewed A40 benchmark exposed 47.4 GiB, while a later A40 pod exposed
-44.4 GiB. GPU name alone is insufficient for selecting its largest batch.
-Selection can reuse measurements on a smaller-memory instance of the same GPU
-with matching model/input/software/settings, but only if both projected margins
-remain at least 4 GiB: current total minus measured peak reserved memory, and
-measured minimum free memory minus the reduction in total VRAM. Missing memory
-measurements cause rejection, and other GPU models/settings are still excluded.
-
-The 5,000-update profile sets `target_effective_batch` to 8. Selection considers
-measured microbatches that divide eight and adjusts accumulation accordingly:
-8 × 1 on the benchmarked 47.4 GiB A40, or 4 × 2 on the observed 44.4 GiB A40.
-The latter is a conservative projection, not a new throughput benchmark.
-Existing profiles without this target retain accumulation one selection.

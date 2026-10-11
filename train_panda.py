@@ -32,9 +32,6 @@ def main():
     profile_requires_benchmark=config.pop('require_benchmark',False)
     require_benchmark=args.require_benchmark or profile_requires_benchmark
     expected_gpu=config.pop('expected_gpu',None)
-    target=config.get('target_effective_batch')
-    if target is not None and (not isinstance(target,int) or isinstance(target,bool) or target<1):
-        p.error('target_effective_batch must be a positive integer')
     adapter=None
     if args.adapter:
         from training.continuation import validate_adapter
@@ -59,7 +56,6 @@ def main():
             accumulation=config['grad_accumulation_steps'],
             effective_batch=config['batch_size']*config['grad_accumulation_steps'])
     print('Batch selection:',json.dumps(batch_selection),flush=True)
-    config.pop('target_effective_batch',None)
     pin=json.loads(Path('training/upstream/PIN.json').read_text())
     generated=Path('training/generated/panda_finetune.py').resolve()
     generated.parent.mkdir(parents=True,exist_ok=True);generated.write_text(integrated_source())
