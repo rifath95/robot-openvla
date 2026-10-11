@@ -4,7 +4,11 @@ The expanded **250-trajectory** package is now ready locally as `training_v2`
 (176 train / 37 validation / 37 test; 19,625 valid action examples). Use
 [TRAINING_V2.md](TRAINING_V2.md) for its upload and explicit dataset selection.
 The `training_v1` preparation and completed runs described below are retained
-as the original 50-trajectory experiment. New training has not been launched.
+as the original 50-trajectory experiment. The next run is configured for 5,000
+updates on A40, effective batch 8, a four-hour inner limit, and a five-hour outer
+limit. See [TRAINING_OVERNIGHT.md](TRAINING_OVERNIGHT.md) for the detached launch
+and later continuation from saved adapters. This expanded-data run has not yet
+been launched.
 
 The local preparation milestone packages all 50 expert trajectories into a
 portable TFDS/RLDS dataset at `datasets/panda_pick_place/training_v1`. Local

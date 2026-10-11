@@ -1,9 +1,9 @@
 # Detached training with automatic pod stop
 
-Use this for the 1,000-update run. Training runs on the pod inside `tmux`, so
+Use this for the expanded-dataset **5,000-update A40 run**. Training runs on the pod inside `tmux`, so
 closing VS Code or sleeping the Mac does not disconnect the training process.
 The wrapper requests **stop**, not termination, after success, failure, or its
-90-minute wall limit. This is a dedicated training pod: stopping it ends all
+**five-hour outer wall limit**. This is a dedicated training pod: stopping it ends all
 processes on that pod.
 
 ## 1. Prepare before launching
@@ -65,7 +65,7 @@ already in the image:
 
 ```bash
 command -v tmux || (apt-get update && apt-get install -y tmux)
-bash scripts/train_detached.sh
+bash scripts/train_detached.sh training/pick_place_v2_5000.json /workspace/panda-training/training_v2
 ```
 
 For the first **20-update automatic-stop test**, run this instead of the last
@@ -76,13 +76,30 @@ bash scripts/train_detached.sh training/smoke.json
 ```
 
 The smoke test evaluates a 64-example validation sample; completing that sample
-is accepted for this test. The default 1,000-update configuration still requires
-full final validation. Each launch creates a new session directory.
+is accepted for this test. The 5,000-update configuration requires full final validation. Each launch creates a new session directory.
 
 The script verifies API read access and the attached network volume before
 launching. It prints the exact session name, attach command, log path, and status
 path. No Python training parameters need to be pasted: it uses
-`training/pick_place_1000.json` with the existing dataset/base model.
+`training/pick_place_v2_5000.json` with the expanded dataset and original base model.
+This profile requires the A40 and a compatible saved benchmark; it rejects a
+missing recommendation instead of silently using a fallback. The reviewed A40
+result selects microbatch 8 and accumulation 1. Allow at least 3 GiB free on the
+network volume for five adapter checkpoints and logs; the launcher checks this.
+The no-argument command still selects the historical v1/1,000-update profile.
+
+| Setting | This run |
+| --- | --- |
+| Dataset | 250 trajectories: 176 train / 37 validation / 37 test |
+| Optimizer updates | 5,000 |
+| Effective batch | 8 training steps per update |
+| Training examples presented | 40,000, about 2.9 passes over 13,812 train examples |
+| Checkpoints and full validation | Every 1,000 updates |
+| Inner training limit | 14,400 seconds (4 hours) |
+| Outer supervisor limit | 18,000 seconds (5 hours) |
+
+Repeated/shuffled sampling does not guarantee each example appears equally often.
+Validation and test trajectories are excluded from gradient updates.
 
 Use the printed `tail -F .../console.log` command to see initial progress. Ctrl+C
 stops **tail**, not the training job. Wait until actual training updates appear
@@ -125,25 +142,31 @@ Each job gets a unique directory:
     experiment.json
     model_info.json
     tensorboard/
-    checkpoint_000250/
-    checkpoint_000500/
-    checkpoint_000750/
+    batch_selection.json
     checkpoint_001000/
+    checkpoint_002000/
+    checkpoint_003000/
+    checkpoint_004000/
+    checkpoint_005000/
 ```
 
 Checkpoints exist only if training reached those updates. Training starts a fresh
 adapter and leaves the original base model and smoke checkpoint unchanged.
 `status.json` records the exit code, final update, missing artifacts, full-final-
 validation status, and stop-request state. A zero process exit alone does not
-mean all 1,000 updates completed: the training runtime guard may finish earlier.
+mean all 5,000 updates completed: the training runtime guard may finish earlier.
 
 The supervisor closes the training log, writes status, flushes filesystem writes,
 then calls the RunPod stop API. It tries up to three times on API/network errors.
 The management credential is removed from the training subprocess environment
 and is never included in commands or output files.
 
-The inner one-hour training limit begins after model/data setup and checks between
-updates. The outer **90-minute hard limit** includes setup, validation, and saving;
+The inner **four-hour training limit** begins after model/data setup and checks
+between updates. On expiry, the trainer saves the current completed update and
+ends; it does not wait for the next 1,000-update checkpoint. Validation and saving
+can extend this inner limit. The outer **five-hour hard limit** starts when the
+cloud supervisor starts, not when you deploy the pod. It includes training setup,
+validation, and saving;
 on expiry the child process group is terminated, then the pod stop is requested.
 A forced timeout or training failure may leave only earlier checkpoints or an
 incomplete checkpoint. The wrapper records this as a failure, not success.
@@ -155,5 +178,31 @@ portal afterward: an accepted stop request is not proof the GPU has stopped.
 The wrapper deliberately never deletes your pod or network volume. Persistent
 storage charges continue after compute stops.
 
-This mechanism has local mocked tests; a live stop request must be checked on
-the first cloud run. No real pod was stopped during those tests.
+The detached wrapper and automatic stop were verified in earlier 20-update and
+1,000-update cloud runs. The new profile and adapter continuation have local
+checks, including a real CPU LoRA save/reload and another training update.
+The new 5,000-update run has not been launched yet.
+
+## 6. Continue training from a saved adapter later
+
+The default launch above starts a fresh LoRA adapter from the original base.
+To continue learned adapter weights, supply a third argument:
+
+```bash
+bash scripts/train_detached.sh training/pick_place_v2_5000.json \
+  /workspace/panda-training/training_v2 \
+  /workspace/panda-training/sessions/OLD_SESSION/runs/training/checkpoint_005000
+```
+
+Replace `OLD_SESSION` with the saved session name. Choose an existing complete
+checkpoint; it can also be an earlier checkpoint if training stopped early.
+This creates a new output session and trains for **another** configured 5,000
+updates (unless a time limit ends it first). Change the configuration to select
+a different number of additional updates. The base weights and source checkpoint
+are read without overwriting them.
+
+This is **continuation from adapter weights with a fresh optimizer**, not exact
+training-state resume: AdamW momentum, shuffled data position, elapsed time, and
+update numbering restart. Checkpoints do not contain optimizer state. LoRA
+rank/dropout and the original base path must match. The source adapter path and
+continuation mode are saved in `experiment.json` for the new run.

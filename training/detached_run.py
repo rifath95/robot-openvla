@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import re
 import signal
+import shutil
 import subprocess
 import sys
 import time
@@ -150,12 +151,19 @@ def main():
     parser.add_argument('--session-dir', type=Path)
     parser.add_argument('--config', type=Path, default=ROOT / 'training/pick_place_1000.json')
     parser.add_argument('--dataset', type=Path, default=Path('/workspace/panda-training/training_v1'))
-    parser.add_argument('--hard-limit-seconds', type=int, default=5400)
+    parser.add_argument('--hard-limit-seconds', type=int, help='Override configuration outer limit; otherwise 90 minutes for legacy profiles')
+    parser.add_argument('--adapter',type=Path,help='Continue adapter weights with a fresh optimizer')
     args = parser.parse_args()
-    if args.hard_limit_seconds <= 0:
-        parser.error('Hard wall limit must be positive')
     try:
         config = json.loads(args.config.read_text())
+        hard_limit=args.hard_limit_seconds if args.hard_limit_seconds is not None else config.get('hard_limit_seconds',5400)
+        if not isinstance(hard_limit,int) or isinstance(hard_limit,bool) or hard_limit<=0:
+            raise ValueError('Hard wall limit must be a positive integer')
+        if hard_limit<=config['max_runtime_seconds']:
+            raise ValueError('Outer wall limit must exceed the inner training limit')
+        if args.adapter:
+            from training.continuation import validate_adapter
+            validate_adapter(args.adapter,config,Path('/workspace/openvla-7b'))
         if config['max_steps'] < 1 or config['validation_max_batches'] < 0:
             raise ValueError('Invalid update count or validation limit')
         dataset = args.dataset.resolve()
@@ -165,6 +173,9 @@ def main():
         if not verification.get('passed'):
             raise ValueError('Selected dataset has not passed verification')
         pod_id, key = preflight()
+        minimum_free=config.get('minimum_free_disk_gib',0)
+        if minimum_free and shutil.disk_usage('/workspace').free<minimum_free*2**30:
+            raise ValueError(f'Need at least {minimum_free} GiB free on the network volume for checkpoints; expand the volume or free space before training')
         if args.check_only:
             print(f'API, network-volume and dataset checks passed: {dataset}. This did not stop the pod.')
             return 0
@@ -179,8 +190,9 @@ def main():
                    '--model', '/workspace/openvla-7b', '--config', str(args.config.resolve()),
                    '--output-root', str(directory / 'runs'),
                    '--run-name', 'training']
+        if args.adapter:command.extend(['--adapter',str(args.adapter.resolve())])
         return supervise(command, directory, pod_id, key,
-                         hard_limit=args.hard_limit_seconds, expected_updates=config['max_steps'],
+                         hard_limit=hard_limit, expected_updates=config['max_steps'],
                          require_full_validation=config['validation_max_batches'] == 0)
     except (RuntimeError, OSError, ValueError, subprocess.CalledProcessError) as exc:
         print(f'Not started: {exc}. The pod still bills; stop it manually if needed.', file=sys.stderr)

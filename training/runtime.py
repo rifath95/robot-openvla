@@ -28,6 +28,8 @@ class Metrics:
             validation_every=int(os.environ['PANDA_VALIDATE_EVERY']),
             validation_max_batches=int(os.environ['PANDA_VALIDATION_MAX_BATCHES']),
             max_runtime_seconds=int(os.environ['PANDA_MAX_RUNTIME']),
+            initial_adapter=os.environ.get('PANDA_INITIAL_ADAPTER') or None,
+            continuation_mode='adapter_weights_fresh_optimizer' if os.environ.get('PANDA_INITIAL_ADAPTER') else 'fresh_base',
             note='Runtime guard is checked between updates; it does not stop pod billing.'),indent=2)+'\n')
         if hasattr(self,'model_details'):
             (self.directory/'model_info.json').write_text(json.dumps(self.model_details,default=str,indent=2)+'\n')

@@ -16,6 +16,8 @@ def integrated_source():
         if source.count(old)!=1:raise ValueError(f'Upstream integration anchor changed: {old[:60]}')
         source=source.replace(old,new)
     replace('import wandb','from training.runtime import metrics as wandb\nfrom training.runtime import validate, save_adapter, budget_expired, record_model\nfrom training.panda_rlds import PandaRLDSDataset')
+    replace('        vla = get_peft_model(vla, lora_config)',
+            '        from training.continuation import attach_lora\n        vla = attach_lora(vla, lora_config)')
     replace('        vla.print_trainable_parameters()',
             '        vla.print_trainable_parameters()\n        record_model(vla, cfg)')
     replace('vla_dataset = RLDSDataset(', 'vla_dataset = PandaRLDSDataset(')

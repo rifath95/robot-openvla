@@ -127,17 +127,22 @@ network volume and the GPU/training settings match. Selection is printed and
 saved in `batch_selection.json`; a missing/incompatible result uses the
 configured fallback and prints its reason.
 
-For the next 1,000-update baseline on the expanded bundle, after updating the
-cloud checkout and ensuring tmux is installed:
+For the agreed next run, launch the **5,000-update A40 profile**:
 
 ```bash
-bash scripts/train_detached.sh training/pick_place_1000.json /workspace/panda-training/training_v2
+bash scripts/train_detached.sh training/pick_place_v2_5000.json /workspace/panda-training/training_v2
 ```
 
-This uses the expanded 250-trajectory bundle: **176 training**, **37 validation**,
-and **37 held-out test** trajectories. Validation/test examples are not trained
-on. At effective batch eight, 1,000 updates consume 8,000 sampled training steps;
-this is an initial baseline, not a guarantee that every training step is seen.
-Checkpoints and full validation occur every 250 updates. The existing one-hour
-inner training limit and 90-minute outer wrapper limit still apply. The wrapper
-requests a pod stop after it saves the results; confirm this in the portal.
+It requires a compatible saved A40 benchmark and at least 3 GiB of free volume
+space. The reviewed recommendation is microbatch **8**, accumulation **1**:
+5,000 updates present **40,000 training examples**, about **2.9 passes** over
+the 13,812 training steps. Sampling can repeat examples; this is not a guarantee
+of complete coverage or task success. Validation/test examples are not trained on.
+
+Checkpoints and full validation occur every **1,000 updates**. The inner training
+limit is **4 hours**, and the outer supervisor limit is **5 hours**. Results are
+saved on the network volume and the wrapper requests a pod stop. Mac sleep does
+not stop the detached cloud job. Confirm stopped status in the portal afterward.
+See [TRAINING_OVERNIGHT.md](TRAINING_OVERNIGHT.md) for the complete launch,
+disconnect/reconnect, and optional adapter-continuation commands. No Docker
+rebuild is needed. The earlier 1,000-update profile remains available separately.
