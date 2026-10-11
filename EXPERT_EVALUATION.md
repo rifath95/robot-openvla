@@ -98,6 +98,10 @@ to `checkpoint_001000`, and pass that **same complete path** to this client:
 
 ## Interpretation and stopping
 
+Use the latest server code: inference now lowercases instructions to match the
+official training transform. Earlier evaluations preserved uppercase world X/Y
+and need repeating. See [PIPELINE_AUDIT.md](PIPELINE_AUDIT.md) for the local checks.
+
 These are **generated-action errors**, not the teacher-forced cross-entropy,
 token accuracy, or normalized L1 printed during training. Teacher forcing gives
 the model preceding expert action tokens; normal inference generates those

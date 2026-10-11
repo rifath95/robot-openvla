@@ -87,7 +87,8 @@ def main():
     def predict(image_path):
         with Image.open(image_path) as source:
             image = source.convert("RGB")
-        prompt = f"In: What action should the robot take to {args.instruction}?\nOut:"
+        from openvla_prompt import action_prompt
+        prompt = action_prompt(args.instruction)
         inputs = processor(prompt, image).to(args.device, dtype=dtype)
         # Supply the training-time token AND its mask entry before predict_action.
         if not torch.all(inputs["input_ids"][:, -1] == 29871):

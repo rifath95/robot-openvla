@@ -59,7 +59,7 @@ class RemoteInferenceTests(unittest.TestCase):
             with patch('transformers.AutoProcessor.from_pretrained', return_value=processor) as load_processor, patch('transformers.AutoModelForVision2Seq.from_pretrained', return_value=Model()) as load_model:
                 predictor = OpenVLAPredictor(folder, device='cpu')
                 first = predictor.predict(Image.new('RGB', (20, 10)), 'pick up the cube')
-                second = predictor.predict(Image.new('RGB', (30, 10)), 'place the cube')
+                second = predictor.predict(Image.new('RGB', (30, 10)), 'Place the cube along world Y')
             self.assertGreaterEqual(predictor.startup_info['model_load_seconds'], 0)
             self.assertEqual(predictor.startup_info['device'], 'cpu')
             self.assertEqual(predictor.startup_info['action_statistics'], Model.norm_stats['bridge_orig']['action'])
@@ -70,6 +70,8 @@ class RemoteInferenceTests(unittest.TestCase):
             self.assertEqual(load_processor.call_count, 1)
             self.assertEqual(len(processor.calls), 2)
             self.assertIn('place the cube', processor.calls[1][0])
+            self.assertEqual(processor.calls[1][0],
+                             'In: What action should the robot take to place the cube along world y?\nOut:')
             self.assertEqual(processor.calls[1][1], (30, 10))
             self.assertEqual(first['action'][0], 0.01)
             self.assertGreaterEqual(second['timings_seconds']['model_inference'], 0)

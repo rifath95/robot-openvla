@@ -297,6 +297,9 @@ evaluation; controlled held-out task evaluation is still pending.
 
 ## Completion criteria
 
+The training/inference consistency audit and the inference prompt correction are
+recorded in [PIPELINE_AUDIT.md](PIPELINE_AUDIT.md).
+
 For a saved-demonstration diagnostic before more training, follow
 [EXPERT_EVALUATION.md](EXPERT_EVALUATION.md). It compares real HTTP-generated
 actions with expert labels, including the first lift, without robot movement.

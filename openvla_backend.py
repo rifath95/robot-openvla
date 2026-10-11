@@ -5,6 +5,8 @@ import json
 from pathlib import Path
 import time
 
+from openvla_prompt import action_prompt
+
 
 class OpenVLAPredictor:
     def __init__(self, model_dir, *, device="cuda", unnorm_key="bridge_orig"):
@@ -44,6 +46,7 @@ class OpenVLAPredictor:
             'loading_note': 'Processor setup, checkpoint reading, model construction and device transfer, synchronized at completion; not isolated storage-to-VRAM time.',
             'device': device, 'dtype': str(self.dtype), 'attention': 'eager',
             'pytorch_version': torch.__version__, 'transformers_version': transformers.__version__,
+            'instruction_processing': 'lowercase to match official RLDSBatchTransform',
         })
         if device == 'cuda':
             properties = torch.cuda.get_device_properties(torch.cuda.current_device())
@@ -75,7 +78,7 @@ class OpenVLAPredictor:
     def predict(self, image, instruction):
         torch = self.torch
         started = time.perf_counter()
-        prompt = f"In: What action should the robot take to {instruction}?\nOut:"
+        prompt = action_prompt(instruction)
         inputs = self.processor(prompt, image).to(self.device, dtype=self.dtype)
         # Match the successful local path: keep the extra training token and mask aligned.
         if not torch.all(inputs["input_ids"][:, -1] == 29871):
