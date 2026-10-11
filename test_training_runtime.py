@@ -36,9 +36,12 @@ class TrainingRuntimeTests(unittest.TestCase):
     def test_plots_events_and_existing_run_protection(self):
         with tempfile.TemporaryDirectory() as directory:
             env=dict(PANDA_RUN_DIR=directory,PANDA_UPSTREAM_REVISION='test',
-                     PANDA_VALIDATE_EVERY='10',PANDA_VALIDATION_MAX_BATCHES='64',PANDA_MAX_RUNTIME='30')
+                     PANDA_VALIDATE_EVERY='10',PANDA_VALIDATION_MAX_BATCHES='64',PANDA_MAX_RUNTIME='30',
+                     PANDA_BATCH_SELECTION=json.dumps(dict(policy='auto',microbatch=8,accumulation=1)))
             with patch.dict(os.environ,env):
                 metrics=Metrics();metrics.init(name='test')
+                selection=json.loads((Path(directory)/'batch_selection.json').read_text())
+                self.assertEqual(selection['microbatch'],8)
                 metrics.log({'train_loss':2.0},step=1)
                 metrics.log({'validation_loss':2.5,'validation_examples':64,'validation_complete':False},step=10)
                 self.assertTrue((Path(directory)/'loss.png').is_file())

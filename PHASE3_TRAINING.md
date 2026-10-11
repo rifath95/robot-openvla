@@ -329,3 +329,9 @@ the pretrained baseline. Record actual performance, including limited success;
 perfect performance is not required to complete and assess this experiment.
 Stop or terminate the rented pod in RunPod after testing. Exiting training does
 not stop GPU billing; external storage persists and has its own charge.
+## Automatic training microbatch selection
+
+Training now checks saved compatible GPU capacity benchmarks automatically.
+See [TRAINING_BATCHES.md](TRAINING_BATCHES.md) for matching rules, fallback,
+accumulation-one behavior and `batch_selection.json`. The original A40/v1
+measurement does not establish a validated microbatch for the expanded v2 data.

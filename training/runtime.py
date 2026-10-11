@@ -18,6 +18,9 @@ class Metrics:
         if (self.directory/'experiment.json').exists():
             raise ValueError('Run already exists; refusing to mix experiment logs')
         self.rows=[]
+        if os.environ.get('PANDA_BATCH_SELECTION'):
+            (self.directory/'batch_selection.json').write_text(json.dumps(
+                json.loads(os.environ['PANDA_BATCH_SELECTION']),indent=2)+'\n')
         from torch.utils.tensorboard import SummaryWriter
         self.writer=SummaryWriter(str(self.directory/'tensorboard'))
         (self.directory/'experiment.json').write_text(json.dumps(dict(name=name,

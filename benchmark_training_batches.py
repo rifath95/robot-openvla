@@ -119,9 +119,11 @@ def main():
     config=json.loads(Path('training/pick_place_1000.json').read_text())
     results=[]
     mode='capacity' if args.find_capacity else 'controlled'
+    from training.batch_policy import benchmark_context
+    context=benchmark_context(config,args.dataset,args.model)
     (root/'benchmark_metadata.json').write_text(json.dumps(dict(mode=mode,
         dataset=str(args.dataset.resolve()),model=str(args.model.resolve()),
-        max_batch=args.max_batch,updates_per_candidate=25,warmup_updates=5),indent=2)+'\n')
+        max_batch=args.max_batch,updates_per_candidate=25,warmup_updates=5,context=context),indent=2)+'\n')
     def report():
         write_report(root,results,mode,args.max_batch)
         from summarize_gpu_benchmarks import comparison
@@ -154,7 +156,7 @@ def main():
         config_path.write_text(json.dumps(candidate,indent=2)+'\n')
         command=[sys.executable,'-u','train_panda.py','--dataset',str(args.dataset),
             '--model',str(args.model),'--config',str(config_path),
-            '--output-root',str(root),'--run-name',name]
+            '--output-root',str(root),'--run-name',name,'--batch-policy','config']
         print(f'Testing microbatch {microbatch}, accumulation {accumulation} (25 updates)...',flush=True)
         started=time.monotonic()
         with (root/f'{name}.log').open('w') as log:

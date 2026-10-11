@@ -47,7 +47,31 @@ connection can prevent automatic stopping; stop manually in that case. No Docker
 rebuild needed. Stop status is saved on the volume in
 `/workspace/panda-training/batch-benchmarks/pod_stop_status.json`.
 
-## Direct cloud command (manual download)
+## Automatic batch selection for training
+
+`train_panda.py` defaults to `--batch-policy auto`. It detects the actual GPU and
+looks in `/workspace/panda-training/batch-benchmarks` for matching capacity-mode
+measurements. Compatibility includes GPU name/VRAM/compute capability, PyTorch,
+Transformers, CUDA runtime, dataset SHA256SUMS identity, model export/config
+identity, LoRA rank/dropout, quantization, image augmentation, BF16 and eager
+attention. The fastest completed candidate passing the headroom screen supplies
+the microbatch; accumulation is set to **one** for the initial training baseline.
+
+If there is no matching benchmark, the configured microbatch and accumulation
+are retained and the reason is printed. A v1 result does not automatically set
+the batch for v2. Legacy measurements without the new context identity are not
+automatically reused; benchmark the selected dataset once with current code.
+To refuse training rather than fall back, pass `--require-benchmark` to
+`train_panda.py`. To use manual settings, pass `--batch-policy config`.
+
+Every training run saves `batch_selection.json`, including the effective batch
+and source benchmark when one was selected. Actual batch/accumulation are also
+saved in model details and checkpoint configs. Benchmark subprocesses always
+use config policy so automatic training selection cannot override the batch
+size under test. Selection does not change the learning rate or update count;
+decide total data exposure and validation cadence with the chosen effective batch.
+
+## Direct benchmark details
 
 Prepared locally; GPU measurements are pending. The previous run used microbatch
 1 with four accumulation steps: four individual image–instruction–action examples
