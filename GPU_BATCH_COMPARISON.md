@@ -14,6 +14,7 @@ A fitting batch completed 25 real updates. The short-run capacity applies to tes
 | NVIDIA A40 | Unknown | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 8 / 1 | 2.140 | 3.74 | 40.25 / 42.71 | [20261011_054257_777818](outputs/gpu-benchmarks/20261011_054257_777818/BATCH_BENCHMARK.md) |
 | NVIDIA H100 80GB HBM3 | Unknown | 79.2 | training_v2 | capacity | 18 (boundary found) | 19 | 16 / 1 | 1.606 | 9.96 | 65.55 / 71.64 | [20261011_071323_382964](outputs/gpu-benchmarks/20261011_071323_382964/BATCH_BENCHMARK.md) |
 | NVIDIA RTX A6000 | Unknown | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 4 / 1 | 5.295 | 0.76 | 27.59 / 28.42 | [20261011_095911_435567](outputs/gpu-benchmarks/20261011_095911_435567/BATCH_BENCHMARK.md) |
+| NVIDIA H200 | Enabled | 139.8 | training_v1 | capacity | 34 (boundary found) | 35 | 16 / 1 | 1.105 | 14.47 | 65.38 / 71.14 | [20261011_113403_097508](outputs/gpu-benchmarks/20261011_113403_097508/BATCH_BENCHMARK.md) |
 
 ## Cost for the same amount of training
 
@@ -26,9 +27,10 @@ Rates are the user-confirmed prices for these particular pod runs, saved in `tra
 | NVIDIA A40 | 20261011_054257_777818 | $0.59 | 3.74 | 44 min 35 sec | $0.44 |
 | NVIDIA H100 80GB HBM3 | 20261011_071323_382964 | $3.99 | 9.96 | 16 min 44 sec | $1.11 |
 | NVIDIA RTX A6000 | 20261011_095911_435567 | $0.59 | 0.76 | 220 min 37 sec | $2.17 |
+| NVIDIA H200 | 20261011_113403_097508 | $5.29 | 14.47 | 11 min 31 sec | $1.02 |
 
 Lowest estimated training cost among these priced runs: **NVIDIA A40**, **$0.44 per 10,000 examples**.
-**NVIDIA H100 80GB HBM3** processes examples **2.67× faster** than NVIDIA A40, but costs **2.54× as much per example**.
+**NVIDIA H200** processes examples **3.87× faster** than NVIDIA A40, but costs **2.32× as much per example**.
 
 These are training-only estimates, excluding deployment, model loading, validation, checkpoint saving, idle time, and storage charges. Total billed cost includes those additional items.
 Different microbatches/effective batches and datasets were benchmarked. Equal examples processed does not guarantee equal model quality; a convergence comparison should match effective batch and training settings.
@@ -184,6 +186,61 @@ CPU and GPU snapshot diagnostics: `batch_host_context.json` in this run’s outp
 | 10 | 1 | capacity | out_of_memory | — | — | — | — |
 | 12 | 1 | capacity | out_of_memory | — | — | — | — |
 | 16 | 1 | capacity | out_of_memory | — | — | — | — |
+
+## NVIDIA H200 — 139.8 GiB
+
+### Run 20261011_113403_097508
+
+Dataset: `/root/robot-openvla/.benchmark-local/inputs/training_v1`. Model: `/root/robot-openvla/.benchmark-local/inputs/openvla-7b`.
+Mode: capacity; PyTorch: 2.2.2+cu121; LoRA rank: 32; quantization: False; image augmentation: False.
+Total benchmark time: **11 min 56 sec**.
+GPU ECC: **Enabled** (current); pending mode: **Enabled**.
+Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.
+Capacity finding: **34 (boundary found)**.
+Fastest candidate with headroom: **microbatch 16, accumulation 1**, 14.47 examples/s.
+
+Software stack (recorded versions; missing historical values are Unknown):
+
+| Component | Version / setting |
+| --- | --- |
+| Python | 3.11.10 |
+| torch | 2.2.2+cu121 |
+| torchvision | 0.17.2+cu121 |
+| transformers | 4.40.1 |
+| tokenizers | 0.19.1 |
+| peft | 0.11.1 |
+| accelerate | 0.29.3 |
+| timm | 0.9.10 |
+| numpy | 1.26.4 |
+| tensorflow | 2.15.0 |
+| tensorflow-datasets | 4.9.3 |
+| dlimp | 0.0.1 |
+| huggingface-hub | 0.36.2 |
+| PyTorch CUDA runtime | 12.1 |
+| NVIDIA driver | 595.91.07 |
+| Precision | bfloat16 |
+| Attention | eager |
+| Benchmark code commit | 4bee68dfcb6ee3e9e784f5527e69a051518ad1cb |
+
+Input storage: **global_volume** at `/workspace`; training reads staged inputs from **container_disk**.
+Input staging: **61.12 seconds**, excluded from total benchmark time above. Model staging read source: `global_volume`.
+
+
+| Microbatch | Accumulation | Phase | Status | Seconds/update | Examples/s | Peak allocated / reserved GiB | Headroom screen |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 1 | capacity | completed | 0.195 | 5.13 | 18.24 / 22.21 | True |
+| 2 | 1 | capacity | completed | 0.211 | 9.48 | 21.29 / 23.65 | True |
+| 4 | 1 | capacity | completed | 0.305 | 13.12 | 27.63 / 28.59 | True |
+| 8 | 1 | capacity | completed | 0.600 | 13.33 | 40.30 / 43.06 | True |
+| 16 | 1 | capacity | completed | 1.105 | 14.47 | 65.38 / 71.14 | True |
+| 32 | 1 | capacity | completed | 2.325 | 13.76 | 121.72 / 129.46 | True |
+| 33 | 1 | speed_refinement | completed | 2.439 | 13.53 | 125.03 / 133.44 | True |
+| 34 | 1 | capacity | completed | 2.489 | 13.66 | 128.49 / 136.58 | False |
+| 35 | 1 | capacity | out_of_memory | — | — | — | — |
+| 36 | 1 | capacity | out_of_memory | — | — | — | — |
+| 40 | 1 | capacity | out_of_memory | — | — | — | — |
+| 48 | 1 | capacity | out_of_memory | — | — | — | — |
+| 64 | 1 | capacity | out_of_memory | — | — | — | — |
 
 ## Reading the results
 
