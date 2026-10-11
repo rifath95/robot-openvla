@@ -46,7 +46,35 @@ this check, not the seven-billion-parameter model. The bundle's `PACKAGE_REPORT.
 `training_v2` is the bundle name; its TFDS schema directory remains
 `rlds/panda_pick_place/1.0.0`. No schema or model architecture change is needed.
 
-## Upload after launching a pod
+## Download the completed Hugging Face upload (recommended)
+
+The full 250-trajectory bundle has been uploaded to the private repository
+`Maxalderone/robot-openvla-panda`, under `training_v2`. The verified repository
+revision is `8ffd54b1dd27022102aba0866b65a7a9ac4eefc7`.
+
+Before launching a training pod, create a Hugging Face **read** token in
+Settings → Access Tokens. Save it in RunPod Secrets, then add `HF_TOKEN` to
+the training template's environment variables using the secret picker. Do not
+paste the token into commands or Git. Launch with the existing network volume.
+No Docker rebuild is required.
+
+After cloning/updating this repository in the cloud terminal, run:
+
+```bash
+cd /root/robot-openvla
+/opt/openvla/bin/python download_training_dataset.py
+```
+
+The downloader pins the completed upload, downloads into a resumable staging
+directory on the volume, verifies all 31 file hashes, and only then moves the
+bundle into `/workspace/panda-training/training_v2`. Repeat the same command
+after an interruption. Existing final bundles are verified and reused; mismatched
+bundles are rejected without overwriting. Hugging Face provenance is recorded
+outside the bundle in `/workspace/panda-training/training_v2_hf_source.json`.
+Original v1, base weights and previous adapters remain unchanged. This download
+does not start training or automatically stop the pod.
+
+## Direct Mac upload after launching a pod (alternative)
 
 Use the existing training template and attach **robot-openvla-network-volume-A40**
 at `/workspace`. No Docker rebuild is needed. Once ready, obtain the SSH command
