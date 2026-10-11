@@ -13,7 +13,7 @@ import mujoco.viewer
 import numpy as np
 import glfw
 
-from plate_scene import SCENE_PATH, randomize_scene
+from bowl_scene import SCENE_PATH, randomize_scene
 TRANSLATION_STEP = 0.025  # metres
 ROTATION_STEP = 0.10  # radians
 
@@ -36,7 +36,7 @@ def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--seed', type=int, help='Repeat the same random scene and reset sequence')
     parser.add_argument('--headless', action='store_true', help='Save a scene preview without opening a window')
-    parser.add_argument('--output-dir', type=Path, default=Path('outputs/plate_scene_preview'))
+    parser.add_argument('--output-dir', type=Path, default=Path('outputs/bowl_scene_preview'))
     args = parser.parse_args()
     if not args.headless:
         _restart_with_mjpython()
@@ -90,7 +90,7 @@ def main() -> None:
             f"Up/Down, Left/Right, Home/End: {axes}\n"
             "Mac Home/End: Fn+Left / Fn+Right\n"
             "Space: switch Move/Rotate | Enter: open/close\n"
-            "N: new random arm, cube and plate positions\n"
+            "N: new random arm, cube and bowl positions\n"
             "Esc: free camera | Close window to quit",
         ))
 

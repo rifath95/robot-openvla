@@ -324,12 +324,12 @@ Results are saved in `outputs/openvla_loop_<timestamp>/`:
 
 In `end_effector_demo.py`, click inside the simulator window to give it keyboard focus.
 
-The manual viewer now uses `scene_plate.xml`: a red cube and a blue-bordered
-plate on the table. The task is **"pick up the red cube and place it on the blue
-plate"**. On every launch, cube and plate positions and the arm's starting
+The manual viewer now uses `scene_bowl.xml`: a red cube and a blue bowl
+on the table. The task is **"pick up the red cube and place it in the blue
+bowl"**. On every launch, cube and bowl positions and the arm's starting
 position/yaw are randomized. Starts are settled and collision checked; object
 locations are sampled independently within the reachable table interior, with
-enough separation that the cube does not start on the plate. This is a scene
+enough separation that the cube does not start in the bowl. This is a scene
 preview and manual control update; the new 250-trajectory dataset has not been
 generated yet. Existing inference/collection scripts still use the original scene.
 
@@ -338,10 +338,13 @@ generated yet. Existing inference/collection scripts still use the original scen
 ```
 
 Use `--seed 42` to reproduce a scene and its sequence of random resets.
-`launch_sim.py` also starts with the randomized plate scene and supports `--seed`;
+`launch_sim.py` also starts with the randomized bowl scene and supports `--seed`;
 its standard MuJoCo viewer exposes actuator controls. The keyboard demo uses
 the fixed workspace camera initially and is the recommended manual interface.
-The plate is fixed in place during each trial, with a physical support surface.
+The bowl is fixed in place during each trial, with a physical floor and walls.
+The new scene uses stronger closing pressure and higher-friction finger pads;
+grasping still depends on alignment and physical contact. See
+[BOWL_SCENE.md](BOWL_SCENE.md) for settings and verification.
 The original `scene.xml` remains available for existing recordings and replays.
 
 | Key | Move mode | Rotate mode |
@@ -352,7 +355,7 @@ The original `scene.xml` remains available for existing recordings and replays.
 
 - **Space:** switch Move/Rotate mode.
 - **Enter:** toggle gripper open/closed.
-- **N:** reset to new randomized arm, cube and plate positions, with the gripper open.
+- **N:** reset to new randomized arm, cube and bowl positions, with the gripper open.
 - **Fn + Left / Fn + Right:** Home/End on a Mac keyboard.
 - **Esc:** return to the free camera.
 - **Close the window:** quit.

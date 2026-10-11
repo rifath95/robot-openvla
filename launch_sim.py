@@ -1,4 +1,4 @@
-"""Launch the randomized cube-to-plate scene with MuJoCo actuator controls."""
+"""Launch the randomized cube-to-bowl scene with MuJoCo actuator controls."""
 
 import argparse
 import json
@@ -8,7 +8,7 @@ import mujoco
 import mujoco.viewer
 
 
-from plate_scene import SCENE_PATH, randomize_scene
+from bowl_scene import SCENE_PATH, randomize_scene
 
 
 def main() -> None:

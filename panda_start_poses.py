@@ -9,7 +9,7 @@ from panda_controller import _euler_xyz_to_quat, _quat_multiply, _orientation_er
 def robot_contacts(model, data):
     """Return penetrating robot contacts; cube/table contact is expected."""
     environment = {mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, name)
-                   for name in ('world', 'table', 'cube', 'plate')}
+                   for name in ('world', 'table', 'cube', 'plate', 'bowl')}
     contacts = []
     for contact in data.contact:
         bodies = [int(model.geom_bodyid[g]) for g in (contact.geom1, contact.geom2)]
