@@ -25,6 +25,14 @@ def integrated_source():
             '                        "train_loss": smoothened_loss,\n                        "learning_rate": cfg.learning_rate,')
     replace('if distributed_state.is_main_process and gradient_step_idx % 10 == 0:',
             'if distributed_state.is_main_process and (batch_idx + 1) % cfg.grad_accumulation_steps == 0:')
+    # Measure completed updates, including the optimizer, rather than logging
+    # before optimizer.step(). This also captures first-update optimizer memory.
+    log_start=source.index('            # Push Metrics to W&B')
+    optimizer_start=source.index('            # Optimizer Step',log_start)
+    save_start=source.index('            # Save Model Checkpoint',optimizer_start)
+    log_block=source[log_start:optimizer_start]
+    optimizer_block=source[optimizer_start:save_start]
+    source=source[:log_start]+optimizer_block+log_block+source[save_start:]
     # Adapter-only saves avoid a second 7B model and expensive per-save merges.
     start=source.index('            # Save Model Checkpoint =>>')
     end=source.index('\n\n\nif __name__',start)

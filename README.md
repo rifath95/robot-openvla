@@ -4,6 +4,10 @@ A robotics workspace for connecting a simulated Franka Panda arm to OpenVLA. Dev
 
 Last updated: 2026-10-11. Update this document as milestones, run instructions, and model locations change.
 
+For the planned A40 microbatch speed/memory comparison, see
+[TRAINING_BATCHES.md](TRAINING_BATCHES.md). GPU benchmarking is pending; the
+existing training batch configuration is unchanged.
+
 **Phases 1 and 2 are complete. Phase 3 is the current focus:** collect and
 validate varied pick-and-place demonstrations, fine-tune OpenVLA for our Panda
 setup, and evaluate task success on unseen scenes. Phase 4 will explore additional

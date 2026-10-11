@@ -32,8 +32,15 @@ class Metrics:
     def log(self, values, step):
         row=dict(update=step,elapsed_seconds=time.monotonic()-self.started,**values)
         if torch.cuda.is_available():
+            torch.cuda.synchronize()
             row['gpu_allocated_gib']=torch.cuda.memory_allocated()/2**30
             row['gpu_peak_allocated_gib']=torch.cuda.max_memory_allocated()/2**30
+            row['gpu_reserved_gib']=torch.cuda.memory_reserved()/2**30
+            row['gpu_peak_reserved_gib']=torch.cuda.max_memory_reserved()/2**30
+            free,total=torch.cuda.mem_get_info()
+            row['gpu_free_gib']=free/2**30
+            row['gpu_total_gib']=total/2**30
+            row['elapsed_seconds']=time.monotonic()-self.started
         self.rows.append(row)
         for key,value in values.items():
             if isinstance(value,(int,float)):
