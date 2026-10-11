@@ -1,13 +1,38 @@
 """Verify checksum gates and non-overwriting dataset publication locally."""
 import hashlib
 from pathlib import Path
+import shutil
 import tempfile
 import unittest
+from unittest.mock import patch
 
-from download_training_dataset import verify_bundle,finalize_download,load_hf_token
+from download_training_dataset import verify_bundle,finalize_download,load_hf_token,copy_verified_bundle
 
 
 class DownloadDatasetTests(unittest.TestCase):
+    def test_global_copy_keeps_source_and_publishes_verification_last(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);source=root/'staging';expected=self.bundle(source)
+            destination=root/'global'/'training_v1';copied=[]
+            copy=shutil.copyfile
+            def record(src,dst):
+                copied.append(src.name)
+                if src.name!='verification.json':self.assertFalse((destination/'verification.json').exists())
+                return copy(src,dst)
+            with patch('download_training_dataset.shutil.copyfile',side_effect=record), \
+                 patch.object(Path,'rename',side_effect=AssertionError('Global copy must not rename')):
+                self.assertEqual(copy_verified_bundle(source,destination,expected),2)
+            self.assertTrue(source.exists())
+            self.assertEqual(copied[-1],'verification.json')
+            self.assertEqual((destination/'data.bin').read_bytes(),b'image-instruction-action')
+
+    def test_global_copy_rejects_corruption_before_creating_destination(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);source=root/'staging';expected=self.bundle(source)
+            (source/'data.bin').write_bytes(b'broken')
+            with self.assertRaises(ValueError):copy_verified_bundle(source,root/'global',expected)
+            self.assertFalse((root/'global').exists())
+
     def test_recovers_only_hf_token_from_container_when_ssh_omits_it(self):
         with tempfile.TemporaryDirectory() as folder:
             path=Path(folder)/'environ'

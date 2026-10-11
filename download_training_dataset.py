@@ -5,11 +5,13 @@ import json
 import os
 from pathlib import Path, PurePosixPath
 import re
+import shutil
 import subprocess
 
 
 REPOSITORY='Maxalderone/robot-openvla-panda'
 REVISION='8ffd54b1dd27022102aba0866b65a7a9ac4eefc7'
+V1_REVISION='f653bb505352c358fa7ea478e2338929d3222a68'
 
 
 def load_hf_token(environ=None,container_environment=Path('/proc/1/environ')):
@@ -71,12 +73,32 @@ def finalize_download(bundle,destination,checksums):
     return count
 
 
+def copy_verified_bundle(bundle,destination,checksums):
+    """Global storage: regular copies, no locks, links, or atomic directory rename."""
+    if destination.exists():
+        raise ValueError('Destination already exists; verify it instead of overwriting')
+    verify_bundle(bundle,checksums)
+    destination.mkdir(parents=True)
+    files=sorted(p for p in bundle.rglob('*') if p.is_file())
+    # Publish the verification record last. Only one preparation pod should write.
+    files.sort(key=lambda p:p.relative_to(bundle).as_posix()=='verification.json')
+    for source in files:
+        target=destination/source.relative_to(bundle)
+        target.parent.mkdir(parents=True,exist_ok=True)
+        shutil.copyfile(source,target)
+    return verify_bundle(destination,checksums)
+
+
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--repo',default=REPOSITORY)
-    p.add_argument('--revision',default=REVISION,help='Pinned completed upload; change explicitly for future bundles')
+    p.add_argument('--bundle',choices=('training_v1','training_v2'),default='training_v2')
+    p.add_argument('--revision',help='Override the selected bundle’s pinned completed upload')
+    p.add_argument('--volume-root',type=Path,default=Path('/workspace'))
+    p.add_argument('--global-volume',action='store_true',help='Download on container disk and copy regular files to global storage')
     args=p.parse_args()
-    subprocess.run(['mountpoint','-q','/workspace'],check=True)
+    if not args.volume_root.is_absolute():p.error('--volume-root must be an absolute mounted path')
+    subprocess.run(['mountpoint','-q',str(args.volume_root)],check=True)
     try:
         source=load_hf_token()
     except ValueError as exc:
@@ -84,23 +106,28 @@ def main():
     print(f'Hugging Face authentication loaded from {source}.',flush=True)
     from huggingface_hub import HfApi,hf_hub_download,snapshot_download
     # Resolve any supplied tag to a commit once, so files cannot mix revisions.
-    revision=HfApi().repo_info(args.repo,repo_type='dataset',revision=args.revision).sha
-    expected=Path(hf_hub_download(args.repo,'training_v2/SHA256SUMS',
-        repo_type='dataset',revision=revision)).read_text()
-    parent=Path('/workspace/panda-training');parent.mkdir(parents=True,exist_ok=True)
-    destination=parent/'training_v2'
+    requested_revision=args.revision or (V1_REVISION if args.bundle=='training_v1' else REVISION)
+    revision=HfApi().repo_info(args.repo,repo_type='dataset',revision=requested_revision).sha
+    cache=Path(__file__).resolve().parent/'.cache-dataset-download'/args.bundle
+    download_options={'cache_dir':str(cache/'hub')} if args.global_volume else {}
+    expected=Path(hf_hub_download(args.repo,f'{args.bundle}/SHA256SUMS',
+        repo_type='dataset',revision=revision,**download_options)).read_text()
+    parent=args.volume_root/'panda-training';parent.mkdir(parents=True,exist_ok=True)
+    destination=parent/args.bundle
     if destination.exists():
         count=verify_bundle(destination,expected)
         print(f'Existing bundle verified: {destination} ({count} checksums)',flush=True)
     else:
-        staging=parent/'.hf-download-training_v2'
+        staging=cache/'snapshot' if args.global_volume else parent/f'.hf-download-{args.bundle}'
         print(f'Downloading {args.repo}@{revision} into a resumable staging directory...',flush=True)
         snapshot_download(args.repo,repo_type='dataset',revision=revision,
-            allow_patterns=['training_v2/**'],local_dir=staging)
-        count=finalize_download(staging/'training_v2',destination,expected)
+            allow_patterns=[f'{args.bundle}/**'],local_dir=staging,**download_options)
+        publish=copy_verified_bundle if args.global_volume else finalize_download
+        count=publish(staging/args.bundle,destination,expected)
         print(f'Verified downloaded bundle: {destination} ({count} checksums)',flush=True)
-    (parent/'training_v2_hf_source.json').write_text(json.dumps(dict(
-        repository=args.repo,revision=revision,bundle=str(destination),verified_files=count),indent=2)+'\n')
+    (parent/f'{args.bundle}_hf_source.json').write_text(json.dumps(dict(
+        repository=args.repo,revision=revision,bundle=str(destination),verified_files=count,
+        publication='regular_copy' if args.global_volume else 'directory_rename'),indent=2)+'\n')
     print('Dataset ready. This command does not start training or stop the pod.',flush=True)
 
 

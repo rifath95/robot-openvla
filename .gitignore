@@ -16,6 +16,7 @@ training/vendor/
 training/generated/
 .cache-openvla/
 .cache-openvla-server/
+.cache-dataset-download/
 venv/
 env/
 mujoco_env/
