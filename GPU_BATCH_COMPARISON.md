@@ -54,8 +54,9 @@ Use the local launcher for automatic cloud execution, report download and worksp
 ```
 
 Get POD_IP and POD_PORT from RunPod → Pod → Connect → SSH over exposed TCP. The launcher selects this Mac's existing private key.
-Keep the Mac awake and connected. This command does not stop the rented pod. Stop it in RunPod after synchronization.
-For an existing run or an interrupted download, use the same command with `--fetch-only`; it does not run training.
+Keep the Mac awake and connected. By default the launcher requests a pod stop after local report synchronization. It uses the RUNPOD_API_KEY secret already configured on the pod. Confirm stopped status in RunPod.
+Use `--keep-pod-running` to disable that stop. For an existing run or interrupted download, use `--fetch-only`; add `--stop-after-fetch` to stop after retrieval. No benchmark is run in fetch-only mode.
+If synchronization or the stop API fails, stop the pod manually. An interrupted Mac connection can prevent the automatic stop.
 The download includes all saved benchmark reports, JSON measurements, configs and logs on the attached volume; adapter weights are excluded.
 Timestamped report folders and a combined report are saved in outputs/gpu-benchmarks. This workspace file is rebuilt automatically from the downloaded JSON.
 For report folders already downloaded, the standalone refresh command remains available:

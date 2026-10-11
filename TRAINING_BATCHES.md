@@ -25,18 +25,27 @@ folder too; A100 filenames include the actual variant name reported by CUDA.
 It is not necessary to manually copy results or edit the table.
 
 Keep the Mac connected and the lid open until synchronization completes. This
-is a foreground workflow, not the detached training wrapper. If interrupted,
+is a foreground workflow, not the detached training wrapper. After successful
+download, the launcher requests a pod **stop** (not termination) automatically.
+It uses the existing `RUNPOD_API_KEY` secret on the pod and verifies API/network
+volume access before starting the benchmark. A GET check cannot guarantee stop
+permission; stop failures are retried and reported. Confirm stopped status in
+RunPod. Use `--keep-pod-running` when intentionally doing more work on the pod.
+If interrupted,
 reconnect to a running pod with the same volume and fetch already-saved results:
 
 ```bash
 .venv/bin/python benchmark_cloud_session.py \
   --ssh 'ssh root@POD_IP -p POD_PORT -i ~/.ssh/id_ed25519' \
-  --fetch-only
+  --fetch-only --stop-after-fetch
 ```
 
 `--fetch-only` runs no benchmark or training. It can collect a prior run even
-from a new pod attached to the same volume. Neither mode automatically stops
-the pod: stop it in RunPod after the download completes. No Docker rebuild needed.
+from a new pod attached to the same volume. Fetch-only leaves the pod running
+unless `--stop-after-fetch` is supplied. Downloads/API failures or losing the Mac
+connection can prevent automatic stopping; stop manually in that case. No Docker
+rebuild needed. Stop status is saved on the volume in
+`/workspace/panda-training/batch-benchmarks/pod_stop_status.json`.
 
 ## Direct cloud command (manual download)
 

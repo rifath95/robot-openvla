@@ -127,7 +127,7 @@ def main():
         from summarize_gpu_benchmarks import comparison
         comparison(args.output_root,args.output_root/'GPU_BATCH_COMPARISON.md')
     print(f'Benchmark outputs: {root}',flush=True)
-    print('This command does not stop the pod. Stop it in RunPod afterward.',flush=True)
+    print('This benchmark alone does not stop the pod; the Mac launcher handles download and automatic stop when enabled.',flush=True)
     controlled=iter(((1,4),(2,2),(4,1)))
     speed_candidates=None
     while True:
