@@ -327,6 +327,9 @@ For a saved-demonstration diagnostic before more training, follow
 [EXPERT_EVALUATION.md](EXPERT_EVALUATION.md). It compares real HTTP-generated
 actions with expert labels, including the first lift, without robot movement.
 
+The local checks after the 250-trajectory v2 training run and its checkpoint
+3,000/5,000 simulator trials are recorded in [V2_LOCAL_AUDIT.md](V2_LOCAL_AUDIT.md).
+
 Phase 3 is complete after reproducible training, saved plots/checkpoints, and
 live model-driven evaluation on held-out pick-and-place scenarios, compared with
 the pretrained baseline. Record actual performance, including limited success;

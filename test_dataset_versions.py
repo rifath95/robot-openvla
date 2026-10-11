@@ -59,7 +59,7 @@ class DatasetVersionTests(unittest.TestCase):
         def read(path, *args, **kwargs):
             if path.name == 'verification.json':
                 return '{"passed": true}'
-            return json.dumps(dict(max_steps=1000,validation_max_batches=0))
+            return json.dumps(dict(max_steps=1000,validation_max_batches=0,max_runtime_seconds=3600))
         with patch('sys.argv', ['detached_run', '--dataset', '/workspace/panda-training/training_v2',
                                '--session-dir', '/workspace/panda-training/sessions/fake']), \
              patch.object(Path, 'resolve', lambda self: self), \
