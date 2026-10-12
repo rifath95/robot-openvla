@@ -16,6 +16,7 @@ A fitting batch completed 25 real updates. The short-run capacity applies to tes
 | NVIDIA RTX A6000 | Unknown | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 4 / 1 | 5.295 | 0.76 | 27.59 / 28.42 | [20261011_095911_435567](../../outputs/gpu-benchmarks/20261011_095911_435567/BATCH_BENCHMARK.md) |
 | NVIDIA H200 | Enabled | 139.8 | training_v1 | capacity | 34 (boundary found) | 35 | 16 / 1 | 1.105 | 14.47 | 65.38 / 71.14 | [20261011_113403_097508](../../outputs/gpu-benchmarks/20261011_113403_097508/BATCH_BENCHMARK.md) |
 | NVIDIA A100-SXM4-80GB | Enabled | 79.3 | training_v1 | capacity | 18 (boundary found) | 19 | 8 / 1 | 0.960 | 8.33 | 40.25 / 42.68 | [20261011_115921_878754](../../outputs/gpu-benchmarks/20261011_115921_878754/BATCH_BENCHMARK.md) |
+| NVIDIA A40 | Enabled | 44.4 | training_v1 | capacity | 8 (boundary found) | 9 | 4 / 1 | 1.040 | 3.85 | 27.57 / 28.26 | [20261012_003826_853142](../../outputs/gpu-benchmarks/20261012_003826_853142/BATCH_BENCHMARK.md) |
 
 ## Cost for the same amount of training
 
@@ -30,6 +31,7 @@ Rates are the user-confirmed prices for these particular pod runs, saved in `tra
 | NVIDIA RTX A6000 | 20261011_095911_435567 | $0.59 | 0.76 | 220 min 37 sec | $2.17 |
 | NVIDIA H200 | 20261011_113403_097508 | $5.29 | 14.47 | 11 min 31 sec | $1.02 |
 | NVIDIA A100-SXM4-80GB | 20261011_115921_878754 | $1.79 | 8.33 | 20 min 00 sec | $0.60 |
+| NVIDIA A40 | 20261012_003826_853142 | Not recorded | 3.85 | — | — |
 
 Lowest estimated training cost among these priced runs: **NVIDIA A40**, **$0.44 per 10,000 examples**.
 **NVIDIA H200** processes examples **3.87× faster** than NVIDIA A40, but costs **2.32× as much per example**.
@@ -296,6 +298,57 @@ Input staging: **64.25 seconds**, excluded from total benchmark time above. Mode
 | 20 | 1 | capacity | out_of_memory | — | — | — | — |
 | 24 | 1 | capacity | out_of_memory | — | — | — | — |
 | 32 | 1 | capacity | out_of_memory | — | — | — | — |
+
+## NVIDIA A40 — 44.4 GiB
+
+### Run 20261012_003826_853142
+
+Dataset: `/workspace/panda-training/training_v1`. Model: `/workspace/openvla-7b`.
+Mode: capacity; PyTorch: 2.2.2+cu121; LoRA rank: 32; quantization: False; image augmentation: False.
+Total benchmark time: **11 min 54 sec**.
+GPU ECC: **Enabled** (current); pending mode: **Enabled**.
+Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.
+Capacity finding: **8 (boundary found)**.
+Fastest candidate with headroom: **microbatch 4, accumulation 1**, 3.85 examples/s.
+
+Software stack (recorded versions; missing historical values are Unknown):
+
+| Component | Version / setting |
+| --- | --- |
+| Python | 3.11.10 |
+| torch | 2.2.2+cu121 |
+| torchvision | 0.17.2+cu121 |
+| transformers | 4.40.1 |
+| tokenizers | 0.19.1 |
+| peft | 0.11.1 |
+| accelerate | 0.29.3 |
+| timm | 0.9.10 |
+| numpy | 1.26.4 |
+| tensorflow | 2.15.0 |
+| tensorflow-datasets | 4.9.3 |
+| dlimp | 0.0.1 |
+| huggingface-hub | 0.36.2 |
+| PyTorch CUDA runtime | 12.1 |
+| NVIDIA driver | 570.195.03 |
+| Precision | bfloat16 |
+| Attention | eager |
+| Benchmark code commit | 4fd39f4025721ea56f770e9227032890cd705e42 |
+
+
+
+| Microbatch | Accumulation | Phase | Status | Seconds/update | Examples/s | Peak allocated / reserved GiB | Headroom screen |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 1 | capacity | completed | 0.410 | 2.44 | 18.01 / 27.62 | True |
+| 2 | 1 | capacity | completed | 0.610 | 3.28 | 21.25 / 27.09 | True |
+| 4 | 1 | capacity | completed | 1.040 | 3.85 | 27.57 / 28.26 | True |
+| 5 | 1 | speed_refinement | completed | 1.510 | 3.31 | 30.71 / 31.78 | True |
+| 6 | 1 | speed_refinement | completed | 1.574 | 3.81 | 33.90 / 35.54 | True |
+| 7 | 1 | speed_refinement | completed | 1.820 | 3.85 | 37.01 / 39.06 | True |
+| 8 | 1 | capacity | completed | 2.020 | 3.96 | 40.25 / 42.93 | False |
+| 9 | 1 | capacity | out_of_memory | — | — | — | — |
+| 10 | 1 | capacity | out_of_memory | — | — | — | — |
+| 12 | 1 | capacity | out_of_memory | — | — | — | — |
+| 16 | 1 | capacity | out_of_memory | — | — | — | — |
 
 ## Reading the results
 
