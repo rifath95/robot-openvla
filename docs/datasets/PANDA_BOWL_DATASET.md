@@ -9,9 +9,29 @@ The bowl is a visible destination. The instruction does not require remembering
 the cube's initial position or interpreting a relative placement offset.
 All observations use the approved fixed `bowl_camera` view.
 
+## Completed collection
+
+The corpus now has **300 successful, physics-replay-verified trajectories**:
+
+| Split | Trajectories | Recorded steps |
+| --- | ---: | ---: |
+| Training | 200 | 22,311 |
+| Validation | 50 | 5,454 |
+| Test | 50 | 5,517 |
+| Total | 300 | 33,282 |
+
+The original twenty are retained unchanged. The remaining 280 meet their fixed
+coverage assignments, and all final per-split quotas passed. There are 280 distinct
+assigned combinations. Maximum deterministic replay-state difference was
+5.71e-10, below the 1e-6 acceptance limit. Read
+`datasets/panda_pick_bowl/COLLECTION_SUMMARY.md` for observed counts and ranges,
+or `coverage_audit.json` and `FINAL_VERIFICATION.json` for machine-readable checks.
+The ordered replay index includes all 300 episodes. RLDS packaging, upload, and
+fine-tuning for this task have not started.
+
 ## Review the first ten
 
-Ten successful trajectories have been recorded: eight train, one validation,
+The first ten remain in the completed corpus: eight train, one validation,
 and one test. Each contains RGB images, instructions, executed seven-component
 action labels, physics states, stage labels, motion frames, and its own replay
 launcher. No fine-tuning or dataset upload has started for this task.
@@ -46,16 +66,61 @@ settled cube quaternion, and grasp orientation are stored in each new episode.
 Initialization and action/state recordings preserve cube rotation in physics
 replay. Roll/pitch are not randomized for the cube; it starts resting flat.
 
-There are now 20 accepted trajectories (14 train / 3 validation / 3 test).
-Further generation is paused for review. New trajectories after the initial ten
-will also randomize cube yaw. To create/resume only these first twenty:
+These first twenty examples (14 train / 3 validation / 3 test) were reviewed
+before the full collection. Trajectories after the initial ten randomize cube
+yaw. To collect/resume only those first twenty in a fresh output directory:
 
 ```bash
 caffeinate -i .venv/bin/python -m data_tools.collect_panda_bowl --limit 20
 ```
 
+## Fixed coverage for the remaining trajectories
+
+The original twenty are retained. Slots 21–300 have immutable assignments in
+`datasets/panda_pick_bowl/coverage_plan.json`. Within each split, the final counts
+in each dimension are balanced (differing by at most one), including the original
+twenty's actual configurations:
+
+| Dimension | Assigned categories |
+| --- | --- |
+| Cube location | Four XY regions, divided at X=0.55 m and Y=0 |
+| Bowl location | Four XY regions, divided at X=0.55 m and Y=0 |
+| Initial hand location | Four XY regions, divided at X=0.53 m and Y=0 |
+| Initial hand height | Below / above 0.49 m |
+| Initial hand–cube distance | Below / above 0.30 m |
+| Initial roll / pitch | Three equal angular bands each, within ±0.85 rad |
+| Initial yaw | Four equal angular bands, within ±2.2 rad |
+| Cube rotation | Four equal bands of visually distinct yaw modulo 90° |
+| Initial gripper | Closed / intermediate / open |
+
+Cube yaw also includes random quarter turns, giving full ±180° numerical yaw
+coverage without treating visually identical square-cube orientations as different
+visual coverage. Assignments are shuffled independently across dimensions and
+splits. This balances marginal coverage; 300 examples do not cover every Cartesian
+combination or guarantee uniformity within each band.
+
+Every retry, including internal scene resampling, stays within the complete
+assigned combination. The collector compares the settled initial hand position,
+orientation and finger opening against those categories. It never substitutes
+an easier bin after failures. Exhausted attempts stop collection for investigation;
+resuming with more attempts retains the same target. The completed
+`coverage_audit.json` compares observed per-split counts with fixed quotas and
+reports actual feature ranges and unique assigned combinations.
+
+Two independent local MuJoCo processes can collect in parallel; only the parent
+writes manifests and publishes accepted episodes:
+
+```bash
+caffeinate -i .venv/bin/python -m data_tools.collect_panda_bowl \
+  --limit 300 --workers 2 --max-attempts 60
+```
+
+Failed attempts retain compact metadata, transitions, and first/last diagnostic
+frames in `outputs/bowl_collection_checks/`; successful episodes retain all their
+images and states. This limits storage consumed by rejected render sequences.
+
 These episodes belong to the final dataset; there are no separate pilot or
-expansion cohorts. After the user approves the examples, resume collection with:
+expansion cohorts. The following command resumes or verifies the completed collection:
 
 ```bash
 caffeinate -i .venv/bin/python -m data_tools.collect_panda_bowl --limit 300

@@ -81,7 +81,9 @@ def record_episode(folder, scenario):
             rng = np.random.default_rng(scenario['random_seed'])
             env.controller, scene = randomize_scene(env.model, env.data, rng, full_pose=True,
                                                     initial_gripper=scenario['initial_gripper'],
-                                                    random_cube_yaw=scenario.get('random_cube_yaw',False))
+                                                    random_cube_yaw=scenario.get('random_cube_yaw',False),
+                                                    coverage_target=scenario.get('coverage_target'),
+                                                    max_attempts=1000 if scenario.get('coverage_target') else 100)
             metadata['scenario'] = dict(scenario, scene=scene)
             metadata['starting_pose'] = scene['starting_pose']
             metadata['physics_seconds_per_action'] = PHYSICS_STEPS * float(env.model.opt.timestep)

@@ -58,6 +58,10 @@ def initialize_start_pose(env, position, yaw, reference_quaternion, *, roll=0, p
     return dict(requested_position=position.tolist(), requested_yaw_radians=float(yaw),
                 requested_roll_radians=float(roll), requested_pitch_radians=float(pitch),
                 requested_gripper_open_fraction=float(gripper),
+                actual_gripper_open_fraction=float(np.clip(np.mean([
+                    env.data.qpos[env.model.jnt_qposadr[mujoco.mj_name2id(
+                        env.model,mujoco.mjtObj.mjOBJ_JOINT,name)]]
+                    for name in ('finger_joint1','finger_joint2')])/.04,0,1)),
                 actual_position=actual_position.tolist(), actual_quaternion_wxyz=actual_quaternion.tolist(),
                 actual_joint_positions=joints.tolist(), penetrating_contacts=0)
 

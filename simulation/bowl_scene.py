@@ -50,7 +50,7 @@ def configure_grip(model):
 
 
 def randomize_scene(model, data, rng, *, max_attempts=100, full_pose=False,
-                    initial_gripper=None, random_cube_yaw=False):
+                    initial_gripper=None, random_cube_yaw=False, coverage_target=None):
     """Reset objects and sample a collision-checked arm position and yaw.
 
     The fixed bowl's model body position is part of this scene's reset state.
@@ -67,13 +67,22 @@ def randomize_scene(model, data, rng, *, max_attempts=100, full_pose=False,
     address = int(model.jnt_qposadr[cube])
     for attempt in range(max_attempts):
         mujoco.mj_resetDataKeyframe(model, data, home)
-        cube_xy = rng.uniform([.38, -.22], [.72, .22])
-        bowl_xy = rng.uniform([.40, -.21], [.70, .21])
+        if coverage_target:
+            from data_tools.bowl_coverage import sample
+            sampled=sample(rng,coverage_target)
+            cube_xy,bowl_xy=sampled['cube_xy'],sampled['bowl_xy']
+            position=sampled['position']
+            if int(np.linalg.norm(position-np.r_[cube_xy,.27])>=.30)!=coverage_target['hand_distance']:
+                continue
+        else:
+            sampled=None
+            cube_xy = rng.uniform([.38, -.22], [.72, .22])
+            bowl_xy = rng.uniform([.40, -.21], [.70, .21])
         if not .16 <= np.linalg.norm(cube_xy-bowl_xy) <= .36:
             continue
         model.body_pos[bowl] = [*bowl_xy, .254]
         data.qpos[address:address+3] = [*cube_xy, .271]
-        cube_yaw = float(rng.uniform(-np.pi,np.pi)) if random_cube_yaw else 0.0
+        cube_yaw = sampled['cube_yaw'] if sampled else float(rng.uniform(-np.pi,np.pi)) if random_cube_yaw else 0.0
         data.qpos[address+3:address+7] = _euler_xyz_to_quat(0,0,cube_yaw)
         mujoco.mj_forward(model, data)
         env = SimpleNamespace(model=model, data=data, controller=make_controller(model, data))
@@ -87,11 +96,11 @@ def randomize_scene(model, data, rng, *, max_attempts=100, full_pose=False,
                                            max_iterations=400).converged
                    for xy, z in ((cube_xy, .274), (bowl_xy, .286))):
             continue
-        position = rng.uniform([.36, -.24, .38], [.70, .24, .60])
-        yaw = float(rng.uniform(-2.2 if full_pose else -1.15,
-                                2.2 if full_pose else 1.15))
-        roll, pitch = rng.uniform(-.85, .85, size=2) if full_pose else (0, 0)
-        gripper = (float(rng.uniform(0, 1)) if full_pose else 1) if initial_gripper is None else initial_gripper
+        position = sampled['position'] if sampled else rng.uniform([.36, -.24, .38], [.70, .24, .60])
+        yaw = sampled['yaw'] if sampled else float(rng.uniform(-2.2 if full_pose else -1.15,
+                                                              2.2 if full_pose else 1.15))
+        roll, pitch = (sampled['roll'],sampled['pitch']) if sampled else rng.uniform(-.85, .85, size=2) if full_pose else (0, 0)
+        gripper = sampled['gripper'] if sampled else (float(rng.uniform(0, 1)) if full_pose else 1) if initial_gripper is None else initial_gripper
         try:
             start = initialize_start_pose(env, position, yaw, reference, roll=float(roll),
                                           pitch=float(pitch), gripper=gripper,
@@ -115,5 +124,9 @@ def randomize_scene(model, data, rng, *, max_attempts=100, full_pose=False,
                     reference_quaternion_wxyz=reference.tolist(),
                     randomized_components=['x','y','z','roll','pitch','yaw','gripper'] if full_pose
                     else ['x','y','z','yaw'])
+        if coverage_target:
+            from data_tools.bowl_coverage import classify
+            if classify(spec)!=coverage_target:continue
+            spec['coverage_target']=coverage_target
         return env.controller, spec
     raise RuntimeError('No valid random scene found; try another seed')

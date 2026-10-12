@@ -18,17 +18,19 @@ SPLITS = ['train']*4+['validation','test']
 DATASET_ROOT = DATASETS_ROOT/'panda_pick_bowl'
 
 
-def scenario(slot, attempt):
+def scenario(slot, attempt, coverage_target=None):
     split = SPLITS[slot % 6]
     rank = sum(SPLITS[i % 6] == split for i in range(slot))+1
     rng = np.random.default_rng([SEED, slot, attempt])
     # Include fully closed/open and intermediate starts in every split.
     mode = (rank-1) % 4
     gripper = 0 if mode == 0 else 1 if mode == 1 else float(rng.uniform(.1,.9))
-    return dict(id=f'{split}_{rank:03d}', split=split, slot=slot, attempt=attempt,
+    result=dict(id=f'{split}_{rank:03d}', split=split, slot=slot, attempt=attempt,
                 random_seed=[SEED,slot,attempt], initial_gripper=gripper,
                 random_cube_yaw=slot>=10,
                 instruction=INSTRUCTION)
+    if coverage_target:result['coverage_target']=coverage_target
+    return result
 
 
 def coverage(results):
@@ -48,8 +50,46 @@ def coverage(results):
                 bowl_xy_span_metres=np.ptp([r['bowl_position'][:2] for r in results],axis=0).tolist())
 
 
-def collect(folder=DATASET_ROOT, limit=10, max_attempts=30):
+def collect_slot(folder,slot,first_attempt,max_attempts,target):
     from data_tools.bowl_demonstrations import record_episode, replay_episode
+    folder=Path(folder)
+    checks=PROJECT_ROOT/'outputs/bowl_collection_checks'
+    rejected=[]
+    for attempt in range(first_attempt,max_attempts):
+        spec=scenario(slot,attempt,target)
+        destination=folder/spec['split']/spec['id']
+        if destination.exists():raise ValueError(f'Unindexed episode already exists: {destination}')
+        temporary=checks/f'{spec["id"]}_attempt_{attempt:03d}'
+        if temporary.exists():temporary=checks/f'{temporary.name}_{datetime.now(timezone.utc):%H%M%S%f}'
+        print(f'Slot {slot+1}/300, attempt {attempt+1}: {spec["id"]}',flush=True)
+        try:
+            metadata=record_episode(temporary,spec)
+            replay=replay_episode(temporary)
+            result=dict(id=spec['id'],split=spec['split'],slot=slot,attempt=attempt,
+                        episode=str(destination),passed=True,transitions=replay['replayed_transitions'],
+                        starting_pose=metadata['starting_pose'],initial_cube=metadata['initial_cube'],
+                        bowl_position=metadata['scenario']['scene']['bowl_position'],
+                        cube_yaw_radians=metadata['scenario']['scene']['requested_cube_yaw_radians'],
+                        lift_metres=replay['maximum_cube_lift_metres'],
+                        bowl_center_distance_metres=replay['bowl_center_distance_metres'])
+            # The parent publishes accepted episodes only after recording the outcome.
+            return result,rejected,str(temporary)
+        except (ValueError,RuntimeError) as exc:
+            rejected.append(dict(slot=slot,attempt=attempt,specification=spec,
+                                 diagnostic_directory=str(temporary),error=str(exc)))
+            # Retain compact diagnostics; rejected render sequences are not training data.
+            steps=sorted(temporary.glob('step_*'))
+            if steps:
+                for source,name in ((steps[0]/'before.png','failure_start.png'),
+                                    (steps[-1]/'after.png','failure_last.png'),
+                                    (steps[-1]/'before_state.npz','failure_last_state.npz')):
+                    if source.is_file():shutil.copyfile(source,temporary/name)
+                for step in steps:shutil.rmtree(step)
+            print(f'Rejected {spec["id"]}: {exc}',flush=True)
+    return None,rejected,None
+
+
+def collect(folder=DATASET_ROOT, limit=10, max_attempts=30, workers=1):
     folder = Path(folder).resolve()
     folder.mkdir(parents=True, exist_ok=True)
     for split in set(SPLITS):
@@ -61,6 +101,8 @@ def collect(folder=DATASET_ROOT, limit=10, max_attempts=30):
                 cube_orientation=dict(initial_fixed_orientation_slots=10,
                                       subsequent_yaw_range_degrees=[-180,180],
                                       grasp='nearest edge-aligned yaw modulo the cube square symmetry'),
+                coverage_policy='Slots 21-300 use immutable balanced per-split assignments in coverage_plan.json; '
+                                'retries retain their assigned combination and settled starts are checked.',
                 sampling='Independent split/slot/attempt seeds; reachable, settled, collision-checked starts. '
                          'Cube and bowl vary over the reachable table interior; not every physical-table point is reachable.',
                 first_ten='First ten retained in final folders; eight train, one validation, one test.',
@@ -68,8 +110,9 @@ def collect(folder=DATASET_ROOT, limit=10, max_attempts=30):
     plan_path = folder/'collection_plan.json'
     if plan_path.exists():
         previous_plan=json.loads(plan_path.read_text())
-        legacy_plan={k:v for k,v in plan.items() if k!='cube_orientation'}
-        if previous_plan not in (plan,legacy_plan):
+        compatible=[{k:v for k,v in plan.items() if k not in omitted}
+                    for omitted in ((),('coverage_policy',),('cube_orientation','coverage_policy'))]
+        if previous_plan not in compatible:
             raise ValueError('Dataset plan changed; do not mix incompatible demonstrations')
     write_json(plan_path,plan)
     report_path = folder/'collection_report.json'
@@ -80,6 +123,15 @@ def collect(folder=DATASET_ROOT, limit=10, max_attempts=30):
         report = json.loads((episode/'replay.json').read_text())
         if not report['passed'] or report['episode_sha256'] != fingerprint(episode):
             raise ValueError(f'Previously accepted episode changed: {episode}')
+    coverage_plan=None
+    if limit>20:
+        from data_tools.bowl_coverage import build_plan,write_summary
+        coverage_path=folder/'coverage_plan.json'
+        expected=build_plan([row for row in results if row['slot']<20])
+        if coverage_path.exists() and json.loads(coverage_path.read_text())!=expected:
+            raise ValueError('Fixed coverage assignments changed; do not replace hard configurations')
+        coverage_plan=expected
+        write_json(coverage_path,coverage_plan)
     def save(phase):
         write_json(report_path,dict(phase=phase, successful_trajectories=len(results), target=300,
                                    results=results, failures=failures, coverage=coverage(results),
@@ -91,44 +143,43 @@ def collect(folder=DATASET_ROOT, limit=10, max_attempts=30):
     checks = PROJECT_ROOT/'outputs/bowl_collection_checks'
     checks.mkdir(parents=True,exist_ok=True)
     save('collecting')
+    jobs=[]
     for slot in range(limit):
-        if any(row['slot']==slot for row in results):
-            continue
-        start = max((r['attempt'] for r in failures if r['slot']==slot),default=-1)+1
-        for attempt in range(start,max_attempts):
-            spec = scenario(slot,attempt)
-            destination = folder/spec['split']/spec['id']
-            if destination.exists():
-                raise ValueError(f'Unindexed episode already exists: {destination}')
-            temporary = checks/f'{spec["id"]}_attempt_{attempt:03d}'
-            if temporary.exists():
-                temporary = checks/f'{spec["id"]}_attempt_{attempt:03d}_{datetime.now(timezone.utc):%H%M%S%f}'
-            print(f'Slot {slot+1}/{limit}, attempt {attempt+1}: {spec["id"]}',flush=True)
-            try:
-                metadata = record_episode(temporary,spec)
-                replay = replay_episode(temporary)
-                shutil.move(str(temporary),str(destination))
-                result = dict(id=spec['id'], split=spec['split'], slot=slot, attempt=attempt,
-                              episode=str(destination), passed=True, transitions=replay['replayed_transitions'],
-                              starting_pose=metadata['starting_pose'], initial_cube=metadata['initial_cube'],
-                              bowl_position=metadata['scenario']['scene']['bowl_position'],
-                              cube_yaw_radians=metadata['scenario']['scene']['requested_cube_yaw_radians'],
-                              lift_metres=replay['maximum_cube_lift_metres'],
-                              bowl_center_distance_metres=replay['bowl_center_distance_metres'])
-                results.append(result)
-                results.sort(key=lambda row:row['slot'])
-                save('collecting')
-                print(f'Accepted {spec["id"]}: {result["transitions"]} steps',flush=True)
-                break
-            except (ValueError,RuntimeError) as exc:
-                failures.append(dict(slot=slot, attempt=attempt, specification=spec,
-                                     diagnostic_directory=str(temporary),error=str(exc)))
-                save('retrying')
-                print(f'Rejected attempt: {exc}',flush=True)
-        else:
+        if any(row['slot']==slot for row in results):continue
+        start=max((r['attempt'] for r in failures if r['slot']==slot),default=-1)+1
+        jobs.append((folder,slot,start,max_attempts,
+                     coverage_plan['assignments'].get(str(slot)) if coverage_plan else None))
+    def accept(outcome):
+        result,rejected,temporary=outcome
+        failures.extend(rejected)
+        if result is None:
             save('attempts_exhausted')
-            raise RuntimeError(f'Slot {slot+1} exhausted attempts; inspect diagnostics before retrying')
+            raise RuntimeError('A fixed coverage slot exhausted attempts; inspect diagnostics rather than replacing it')
+        shutil.move(temporary,result['episode'])
+        results.append(result)
+        results.sort(key=lambda row:row['slot'])
+        save('collecting')
+        print(f'Accepted {result["id"]}; total {len(results)}/{limit}',flush=True)
+    if workers==1:
+        for job in jobs:accept(collect_slot(*job))
+    else:
+        import multiprocessing
+        from concurrent.futures import ProcessPoolExecutor,wait,FIRST_COMPLETED
+        iterator=iter(jobs)
+        with ProcessPoolExecutor(max_workers=workers,mp_context=multiprocessing.get_context('spawn')) as pool:
+            pending={pool.submit(collect_slot,*job) for job in [next(iterator,None) for _ in range(workers)] if job}
+            while pending:
+                done,pending=wait(pending,return_when=FIRST_COMPLETED)
+                for future in done:
+                    accept(future.result())
+                    job=next(iterator,None)
+                    if job:pending.add(pool.submit(collect_slot,*job))
     save('completed' if len(results)==300 else 'awaiting_user_review')
+    if coverage_plan:
+        checked=write_summary(folder,results,coverage_plan)
+        if not checked['passed']:
+            save('coverage_failed')
+            raise RuntimeError('Accepted configurations do not match their fixed coverage targets')
     print(f'Created {len(results)} successful trajectories. Review {folder/"WATCH_TRAJECTORIES.md"}',flush=True)
 
 
@@ -137,8 +188,9 @@ def main():
     parser.add_argument('--output-dir',type=Path,default=DATASET_ROOT)
     parser.add_argument('--limit',type=int,choices=(10,20,300),default=10)
     parser.add_argument('--max-attempts',type=int,default=30)
+    parser.add_argument('--workers',type=int,choices=(1,2,4),default=1)
     args = parser.parse_args()
-    collect(args.output_dir,args.limit,args.max_attempts)
+    collect(args.output_dir,args.limit,args.max_attempts,args.workers)
 
 
 if __name__ == '__main__':
