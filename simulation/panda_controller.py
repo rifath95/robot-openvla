@@ -142,9 +142,18 @@ class PandaController:
 
         result = self._solve_ik(target_position, target_quaternion)
         if result.converged:
+            # Position actuators need an offset from the actual joint pose to
+            # support gravity/contact loads. Preserve that holding offset when
+            # moving to a new kinematic target; resetting it causes a dip while
+            # step() rebuilds the accumulated Cartesian tracking correction.
+            holding_offset = (self.data.ctrl[self.actuator_ids]
+                              - self.data.qpos[self.qpos_indices])
             self.target_position = target_position
             self.target_quaternion = target_quaternion
-            self.data.ctrl[self.actuator_ids] = result.joint_targets
+            self.data.ctrl[self.actuator_ids] = np.clip(
+                result.joint_targets + holding_offset,
+                self.joint_limits[:, 0], self.joint_limits[:, 1],
+            )
 
         # Panda actuator8 maps 0..255 to closed..open.
         self.data.ctrl[self.gripper_actuator_id] = (gripper + 1.0) * 127.5
