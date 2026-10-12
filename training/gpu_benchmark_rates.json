@@ -22,6 +22,11 @@
       "hourly_rate_usd": 5.29,
       "confirmed_on": "2026-10-11"
     },
+    "20261012_003826_853142": {
+      "gpu": "NVIDIA A40",
+      "hourly_rate_usd": 0.59,
+      "confirmed_on": "2026-10-12"
+    },
     "20261011_115921_878754": {
       "gpu": "NVIDIA A100-SXM4-80GB",
       "hourly_rate_usd": 1.79,

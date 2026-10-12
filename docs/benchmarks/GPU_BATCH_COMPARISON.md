@@ -31,10 +31,10 @@ Rates are the user-confirmed prices for these particular pod runs, saved in `tra
 | NVIDIA RTX A6000 | 20261011_095911_435567 | $0.59 | 0.76 | 220 min 37 sec | $2.17 |
 | NVIDIA H200 | 20261011_113403_097508 | $5.29 | 14.47 | 11 min 31 sec | $1.02 |
 | NVIDIA A100-SXM4-80GB | 20261011_115921_878754 | $1.79 | 8.33 | 20 min 00 sec | $0.60 |
-| NVIDIA A40 | 20261012_003826_853142 | Not recorded | 3.85 | — | — |
+| NVIDIA A40 | 20261012_003826_853142 | $0.59 | 3.85 | 43 min 19 sec | $0.43 |
 
-Lowest estimated training cost among these priced runs: **NVIDIA A40**, **$0.44 per 10,000 examples**.
-**NVIDIA H200** processes examples **3.87× faster** than NVIDIA A40, but costs **2.32× as much per example**.
+Lowest estimated training cost among these priced runs: **NVIDIA A40**, **$0.43 per 10,000 examples**.
+**NVIDIA H200** processes examples **3.76× faster** than NVIDIA A40, but costs **2.38× as much per example**.
 
 These are training-only estimates, excluding deployment, model loading, validation, checkpoint saving, idle time, and storage charges. Total billed cost includes those additional items.
 Different microbatches/effective batches and datasets were benchmarked. Equal examples processed does not guarantee equal model quality; a convergence comparison should match effective batch and training settings.
