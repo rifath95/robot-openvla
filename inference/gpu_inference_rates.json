@@ -1,0 +1,9 @@
+{
+  "currency": "USD",
+  "source": "User-confirmed comparison rates; not live prices or historical billing records.",
+  "gpus": {
+    "NVIDIA A40": {"hourly_rate_usd": 0.59},
+    "NVIDIA RTX A5000": {"hourly_rate_usd": 0.27},
+    "NVIDIA RTX A6000": {"hourly_rate_usd": 0.59}
+  }
+}

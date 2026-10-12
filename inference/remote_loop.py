@@ -358,6 +358,11 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                                       "elapsed_seconds": time.perf_counter() - started})
         from analysis.run_report import write_run_report
         write_run_report(folder)
+        from analysis.summarize_gpu_inference import comparison
+        try:
+            comparison(ROOT / 'outputs', ROOT / 'docs/benchmarks/GPU_INFERENCE_COMPARISON.md')
+        except (OSError, ValueError, KeyError) as exc:
+            print(f'Inference comparison could not be refreshed: {exc}', flush=True)
     return folder
 
 
