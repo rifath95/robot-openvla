@@ -5,18 +5,13 @@ One request = one RGB image + instruction → one seven-value action. Inference 
 Timings are seconds. The first 5 recorded requests per trial are excluded as warmup. Short trials without remaining samples show missing timings. These are observed simulator runs, not identical-input hardware benchmarks; model/checkpoint, instruction, network, Mac, storage and software differences can affect results. Rejected/held actions remain prediction requests. Combined benchmarks start with 5 warmup requests and 20 measured inference requests, both on the cloud and from the Mac when connected. Cloud-loopback RTT is never reported as Mac latency. When Mac measurements exist, the server breakdown uses those same responses to keep RTT and server timing paired; otherwise it uses the cloud samples. Both raw sets are retained.
 
 
-## Average by comparable GPU configuration
+## Average by GPU type
 
-Means are weighted by measured request counts, not an average of rounded table values. Groups separate GPU/VRAM/ECC, recorded software package versions, precision/attention, model/checkpoint, benchmark image and simulator versus benchmark. Historical unknown settings stay explicit. Different live simulator scenes/instructions still vary within a group. Local timing is Mac-dependent. Each metric includes only runs that recorded it; cloud-only runs contribute server timing but not Mac RTT or simulator time. The per-run table below preserves each observation.
+Means are weighted by measured request counts, not an average of rounded table values. There is one row per reported GPU type: all A40 runs are combined, for example. These overall averages mix VRAM/ECC configurations, model checkpoints, software versions, inputs, and simulator/benchmark runs; use the detailed tables below to inspect those differences. They describe our observed runs rather than an isolated hardware ranking. Local timing is Mac-dependent. Each metric includes only runs that recorded it; cloud-only runs contribute server timing but not Mac RTT or simulator time. The per-run table below preserves each observation.
 
-| GPU | VRAM GiB | ECC | Type | PyTorch / Transformers | Model/checkpoint group | Runs | Measured requests | Mean cycle s | Mean request RTT s | Mean prediction s | USD/hour | 100-cycle/request USD | Cost basis |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| NVIDIA A40 | 44.4 | Not recorded | Simulator | 2.2.2+cu121 / 4.40.1 | base OpenVLA | 3 | 190 | 1.440 | 0.936 | 0.309 | 0.59 | 0.0236 | Simulator cycles |
-| NVIDIA A40 | 44.4 | Not recorded | Simulator | 2.2.2+cu121 / 4.40.1 | checkpoint_000020 | 1 | 82 | 1.630 | 1.123 | 0.331 | 0.59 | 0.0267 | Simulator cycles |
-| NVIDIA A40 | 47.4 | Not recorded | Simulator | 2.2.2+cu121 / 4.40.1 | checkpoint_000500 | 1 | 95 | 1.561 | 1.053 | 0.321 | 0.59 | 0.0256 | Simulator cycles |
-| NVIDIA A40 | 44.4 | Not recorded | Simulator | 2.2.2+cu121 / 4.40.1 | checkpoint_001000 | 2 | 97 | 1.694 | 1.187 | 0.330 | 0.59 | 0.0278 | Simulator cycles |
-| NVIDIA A40 | 44.4 | Not recorded | Simulator | 2.2.2+cu121 / 4.40.1 | checkpoint_003000 | 1 | 95 | 1.411 | 0.905 | 0.295 | 0.59 | 0.0231 | Simulator cycles |
-| NVIDIA A40 | 44.4 | Not recorded | Simulator | 2.2.2+cu121 / 4.40.1 | checkpoint_005000 | 1 | 95 | 1.421 | 0.920 | 0.292 | 0.59 | 0.0233 | Simulator cycles |
+| GPU | Runs | Measured requests | Mean cycle s | Mean request RTT s | Mean prediction s | USD/hour | 100 requests USD | 100 simulator cycles USD |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| NVIDIA A40 | 9 | 654 | 1.512 | 1.007 | 0.312 | 0.59 | 0.0165 | 0.0248 |
 
 ## Full cycle and estimated cost for 100 steps
 

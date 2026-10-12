@@ -42,8 +42,8 @@ and exits before training starts, releasing its model weights and CUDA memory.
 
 Both reports are refreshed: `docs/benchmarks/GPU_TRAINING_COMPARISON.md` and
 `docs/benchmarks/GPU_INFERENCE_COMPARISON.md`. The inference report begins with
-request-count-weighted means grouped by comparable GPU/model/software/fixture
-settings, followed by the individual runs and timing breakdowns. Benchmark
+request-count-weighted means grouped by GPU type, followed by individual runs
+and their configuration/timing breakdowns. Benchmark
 100-step cost estimates cover requests only; full simulator-cycle costs still
 come from real simulator trials. Rates must be confirmed separately.
 

@@ -56,12 +56,18 @@ class InferenceBenchmarkTests(unittest.TestCase):
             for i, latency in enumerate((1,3)):
                 folder=root/'sessions'/str(i);folder.mkdir(parents=True)
                 report=self.report(mac=True)
+                if i:
+                    report['startup_info']['gpu']['total_vram_bytes']=45*2**30
+                    report['startup_info']['pytorch_version']='different-version'
+                    report['model_identity']='different-checkpoint'
                 for r in report['mac_requests'][5:]:r['request_timings_seconds']['request_round_trip']=latency
                 (folder/'inference.json').write_text(json.dumps(report))
             output=root/'report.md';self.assertEqual(comparison(root,output),2)
             text=output.read_text()
             self.assertIn('2 | 40 | — | 2.000 | 0.300',text)
-            self.assertLess(text.index('## Average by comparable'),text.index('## Full cycle'))
+            self.assertLess(text.index('## Average by GPU type'),text.index('## Full cycle'))
+            summary=text.split('## Average by GPU type')[1].split('## Full cycle')[0]
+            self.assertEqual(sum(line.startswith('| NVIDIA A40 |') for line in summary.splitlines()),1)
 
     def test_sampling_makes_five_warmups_and_twenty_measurements(self):
         response=dict(client_timings_seconds=dict(request_round_trip=1),timings_seconds=dict(model_inference=.3))

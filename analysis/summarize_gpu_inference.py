@@ -112,39 +112,31 @@ def comparison(root, output, warmup=5):
              'RTT and server timing paired; otherwise it uses the cloud samples. Both raw sets are retained.', '']
     groups={}
     for m in runs:
-        s=m['startup'];gpu=s['gpu']
-        key=(gpu['name'],round(gpu.get('total_vram_bytes',0)/2**30,1),
-             s.get('gpu_ecc',{}).get('current','Not recorded'),s.get('pytorch_version','Not recorded'),
-             s.get('transformers_version','Not recorded'),s.get('dtype','Not recorded'),
-             s.get('attention','Not recorded'),m['model_identity'],m['fixture_identity'],
-             'Benchmark' if m['kind'].startswith('Benchmark') else 'Simulator',
-             json.dumps(s.get('software_stack',{}).get('packages',{}),sort_keys=True))
-        groups.setdefault(key,[]).append(m)
+        groups.setdefault(m['startup']['gpu']['name'],[]).append(m)
     def pooled(group, category, key):
         values=[(row.get(category) or {}).get(key) for m in group for row in m['samples']]
         values=[value for value in values if number(value)]
         return mean(values) if values else None
     summary=[]
-    for key,group in groups.items():
+    for gpu,group in groups.items():
         cycle=pooled(group,'timings_seconds','cycle')
         request=pooled(group,'request_timings_seconds','request_round_trip')
         prediction=pooled(group,'server_timings_seconds','model_inference')
-        rate=rates.get(key[0],{}).get('hourly_rate_usd');duration=cycle if number(cycle) else request
-        cost=100*duration/3600*rate if number(duration) and number(rate) else None
-        model=Path(key[7]).name if key[7]!='base OpenVLA' and key[9]=='Simulator' else key[7][:16]
-        summary.append([key[0],key[1],key[2],key[9],f'{key[3]} / {key[4]}',model,
-                        len(group),sum(m['measured'] for m in group),fmt(cycle),fmt(request),fmt(prediction),
-                        fmt(rate,2),fmt(cost,4),'Simulator cycles' if number(cycle) else 'Requests only'])
-    lines += ['', '## Average by comparable GPU configuration', '',
+        rate=rates.get(gpu,{}).get('hourly_rate_usd')
+        def cost(duration):
+            return 100*duration/3600*rate if number(duration) and number(rate) else None
+        summary.append([gpu,len(group),sum(m['measured'] for m in group),
+                        fmt(cycle),fmt(request),fmt(prediction),fmt(rate,2),fmt(cost(request),4),fmt(cost(cycle),4)])
+    lines += ['', '## Average by GPU type', '',
               'Means are weighted by measured request counts, not an average of rounded table values. '
-              'Groups separate GPU/VRAM/ECC, recorded software package versions, precision/attention, model/checkpoint, '
-              'benchmark image and simulator versus benchmark. Historical unknown settings stay explicit. '
-              'Different live simulator scenes/instructions still vary within a group. Local timing is Mac-dependent. '
+              'There is one row per reported GPU type: all A40 runs are combined, for example. '
+              'These overall averages mix VRAM/ECC configurations, model checkpoints, software versions, '
+              'inputs, and simulator/benchmark runs; use the detailed tables below to inspect those differences. '
+              'They describe our observed runs rather than an isolated hardware ranking. Local timing is Mac-dependent. '
               'Each metric includes only runs that recorded it; cloud-only runs contribute server timing '
               'but not Mac RTT or simulator time. The per-run table below preserves each observation.', '']
-    lines += table(['GPU','VRAM GiB','ECC','Type','PyTorch / Transformers','Model/checkpoint group',
-                    'Runs','Measured requests','Mean cycle s','Mean request RTT s','Mean prediction s',
-                    'USD/hour','100-cycle/request USD','Cost basis'],summary)
+    lines += table(['GPU','Runs','Measured requests','Mean cycle s','Mean request RTT s','Mean prediction s',
+                    'USD/hour','100 requests USD','100 simulator cycles USD'],summary)
     lines += ['', '## Full cycle and estimated cost for 100 steps', '']
     overview = []
     for m in runs:
