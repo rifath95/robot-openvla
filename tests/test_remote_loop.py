@@ -18,6 +18,23 @@ from simulation.panda_actions import PHYSICS_STEPS
 
 
 class LoopTests(unittest.TestCase):
+    def test_bowl_start_records_matching_camera_and_replay_geometry(self):
+        from simulation.replay_run import replay_model
+        import mujoco
+        with tempfile.TemporaryDirectory() as tmp:
+            output=Path(tmp)/'run'
+            stop=threading.Event();stop.set()
+            run_loop(task='bowl',scene_seed=0,steps=1,no_view=True,
+                stop_event=stop,output_dir=output,
+                instruction='pick up the red cube and drop it in the blue bowl.')
+            metadata=json.loads((output/'episode.json').read_text())
+            contract=json.loads((output/'action_contract.json').read_text())
+            self.assertIn('bowl_camera',json.dumps(contract))
+            model,camera=replay_model(output)
+            self.assertEqual(camera,'bowl_camera')
+            bowl=mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_BODY,'bowl')
+            np.testing.assert_allclose(model.body_pos[bowl],metadata['scenario']['scene']['bowl_position'])
+
     def test_active_timer_excludes_pauses_and_resumes(self):
         now = [0.0]
         timer = ActiveTimer(lambda: now[0])

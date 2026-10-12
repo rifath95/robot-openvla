@@ -53,11 +53,19 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
              steps=100, timeout_seconds=180, max_runtime_seconds=900,
              max_consecutive_rejections=3,
              output_dir=None, no_view=False, start_immediately=False, startup_info=None,
-             stop_event=None):
+             stop_event=None, task='cube', scene_seed=0):
     import mujoco
     import numpy as np
     from simulation.capture_camera import save_rgb_png
     from simulation.panda_env import PandaEnv
+    if task not in ('cube','bowl'):
+        raise ValueError('Unknown simulation task')
+    env_options={}
+    camera='workspace_camera'
+    if task=='bowl':
+        from simulation.bowl_scene import SCENE_PATH, CAMERA_NAME, randomize_scene
+        env_options=dict(scene_path=SCENE_PATH,camera=CAMERA_NAME)
+        camera=CAMERA_NAME
 
     if type(steps) is not int or steps < 1:
         raise ValueError("steps must be a positive integer")
@@ -150,11 +158,18 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                 paused.set()
 
     print(f"Results and status: {folder}", flush=True)
-    save(folder / "action_contract.json", action_contract())
+    save(folder / "action_contract.json", action_contract(camera=camera))
     status(phase)
     try:
-        with PandaEnv() as env:
-            env.controller.step(500)
+        with PandaEnv(**env_options) as env:
+            if task=='bowl':
+                env.controller,spec=randomize_scene(env.model,env.data,np.random.default_rng(scene_seed),
+                    full_pose=True,random_cube_yaw=True)
+                save(folder/'episode.json',dict(scene_profile='panda_bowl_v1',
+                    scene_seed=scene_seed,instruction=instruction,scenario=dict(scene=spec),
+                    training_eligible=False))
+            else:
+                env.controller.step(500)
             if no_view:
                 context = nullcontext(None)
             else:
@@ -309,7 +324,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                         "mapping": ("Panda training action contract; grasp-point control"
                                     if unnorm_key == "panda_grasp_v1" else
                                     "Provisional Bridge deltas interpreted using panda_grasp_v1; grasp-point control"),
-                        "action_contract": action_contract(),
+                        "action_contract": action_contract(camera=camera),
                         "executed_panda_action": from_controller_action(action).tolist(),
                         "training_eligible": False,
                         "gripper_mapping": "2 * model_gripper - 1", "unnorm_key": unnorm_key,
@@ -370,6 +385,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--server-url", default="http://127.0.0.1:8000")
     parser.add_argument("--instruction", default="pick up the red cube")
+    parser.add_argument('--task', choices=['cube','bowl'], default='cube')
+    parser.add_argument('--scene-seed', type=int, default=0)
     parser.add_argument("--steps", type=int, default=100,
                         help="Maximum observation/prediction cycles, including held/rejected actions")
     parser.add_argument("--max-consecutive-rejections", type=int, default=3,

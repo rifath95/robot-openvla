@@ -115,6 +115,8 @@ def main():
     parser.add_argument('--steps', type=int, default=100)
     parser.add_argument('--max-consecutive-rejections', type=int, default=3)
     parser.add_argument('--instruction', default='pick up the red cube')
+    parser.add_argument('--task', choices=['cube', 'bowl'], default='cube')
+    parser.add_argument('--scene-seed', type=int, default=0)
     parser.add_argument('--max-runtime-seconds', type=int, default=900, help='Local active limit, excluding pauses')
     parser.add_argument('--server-runtime-seconds', type=int, default=1800, help='Server wall limit AFTER readiness; does not stop pod billing')
     parser.add_argument('--startup-timeout-seconds', type=int, default=600, help='Wait for loading after dependency setup')
@@ -176,6 +178,7 @@ def main():
             print('Opening paused simulator: Space starts/pauses/resumes; Esc stops the local trial.', flush=True)
             result = subprocess.run([str(ROOT / '.venv/bin/python'), "-m", 'inference.remote_loop',
                                      '--steps', str(args.steps), '--instruction', args.instruction,
+                                     '--task', args.task, '--scene-seed', str(args.scene_seed),
                                      '--startup-info', str(startup_path),
                                      '--max-consecutive-rejections', str(args.max_consecutive_rejections),
                                      '--max-runtime-seconds', str(args.max_runtime_seconds)], cwd=ROOT)
