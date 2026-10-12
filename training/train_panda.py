@@ -28,6 +28,10 @@ def main():
     if not (args.dataset/'verification.json').is_file() or not json.loads((args.dataset/'verification.json').read_text())['passed']:
         p.error('Dataset must have a passing export verification')
     config=json.loads(args.config.read_text())
+    from training.dataset_profile import validate_dataset, PROFILE_KEYS
+    try:validate_dataset(config,args.dataset)
+    except (ValueError,OSError) as exc:p.error(str(exc))
+    for key in PROFILE_KEYS:config.pop(key,None)
     config.pop('minimum_free_disk_gib',None)
     config.pop('hard_limit_seconds',None)  # Supervisor option, not an upstream trainer flag.
     profile_requires_benchmark=config.pop('require_benchmark',False)

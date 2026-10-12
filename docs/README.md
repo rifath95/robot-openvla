@@ -27,6 +27,7 @@ Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 
 ## Fine-tuning
 
+- [A40 cube-to-bowl training profile and launch](training/BOWL_TRAINING.md)
 - [Blackwell training and benchmark image](training/BLACKWELL_TRAINING_SETUP.md)
 - [Phase 3: prepare, fine-tune, and evaluate OpenVLA](training/PHASE3_TRAINING.md)
 - [First cloud LoRA test — October 10, 2026](training/SMOKE_REVIEW.md)

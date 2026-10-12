@@ -127,7 +127,7 @@ def main():
     parser.add_argument('--ssh', required=True, help='Current RunPod direct TCP SSH command')
     parser.add_argument('--key', type=Path)
     parser.add_argument('--config', default='training/smoke.json')
-    parser.add_argument('--dataset', default='/workspace/panda-training/training_v1')
+    parser.add_argument('--dataset', help='Override the dataset selected by the training profile')
     parser.add_argument('--adapter', help='Continue adapter weights with a fresh optimizer')
     parser.add_argument('--download-window-seconds', type=int, default=120)
     parser.add_argument('--fetch-only', action='store_true')
@@ -135,6 +135,8 @@ def main():
     parser.add_argument('--stop-after-fetch', action='store_true', help='Stop the resumed pod after a successful fetch-only download')
     args = parser.parse_args()
     try:
+        from training.dataset_profile import select_dataset
+        args.dataset=str(select_dataset(json.loads((ROOT/args.config).read_text()),args.dataset))
         host, port, key = parse_ssh(args.ssh, args.key)
         script = launch_script(args.config, args.dataset, args.adapter, args.download_window_seconds)
         if args.fetch_only:

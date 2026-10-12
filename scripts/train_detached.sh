@@ -4,12 +4,15 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 python=/opt/openvla/bin/python
 config="${1:-training/pick_place_1000.json}"
-dataset="${2:-/workspace/panda-training/training_v1}"
+dataset="${2:-}"
 adapter_args=()
 download_grace="${PANDA_TRAIN_DOWNLOAD_GRACE_SECONDS:-0}"
 if [[ -n "${3:-}" ]]; then adapter_args=(--adapter "$3"); fi
 [[ "$#" -le 3 && -f "$config" ]] || { echo 'Usage: bash scripts/train_detached.sh [CONFIG_JSON] [DATASET_DIRECTORY] [ADAPTER_CHECKPOINT]'; exit 1; }
 [[ -x "$python" ]] || { echo 'Use the training Docker template.'; exit 1; }
+dataset_args=(--config "$config")
+if [[ -n "$dataset" ]]; then dataset_args+=(--dataset "$dataset"); fi
+dataset="$("$python" -m training.dataset_profile "${dataset_args[@]}")"
 command -v tmux >/dev/null || { echo 'Install tmux first: apt-get update && apt-get install -y tmux'; exit 1; }
 # Each job uses its own tmux server so it inherits the current secret environment.
 if pgrep -f '[t]raining.detached_run --session-dir' >/dev/null; then

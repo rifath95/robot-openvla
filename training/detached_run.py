@@ -220,7 +220,7 @@ def main():
     parser.add_argument('--check-only', action='store_true')
     parser.add_argument('--session-dir', type=Path)
     parser.add_argument('--config', type=Path, default=ROOT / 'training/pick_place_1000.json')
-    parser.add_argument('--dataset', type=Path, default=Path('/workspace/panda-training/training_v1'))
+    parser.add_argument('--dataset', type=Path, help='Override the dataset selected by the training profile')
     parser.add_argument('--hard-limit-seconds', type=int, help='Override configuration outer limit; otherwise 90 minutes for legacy profiles')
     parser.add_argument('--adapter',type=Path,help='Continue adapter weights with a fresh optimizer')
     parser.add_argument('--download-grace-seconds',type=int,default=0,
@@ -244,6 +244,8 @@ def main():
         if args.download_grace_seconds < 0 or args.download_grace_seconds > 3600:
             raise ValueError('Download window must be between 0 and 3600 seconds')
         config = json.loads(args.config.read_text())
+        from training.dataset_profile import select_dataset
+        args.dataset=select_dataset(config,args.dataset)
         hard_limit=args.hard_limit_seconds if args.hard_limit_seconds is not None else config.get('hard_limit_seconds',5400)
         if not isinstance(hard_limit,int) or isinstance(hard_limit,bool) or hard_limit<=0:
             raise ValueError('Hard wall limit must be a positive integer')
@@ -255,6 +257,8 @@ def main():
         if config['max_steps'] < 1 or config['validation_max_batches'] < 0:
             raise ValueError('Invalid update count or validation limit')
         dataset = args.dataset.resolve()
+        from training.dataset_profile import validate_dataset
+        validate_dataset(config,dataset)
         if dataset.parent != Path('/workspace/panda-training'):
             raise ValueError('Select a dataset directory directly inside /workspace/panda-training')
         verification = json.loads((dataset / 'verification.json').read_text())
