@@ -108,14 +108,16 @@ def fetch_reports(ssh, local_root, workspace_report,volume_root='/workspace'):
 def measure_mac_inference(ssh,local_root,global_volume=None):
     """Measure real Mac/tunnel latency while the detached cloud server is waiting."""
     from cloud.connection_client import request_prediction
-    reports=sorted(local_root.glob('sessions/*/inference.json'))
-    if not reports:return
-    path=reports[-1];report=json.loads(path.read_text())
+    sessions=sorted(local_root.glob('sessions/*/status.json'))
+    if not sessions:return
+    path=sessions[-1].parent/'inference.json'
+    if not path.exists():return
+    report=json.loads(path.read_text())
     status=json.loads((path.parent/'status.json').read_text())
-    if status.get('phase')!='inference_ready':return
     remote=report['live_session_dir']
     if not re.fullmatch(r'/((workspace|workspace-global)/panda-training|root/robot-openvla/\.benchmark-local)/batch-benchmarks/sessions/\d{8}_\d{6}_\d{6}',remote):
         raise ValueError('Unexpected inference session directory')
+    if status.get('phase')!='inference_ready':return remote
     port=report['server_port']
     if type(port)!=int or not 1<=port<=65535:raise ValueError('Invalid inference port')
     with socket.socket() as probe:
@@ -159,6 +161,8 @@ def measure_mac_inference(ssh,local_root,global_volume=None):
         except subprocess.TimeoutExpired:tunnel.kill();tunnel.wait()
         from analysis.summarize_gpu_inference import comparison as inference_comparison
         inference_comparison(ROOT/'outputs',ROOT/'docs/benchmarks/GPU_INFERENCE_COMPARISON.md')
+    print('Inference measurements saved locally and on the volume. You can close the lid now; training continues in the cloud.',flush=True)
+    return remote
 
 
 def repr_path(volume_root):
@@ -243,7 +247,13 @@ def main():
             fetch_reports(ssh,ROOT/'outputs/gpu-benchmarks',ROOT/'docs/benchmarks/GPU_TRAINING_COMPARISON.md',args.global_volume)
         else:fetch_reports(ssh,ROOT/'outputs/gpu-benchmarks',ROOT/'docs/benchmarks/GPU_TRAINING_COMPARISON.md')
         if not args.fetch_only and auto_stop:
-            measure_mac_inference(ssh,ROOT/'outputs/gpu-benchmarks',args.global_volume)
+            session=measure_mac_inference(ssh,ROOT/'outputs/gpu-benchmarks',args.global_volume)
+            if session:
+                watch='/opt/openvla/bin/python -u -m training.benchmark_supervisor --watch-session '+shlex.quote(session)
+                if args.global_volume:watch+=' --global-volume '+shlex.quote(args.global_volume)
+                result=subprocess.run(ssh+['cd /root/robot-openvla && '+watch])
+                code=result.returncode
+                fetch_reports(ssh,ROOT/'outputs/gpu-benchmarks',ROOT/'docs/benchmarks/GPU_TRAINING_COMPARISON.md',args.global_volume or '/workspace')
     except (OSError,ValueError,RuntimeError,subprocess.CalledProcessError,tarfile.TarError) as exc:
         error=f'Results were not fully synchronized: {exc}. Saved results remain on the volume.'
     except KeyboardInterrupt:

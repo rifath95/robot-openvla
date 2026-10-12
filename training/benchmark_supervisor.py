@@ -105,7 +105,7 @@ def supervise(command,directory,pod_id,key,*,hard_limit=3600,sync_grace=120,pers
     return 0 if status.get('outcome')=='completed' and status['stop_state']=='accepted' else 1
 
 
-def watch(directory):
+def watch(directory, *, inference_handoff=True):
     """Stream progress over SSH; disconnecting this watcher leaves the worker alive."""
     offset=0
     while True:
@@ -118,7 +118,7 @@ def watch(directory):
         path=directory/'status.json'
         if path.exists():
             status=json.loads(path.read_text())
-            if status['phase']=='inference_ready':
+            if status['phase']=='inference_ready' and inference_handoff:
                 return 0
             if status['phase'] in ('awaiting_sync','stopping','finished'):
                 return 0 if status.get('outcome')=='completed' else 1
@@ -129,6 +129,7 @@ def main():
     global BENCHMARK_ROOT
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--launch',action='store_true')
+    p.add_argument('--watch-session',type=Path,help='Watch training after the inference handoff; start no worker')
     p.add_argument('--session-dir',type=Path)
     p.add_argument('--lock-fd',type=int)
     p.add_argument('--dataset',default='/workspace/panda-training/training_v1')
@@ -144,6 +145,11 @@ def main():
         if args.global_volume:
             from training.global_benchmark_storage import LOCAL_ROOT,global_preflight
             BENCHMARK_ROOT=LOCAL_ROOT/'batch-benchmarks'
+        if args.watch_session:
+            directory=args.watch_session.resolve()
+            if not directory.is_relative_to(BENCHMARK_ROOT/'sessions'):
+                p.error('Watch directory must be a benchmark session')
+            return watch(directory,inference_handoff=False)
         if args.launch:
             pod_id,key=global_preflight(args.global_volume) if args.global_volume else preflight()
             BENCHMARK_ROOT.mkdir(parents=True,exist_ok=True)

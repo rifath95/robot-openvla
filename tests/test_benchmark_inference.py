@@ -13,12 +13,25 @@ from training.benchmark_pipeline import inference, sample_requests, main
 
 
 class InferenceBenchmarkTests(unittest.TestCase):
-    def test_training_failure_skips_inference_and_propagates_to_watchdog(self):
+    def test_inference_failure_skips_training_and_propagates_to_watchdog(self):
         with patch('sys.argv',['pipeline','--session-dir','/tmp/run','--dataset','/workspace/panda-training/training_v1']), \
              patch('training.benchmark_pipeline.subprocess.run',return_value=SimpleNamespace(returncode=3)), \
              patch('training.benchmark_pipeline.inference') as predict:
             self.assertEqual(main(),3)
         predict.assert_not_called()
+
+    def test_inference_child_finishes_before_fresh_training_child_starts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'status.json').write_text('{"phase":"inference_ready"}')
+            with patch('sys.argv',['pipeline','--session-dir',str(root),'--dataset','/workspace/panda-training/training_v1']), \
+                 patch('training.benchmark_pipeline.subprocess.run',return_value=SimpleNamespace(returncode=0)) as run:
+                self.assertEqual(main(),0)
+            commands=[call.args[0] for call in run.call_args_list]
+            self.assertEqual(len(commands),2)
+            self.assertIn('--inference-only',commands[0])
+            self.assertIn('training.benchmark_training_batches',commands[1])
+            self.assertIn('--find-capacity',commands[1])
+            self.assertEqual(json.loads((root/'status.json').read_text())['phase'],'training')
 
     def report(self, mac=False):
         rows=[dict(warmup=i<5,request_timings_seconds=dict(request_round_trip=100 if i<5 else 1),

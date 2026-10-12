@@ -1,4 +1,4 @@
-"""Run training benchmarks, then batch-one inference inside the same watchdog."""
+"""Run batch-one inference before training, inside the same cloud watchdog."""
 import argparse
 import base64
 import hashlib
@@ -69,7 +69,7 @@ def inference(directory, model, dataset, *, persistent_root=None, wait_seconds=1
                         image_png_base64=base64.b64encode(png).decode(),instruction=instruction,
                         server_port=server.server_port,cloud_requests=requests,mac_requests=[],
                         live_session_dir=str(directory),
-                        source='training benchmark inference follow-up')
+                        source='inference-first combined GPU benchmark')
             write_status(directory/'inference.json',report)
             status=json.loads((directory/'status.json').read_text())
             status.update(phase='inference_ready',inference_report=str(directory/'inference.json'))
@@ -93,23 +93,37 @@ def main():
     parser.add_argument('--max-batch',type=int,default=64)
     parser.add_argument('--controlled',action='store_true')
     parser.add_argument('--global-volume',type=Path)
+    parser.add_argument('--inference-only',action='store_true')
     args=parser.parse_args()
-    if args.global_volume:
-        command=[sys.executable,'-u','-m','training.global_benchmark_storage','--volume',str(args.global_volume),
-                 '--dataset',str(args.dataset),'--max-batch',str(args.max_batch)]
-    else:
-        command=[sys.executable,'-u','-m','training.benchmark_training_batches',
-                 '--dataset',str(args.dataset),'--max-batch',str(args.max_batch)]
-    if args.controlled and args.global_volume:command.append('--controlled')
-    elif not args.controlled and not args.global_volume:command.append('--find-capacity')
-    code=subprocess.run(command).returncode
-    if code:return code
     model=Path('/workspace/openvla-7b');dataset=args.dataset;persistent=None
     if args.global_volume:
-        from training.global_benchmark_storage import LOCAL_ROOT
+        from training.global_benchmark_storage import LOCAL_ROOT,stage_inputs
         model=LOCAL_ROOT/'inputs/openvla-7b';dataset=LOCAL_ROOT/'inputs'/args.dataset.name
         persistent=args.global_volume/'panda-training/batch-benchmarks'
-    return inference(args.session_dir,model,dataset,persistent_root=persistent)
+        if not args.inference_only:
+            model,dataset,metadata=stage_inputs(args.global_volume,args.dataset)
+            metadata_path=LOCAL_ROOT/'input_staging.json'
+            metadata_path.write_text(json.dumps(metadata,indent=2)+'\n')
+            import os
+            os.environ['PANDA_BENCHMARK_STAGING_METADATA']=str(metadata_path)
+    if args.inference_only:
+        return inference(args.session_dir,model,dataset,persistent_root=persistent)
+    # Exit the inference process before training: its weights and CUDA allocator
+    # must release all VRAM so training capacity measurements remain valid.
+    command=[sys.executable,'-u','-m','training.benchmark_pipeline','--inference-only',
+             '--session-dir',str(args.session_dir),'--dataset',str(args.dataset)]
+    if args.global_volume:command+=['--global-volume',str(args.global_volume)]
+    code=subprocess.run(command).returncode
+    if code:return code
+    status=json.loads((args.session_dir/'status.json').read_text())
+    status.update(phase='training',inference_complete=True)
+    write_status(args.session_dir/'status.json',status)
+    print('Inference completed. Starting training benchmark in a fresh process.',flush=True)
+    command=[sys.executable,'-u','-m','training.benchmark_training_batches',
+             '--dataset',str(dataset),'--model',str(model),'--max-batch',str(args.max_batch)]
+    if persistent:command+=['--output-root',str(args.session_dir.parent.parent)]
+    if not args.controlled:command.append('--find-capacity')
+    return subprocess.run(command).returncode
 
 
 if __name__=='__main__':raise SystemExit(main())

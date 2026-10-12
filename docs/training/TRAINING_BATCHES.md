@@ -23,8 +23,8 @@ LoRA adapters for measurement but do not save adapter checkpoint directories.
 Metrics, model information, validation results, logs and reports are still saved.
 The downloader also excludes adapter weights from older benchmark runs.
 
-The default supervised launcher now follows the training benchmark with a
-batch-one inference benchmark of the untouched base OpenVLA model. It takes one
+The default supervised launcher now starts with a batch-one inference benchmark
+of the untouched base OpenVLA model, then runs the training benchmark. It takes one
 fixed image/instruction from the selected training bundle, runs **5 warmup requests**
 and **20 measured requests** on the cloud, and saves the raw request timings.
 While the Mac stays connected, it then sends the same image/instruction through
@@ -33,6 +33,12 @@ measure actual request round trips; cloud loopback timing is never substituted.
 This test performs no robot movement, IK or local simulator rendering.
 When Mac timings are available, reported server averages use those same requests
 so the network/processing breakdown stays paired. Both raw sample sets remain saved.
+The launcher prints **"Inference measurements saved locally and on the volume.
+You can close the lid now; training continues in the cloud."** after the Mac
+measurements are persisted. At that point you can disconnect and fetch training
+results later. If you stay connected, the launcher watches training and downloads
+its reports automatically when finished. Inference runs in its own child process
+and exits before training starts, releasing its model weights and CUDA memory.
 
 Both reports are refreshed: `docs/benchmarks/GPU_TRAINING_COMPARISON.md` and
 `docs/benchmarks/GPU_INFERENCE_COMPARISON.md`. The inference report begins with
@@ -43,7 +49,8 @@ come from real simulator trials. Rates must be confirmed separately.
 
 If the Mac disconnects, the cloud still saves its 20 measured predictions and
 waits up to **120 seconds** for the optional Mac measurements, then continues
-to normal publication and the bounded download grace period before stopping.
+to training. After training it publishes results and allows the bounded download
+grace period before stopping.
 The same 60-minute outer deadline covers training, inference, and both windows.
 Use `--fetch-only` later to retrieve cloud-only measurements. This does not
 recreate the missing Mac latency measurements. The legacy `--keep-pod-running`

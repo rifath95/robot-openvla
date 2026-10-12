@@ -32,6 +32,15 @@ class PodEnvironmentTests(unittest.TestCase):
 
 
 class SupervisorTests(unittest.TestCase):
+    def test_training_watcher_waits_past_inference_handoff(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder=Path(tmp);(folder/'status.json').write_text('{}')
+            statuses=['{"phase":"inference_ready"}', '{"phase":"awaiting_sync","outcome":"completed"}']
+            with patch.object(Path,'read_text',side_effect=statuses), \
+                 patch('training.benchmark_supervisor.time.sleep') as sleep:
+                self.assertEqual(supervisor.watch(folder,inference_handoff=False),0)
+            sleep.assert_called_once()
+
     def run_child(self,source,hard_limit=10):
         with tempfile.TemporaryDirectory() as folder:
             directory=Path(folder)

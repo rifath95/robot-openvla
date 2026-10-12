@@ -106,7 +106,7 @@ def comparison(root, output, warmup=5):
              'Short trials without remaining samples show missing timings. These are observed simulator runs, '
              'not identical-input hardware benchmarks; model/checkpoint, instruction, network, Mac, storage and '
              'software differences can affect results. Rejected/held actions remain prediction requests. '
-             'Benchmark follow-ups use 5 warmup requests and 20 measured requests, both on the cloud and '
+             'Combined benchmarks start with 5 warmup requests and 20 measured inference requests, both on the cloud and '
              'from the Mac when connected. Cloud-loopback RTT is never reported as Mac latency. '
              'When Mac measurements exist, the server breakdown uses those same responses to keep '
              'RTT and server timing paired; otherwise it uses the cloud samples. Both raw sets are retained.', '']

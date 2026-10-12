@@ -12,6 +12,21 @@ from cloud.benchmark_cloud_session import extract_reports,fetch_reports,remote_b
 
 
 class BenchmarkSyncTests(unittest.TestCase):
+    def test_launcher_watches_training_after_inference_before_stopping(self):
+        from types import SimpleNamespace
+        session='/workspace/panda-training/batch-benchmarks/sessions/20261012_120000_123456'
+        with patch('sys.argv',['launcher','--ssh','fake']), \
+             patch('cloud.benchmark_cloud_session.parse_ssh',return_value=('root@fake',22,Path('/tmp/key'))), \
+             patch('cloud.benchmark_cloud_session.fetch_reports') as fetch, \
+             patch('cloud.benchmark_cloud_session.measure_mac_inference',return_value=session), \
+             patch('cloud.benchmark_cloud_session.subprocess.run',return_value=SimpleNamespace(returncode=0)) as run:
+            benchmark_cloud_session.main()
+        commands=[call.args[0] for call in run.call_args_list]
+        self.assertEqual(len(commands),3)
+        self.assertIn('--watch-session',commands[1][-1])
+        self.assertIn('training.benchmark_stop',commands[2][-1])
+        self.assertEqual(fetch.call_count,2)
+
     def test_mac_probe_averages_twenty_after_five_warmups_and_persists_before_stop(self):
         run='20261012_120000_123456'
         with tempfile.TemporaryDirectory() as directory:
