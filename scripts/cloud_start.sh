@@ -21,7 +21,14 @@ if [[ -s outputs/cloud_server.pid ]]; then
   fi
 fi
 desired="$(sha256sum requirements/requirements-openvla.txt | cut -d ' ' -f 1)"
-if [[ -x /opt/openvla/bin/python ]] && [[ -f /opt/openvla/requirements.sha256 ]] && [[ "$(cat /opt/openvla/requirements.sha256)" == "$desired" ]]; then
+installed=""
+if [[ -f /opt/openvla/requirements.sha256 ]]; then
+  installed="$(cat /opt/openvla/requirements.sha256)"
+elif [[ -f /opt/requirements/requirements-openvla.txt ]]; then
+  # The training image retains its build requirements rather than this marker.
+  installed="$(sha256sum /opt/requirements/requirements-openvla.txt | cut -d ' ' -f 1)"
+fi
+if [[ -x /opt/openvla/bin/python ]] && [[ "$installed" == "$desired" ]]; then
   python=/opt/openvla/bin/python
   echo 'Using dependencies preinstalled in the Docker image.'
 else
