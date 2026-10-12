@@ -32,6 +32,7 @@ Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 - [First cloud LoRA test — October 10, 2026](training/SMOKE_REVIEW.md)
 - [Measure training microbatch size on the A40](training/TRAINING_BATCHES.md)
 - [Detached training with automatic pod stop](training/TRAINING_OVERNIGHT.md)
+- [Cube-to-bowl dataset and trajectory replay](datasets/PANDA_BOWL_DATASET.md)
 
 ## GPU benchmarking
 

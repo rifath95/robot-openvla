@@ -12,7 +12,7 @@ from simulation.panda_start_poses import initialize_start_pose
 
 SCENE_PATH = (PROJECT_ROOT / 'simulation/scenes/scene_bowl.xml')
 CAMERA_NAME = 'bowl_camera'
-INSTRUCTION = 'pick up the red cube and place it in the blue bowl'
+INSTRUCTION = 'pick up the red cube and drop it in the blue bowl.'
 BOWL_RADIUS = .085
 
 
@@ -48,7 +48,8 @@ def configure_grip(model):
                 simulated_contact_grip=True)
 
 
-def randomize_scene(model, data, rng, *, max_attempts=100):
+def randomize_scene(model, data, rng, *, max_attempts=100, full_pose=False,
+                    initial_gripper=None):
     """Reset objects and sample a collision-checked arm position and yaw.
 
     The fixed bowl's model body position is part of this scene's reset state.
@@ -80,9 +81,14 @@ def randomize_scene(model, data, rng, *, max_attempts=100):
                    for xy, z in ((cube_xy, .274), (bowl_xy, .286))):
             continue
         position = rng.uniform([.36, -.24, .38], [.70, .24, .60])
-        yaw = float(rng.uniform(-1.15, 1.15))
+        yaw = float(rng.uniform(-2.2 if full_pose else -1.15,
+                                2.2 if full_pose else 1.15))
+        roll, pitch = rng.uniform(-.85, .85, size=2) if full_pose else (0, 0)
+        gripper = (float(rng.uniform(0, 1)) if full_pose else 1) if initial_gripper is None else initial_gripper
         try:
-            start = initialize_start_pose(env, position, yaw, reference)
+            start = initialize_start_pose(env, position, yaw, reference, roll=float(roll),
+                                          pitch=float(pitch), gripper=gripper,
+                                          yaw_limit=2.2 if full_pose else 1.3)
         except ValueError:
             continue
         cube_body = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, 'cube')
@@ -94,6 +100,9 @@ def randomize_scene(model, data, rng, *, max_attempts=100):
                     cube_position=data.xpos[cube_body].tolist(),
                     bowl_position=data.xpos[bowl].tolist(), bowl_radius_metres=BOWL_RADIUS,
                     bowl_floor_height_metres=.259, bowl_rim_height_metres=.314,
-                    gripper_physics=grip, starting_pose=start)
+                    gripper_physics=grip, starting_pose=start,
+                    reference_quaternion_wxyz=reference.tolist(),
+                    randomized_components=['x','y','z','roll','pitch','yaw','gripper'] if full_pose
+                    else ['x','y','z','yaw'])
         return env.controller, spec
     raise RuntimeError('No valid random scene found; try another seed')

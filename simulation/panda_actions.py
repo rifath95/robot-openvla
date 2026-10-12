@@ -9,7 +9,7 @@ TRANSLATION_LIMIT = 0.01
 ROTATION_LIMIT = 0.05
 
 
-def action_contract():
+def action_contract(*, camera='workspace_camera'):
     return dict(id=CONVENTION_ID,
                 components=['dx', 'dy', 'dz', 'droll', 'dpitch', 'dyaw', 'gripper'],
                 translation_frame='MuJoCo world', translation_units='metres',
@@ -21,7 +21,7 @@ def action_contract():
                 rotation_norm_limit_radians=ROTATION_LIMIT,
                 physics_steps_per_action=PHYSICS_STEPS,
                 label='bounded accepted command actually executed; measured motion is separate',
-                observation='RGB workspace_camera immediately before command; frozen during prediction')
+                observation=f'RGB {camera} immediately before command; frozen during prediction')
 
 
 def to_controller_action(values):

@@ -1,6 +1,11 @@
 # Fine-tuning datasets
 
 Generated expert demonstrations and training dataset exports belong here.
+
+The new bowl task is in `panda_pick_bowl/{train,validation,test}/`, with the first
+ten accepted trajectories numbered for the final 200/50/50 split. Each includes
+`replay.py`; see [the bowl dataset guide](../docs/datasets/PANDA_BOWL_DATASET.md).
+The remaining trajectories are waiting for the user's review.
 Experiment logs, model-driven rollouts and failed prototype runs remain in
 `outputs/`. Large generated datasets are excluded from GitHub; this guide and
 collection/preparation code are tracked. A fresh clone does not contain the data.

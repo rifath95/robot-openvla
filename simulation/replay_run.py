@@ -8,6 +8,21 @@ import time
 ROOT = PROJECT_ROOT
 
 
+def replay_model(folder):
+    """Select the recorded task scene; preserve the original default for old runs."""
+    import json
+    import mujoco
+    metadata_path = Path(folder)/'episode.json'
+    metadata = json.loads(metadata_path.read_text()) if metadata_path.is_file() else {}
+    if metadata.get('scene_profile') == 'panda_bowl_v1':
+        from simulation.bowl_scene import SCENE_PATH, CAMERA_NAME
+        from data_tools.bowl_demonstrations import configure_recorded_scene
+        model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
+        configure_recorded_scene(model, metadata)
+        return model, CAMERA_NAME
+    return mujoco.MjModel.from_xml_path(str(ROOT/'scene.xml')), 'workspace_camera'
+
+
 def write_launcher(folder):
     """Keep each run playable from its output folder within the repository."""
     launcher = '''"""Offline playback. Run with the repository simulation Python environment."""
@@ -86,7 +101,7 @@ def main(argv=None):
         from simulation.viewer import _restart_with_mjpython
         _restart_with_mjpython()
     import mujoco
-    model = mujoco.MjModel.from_xml_path(str(ROOT / 'scene.xml'))
+    model, camera = replay_model(args.run_dir)
     frames, approximate = load_frames(args.run_dir, model)
     print(f'Loaded {len(frames)} poses from {args.run_dir}')
     if approximate:
@@ -111,7 +126,7 @@ def main(argv=None):
     with mujoco.viewer.launch_passive(model, data, key_callback=key_callback,
                                      show_left_ui=False, show_right_ui=False) as viewer:
         viewer.cam.type = mujoco.mjtCamera.mjCAMERA_FIXED
-        viewer.cam.fixedcamid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, 'workspace_camera')
+        viewer.cam.fixedcamid = mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_CAMERA, camera)
         index, remaining = 0, 0.0
         previous = time.perf_counter()
         while viewer.is_running() and not stopped:

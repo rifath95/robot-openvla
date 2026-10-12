@@ -40,12 +40,16 @@ def fingerprint(folder):
 def prepare_dataset(episodes, output):
     output = Path(output)
     records = []
+    contract = None
     for episode in episodes:
         episode = Path(episode).resolve()
         metadata = json.loads((episode / 'episode.json').read_text())
         replay = json.loads((episode / 'replay.json').read_text())
-        if metadata.get('action_contract') != action_contract():
+        if metadata.get('action_contract') != action_contract(camera=metadata.get('camera','workspace_camera')):
             raise ValueError(f'Incompatible convention: {episode}')
+        if contract is not None and contract != metadata['action_contract']:
+            raise ValueError('Keep different observation-camera conventions in separate datasets')
+        contract = metadata['action_contract']
         if not metadata.get('success') or not metadata.get('training_eligible') or not replay.get('passed'):
             raise ValueError(f'Only successful replay-verified expert episodes are eligible: {episode}')
         if replay.get('episode_sha256') != fingerprint(episode):
@@ -85,7 +89,7 @@ def prepare_dataset(episodes, output):
     output.mkdir(parents=True, exist_ok=False)
     (output / 'dataset.jsonl').write_text(''.join(json.dumps(row) + '\n' for row in records))
     (output / 'normalization_stats.json').write_text(json.dumps({CONVENTION_ID: {'action': statistics}}, indent=2) + '\n')
-    report = dict(convention=action_contract(), episodes=len(episodes), transitions=len(records),
+    report = dict(convention=contract, episodes=len(episodes), transitions=len(records),
                   ready_for_finetuning=False,
                   limitations=['A scripted pilot is a pipeline check, not proof of adequate task coverage.',
                                'JSONL references local files; bundle episodes and regenerate paths after copying.',

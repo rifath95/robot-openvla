@@ -19,15 +19,17 @@ def robot_contacts(model, data):
     return contacts
 
 
-def initialize_start_pose(env, position, yaw, reference_quaternion):
+def initialize_start_pose(env, position, yaw, reference_quaternion, *, roll=0, pitch=0,
+                          gripper=1, yaw_limit=1.3):
     position = np.asarray(position, dtype=float)
     if position.shape != (3,) or not np.isfinite(position).all():
         raise ValueError('Starting position must have three finite coordinates')
     if not (.34 <= position[0] <= .72 and abs(position[1]) <= .26 and .35 <= position[2] <= .65):
         raise ValueError('Starting grasp point outside broad collection bounds')
-    if not np.isfinite(yaw) or abs(yaw) > 1.3:
-        raise ValueError('Starting yaw must be within 1.3 radians of the home orientation')
-    quaternion = _quat_multiply(_euler_xyz_to_quat(0, 0, yaw), reference_quaternion)
+    if not np.isfinite([roll, pitch, yaw, gripper, yaw_limit]).all() or (
+            abs(yaw) > yaw_limit or abs(roll) > 1 or abs(pitch) > 1 or not 0 <= gripper <= 1):
+        raise ValueError('Invalid starting orientation or gripper opening')
+    quaternion = _quat_multiply(_euler_xyz_to_quat(roll, pitch, yaw), reference_quaternion)
     controller = env.controller
     result = controller._solve_ik(position, quaternion, max_iterations=400)
     if not result.converged:
@@ -35,6 +37,7 @@ def initialize_start_pose(env, position, yaw, reference_quaternion):
     env.data.qpos[controller.qpos_indices] = result.joint_targets
     env.data.qvel[:] = 0
     env.data.ctrl[controller.actuator_ids] = result.joint_targets
+    env.data.ctrl[controller.gripper_actuator_id] = 255 * gripper
     mujoco.mj_forward(env.model, env.data)
     if robot_contacts(env.model, env.data):
         raise ValueError('Starting pose has a penetrating robot contact')
@@ -53,6 +56,8 @@ def initialize_start_pose(env, position, yaw, reference_quaternion):
     if np.any(joints < controller.joint_limits[:, 0]) or np.any(joints > controller.joint_limits[:, 1]):
         raise ValueError('Starting joints violate their limits')
     return dict(requested_position=position.tolist(), requested_yaw_radians=float(yaw),
+                requested_roll_radians=float(roll), requested_pitch_radians=float(pitch),
+                requested_gripper_open_fraction=float(gripper),
                 actual_position=actual_position.tolist(), actual_quaternion_wxyz=actual_quaternion.tolist(),
                 actual_joint_positions=joints.tolist(), penetrating_contacts=0)
 
