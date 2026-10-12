@@ -1,5 +1,67 @@
 # Detached training with automatic pod stop
 
+## One Mac command with automatic report download
+
+With the pod already running, use the following **in the local Mac terminal**:
+
+```bash
+caffeinate -i .venv/bin/python -m cloud.training_cloud_session \
+  --ssh 'ssh root@POD_IP -p POD_PORT -i ~/.ssh/id_ed25519' \
+  --config training/smoke.json \
+  --dataset /workspace/panda-training/training_v1
+```
+
+This runs the 20-update smoke test. For the expanded 5,000-update run, change
+`--config` to `training/pick_place_v2_5000.json` and `--dataset` to
+`/workspace/panda-training/training_v2`. The selected configuration still controls
+updates, validation, checkpoints, and inner/outer limits. Optional
+`--adapter /workspace/panda-training/.../checkpoint_...` loads existing LoRA weights
+with a fresh optimizer, as before. The launcher does not deploy a pod or download
+missing model weights/datasets; prepare those on the attached volume first.
+
+The command updates the cloud checkout, installs tmux if needed, checks the API
+and dataset, and launches the existing detached supervisor. After it prints
+**Detached cloud training confirmed**, closing the terminal, pressing Ctrl+C,
+sleeping the Mac, or disconnecting does not cancel the cloud training job.
+`caffeinate -i` prevents automatic idle sleep while the local launcher runs.
+
+- **Mac stays connected:** when training finishes, reports download automatically
+  to `outputs/phase3_training/<session-name>/`. The Mac acknowledges successful
+  synchronization, and the cloud supervisor requests a pod stop immediately.
+- **Mac disconnects:** the cloud saves results and waits up to **120 seconds**
+  after finishing for a download acknowledgment, then requests a pod stop.
+- **Failure or incomplete training:** saved diagnostics can still download;
+  the cloud still requests a stop. The launcher reports that training did not
+  complete successfully.
+- **Outer timeout:** cleanup takes priority over the download window. The window
+  never extends the configured outer deadline. Timed-out reports may need fetching
+  after a resume. API/network failure can prevent a stop; confirm in RunPod.
+
+Downloads include final raw/smoothed loss plots, per-update/validation timing
+metrics, logs, TensorBoard events, configuration/GPU metadata, and checkpoint
+metadata. Large adapter weight files remain on the network volume. Training
+configuration, task instructions, dataset, and model code are unchanged.
+The local `status.json` is a snapshot taken before acknowledging the download;
+it can show `awaiting_sync`. Final stop status remains in the cloud session.
+
+After disconnecting, resume a pod with the same volume and use its **new** SSH
+address plus the session name printed by the original launcher:
+
+```bash
+caffeinate -i .venv/bin/python -m cloud.training_cloud_session \
+  --ssh 'ssh root@POD_IP -p POD_PORT -i ~/.ssh/id_ed25519' \
+  --fetch-only --session panda-train-YYYYMMDD-HHMMSS-ID --stop-after-fetch
+```
+
+This downloads existing reports without starting training, then requests a stop
+after a successful download. Omit `--stop-after-fetch` to keep the resumed pod
+running. No Docker rebuild is needed; push the code before using the launcher.
+
+The manual cloud-terminal commands below remain available. Their default behavior
+stops immediately without a report download window. To opt into the same window
+when launching manually, prefix the shell command with
+`PANDA_TRAIN_DOWNLOAD_GRACE_SECONDS=120`.
+
 Use this for the expanded-dataset **5,000-update A40 run**. Training runs on the pod inside `tmux`, so
 closing VS Code or sleeping the Mac does not disconnect the training process.
 The wrapper requests **stop**, not termination, after success, failure, or its

@@ -23,13 +23,13 @@ class DetachedTrainingTests(unittest.TestCase):
                                           json.dumps(dict(update=update, validation_complete=True)) + '\n')
         return run
 
-    def run_supervisor(self, directory, process, request):
+    def run_supervisor(self, directory, process, request, **options):
         with patch('training.detached_run.subprocess.Popen', return_value=process) as launch, \
              patch('training.detached_run.api_request', request), \
              patch('training.detached_run.os.sync'), patch('training.detached_run.time.sleep'), \
              patch.dict('os.environ', {'RUNPOD_API_KEY': 'test-secret'}):
             result = supervise(['python', 'fake_training.py'], directory, 'fakepod', 'test-secret',
-                               hard_limit=5400, expected_updates=1000)
+                               hard_limit=5400, expected_updates=1000, **options)
         self.assertNotIn('RUNPOD_API_KEY', launch.call_args.kwargs['env'])
         self.assertNotIn('test-secret', (directory / 'status.json').read_text())
         return result, json.loads((directory / 'status.json').read_text())
@@ -58,6 +58,31 @@ class DetachedTrainingTests(unittest.TestCase):
             self.assertEqual(status['phase'], 'training_failed')
             request.assert_called_once_with('fakepod', 'test-secret', stop=True)
             self.assertTrue((Path(folder) / 'console.log').exists())
+
+    def test_success_stops_only_after_download_acknowledgment(self):
+        with tempfile.TemporaryDirectory() as folder:
+            directory = Path(folder)
+            self.artifacts(directory)
+            (directory / 'reports_downloaded.json').write_text('{}')
+            process = MagicMock(); process.wait.return_value = 0; process.poll.return_value = 0
+            def request(*args, **kwargs):
+                status = json.loads((directory / 'status.json').read_text())
+                self.assertEqual(status['download_state'], 'acknowledged')
+                self.assertEqual(status['phase'], 'completed')
+                return {}
+            result, status = self.run_supervisor(directory, process, request, download_grace_seconds=120)
+            self.assertEqual(result, 0)
+            self.assertEqual(status['stop_state'], 'accepted')
+
+    def test_download_wait_error_still_stops_pod(self):
+        with tempfile.TemporaryDirectory() as folder:
+            process = MagicMock(); process.wait.return_value = 1; process.poll.return_value = 1
+            request = MagicMock(return_value={})
+            with patch('training.detached_run.wait_for_download', side_effect=OSError('report disk error')):
+                _, status = self.run_supervisor(Path(folder), process, request, download_grace_seconds=120)
+            self.assertEqual(status['download_state'], 'failed')
+            self.assertEqual(status['stop_state'], 'accepted')
+            request.assert_called_once_with('fakepod', 'test-secret', stop=True)
 
     def test_partial_run_is_not_reported_as_complete(self):
         with tempfile.TemporaryDirectory() as folder:

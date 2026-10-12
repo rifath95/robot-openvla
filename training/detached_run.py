@@ -83,8 +83,73 @@ def verify_results(run_dir, expected_updates, *, require_full_validation=True):
                 and (full_validation or not require_full_validation))
 
 
-def supervise(command, directory, pod_id, key, *, hard_limit, expected_updates, require_full_validation=True):
+def wait_for_download(directory, status, deadline, seconds):
+    """Allow bounded report synchronization; a disconnected Mac cannot delay stop forever."""
+    if not seconds or status['phase'] == 'wall_limit_reached':
+        return
+    outcome = status['phase']
+    status.update(phase='awaiting_sync', training_outcome=outcome,
+                  download_state='pending', download_window_seconds=seconds)
+    write_status(directory / 'status.json', status)
+    end = min(deadline, time.monotonic() + seconds)
+    while time.monotonic() < end:
+        if (directory / 'reports_downloaded.json').is_file():
+            status['download_state'] = 'acknowledged'
+            break
+        time.sleep(min(0.5, max(0, end - time.monotonic())))
+    else:
+        status['download_state'] = ('outer_limit_reached' if time.monotonic() >= deadline
+                                    else 'window_expired')
+    status['phase'] = outcome
+
+
+def session_directory(value):
+    directory = Path(value).resolve()
+    root = Path('/workspace/panda-training/sessions')
+    if directory.parent != root or not re.fullmatch(r'panda-train-[A-Za-z0-9_-]+', directory.name):
+        raise ValueError('Select a named training session directly inside /workspace/panda-training/sessions')
+    return directory
+
+
+def watch_session(directory):
+    """Stream logs until reports are stable, without owning the training process."""
+    offset = 0
+    startup_deadline = time.monotonic() + 120
+    seen_status = False
+    while True:
+        log = directory / 'console.log'
+        if log.is_file():
+            with log.open(errors='replace') as stream:
+                stream.seek(offset)
+                content = stream.read()
+                offset = stream.tell()
+            if content:
+                print(content, end='', flush=True)
+        status_path = directory / 'status.json'
+        if status_path.is_file():
+            seen_status = True
+            status = json.loads(status_path.read_text())
+            if status['phase'] != 'training':
+                print(f"\nTraining status: {status['phase']}; reports are ready to download.", flush=True)
+                return 0 if status.get('training_complete') else 1
+        elif not seen_status and time.monotonic() >= startup_deadline:
+            raise RuntimeError('Cloud supervisor did not create session status within 120 seconds')
+        time.sleep(0.5)
+
+
+def acknowledge_download(directory):
+    status = json.loads((directory / 'status.json').read_text())
+    if status['phase'] != 'awaiting_sync':
+        raise ValueError('Training is not waiting for report synchronization')
+    write_status(directory / 'reports_downloaded.json',
+                 dict(downloaded_at_utc=datetime.now(timezone.utc).isoformat()))
+    print('Reports synchronized. The cloud supervisor will now request a pod stop.', flush=True)
+
+
+def supervise(command, directory, pod_id, key, *, hard_limit, expected_updates, require_full_validation=True,
+              download_grace_seconds=0):
     """Always attempt to stop this pod after the child exits, fails, or times out."""
+    deadline = time.monotonic() + hard_limit
     status = dict(started_at_utc=datetime.now(timezone.utc).isoformat(),
                   pod_id=pod_id, command=command, hard_limit_seconds=hard_limit,
                   phase='training', stop_state='not_requested')
@@ -124,6 +189,11 @@ def supervise(command, directory, pod_id, key, *, hard_limit, expected_updates, 
             os.killpg(process.pid, signal.SIGKILL)
             process.wait()
         status['finished_at_utc'] = datetime.now(timezone.utc).isoformat()
+        try:
+            wait_for_download(directory, status, deadline, download_grace_seconds)
+        except Exception as exc:
+            status['phase'] = status.get('training_outcome', status['phase'])
+            status.update(download_state='failed', download_error=type(exc).__name__)
         status['stop_state'] = 'requested'
         write_status(status_path, status)
         os.sync()  # Flush persistent output before asking RunPod to stop.
@@ -153,8 +223,26 @@ def main():
     parser.add_argument('--dataset', type=Path, default=Path('/workspace/panda-training/training_v1'))
     parser.add_argument('--hard-limit-seconds', type=int, help='Override configuration outer limit; otherwise 90 minutes for legacy profiles')
     parser.add_argument('--adapter',type=Path,help='Continue adapter weights with a fresh optimizer')
+    parser.add_argument('--download-grace-seconds',type=int,default=0,
+                        help='Bounded post-training report download window; zero stops immediately')
+    actions = parser.add_mutually_exclusive_group()
+    actions.add_argument('--watch-session',type=Path)
+    actions.add_argument('--ack-download',type=Path)
+    actions.add_argument('--stop-only',action='store_true')
     args = parser.parse_args()
     try:
+        if args.watch_session:
+            return watch_session(session_directory(args.watch_session))
+        if args.ack_download:
+            acknowledge_download(session_directory(args.ack_download))
+            return 0
+        if args.stop_only:
+            pod_id, key = preflight()
+            api_request(pod_id, key, stop=True)
+            print('RunPod accepted the stop request. Confirm stopped status in the portal.',flush=True)
+            return 0
+        if args.download_grace_seconds < 0 or args.download_grace_seconds > 3600:
+            raise ValueError('Download window must be between 0 and 3600 seconds')
         config = json.loads(args.config.read_text())
         hard_limit=args.hard_limit_seconds if args.hard_limit_seconds is not None else config.get('hard_limit_seconds',5400)
         if not isinstance(hard_limit,int) or isinstance(hard_limit,bool) or hard_limit<=0:
@@ -193,7 +281,8 @@ def main():
         if args.adapter:command.extend(['--adapter',str(args.adapter.resolve())])
         return supervise(command, directory, pod_id, key,
                          hard_limit=hard_limit, expected_updates=config['max_steps'],
-                         require_full_validation=config['validation_max_batches'] == 0)
+                         require_full_validation=config['validation_max_batches'] == 0,
+                         download_grace_seconds=args.download_grace_seconds)
     except (RuntimeError, OSError, ValueError, subprocess.CalledProcessError) as exc:
         print(f'Not started: {exc}. The pod still bills; stop it manually if needed.', file=sys.stderr)
         return 1

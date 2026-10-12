@@ -200,6 +200,7 @@ The successful inference took approximately **516 seconds (8 minutes 36 seconds)
 | `docs/cloud/CLOUD_SETUP.md` | Linux NVIDIA GPU setup, headless rendering checks, and the CUDA loop benchmark. |
 | `cloud/cloud_startup_metrics.py` | Records checkpoint preparation, mount and host information for session startup reports. |
 | `cloud_session.py` | One Mac command to prepare a GPU host, open the SSH tunnel, wait for model readiness, and launch repeated local trials. |
+| `cloud/training_cloud_session.py` | Mac launcher for detached training, automatic report downloads, and acknowledgment before pod stop. Run with `python -m cloud.training_cloud_session`; see [the training guide](docs/training/TRAINING_OVERNIGHT.md). |
 | `scripts/cloud_start.sh` / `scripts/cloud_stop.sh` | Linux setup and recorded server lifecycle; reuse preinstalled Docker dependencies or install the tested environment. |
 | `docker/Dockerfile` / `.github/workflows/build-cloud-image.yml` | Dependency image and manual GitHub Container Registry build/publication workflow; weights remain on the external volume. |
 | `docs/cloud/CLOUD_QUICKSTART.md` | Simplified session instructions and one-time Docker publication/template setup. |

@@ -45,6 +45,7 @@ Use them from the repository root as before. Secondary tools use module commands
 ```bash
 .venv/bin/python -m simulation.capture_camera
 .venv/bin/python -m inference.remote_loop --help
+.venv/bin/python -m cloud.training_cloud_session --help
 .venv/bin/python -m data_tools.collect_panda_broad --help
 .venv-training/bin/python -m analysis.summarize_gpu_benchmarks
 ```
