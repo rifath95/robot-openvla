@@ -14,6 +14,16 @@ import subprocess
 REPOSITORY='Maxalderone/robot-openvla-panda'
 REVISION='8ffd54b1dd27022102aba0866b65a7a9ac4eefc7'
 V1_REVISION='f653bb505352c358fa7ea478e2338929d3222a68'
+BOWL_REPOSITORY='Maxalderone/robot-openvla-panda-bowl'
+BOWL_REVISION='6750b3dad36b0d238c5e101ec70e64a2c36bbc62'
+
+
+def bundle_source(bundle, repo=None, revision=None):
+    if bundle=='training_bowl_v1':
+        return repo or BOWL_REPOSITORY, revision or BOWL_REVISION, ''
+    if bundle not in ('training_v1','training_v2'):
+        raise ValueError('Unsupported training bundle')
+    return repo or REPOSITORY, revision or (V1_REVISION if bundle=='training_v1' else REVISION), bundle+'/'
 
 
 def load_hf_token(environ=None,container_environment=Path('/proc/1/environ')):
@@ -93,8 +103,8 @@ def copy_verified_bundle(bundle,destination,checksums):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--repo',default=REPOSITORY)
-    p.add_argument('--bundle',choices=('training_v1','training_v2'),default='training_v2')
+    p.add_argument('--repo',help='Override the selected bundle’s Hugging Face repository')
+    p.add_argument('--bundle',choices=('training_v1','training_v2','training_bowl_v1'),default='training_v2')
     p.add_argument('--revision',help='Override the selected bundle’s pinned completed upload')
     p.add_argument('--volume-root',type=Path,default=Path('/workspace'))
     p.add_argument('--global-volume',action='store_true',help='Download on container disk and copy regular files to global storage')
@@ -108,11 +118,11 @@ def main():
     print(f'Hugging Face authentication loaded from {source}.',flush=True)
     from huggingface_hub import HfApi,hf_hub_download,snapshot_download
     # Resolve any supplied tag to a commit once, so files cannot mix revisions.
-    requested_revision=args.revision or (V1_REVISION if args.bundle=='training_v1' else REVISION)
-    revision=HfApi().repo_info(args.repo,repo_type='dataset',revision=requested_revision).sha
+    repository,requested_revision,prefix=bundle_source(args.bundle,args.repo,args.revision)
+    revision=HfApi().repo_info(repository,repo_type='dataset',revision=requested_revision).sha
     cache=PROJECT_ROOT/'.cache-dataset-download'/args.bundle
     download_options={'cache_dir':str(cache/'hub')} if args.global_volume else {}
-    expected=Path(hf_hub_download(args.repo,f'{args.bundle}/SHA256SUMS',
+    expected=Path(hf_hub_download(repository,prefix+'SHA256SUMS',
         repo_type='dataset',revision=revision,**download_options)).read_text()
     parent=args.volume_root/'panda-training';parent.mkdir(parents=True,exist_ok=True)
     destination=parent/args.bundle
@@ -121,14 +131,15 @@ def main():
         print(f'Existing bundle verified: {destination} ({count} checksums)',flush=True)
     else:
         staging=cache/'snapshot' if args.global_volume else parent/f'.hf-download-{args.bundle}'
-        print(f'Downloading {args.repo}@{revision} into a resumable staging directory...',flush=True)
-        snapshot_download(args.repo,repo_type='dataset',revision=revision,
-            allow_patterns=[f'{args.bundle}/**'],local_dir=staging,**download_options)
+        print(f'Downloading {repository}@{revision} into a resumable staging directory...',flush=True)
+        patterns=[prefix+'**'] if prefix else ['SHA256SUMS','*.json','PACKAGE_REPORT.md','rlds/**']
+        snapshot_download(repository,repo_type='dataset',revision=revision,
+            allow_patterns=patterns,local_dir=staging,**download_options)
         publish=copy_verified_bundle if args.global_volume else finalize_download
-        count=publish(staging/args.bundle,destination,expected)
+        count=publish(staging/args.bundle if prefix else staging,destination,expected)
         print(f'Verified downloaded bundle: {destination} ({count} checksums)',flush=True)
     (parent/f'{args.bundle}_hf_source.json').write_text(json.dumps(dict(
-        repository=args.repo,revision=revision,bundle=str(destination),verified_files=count,
+        repository=repository,revision=revision,bundle=str(destination),verified_files=count,
         publication='regular_copy' if args.global_volume else 'directory_rename'),indent=2)+'\n')
     print('Dataset ready. This command does not start training or stop the pod.',flush=True)
 

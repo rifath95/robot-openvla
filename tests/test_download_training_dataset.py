@@ -7,9 +7,17 @@ import unittest
 from unittest.mock import patch
 
 from cloud.download_training_dataset import verify_bundle,finalize_download,load_hf_token,copy_verified_bundle
+from cloud.download_training_dataset import bundle_source, BOWL_REPOSITORY, BOWL_REVISION
 
 
 class DownloadDatasetTests(unittest.TestCase):
+    def test_bowl_uses_verified_root_repository_and_old_bundles_keep_prefixes(self):
+        self.assertEqual(bundle_source('training_bowl_v1'),(BOWL_REPOSITORY,BOWL_REVISION,''))
+        self.assertEqual(bundle_source('training_v1')[2],'training_v1/')
+        self.assertEqual(bundle_source('training_v2')[2],'training_v2/')
+        self.assertEqual(bundle_source('training_bowl_v1','custom/repo','custom-sha'),
+                         ('custom/repo','custom-sha',''))
+
     def test_global_copy_keeps_source_and_publishes_verification_last(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);source=root/'staging';expected=self.bundle(source)
