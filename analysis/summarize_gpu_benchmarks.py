@@ -50,22 +50,36 @@ def cost_section(runs):
         '| GPU | ECC | Run | GPU rate USD/hour | Examples/s | Time for 10,000 examples | Training cost USD |',
         '| --- | --- | --- | --- | --- | --- | --- |']
     priced=[]
+    exceptions=[]
     for gpu,path,best in runs:
         metadata_path=path.parent/'benchmark_metadata.json'
         metadata=json.loads(metadata_path.read_text()) if metadata_path.exists() else {}
         ecc=ecc_label(metadata.get('gpu_ecc'))
         rate=rates.get(path.parent.name,{})
         hourly=rate.get('hourly_rate_usd') if rate.get('gpu')==gpu else None
+        ignoring_headroom = False
+        if best is None:
+            completed=[r for r in json.loads(path.read_text()) if r['status']=='completed']
+            if completed:
+                best=max(completed,key=lambda r:r['examples_per_second'])
+                ignoring_headroom = True
         if best and isinstance(hourly,(int,float)) and math.isfinite(hourly) and hourly>0:
             seconds,cost=cost_estimate(best['examples_per_second'],hourly)
             minutes,remainder=divmod(round(seconds),60)
             values=[gpu,ecc,path.parent.name,f'${hourly:.2f}',f"{best['examples_per_second']:.2f}",
                     f'{minutes} min {remainder:02d} sec',f'${cost:.2f}']
-            priced.append((cost,gpu,best['examples_per_second']))
+            if ignoring_headroom:
+                values[4:]=[value+'*' for value in values[4:]]
+                exceptions.append(f'{gpu} (run {path.parent.name}): microbatch {best["microbatch"]}, accumulation {best["accumulation"]}')
+            else:
+                priced.append((cost,gpu,best['examples_per_second']))
         else:
             values=[gpu,ecc,path.parent.name,'Not recorded' if hourly is None else f'${hourly:.2f}',
                     f"{best['examples_per_second']:.2f}" if best else '—','—','—']
         lines.append('| '+' | '.join(cell(v) for v in values)+' |')
+    if exceptions:
+        lines+=['', '* Asterisked estimates ignore the memory-headroom requirement because no tested microbatch passed it, including microbatch 1. They use the fastest fitting candidate for comparison only, are not training recommendations, and are excluded from the cheapest-GPU ranking.',
+                'Asterisked candidates: '+ '; '.join(exceptions)+'.']
     if priced:
         cheapest=min(priced)
         lines+=['',f'Lowest estimated training cost among these priced runs: **{cell(cheapest[1])}**, **${cheapest[0]:.2f} per 10,000 examples**.']

@@ -144,8 +144,22 @@ class BatchBenchmarkTests(unittest.TestCase):
             ('NVIDIA A40',Path('/runs/new/benchmark.json'),dict(examples_per_second=3.74))]))
         self.assertIn('$0.44',text)
         self.assertIn('$1.11',text)
-        self.assertIn('| NVIDIA A40 | new | Not recorded',text)
+        self.assertIn('| NVIDIA A40 | Unknown | new | Not recorded',text)
         self.assertIn('Lowest estimated training cost',text)
+
+    def test_no_headroom_cost_is_marked_and_excluded_from_ranking(self):
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'20261012_025737_894348'/'benchmark.json'
+            path.parent.mkdir()
+            path.write_text(json.dumps([
+                dict(status='completed',microbatch=1,accumulation=1,examples_per_second=2.50),
+                dict(status='completed',microbatch=2,accumulation=1,examples_per_second=2.795441033),
+                dict(status='out_of_memory',microbatch=3)]))
+            text='\n'.join(cost_section([('NVIDIA RTX A5000',path,None)]))
+            self.assertIn('2.80* | 59 min 37 sec* | $0.27*',text)
+            self.assertIn('microbatch 2, accumulation 1',text)
+            self.assertIn('excluded from the cheapest-GPU ranking',text)
+            self.assertNotIn('Lowest estimated training cost',text)
 
     def test_empty_comparison_does_not_invent_measurements(self):
         with tempfile.TemporaryDirectory() as directory:

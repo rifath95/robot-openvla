@@ -33,7 +33,10 @@ Rates are the user-confirmed prices for these particular pod runs, saved in `tra
 | NVIDIA H200 | Enabled | 20261011_113403_097508 | $5.29 | 14.47 | 11 min 31 sec | $1.02 |
 | NVIDIA A100-SXM4-80GB | Enabled | 20261011_115921_878754 | $1.79 | 8.33 | 20 min 00 sec | $0.60 |
 | NVIDIA A40 | Enabled | 20261012_003826_853142 | $0.59 | 3.85 | 43 min 19 sec | $0.43 |
-| NVIDIA RTX A5000 | Disabled | 20261012_025737_894348 | $0.27 | — | — | — |
+| NVIDIA RTX A5000 | Disabled | 20261012_025737_894348 | $0.27 | 2.80* | 59 min 37 sec* | $0.27* |
+
+* Asterisked estimates ignore the memory-headroom requirement because no tested microbatch passed it, including microbatch 1. They use the fastest fitting candidate for comparison only, are not training recommendations, and are excluded from the cheapest-GPU ranking.
+Asterisked candidates: NVIDIA RTX A5000 (run 20261012_025737_894348): microbatch 2, accumulation 1.
 
 Lowest estimated training cost among these priced runs: **NVIDIA A40**, **$0.43 per 10,000 examples**.
 **NVIDIA H200** processes examples **3.76× faster** than NVIDIA A40, but costs **2.38× as much per example**.
