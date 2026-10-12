@@ -1,8 +1,56 @@
 # Compare the bowl policy with expert demonstration actions
 
-Prepared locally on 2026-10-12 for checkpoint_002000 from session
-`panda-train-20261012-072437-856`. No model predictions or cloud computation
-have run yet for this test.
+Prepared and completed on 2026-10-12 for checkpoint_002000 from session
+`panda-train-20261012-072437-856`. The live A40 evaluation completed all 52
+examples. Reports were saved locally and archived on the network volume before
+RunPod accepted stopping pod `dtzaz6pmxal2tg`; SSH then closed during shutdown.
+
+## Completed results
+
+| Metric | Independently generated action | Teacher-forced prediction |
+| --- | ---: | ---: |
+| Mean XYZ error against expert command | 2.983 mm | 1.201 mm |
+| Mean normalized absolute error across seven components | 0.1037 | 0.0407 |
+| Open/closed gripper agreement | 48/52 (92.3%) | 52/52 (100%) |
+
+Both prompt-prefix and pixel-tensor equivalence checks passed on all 52 examples
+on the deployed processor. Teacher-forced first-component X predictions matched
+the generated X component in all 52 comparisons, as expected when neither has
+earlier action tokens. No teacher-forced predictions used invalid action tokens.
+
+The checkpoint produces nonzero horizontal movement on some demonstration
+observations. Its predictions are not globally stuck at zero. On the four first-
+lift examples, it generated upward movement and a closed gripper correctly;
+three of four explicit close examples also commanded closure. Those results
+contradict a claim that it cannot ever lift or close.
+
+However, failures remain on familiar training inputs. Generated XYZ error is
+7.948 mm during approach versus 3.595 mm under teacher forcing, and 6.989 mm
+during transfer versus 2.975 mm. At an expert close step for train_001, generation
+commands about 10 mm downward and an open gripper, while teacher forcing correctly
+predicts closure. Rotational predictions in orient_for_grasp are poor under both
+methods, including incorrect yaw direction. Thus the result supports both
+imperfect conditional predictions and additional errors when generating without
+expert preceding tokens; it is not solely a controller issue or a wholly broken
+normalizer. It does not prove why the model learned those errors.
+
+This is a balanced diagnostic subset of training images, not held-out accuracy,
+and the sample count per stage is only four. Errors refer to requested commands,
+not simulated motion or successful task completion. Do not treat the 92.3%
+gripper agreement as a grasp success rate.
+
+The 52 evaluations took 76.56 seconds, excluding merge/loading/source checking.
+Local result directory: `outputs/matched_evaluation_20261012_131448_f2da1fde/`.
+Cloud archive: `/workspace/panda-training/diagnostics/matched_evaluation_20261012_131448_f2da1fde/`.
+The local directory also contains the server log and pod-stop receipt.
+
+Next compare checkpoint_005000 on the same sample selection before another long
+training run or changing the architecture. Separately address the demonstrated
+collection/deployment controller mismatch. Neither more random trials nor the
+teacher-forced loss alone can determine whether the newer checkpoint generates
+better task-directed actions.
+
+## Reproduce the test
 
 The existing matched diagnostic uses real before-images, original instructions,
 and accepted action labels from the verified bowl training bundle. Four examples
