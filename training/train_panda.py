@@ -50,11 +50,17 @@ def main():
     if args.batch_policy=='auto':
         from training.batch_policy import benchmark_context,choose_batch
         context=benchmark_context(config,args.dataset,args.model)
+        config,batch_selection=choose_batch(config,context,args.benchmark_root)
+        if (require_benchmark and batch_selection['source']!='compatible_benchmark') or (
+                expected_gpu and (context is None or context.get('gpu')!=expected_gpu)):
+            args.output_root.mkdir(parents=True,exist_ok=True)
+            diagnostic=args.output_root/'batch_compatibility.json'
+            diagnostic.write_text(json.dumps(dict(batch_selection,expected_gpu=expected_gpu),indent=2)+'\n')
+            print(f'Benchmark compatibility diagnostics: {diagnostic}',flush=True)
         if expected_gpu and (context is None or context.get('gpu')!=expected_gpu):
             p.error(f'This training profile requires {expected_gpu} with verified model/input metadata')
-        config,batch_selection=choose_batch(config,context,args.benchmark_root)
         if require_benchmark and batch_selection['source']!='compatible_benchmark':
-            p.error(batch_selection['reason'])
+            p.error('No compatible safe benchmark recommendation. Training was not started; see batch_compatibility.json for exact differences.')
     else:
         if require_benchmark or expected_gpu:p.error('This profile requires automatic benchmark selection')
         batch_selection=dict(policy='config',source='configuration',microbatch=config['batch_size'],

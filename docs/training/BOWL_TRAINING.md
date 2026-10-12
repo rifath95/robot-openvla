@@ -21,6 +21,22 @@ limit is 4 hours; the detached supervisor's outer limit is 5 hours, including
 setup after launch. These are not deployment-to-shutdown billing limits.
 The network volume needs at least 3 GiB free for checkpoint storage.
 
+## Check batch compatibility before retrying a refused launch
+
+In the cloud terminal after updating the checkout, run:
+
+```bash
+/opt/openvla/bin/python -m training.check_training_batch
+```
+
+This prints the actual GPU/VRAM/input/model/software context and the precise
+differences for each saved capacity benchmark. It selects a batch only if the
+existing compatibility and headroom checks pass. It loads no model weights,
+performs no updates, and does not stop the pod. The diagnostic is saved under
+`/workspace/panda-training/batch-checks/`. Share its output before attempting
+another full training launch. Future refused training runs also save
+`runs/batch_compatibility.json` inside their session for automatic report download.
+
 ## Start from the Mac
 
 Use the usual training-image A40 pod with the network volume at `/workspace`,

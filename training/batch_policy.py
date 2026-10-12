@@ -31,16 +31,23 @@ def benchmark_context(config,dataset,model):
 DEFAULT_INPUT_CONTRACT=dict(pixel_shape=[6,224,224],supervised_tokens=8)
 
 
+def normalized_context(value):
+    result={k:v for k,v in value.items() if k not in ('dataset_checksums_sha256','model_path')}
+    result.setdefault('input_contract',DEFAULT_INPUT_CONTRACT)
+    return result
+
+
+def context_differences(saved,current):
+    if not isinstance(saved,dict):return {'context':dict(saved='Not recorded',current=current)}
+    saved,current=normalized_context(saved),normalized_context(current)
+    return {key:dict(saved=saved.get(key),current=current.get(key))
+            for key in sorted(saved.keys()|current.keys()) if saved.get(key)!=current.get(key)
+            or (key in saved)!=(key in current)}
+
+
 def compatible_context(saved,current):
     """Dataset identity is provenance, not a batch-capacity requirement."""
-    if not isinstance(saved,dict):return False
-    def normalized(value):
-        result={k:v for k,v in value.items()
-                if k not in ('dataset_checksums_sha256','model_path')}
-        # Earlier context-bearing benchmarks used this fixed Panda input format.
-        result.setdefault('input_contract',DEFAULT_INPUT_CONTRACT)
-        return result
-    return normalized(saved)==normalized(current)
+    return isinstance(saved,dict) and not context_differences(saved,current)
 
 
 def compatible_reviewed_legacy(root,metadata,row,current):
@@ -70,6 +77,7 @@ def compatible_reviewed_legacy(root,metadata,row,current):
 def choose_batch(config,context,benchmark_root):
     selected=dict(config)
     record=dict(policy='auto',source='configured_fallback',
+        context=context,benchmarks_considered=[],
         microbatch=config['batch_size'],accumulation=config['grad_accumulation_steps'],
         effective_batch=config['batch_size']*config['grad_accumulation_steps'],
         reason='No compatible GPU/input/model benchmark; using the explicit configuration.')
@@ -84,6 +92,9 @@ def choose_batch(config,context,benchmark_root):
             saved_context=metadata.get('context')
             compatible=compatible_context(saved_context,context) if saved_context else False
             reviewed_legacy=(not saved_context and path.parent.name=='20261011_054257_777818')
+            record['benchmarks_considered'].append(dict(benchmark=str(path.parent),
+                compatible_context=compatible,reviewed_legacy=reviewed_legacy,
+                differences=context_differences(saved_context,context)))
             if not compatible and not reviewed_legacy:continue
             for row in json.loads((path.parent/'benchmark.json').read_text()):
                 if (row.get('status')=='completed' and row.get('headroom_screen_passed') is True
@@ -91,7 +102,8 @@ def choose_batch(config,context,benchmark_root):
                     and row.get('examples_per_second',0)>0):
                     if compatible or compatible_reviewed_legacy(path.parent,metadata,row,context):
                         candidates.append((row['examples_per_second'],path,row))
-        except (OSError,ValueError,KeyError,TypeError):
+        except (OSError,ValueError,KeyError,TypeError) as exc:
+            record['benchmarks_considered'].append(dict(benchmark=str(path.parent),error=type(exc).__name__))
             continue  # An incomplete/malformed benchmark cannot configure training.
     if candidates:
         speed,path,row=max(candidates,key=lambda item:(item[0],str(item[1])))

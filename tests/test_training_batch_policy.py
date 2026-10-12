@@ -6,10 +6,22 @@ import unittest
 from unittest.mock import patch
 from types import SimpleNamespace
 
-from training.batch_policy import choose_batch,benchmark_context
+from training.batch_policy import choose_batch,benchmark_context,context_differences
 
 
 class BatchPolicyTests(unittest.TestCase):
+    def test_diagnostics_identify_exact_mismatch_without_relaxing_compatibility(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);self.benchmark(root/'run')
+            current=dict(self.context,total_vram_bytes=self.context['total_vram_bytes']-1024**2)
+            config,record=choose_batch(self.config,current,root)
+            self.assertEqual(record['source'],'configured_fallback')
+            self.assertEqual(record['benchmarks_considered'][0]['differences'],
+                             {'total_vram_bytes':dict(saved=self.context['total_vram_bytes'],
+                                                     current=current['total_vram_bytes'])})
+            self.assertEqual(config,self.config)
+            self.assertEqual(context_differences(self.context,dict(self.context,model_path='different',dataset_checksums_sha256='new')), {})
+
     config=dict(batch_size=1,grad_accumulation_steps=4)
     context=dict(gpu='NVIDIA A40',total_vram_bytes=48*2**30,dataset_checksums_sha256='v2',
                  model_identity_sha256='model',settings=dict(lora_rank=32),torch_version='2.2.2')
