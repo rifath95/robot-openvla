@@ -8,9 +8,42 @@ from unittest.mock import patch
 import cloud.upload_training_dataset as upload_training_dataset
 from training import detached_run
 from data_tools.prepare_training_dataset import load_episodes, write_package_report, write_upload_checksums
+from simulation.panda_actions import action_contract
 
 
 class DatasetVersionTests(unittest.TestCase):
+    def camera_manifest(self, root, cameras):
+        entries = []
+        for split, camera in zip(('train', 'validation', 'test'), cameras):
+            episode = root / split; episode.mkdir()
+            (episode/'episode.json').write_text(json.dumps(dict(
+                camera=camera, action_contract=action_contract(camera=camera),
+                success=True, training_eligible=True, transition_count=1,
+                instruction='pick up the red cube and drop it in the blue bowl.')))
+            (episode/'replay.json').write_text(json.dumps(dict(
+                passed=True, episode_sha256='verified', replayed_transitions=1)))
+            (episode/'transitions.jsonl').write_text(json.dumps(dict(
+                index=1, executed=True, instruction='pick up the red cube and drop it in the blue bowl.',
+                observation='image.png'))+'\n')
+            entries.append(dict(id=split, split=split, episode=str(episode), passed=True))
+        manifest = root/'manifest.json'
+        manifest.write_text(json.dumps(dict(episodes=entries)))
+        return manifest
+
+    def test_bowl_camera_exports_and_preserves_contract(self):
+        with tempfile.TemporaryDirectory() as folder, patch(
+                'data_tools.prepare_training_dataset.fingerprint', return_value='verified'):
+            episodes = load_episodes(self.camera_manifest(Path(folder), ['bowl_camera']*3),
+                                     verify_images=False)
+            self.assertEqual(episodes[0]['action_contract'], action_contract(camera='bowl_camera'))
+
+    def test_export_rejects_mixed_camera_contracts(self):
+        with tempfile.TemporaryDirectory() as folder, patch(
+                'data_tools.prepare_training_dataset.fingerprint', return_value='verified'):
+            manifest = self.camera_manifest(Path(folder), ['bowl_camera', 'workspace_camera', 'bowl_camera'])
+            with self.assertRaisesRegex(ValueError, 'same camera/action contract'):
+                load_episodes(manifest, verify_images=False)
+
     def test_manifest_cannot_reassign_a_predeclared_split(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)

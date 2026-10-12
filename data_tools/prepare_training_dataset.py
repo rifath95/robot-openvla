@@ -26,10 +26,13 @@ def load_episodes(manifest, *, verify_images=True):
         if scenario.get('id',entry['id']) != entry['id'] or scenario.get('split',entry['split']) != entry['split']:
             raise ValueError('Source manifest changes the predeclared episode identity or split')
         replay = json.loads((path/'replay.json').read_text())
-        if (metadata['action_contract'] != action_contract() or not metadata['success']
+        contract = metadata['action_contract']
+        if (contract != action_contract(camera=metadata.get('camera', 'workspace_camera')) or not metadata['success']
                 or not metadata['training_eligible'] or not replay['passed']
                 or replay['episode_sha256'] != fingerprint(path)):
             raise ValueError(f'Unverified or incompatible episode: {path}')
+        if episodes and contract != episodes[0]['action_contract']:
+            raise ValueError('All episodes in a training bundle must use the same camera/action contract')
         rows = [json.loads(line) for line in (path/'transitions.jsonl').read_text().splitlines()]
         if len(rows) != metadata['transition_count'] or len(rows) != replay['replayed_transitions']:
             raise ValueError('Transition count mismatch')
@@ -44,6 +47,7 @@ def load_episodes(manifest, *, verify_images=True):
                     if im.mode != 'RGB' or im.size != (640, 480):
                         raise ValueError('Unexpected camera image')
         episodes.append(dict(id=entry['id'], split=entry['split'], path=path, rows=rows,
+                             action_contract=contract,
                              fingerprint=replay['episode_sha256'],
                              cohort=entry.get('cohort', 'legacy'),
                              combination=(metadata.get('scenario') or {}).get('combination')))
@@ -136,7 +140,7 @@ def build(manifest, output):
     builder.download_and_prepare(download_config=tfds.download.DownloadConfig(try_download_gcs=False))
     (output/'dataset_statistics.json').write_text(json.dumps(statistics,indent=2)+'\n')
     report=dict(schema_version=1, dataset_name='panda_pick_place', action_key=CONVENTION_ID,
-        builder_directory='rlds/panda_pick_place/1.0.0',action_contract=action_contract(),
+        builder_directory='rlds/panda_pick_place/1.0.0',action_contract=episodes[0]['action_contract'],
         normalization='Training-only q01/q99, clipped to [-1,1]; gripper stays [0,1].',
         source_manifest_sha256=hashlib.sha256(Path(manifest).read_bytes()).hexdigest(),
         episodes=[dict(id=e['id'],split=e['split'],transitions=len(e['rows']),sha256=e['fingerprint'],
