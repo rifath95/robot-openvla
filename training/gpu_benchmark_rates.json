@@ -36,6 +36,11 @@
       "gpu": "NVIDIA RTX A5000",
       "hourly_rate_usd": 0.27,
       "confirmed_on": "2026-10-12"
+    },
+    "20261012_040855_542920": {
+      "gpu": "NVIDIA A40",
+      "hourly_rate_usd": 0.59,
+      "confirmed_on": "2026-10-12"
     }
   }
 }
