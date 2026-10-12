@@ -65,11 +65,11 @@ def bootstrap_script(runtime, adapter=None):
     # All variable arguments are shell-quoted; pasted SSH text is never a shell command.
     model_setup = ''
     model_args = ''
+    identity_args=' --adapter '+shlex.quote(str(adapter)) if adapter else ''
     if adapter:
         # Merge on container disk, leaving the persistent base and adapter intact.
         model_setup = f'''test -x /opt/openvla/bin/python || {{ echo 'Use the training Docker template for adapter evaluation.'; exit 1; }}
 test -f {shlex.quote(str(adapter) + '/adapter_config.json')} || {{ echo 'Adapter checkpoint not found on the attached volume.'; exit 1; }}
-bash scripts/cloud_stop.sh
 merged_dir="$(mktemp -d /root/panda-evaluation-XXXXXXXX)"
 /opt/openvla/bin/python -m training.merge_adapter --base-model /workspace/openvla-7b --adapter {shlex.quote(str(adapter))} --output "$merged_dir/model"
 '''
@@ -81,7 +81,13 @@ else
   git -C /root/robot-openvla pull --ff-only
 fi
 cd /root/robot-openvla
+if python3 -m cloud.server_reuse{identity_args}; then
+  echo 'Matching checkpoint already loaded; reusing its server and remaining runtime.'
+  exit 0
+fi
+bash scripts/cloud_stop.sh
 {model_setup}bash scripts/cloud_start.sh {int(runtime)}{model_args}
+python3 -m cloud.server_reuse{identity_args} --record
 '''
 
 
@@ -123,6 +129,7 @@ def main():
     parser.add_argument('--server-runtime-seconds', type=int, default=1800, help='Server wall limit AFTER readiness; does not stop pod billing')
     parser.add_argument('--startup-timeout-seconds', type=int, default=600, help='Wait for loading after dependency setup')
     parser.add_argument('--setup-only', action='store_true', help='Keep server/tunnel ready without opening the simulator')
+    parser.add_argument('--stop-server', action='store_true', help='Stop the cloud model server without running a trial')
     args = parser.parse_args()
     if any(value <= 0 for value in (args.steps, args.max_consecutive_rejections, args.max_runtime_seconds, args.server_runtime_seconds, args.startup_timeout_seconds)):
         parser.error('Step counts and time limits must be positive')
@@ -130,6 +137,9 @@ def main():
         host, port, key = parse_ssh(args.ssh or input('Paste SSH over exposed TCP command: '), args.key)
     except ValueError as exc:
         parser.error(str(exc))
+    ssh = ssh_arguments(host, port, key)
+    if args.stop_server:
+        return subprocess.run(ssh + ['bash /root/robot-openvla/scripts/cloud_stop.sh'],check=False).returncode
     if not args.setup_only and not (ROOT / '.venv/bin/python').is_file():
         parser.error('The local simulator .venv is missing; prepare the Mac simulation environment first')
     with socket.socket() as probe:
@@ -159,7 +169,8 @@ def main():
             if check.returncode:
                 raise RuntimeError('The cloud server exited during loading; see its log below.')
         health = wait_for_server(tunnel, args.startup_timeout_seconds, check_liveness)
-        print(f"Ready. Model loading took {health.get('model_load_seconds')} seconds.", flush=True)
+        print(f"Ready. Server's recorded model loading time: {health.get('model_load_seconds')} seconds.", flush=True)
+        print('Ending this local session leaves the cloud model loaded. Use --stop-server to unload explicitly. The existing server runtime limit still applies.',flush=True)
         startup_info = dict(health.get('startup_info', {}))
         startup_info.setdefault('model_load_seconds', health.get('model_load_seconds'))
         if args.adapter:
@@ -192,7 +203,7 @@ def main():
             next_seed=next(pending_seeds,None)
             if next_seed is None:
                 while True:
-                    answer=input('Trial finished. Model stays loaded. Enter repeats this seed; type a seed for another scene; q ends the session: ').strip()
+                    answer=input('Trial finished. Model stays loaded. Enter repeats this seed; type a seed for another scene; q disconnects and keeps the server loaded: ').strip()
                     if answer.lower() in ('q','quit','exit'):
                         return 0
                     if not answer:
@@ -217,10 +228,7 @@ def main():
         return 1
     finally:
         if remote_started:
-            try:
-                subprocess.run(ssh + ['if [ -f /root/robot-openvla/scripts/cloud_stop.sh ]; then bash /root/robot-openvla/scripts/cloud_stop.sh; fi'], timeout=20, check=False)
-            except (OSError, subprocess.TimeoutExpired):
-                print('Could not confirm server shutdown. Check the pod portal.', flush=True)
+            print('Disconnected locally; cloud model server was left running until its runtime limit or explicit stop.',flush=True)
         if tunnel is not None:
             tunnel.terminate()
             try:

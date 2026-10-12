@@ -31,7 +31,7 @@ class SessionTests(unittest.TestCase):
             trials=[c for c in commands if 'inference.remote_loop' in c]
             self.assertEqual([c[c.index('--scene-seed')+1] for c in trials],['0','1','2','3','3'])
             self.assertEqual(sum('input' in c.kwargs for c in run.call_args_list),1)
-            self.assertEqual(sum('cloud_stop.sh' in c[-1] for c in commands),1)
+            self.assertEqual(sum('cloud_stop.sh' in c[-1] for c in commands),0)
             self.assertEqual(ready.call_count,5)
             tunnel.terminate.assert_called_once()
 
@@ -41,6 +41,8 @@ class SessionTests(unittest.TestCase):
         self.assertIn('mktemp -d /root/panda-evaluation-', script)
         self.assertIn('bash scripts/cloud_start.sh 1800 "$merged_dir/model" panda_grasp_v1', script)
         self.assertLess(script.index('training.merge_adapter'), script.index('bash scripts/cloud_start.sh'))
+        self.assertLess(script.index('cloud.server_reuse'),script.index('bash scripts/cloud_stop.sh'))
+        self.assertIn('--record',script)
 
     def test_parses_direct_tcp_and_uses_explicit_private_key(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -79,7 +81,7 @@ class SessionTests(unittest.TestCase):
             result = cloud_session.wait_for_server(tunnel, 5)
         self.assertTrue(result['model_loaded'])
 
-    def test_setup_only_opens_tunnel_and_cleans_up_on_interrupt(self):
+    def test_setup_only_disconnect_keeps_server_and_closes_tunnel(self):
         with tempfile.TemporaryDirectory() as directory:
             key = Path(directory) / 'key'
             key.touch()
@@ -97,8 +99,19 @@ class SessionTests(unittest.TestCase):
             payload = run.call_args_list[1].kwargs['input'].decode()
             self.assertIn('git clone https://github.com/rifath95/robot-openvla.git', payload)
             self.assertIn('bash scripts/cloud_start.sh 1800', payload)
-            self.assertIn('cloud_stop.sh', run.call_args_list[-1].args[0][-1])
+            self.assertFalse(any('cloud_stop.sh' in call.args[0][-1] for call in run.call_args_list))
             tunnel.terminate.assert_called_once()
+
+    def test_explicit_stop_only_does_not_bootstrap_or_open_tunnel(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            key=Path(tmp)/'key';key.touch()
+            with patch('sys.argv',['cloud_session.py','--ssh',f'ssh root@host -i {key}','--stop-server']), \
+                 patch('cloud.cloud_session.subprocess.run') as run, \
+                 patch('cloud.cloud_session.subprocess.Popen') as popen:
+                run.return_value.returncode=0
+                self.assertEqual(cloud_session.main(),0)
+                self.assertIn('cloud_stop.sh',run.call_args.args[0][-1])
+                run.assert_called_once();popen.assert_not_called()
 
 
 if __name__ == '__main__':

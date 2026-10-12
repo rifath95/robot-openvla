@@ -55,8 +55,12 @@ Click the simulator and press **Space** to start/pause/resume. **Esc** ends the
 local trial. After a trial, the launcher stays open with the model loaded; press
 **Enter in the terminal** to run another trial without loading again.
 
-**Ctrl+C in the launcher terminal** ends the session, stops the project server,
-and closes the tunnel. It does **not** stop or terminate the rented pod. Finish
+**Ctrl+C or `q` at the trial prompt** disconnects locally and closes the tunnel;
+the model server stays loaded until explicitly stopped or its runtime expires.
+Run the same launch command to reconnect: a matching ready checkpoint is reused
+without another merge/load. A different checkpoint replaces the server.
+Use `cloud_session.py --ssh 'YOUR_SSH_COMMAND' --stop-server` to unload explicitly.
+Neither disconnecting nor stopping the server stops the rented pod. Finish
 by stopping/terminating it in RunPod. Model weights on the independent Global
 volume remain. Local artifacts are under `outputs/remote_loop_*`; the cloud
 server log is `/root/robot-openvla/outputs/cloud_server.log`.
@@ -76,6 +80,11 @@ Optional examples:
 
 # A shorter first trial.
 .venv/bin/python cloud_session.py --steps 10
+
+# Keep one loaded bowl checkpoint across several starting scenes.
+# Add the usual --ssh and --adapter arguments.
+.venv/bin/python cloud_session.py --task bowl --scene-seeds 0 1 2 \
+  --instruction 'pick up the red cube and drop it in the blue bowl.'
 ```
 
 Changing only Mac loop code does not require rebuilding the dependency image.
