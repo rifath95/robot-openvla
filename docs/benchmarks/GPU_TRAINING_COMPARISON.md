@@ -431,7 +431,7 @@ For report folders already downloaded, the standalone refresh command remains av
 ```bash
 .venv-training/bin/python -m analysis.summarize_gpu_benchmarks \
   --root outputs/gpu-benchmarks \
-  --output docs/benchmarks/GPU_BATCH_COMPARISON.md
+  --output docs/benchmarks/GPU_TRAINING_COMPARISON.md
 ```
 
 Historical training memory usage alone does not establish maximum batch capacity.

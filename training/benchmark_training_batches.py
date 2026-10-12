@@ -159,7 +159,7 @@ def main():
         (root/'benchmark_metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')
         write_report(root,results,mode,args.max_batch)
         from analysis.summarize_gpu_benchmarks import comparison
-        comparison(args.output_root,args.output_root/'GPU_BATCH_COMPARISON.md')
+        comparison(args.output_root,args.output_root/'GPU_TRAINING_COMPARISON.md')
     print(f'Benchmark outputs: {root}',flush=True)
     print('This benchmark alone does not stop the pod; the Mac launcher handles download and automatic stop when enabled.',flush=True)
     if (os.environ.get('OPENVLA_TRAINING_STACK')=='blackwell'

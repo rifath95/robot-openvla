@@ -16,7 +16,7 @@ For the planned A40 microbatch speed/memory comparison, see
 [TRAINING_BATCHES.md](docs/training/TRAINING_BATCHES.md). GPU benchmarking is pending; the
 existing training batch configuration is unchanged.
 The cross-GPU capacity and throughput table is in
-[GPU_BATCH_COMPARISON.md](docs/benchmarks/GPU_BATCH_COMPARISON.md), including the measured A40
+[GPU_TRAINING_COMPARISON.md](docs/benchmarks/GPU_TRAINING_COMPARISON.md), including the measured A40
 capacity and throughput. Use `benchmark_cloud_session.py` on the Mac to run the
 cloud benchmark, download reports and automatically refresh the workspace copy.
 For batch-one prediction latency, the Mac/cloud timing breakdown, and estimated

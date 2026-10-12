@@ -2,25 +2,39 @@
 
 One request = one RGB image + instruction → one seven-value action. Inference batch size is 1.
 
-Timings are seconds. The first 5 recorded requests per trial are excluded as warmup. Short trials without remaining samples show missing timings. These are observed simulator runs, not identical-input hardware benchmarks; model/checkpoint, instruction, network, Mac, storage and software differences can affect results. Rejected/held actions remain prediction requests.
+Timings are seconds. The first 5 recorded requests per trial are excluded as warmup. Short trials without remaining samples show missing timings. These are observed simulator runs, not identical-input hardware benchmarks; model/checkpoint, instruction, network, Mac, storage and software differences can affect results. Rejected/held actions remain prediction requests. Benchmark follow-ups use 5 warmup requests and 20 measured requests, both on the cloud and from the Mac when connected. Cloud-loopback RTT is never reported as Mac latency. When Mac measurements exist, the server breakdown uses those same responses to keep RTT and server timing paired; otherwise it uses the cloud samples. Both raw sets are retained.
+
+
+## Average by comparable GPU configuration
+
+Means are weighted by measured request counts, not an average of rounded table values. Groups separate GPU/VRAM/ECC, recorded software package versions, precision/attention, model/checkpoint, benchmark image and simulator versus benchmark. Historical unknown settings stay explicit. Different live simulator scenes/instructions still vary within a group. Local timing is Mac-dependent. Each metric includes only runs that recorded it; cloud-only runs contribute server timing but not Mac RTT or simulator time. The per-run table below preserves each observation.
+
+| GPU | VRAM GiB | ECC | Type | PyTorch / Transformers | Model/checkpoint group | Runs | Measured requests | Mean cycle s | Mean request RTT s | Mean prediction s | USD/hour | 100-cycle/request USD | Cost basis |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| NVIDIA A40 | 44.4 | Not recorded | Simulator | 2.2.2+cu121 / 4.40.1 | base OpenVLA | 3 | 190 | 1.440 | 0.936 | 0.309 | 0.59 | 0.0236 | Simulator cycles |
+| NVIDIA A40 | 44.4 | Not recorded | Simulator | 2.2.2+cu121 / 4.40.1 | checkpoint_000020 | 1 | 82 | 1.630 | 1.123 | 0.331 | 0.59 | 0.0267 | Simulator cycles |
+| NVIDIA A40 | 47.4 | Not recorded | Simulator | 2.2.2+cu121 / 4.40.1 | checkpoint_000500 | 1 | 95 | 1.561 | 1.053 | 0.321 | 0.59 | 0.0256 | Simulator cycles |
+| NVIDIA A40 | 44.4 | Not recorded | Simulator | 2.2.2+cu121 / 4.40.1 | checkpoint_001000 | 2 | 97 | 1.694 | 1.187 | 0.330 | 0.59 | 0.0278 | Simulator cycles |
+| NVIDIA A40 | 44.4 | Not recorded | Simulator | 2.2.2+cu121 / 4.40.1 | checkpoint_003000 | 1 | 95 | 1.411 | 0.905 | 0.295 | 0.59 | 0.0231 | Simulator cycles |
+| NVIDIA A40 | 44.4 | Not recorded | Simulator | 2.2.2+cu121 / 4.40.1 | checkpoint_005000 | 1 | 95 | 1.421 | 0.920 | 0.292 | 0.59 | 0.0233 | Simulator cycles |
 
 ## Full cycle and estimated cost for 100 steps
 
-| GPU | Run | Measured/all requests | Full cycle s | Request RTT s | Request p95 s | Model prediction s | USD/hour | 100 cycles s | 100 active cycles USD | 100 cycles + preparation/loading USD |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| NVIDIA A40 | simulator_trial | 0/5 | — | — | — | — | 0.59 | — | — | — |
-| NVIDIA A40 | remote_loop_20261010_060952_21db409c | 95/100 | 1.464 | 0.960 | 1.196 | 0.319 | 0.59 | 146.4 | 0.0240 | 0.0345 |
-| NVIDIA A40 | remote_loop_20261010_072519_5186f692 | 95/100 | 1.416 | 0.911 | 0.981 | 0.299 | 0.59 | 141.6 | 0.0232 | 0.0301 |
-| NVIDIA A40 | remote_loop_20261010_133609_315d8199 | 82/87 | 1.630 | 1.123 | 1.341 | 0.331 | 0.59 | 163.0 | 0.0267 | 0.0276 |
-| NVIDIA A40 | remote_loop_20261011_003638_4fe3675c | 95/100 | 1.561 | 1.053 | 1.323 | 0.321 | 0.59 | 156.1 | 0.0256 | 0.0265 |
-| NVIDIA A40 | remote_loop_20261011_021037_83d8c4a3 | 40/45 | 1.450 | 0.944 | 1.034 | 0.308 | 0.59 | 145.0 | 0.0238 | 0.0248 |
-| NVIDIA A40 | remote_loop_20261011_023950_e87092ab | 57/62 | 1.865 | 1.357 | 2.508 | 0.346 | 0.59 | 186.5 | 0.0306 | 0.0315 |
-| NVIDIA A40 | remote_loop_20261011_130030_90592976 | 95/100 | 1.411 | 0.905 | 1.030 | 0.295 | 0.59 | 141.1 | 0.0231 | 0.0240 |
-| NVIDIA A40 | remote_loop_20261011_130522_3943abad | 95/100 | 1.421 | 0.920 | 1.045 | 0.292 | 0.59 | 142.1 | 0.0233 | 0.0243 |
-| NVIDIA RTX A5000 | Not measured | 0 | — | — | — | — | 0.27 | — | — | — |
-| NVIDIA RTX A6000 | Not measured | 0 | — | — | — | — | 0.59 | — | — | — |
+| GPU | Run | Measured/all requests | Full cycle s | Request RTT s | Request p95 s | Model prediction s | USD/hour | 100 cycles s | 100 active cycles USD | 100 cycles + preparation/loading USD | Type |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| NVIDIA A40 | simulator_trial | 0/5 | — | — | — | — | 0.59 | — | — | — | Simulator |
+| NVIDIA A40 | remote_loop_20261010_060952_21db409c | 95/100 | 1.464 | 0.960 | 1.196 | 0.319 | 0.59 | 146.4 | 0.0240 | 0.0345 | Simulator |
+| NVIDIA A40 | remote_loop_20261010_072519_5186f692 | 95/100 | 1.416 | 0.911 | 0.981 | 0.299 | 0.59 | 141.6 | 0.0232 | 0.0301 | Simulator |
+| NVIDIA A40 | remote_loop_20261010_133609_315d8199 | 82/87 | 1.630 | 1.123 | 1.341 | 0.331 | 0.59 | 163.0 | 0.0267 | 0.0276 | Simulator |
+| NVIDIA A40 | remote_loop_20261011_003638_4fe3675c | 95/100 | 1.561 | 1.053 | 1.323 | 0.321 | 0.59 | 156.1 | 0.0256 | 0.0265 | Simulator |
+| NVIDIA A40 | remote_loop_20261011_021037_83d8c4a3 | 40/45 | 1.450 | 0.944 | 1.034 | 0.308 | 0.59 | 145.0 | 0.0238 | 0.0248 | Simulator |
+| NVIDIA A40 | remote_loop_20261011_023950_e87092ab | 57/62 | 1.865 | 1.357 | 2.508 | 0.346 | 0.59 | 186.5 | 0.0306 | 0.0315 | Simulator |
+| NVIDIA A40 | remote_loop_20261011_130030_90592976 | 95/100 | 1.411 | 0.905 | 1.030 | 0.295 | 0.59 | 141.1 | 0.0231 | 0.0240 | Simulator |
+| NVIDIA A40 | remote_loop_20261011_130522_3943abad | 95/100 | 1.421 | 0.920 | 1.045 | 0.292 | 0.59 | 142.1 | 0.0233 | 0.0243 | Simulator |
+| NVIDIA RTX A5000 | Not measured | 0 | — | — | — | — | 0.27 | — | — | — | — |
+| NVIDIA RTX A6000 | Not measured | 0 | — | — | — | — | 0.59 | — | — | — | — |
 
-Cost = estimated seconds ÷ 3600 × user-confirmed hourly rate. 100-cycle estimates extrapolate the measured mean, including partial trials; they do not assert task success. Setup-inclusive cost adds recorded model preparation and loading once. It excludes image deployment, adapter merge/export unless covered by recorded preparation, other setup, manual pauses, idle time, shutdown delays and storage charges. Rates are comparison inputs, not historical billing records. Multiple trials can reuse one model loading. Missing measurements stay missing.
+Cost = estimated seconds ÷ 3600 × user-confirmed hourly rate. 100-cycle estimates extrapolate the measured mean, including partial trials; they do not assert task success. Setup-inclusive cost adds recorded model preparation and loading once. It excludes image deployment, adapter merge/export unless covered by recorded preparation, other setup, manual pauses, idle time, shutdown delays and storage charges. Rates are comparison inputs, not historical billing records. Multiple trials can reuse one model loading. For benchmark rows without simulator movements, 100-cycle columns mean 100 requests only: local IK/movement/capture time is unmeasured, not zero. Cloud-only rows cannot estimate Mac RTT costs. Missing measurements stay missing.
 
 ## Remote request breakdown — averages in seconds
 

@@ -50,7 +50,7 @@ Use them from the repository root as before. Secondary tools use module commands
 .venv-training/bin/python -m analysis.summarize_gpu_benchmarks
 ```
 
-The GPU comparison is now [docs/benchmarks/GPU_BATCH_COMPARISON.md](benchmarks/GPU_BATCH_COMPARISON.md).
+The GPU comparison is now [docs/benchmarks/GPU_TRAINING_COMPARISON.md](benchmarks/GPU_TRAINING_COMPARISON.md).
 The cloud benchmark synchronizer and report generator update this new location
 automatically. Recorded per-run reports remain under `outputs/gpu-benchmarks/`.
 

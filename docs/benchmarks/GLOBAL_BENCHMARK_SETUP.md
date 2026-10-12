@@ -99,7 +99,7 @@ stop after completion, failure or timeout. An API/network failure can prevent
 stopping; confirm the stopped state in RunPod.
 
 If the Mac stays connected, reports download automatically to
-`outputs/gpu-benchmarks` and refresh the local `docs/benchmarks/GPU_BATCH_COMPARISON.md`. If it
+`outputs/gpu-benchmarks` and refresh the local `docs/benchmarks/GPU_TRAINING_COMPARISON.md`. If it
 sleeps or disconnects, the cloud supervisor continues, saves reports and requests
 a stop. Launch/resume a pod attached to the same volume and fetch later with:
 

@@ -210,7 +210,7 @@ def comparison(root, output, gpu_filter=None):
         'For report folders already downloaded, the standalone refresh command remains available:', '',
         '```bash','.venv-training/bin/python -m analysis.summarize_gpu_benchmarks \\',
         '  --root outputs/gpu-benchmarks \\',
-        '  --output docs/benchmarks/GPU_BATCH_COMPARISON.md','```','',
+        '  --output docs/benchmarks/GPU_TRAINING_COMPARISON.md','```','',
         'Historical training memory usage alone does not establish maximum batch capacity.']
     output.parent.mkdir(parents=True,exist_ok=True)
     output.write_text('\n'.join(lines)+'\n')
@@ -220,7 +220,7 @@ def comparison(root, output, gpu_filter=None):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--root',type=Path,default=Path('outputs/gpu-benchmarks'))
-    p.add_argument('--output',type=Path,default=PROJECT_ROOT / 'docs/benchmarks/GPU_BATCH_COMPARISON.md')
+    p.add_argument('--output',type=Path,default=PROJECT_ROOT / 'docs/benchmarks/GPU_TRAINING_COMPARISON.md')
     args=p.parse_args()
     count=comparison(args.root,args.output)
     print(f'Wrote {args.output}: {count} measured benchmark runs')

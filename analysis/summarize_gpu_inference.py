@@ -39,20 +39,30 @@ def percentile(values, fraction):
     return values[lo] + (values[hi]-values[lo])*(index-lo)
 
 
-def measurement(folder, warmup=5):
-    startup = read_json(folder/'startup_info.json')
-    rows = [read_json(p) for p in sorted(folder.glob('step_*/execution.json'))]
+def measurement(folder, warmup=5, benchmark=None):
+    startup = benchmark['startup_info'] if benchmark else read_json(folder/'startup_info.json')
+    cloud_only=bool(benchmark and not benchmark.get('mac_requests'))
+    rows = ((benchmark.get('mac_requests') or benchmark['cloud_requests']) if benchmark else
+            [read_json(p) for p in sorted(folder.glob('step_*/execution.json'))])
     if not rows or not startup.get('gpu', {}).get('name'):
         return None
     # Only complete prediction requests qualify; rejected IK actions still qualify.
     rows = [r for r in rows if number((r.get('request_timings_seconds') or {}).get('request_round_trip'))]
     if not rows:
         return None
-    measured = rows[warmup:]
+    measured = [r for r in rows if not r['warmup']] if benchmark else rows[warmup:]
+    if cloud_only:
+        # Cloud-loopback RTT is not Mac-to-cloud latency. Preserve server stages only.
+        measured=[dict(r,request_timings_seconds={}) for r in measured]
     local = [('timings_seconds', key, 1) for key, _ in LOCAL]
     request = average(measured, 'request_timings_seconds', 'request_round_trip')
     cycle = average(measured, 'timings_seconds', 'cycle')
     return dict(folder=folder, startup=startup, count=len(rows), measured=len(measured),
+                samples=measured,
+                kind='Benchmark (cloud only)' if cloud_only else 'Benchmark (Mac)' if benchmark else 'Simulator',
+                model_identity=benchmark['model_identity'] if benchmark else
+                    startup.get('adapter_checkpoint') or 'base OpenVLA',
+                fixture_identity=benchmark.get('image_sha256') if benchmark else 'live simulator',
                 request=request, cycle=cycle,
                 p95=percentile([(r.get('request_timings_seconds') or {}).get('request_round_trip')
                                 for r in measured], .95),
@@ -88,37 +98,81 @@ def comparison(root, output, warmup=5):
     rates = read_json(PROJECT_ROOT/'inference/gpu_inference_rates.json').get('gpus', {})
     runs = [m for path in sorted(root.rglob('startup_info.json'))
             if (m := measurement(path.parent, warmup)) is not None]
+    runs += [m for path in sorted(root.rglob('sessions/*/inference.json'))
+             if (m := measurement(path.parent,warmup,read_json(path))) is not None]
     lines = ['# GPU inference comparison', '',
              'One request = one RGB image + instruction → one seven-value action. Inference batch size is 1.', '',
              f'Timings are seconds. The first {warmup} recorded requests per trial are excluded as warmup. '
              'Short trials without remaining samples show missing timings. These are observed simulator runs, '
              'not identical-input hardware benchmarks; model/checkpoint, instruction, network, Mac, storage and '
-             'software differences can affect results. Rejected/held actions remain prediction requests.', '',
-             '## Full cycle and estimated cost for 100 steps', '']
+             'software differences can affect results. Rejected/held actions remain prediction requests. '
+             'Benchmark follow-ups use 5 warmup requests and 20 measured requests, both on the cloud and '
+             'from the Mac when connected. Cloud-loopback RTT is never reported as Mac latency. '
+             'When Mac measurements exist, the server breakdown uses those same responses to keep '
+             'RTT and server timing paired; otherwise it uses the cloud samples. Both raw sets are retained.', '']
+    groups={}
+    for m in runs:
+        s=m['startup'];gpu=s['gpu']
+        key=(gpu['name'],round(gpu.get('total_vram_bytes',0)/2**30,1),
+             s.get('gpu_ecc',{}).get('current','Not recorded'),s.get('pytorch_version','Not recorded'),
+             s.get('transformers_version','Not recorded'),s.get('dtype','Not recorded'),
+             s.get('attention','Not recorded'),m['model_identity'],m['fixture_identity'],
+             'Benchmark' if m['kind'].startswith('Benchmark') else 'Simulator',
+             json.dumps(s.get('software_stack',{}).get('packages',{}),sort_keys=True))
+        groups.setdefault(key,[]).append(m)
+    def pooled(group, category, key):
+        values=[(row.get(category) or {}).get(key) for m in group for row in m['samples']]
+        values=[value for value in values if number(value)]
+        return mean(values) if values else None
+    summary=[]
+    for key,group in groups.items():
+        cycle=pooled(group,'timings_seconds','cycle')
+        request=pooled(group,'request_timings_seconds','request_round_trip')
+        prediction=pooled(group,'server_timings_seconds','model_inference')
+        rate=rates.get(key[0],{}).get('hourly_rate_usd');duration=cycle if number(cycle) else request
+        cost=100*duration/3600*rate if number(duration) and number(rate) else None
+        model=Path(key[7]).name if key[7]!='base OpenVLA' and key[9]=='Simulator' else key[7][:16]
+        summary.append([key[0],key[1],key[2],key[9],f'{key[3]} / {key[4]}',model,
+                        len(group),sum(m['measured'] for m in group),fmt(cycle),fmt(request),fmt(prediction),
+                        fmt(rate,2),fmt(cost,4),'Simulator cycles' if number(cycle) else 'Requests only'])
+    lines += ['', '## Average by comparable GPU configuration', '',
+              'Means are weighted by measured request counts, not an average of rounded table values. '
+              'Groups separate GPU/VRAM/ECC, recorded software package versions, precision/attention, model/checkpoint, '
+              'benchmark image and simulator versus benchmark. Historical unknown settings stay explicit. '
+              'Different live simulator scenes/instructions still vary within a group. Local timing is Mac-dependent. '
+              'Each metric includes only runs that recorded it; cloud-only runs contribute server timing '
+              'but not Mac RTT or simulator time. The per-run table below preserves each observation.', '']
+    lines += table(['GPU','VRAM GiB','ECC','Type','PyTorch / Transformers','Model/checkpoint group',
+                    'Runs','Measured requests','Mean cycle s','Mean request RTT s','Mean prediction s',
+                    'USD/hour','100-cycle/request USD','Cost basis'],summary)
+    lines += ['', '## Full cycle and estimated cost for 100 steps', '']
     overview = []
     for m in runs:
         s=m['startup']; gpu=s['gpu']['name']; rate=rates.get(gpu, {}).get('hourly_rate_usd')
         rate=rate if number(rate) and rate>0 else None
-        active=100*m['cycle'] if number(m['cycle']) else None
+        duration=m['cycle'] if number(m['cycle']) else m['request']
+        active=100*duration if number(duration) else None
         setup=s.get('model_preparation_seconds'); load=s.get('model_load_seconds')
         total=active+setup+load if all(number(v) for v in (active,setup,load)) else None
         overview.append([gpu,m['folder'].name,f'{m["measured"]}/{m["count"]}',fmt(m['cycle']),
                          fmt(m['request']),fmt(m['p95']),fmt(m['remote']['model_inference']),
                          fmt(rate,2),fmt(active,1),fmt(active/3600*rate,4) if active is not None and rate else '—',
-                         fmt(total/3600*rate,4) if total is not None and rate else '—'])
+                         fmt(total/3600*rate,4) if total is not None and rate else '—',m['kind']])
     observed={m['startup']['gpu']['name'] for m in runs}
     for gpu, rate in rates.items():
         if gpu not in observed:
-            overview.append([gpu,'Not measured','0','—','—','—','—',fmt(rate['hourly_rate_usd'],2),'—','—','—'])
+            overview.append([gpu,'Not measured','0','—','—','—','—',fmt(rate['hourly_rate_usd'],2),'—','—','—','—'])
     lines += table(['GPU','Run','Measured/all requests','Full cycle s','Request RTT s','Request p95 s',
                     'Model prediction s','USD/hour','100 cycles s','100 active cycles USD',
-                    '100 cycles + preparation/loading USD'], overview)
+                    '100 cycles + preparation/loading USD','Type'], overview)
     lines += ['', 'Cost = estimated seconds ÷ 3600 × user-confirmed hourly rate. '
               '100-cycle estimates extrapolate the measured mean, including partial trials; they do not assert task success. '
               'Setup-inclusive cost adds recorded model preparation and loading once. It excludes image deployment, '
               'adapter merge/export unless covered by recorded preparation, other setup, manual pauses, idle time, '
               'shutdown delays and storage charges. Rates are comparison inputs, not historical billing records. '
-              'Multiple trials can reuse one model loading. Missing measurements stay missing.', '',
+              'Multiple trials can reuse one model loading. For benchmark rows without simulator movements, '
+              '100-cycle columns mean 100 requests only: local IK/movement/capture time is unmeasured, not zero. '
+              'Cloud-only rows cannot estimate Mac RTT costs. Missing measurements stay missing.', '',
               '## Remote request breakdown — averages in seconds', '']
     lines += table(['Run','Request RTT']+[label for _,label in REMOTE]+['Remaining server overhead','RTT minus server total'],
                    [[m['folder'].name,fmt(m['request'])]+[fmt(m['remote'][key]) for key,_ in REMOTE]+

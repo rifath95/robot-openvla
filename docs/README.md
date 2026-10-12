@@ -37,7 +37,7 @@ Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 ## GPU benchmarking
 
 - [Global-volume inputs for GPU benchmarks](benchmarks/GLOBAL_BENCHMARK_SETUP.md)
-- [GPU batch capacity and training throughput](benchmarks/GPU_BATCH_COMPARISON.md)
+- [GPU batch capacity and training throughput](benchmarks/GPU_TRAINING_COMPARISON.md)
 - [GPU inference latency, simulator timings, and 100-step cost](benchmarks/GPU_INFERENCE_COMPARISON.md)
 
 ## Audits and findings

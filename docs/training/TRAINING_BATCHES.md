@@ -23,6 +23,32 @@ LoRA adapters for measurement but do not save adapter checkpoint directories.
 Metrics, model information, validation results, logs and reports are still saved.
 The downloader also excludes adapter weights from older benchmark runs.
 
+The default supervised launcher now follows the training benchmark with a
+batch-one inference benchmark of the untouched base OpenVLA model. It takes one
+fixed image/instruction from the selected training bundle, runs **5 warmup requests**
+and **20 measured requests** on the cloud, and saves the raw request timings.
+While the Mac stays connected, it then sends the same image/instruction through
+an SSH tunnel for another **5 warmup + 20 measured requests**. These Mac timings
+measure actual request round trips; cloud loopback timing is never substituted.
+This test performs no robot movement, IK or local simulator rendering.
+When Mac timings are available, reported server averages use those same requests
+so the network/processing breakdown stays paired. Both raw sample sets remain saved.
+
+Both reports are refreshed: `docs/benchmarks/GPU_TRAINING_COMPARISON.md` and
+`docs/benchmarks/GPU_INFERENCE_COMPARISON.md`. The inference report begins with
+request-count-weighted means grouped by comparable GPU/model/software/fixture
+settings, followed by the individual runs and timing breakdowns. Benchmark
+100-step cost estimates cover requests only; full simulator-cycle costs still
+come from real simulator trials. Rates must be confirmed separately.
+
+If the Mac disconnects, the cloud still saves its 20 measured predictions and
+waits up to **120 seconds** for the optional Mac measurements, then continues
+to normal publication and the bounded download grace period before stopping.
+The same 60-minute outer deadline covers training, inference, and both windows.
+Use `--fetch-only` later to retrieve cloud-only measurements. This does not
+recreate the missing Mac latency measurements. The legacy `--keep-pod-running`
+path runs training benchmarks only, without this supervised inference follow-up.
+
 Normal fine-tuning keeps checkpoint saving enabled by default, including the
 5,000-update profile. Each launcher explicitly sets the checkpoint mode for its
 child process, so a benchmark's setting cannot carry into a normal training run.
@@ -30,8 +56,8 @@ This repository change does not modify a training process already running on a
 pod. No Docker rebuild is needed for future benchmarks using updated code.
 
 Local results go into `outputs/gpu-benchmarks/<cloud-run-timestamp>/` along with
-`outputs/gpu-benchmarks/GPU_BATCH_COMPARISON.md`. The top-level workspace
-`docs/benchmarks/GPU_BATCH_COMPARISON.md` is automatically rebuilt too, retaining all downloaded
+`outputs/gpu-benchmarks/GPU_TRAINING_COMPARISON.md`. The top-level workspace
+`docs/benchmarks/GPU_TRAINING_COMPARISON.md` is automatically rebuilt too, retaining all downloaded
 GPU runs. Per-GPU copies such as `A40_COMPARISON.md` are refreshed in that output
 folder too; A100 filenames include the actual variant name reported by CUDA.
 It is not necessary to manually copy results or edit the table. Each GPU run
@@ -154,7 +180,7 @@ decide total data exposure and validation cadence with the chosen effective batc
 
 ## Direct benchmark details
 
-The A40 capacity run is complete; see [GPU_BATCH_COMPARISON.md](../benchmarks/GPU_BATCH_COMPARISON.md). The previous training run used microbatch
+The A40 capacity run is complete; see [GPU_TRAINING_COMPARISON.md](../benchmarks/GPU_TRAINING_COMPARISON.md). The previous training run used microbatch
 1 with four accumulation steps: four individual image–instruction–action examples
 per parameter update, not four trajectories. Portal VRAM usage was about 27 GiB;
 PyTorch peak allocated memory was about 18 GiB. Allocator caching and other GPU
@@ -254,15 +280,15 @@ Use the same command on an A100 to measure that GPU independently. Reports recor
 its actual GPU name and VRAM; a batch limit measured on an A40 does not transfer
 automatically. Keep the cloud connection open and manually stop the pod when done.
 
-Every benchmark refreshes `/workspace/panda-training/batch-benchmarks/GPU_BATCH_COMPARISON.md`
+Every benchmark refreshes `/workspace/panda-training/batch-benchmarks/GPU_TRAINING_COMPARISON.md`
 from all saved benchmark runs on that volume. The workspace copy is
-[GPU_BATCH_COMPARISON.md](../benchmarks/GPU_BATCH_COMPARISON.md). Its refresh command and
+[GPU_TRAINING_COMPARISON.md](../benchmarks/GPU_TRAINING_COMPARISON.md). Its refresh command and
 throughput definition are included in the file. Download benchmark directories
 to `outputs/gpu-benchmarks` to regenerate the workspace comparison across GPUs.
 
 ## Compare training costs
 
-`docs/benchmarks/GPU_BATCH_COMPARISON.md` also estimates the time and GPU cost to process
+`docs/benchmarks/GPU_TRAINING_COMPARISON.md` also estimates the time and GPU cost to process
 10,000 examples at each run's recommended microbatch. Confirmed hourly rates
 are saved per run in `training/gpu_benchmark_rates.json`, so regenerating the
 report preserves them. Add a new run's actual rate after confirming it in

@@ -8,10 +8,34 @@ import unittest
 from unittest.mock import patch
 
 import cloud.benchmark_cloud_session as benchmark_cloud_session
-from cloud.benchmark_cloud_session import extract_reports,fetch_reports,remote_benchmark_script
+from cloud.benchmark_cloud_session import extract_reports,fetch_reports,remote_benchmark_script,measure_mac_inference
 
 
 class BenchmarkSyncTests(unittest.TestCase):
+    def test_mac_probe_averages_twenty_after_five_warmups_and_persists_before_stop(self):
+        run='20261012_120000_123456'
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory);session=root/'sessions'/run;session.mkdir(parents=True)
+            report=dict(live_session_dir=f'/workspace/panda-training/batch-benchmarks/sessions/{run}',
+                        server_port=1234,warmup_requests=5,measured_requests=20,
+                        image_png_base64='aW1hZ2U=',instruction='task')
+            path=session/'inference.json';path.write_text(json.dumps(report))
+            (session/'status.json').write_text('{"phase":"inference_ready"}')
+            response=dict(client_timings_seconds=dict(request_round_trip=1),timings_seconds=dict(model_inference=.3))
+            with patch('cloud.benchmark_cloud_session.socket.create_connection'), \
+                 patch('cloud.benchmark_cloud_session.subprocess.Popen') as launch, \
+                 patch('cloud.benchmark_cloud_session.subprocess.run') as persist, \
+                 patch('cloud.connection_client.request_prediction',return_value=response) as predict, \
+                 patch('analysis.summarize_gpu_inference.comparison'):
+                launch.return_value.poll.return_value=None
+                measure_mac_inference(['ssh','host'],root)
+            self.assertEqual(predict.call_count,25)
+            saved=json.loads(path.read_text())['mac_requests']
+            self.assertEqual(sum(not r['warmup'] for r in saved),20)
+            self.assertIn('inference_client_done',persist.call_args.args[0][-1])
+            self.assertEqual(len(json.loads(persist.call_args.kwargs['input'])['mac_requests']),25)
+            launch.return_value.terminate.assert_called_once()
+
     def archive(self,path,files):
         with tarfile.open(path,'w:gz') as archive:
             for name,data in files.items():
@@ -32,10 +56,10 @@ class BenchmarkSyncTests(unittest.TestCase):
                 f'{run}/batch_8_accum_1/model_info.json':json.dumps(dict(gpu='NVIDIA A40',total_vram_gib=47.4))})
             def download(command,stdout,check):stdout.write(archive.read_bytes())
             with patch('cloud.benchmark_cloud_session.subprocess.run',side_effect=download):
-                fetch_reports(['ssh','fake'],root/'outputs',root/'GPU_BATCH_COMPARISON.md')
-            self.assertIn('NVIDIA A40',(root/'GPU_BATCH_COMPARISON.md').read_text())
+                fetch_reports(['ssh','fake'],root/'outputs',root/'GPU_TRAINING_COMPARISON.md')
+            self.assertIn('NVIDIA A40',(root/'GPU_TRAINING_COMPARISON.md').read_text())
             self.assertTrue((root/'outputs'/run/'benchmark.json').exists())
-            self.assertTrue((root/'outputs/GPU_BATCH_COMPARISON.md').exists())
+            self.assertTrue((root/'outputs/GPU_TRAINING_COMPARISON.md').exists())
             self.assertTrue((root/'outputs/A40_COMPARISON.md').exists())
 
     def test_rejects_traversal_and_weights_before_writing(self):
@@ -69,7 +93,7 @@ class BenchmarkSyncTests(unittest.TestCase):
     def test_failed_download_keeps_existing_workspace_report(self):
         import subprocess
         with tempfile.TemporaryDirectory() as directory:
-            root=Path(directory);report=root/'GPU_BATCH_COMPARISON.md';report.write_text('previous results')
+            root=Path(directory);report=root/'GPU_TRAINING_COMPARISON.md';report.write_text('previous results')
             with patch('cloud.benchmark_cloud_session.subprocess.run',side_effect=subprocess.CalledProcessError(255,['ssh'])):
                 with self.assertRaises(subprocess.CalledProcessError):
                     fetch_reports(['ssh'],root/'outputs',report)

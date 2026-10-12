@@ -118,6 +118,8 @@ def watch(directory):
         path=directory/'status.json'
         if path.exists():
             status=json.loads(path.read_text())
+            if status['phase']=='inference_ready':
+                return 0
             if status['phase'] in ('awaiting_sync','stopping','finished'):
                 return 0 if status.get('outcome')=='completed' else 1
         time.sleep(1)
@@ -175,15 +177,12 @@ def main():
             p.error('Session directory must be inside the benchmark sessions directory')
         from training.pod_environment import recover_pod_environment
         pod_id,key=recover_pod_environment()
-        command=[sys.executable,'-u',"-m", 'training.benchmark_training_batches',
-                 '--dataset',args.dataset,'--max-batch',str(args.max_batch)]
-        if not args.controlled:command.append('--find-capacity')
+        command=[sys.executable,'-u',"-m", 'training.benchmark_pipeline',
+                 '--session-dir',str(directory),'--dataset',args.dataset,'--max-batch',str(args.max_batch)]
+        if args.controlled:command.append('--controlled')
         persistent_root=None
         if args.global_volume:
-            command=[sys.executable,'-u','-m','training.global_benchmark_storage',
-                     '--volume',str(args.global_volume),'--dataset',args.dataset,
-                     '--max-batch',str(args.max_batch)]
-            if args.controlled:command.append('--controlled')
+            command.extend(['--global-volume',str(args.global_volume)])
             persistent_root=args.global_volume/'panda-training/batch-benchmarks'
         return supervise(command,directory,pod_id,key,hard_limit=args.hard_limit_seconds,
                          sync_grace=args.sync_grace_seconds,persistent_root=persistent_root)
