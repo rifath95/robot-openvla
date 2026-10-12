@@ -47,20 +47,23 @@ def cost_section(runs):
         'Estimates below process **10,000 training examples**, using the recommended microbatch and measured throughput for each run.',
         'Time = examples ÷ examples/second. Cost = time in hours × hourly GPU rate.',
         'Rates are the user-confirmed prices for these particular pod runs, saved in `training/gpu_benchmark_rates.json`; they are not live quotes and are not assumed for later runs.', '',
-        '| GPU | Run | GPU rate USD/hour | Examples/s | Time for 10,000 examples | Training cost USD |',
-        '| --- | --- | --- | --- | --- | --- |']
+        '| GPU | ECC | Run | GPU rate USD/hour | Examples/s | Time for 10,000 examples | Training cost USD |',
+        '| --- | --- | --- | --- | --- | --- | --- |']
     priced=[]
     for gpu,path,best in runs:
+        metadata_path=path.parent/'benchmark_metadata.json'
+        metadata=json.loads(metadata_path.read_text()) if metadata_path.exists() else {}
+        ecc=ecc_label(metadata.get('gpu_ecc'))
         rate=rates.get(path.parent.name,{})
         hourly=rate.get('hourly_rate_usd') if rate.get('gpu')==gpu else None
         if best and isinstance(hourly,(int,float)) and math.isfinite(hourly) and hourly>0:
             seconds,cost=cost_estimate(best['examples_per_second'],hourly)
             minutes,remainder=divmod(round(seconds),60)
-            values=[gpu,path.parent.name,f'${hourly:.2f}',f"{best['examples_per_second']:.2f}",
+            values=[gpu,ecc,path.parent.name,f'${hourly:.2f}',f"{best['examples_per_second']:.2f}",
                     f'{minutes} min {remainder:02d} sec',f'${cost:.2f}']
             priced.append((cost,gpu,best['examples_per_second']))
         else:
-            values=[gpu,path.parent.name,'Not recorded' if hourly is None else f'${hourly:.2f}',
+            values=[gpu,ecc,path.parent.name,'Not recorded' if hourly is None else f'${hourly:.2f}',
                     f"{best['examples_per_second']:.2f}" if best else '—','—','—']
         lines.append('| '+' | '.join(cell(v) for v in values)+' |')
     if priced:

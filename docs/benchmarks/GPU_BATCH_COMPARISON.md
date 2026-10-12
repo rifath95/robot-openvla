@@ -24,14 +24,14 @@ Estimates below process **10,000 training examples**, using the recommended micr
 Time = examples ÷ examples/second. Cost = time in hours × hourly GPU rate.
 Rates are the user-confirmed prices for these particular pod runs, saved in `training/gpu_benchmark_rates.json`; they are not live quotes and are not assumed for later runs.
 
-| GPU | Run | GPU rate USD/hour | Examples/s | Time for 10,000 examples | Training cost USD |
-| --- | --- | --- | --- | --- | --- |
-| NVIDIA A40 | 20261011_054257_777818 | $0.59 | 3.74 | 44 min 35 sec | $0.44 |
-| NVIDIA H100 80GB HBM3 | 20261011_071323_382964 | $3.99 | 9.96 | 16 min 44 sec | $1.11 |
-| NVIDIA RTX A6000 | 20261011_095911_435567 | $0.59 | 0.76 | 220 min 37 sec | $2.17 |
-| NVIDIA H200 | 20261011_113403_097508 | $5.29 | 14.47 | 11 min 31 sec | $1.02 |
-| NVIDIA A100-SXM4-80GB | 20261011_115921_878754 | $1.79 | 8.33 | 20 min 00 sec | $0.60 |
-| NVIDIA A40 | 20261012_003826_853142 | $0.59 | 3.85 | 43 min 19 sec | $0.43 |
+| GPU | ECC | Run | GPU rate USD/hour | Examples/s | Time for 10,000 examples | Training cost USD |
+| --- | --- | --- | --- | --- | --- | --- |
+| NVIDIA A40 | Unknown | 20261011_054257_777818 | $0.59 | 3.74 | 44 min 35 sec | $0.44 |
+| NVIDIA H100 80GB HBM3 | Unknown | 20261011_071323_382964 | $3.99 | 9.96 | 16 min 44 sec | $1.11 |
+| NVIDIA RTX A6000 | Unknown | 20261011_095911_435567 | $0.59 | 0.76 | 220 min 37 sec | $2.17 |
+| NVIDIA H200 | Enabled | 20261011_113403_097508 | $5.29 | 14.47 | 11 min 31 sec | $1.02 |
+| NVIDIA A100-SXM4-80GB | Enabled | 20261011_115921_878754 | $1.79 | 8.33 | 20 min 00 sec | $0.60 |
+| NVIDIA A40 | Enabled | 20261012_003826_853142 | $0.59 | 3.85 | 43 min 19 sec | $0.43 |
 
 Lowest estimated training cost among these priced runs: **NVIDIA A40**, **$0.43 per 10,000 examples**.
 **NVIDIA H200** processes examples **3.76× faster** than NVIDIA A40, but costs **2.38× as much per example**.
