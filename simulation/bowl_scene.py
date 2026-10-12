@@ -9,6 +9,7 @@ import numpy as np
 
 from simulation.panda_actions import make_controller
 from simulation.panda_start_poses import initialize_start_pose
+from simulation.panda_controller import _euler_xyz_to_quat, _quat_multiply
 
 SCENE_PATH = (PROJECT_ROOT / 'simulation/scenes/scene_bowl.xml')
 CAMERA_NAME = 'bowl_camera'
@@ -49,7 +50,7 @@ def configure_grip(model):
 
 
 def randomize_scene(model, data, rng, *, max_attempts=100, full_pose=False,
-                    initial_gripper=None):
+                    initial_gripper=None, random_cube_yaw=False):
     """Reset objects and sample a collision-checked arm position and yaw.
 
     The fixed bowl's model body position is part of this scene's reset state.
@@ -72,11 +73,17 @@ def randomize_scene(model, data, rng, *, max_attempts=100, full_pose=False,
             continue
         model.body_pos[bowl] = [*bowl_xy, .254]
         data.qpos[address:address+3] = [*cube_xy, .271]
+        cube_yaw = float(rng.uniform(-np.pi,np.pi)) if random_cube_yaw else 0.0
+        data.qpos[address+3:address+7] = _euler_xyz_to_quat(0,0,cube_yaw)
         mujoco.mj_forward(model, data)
         env = SimpleNamespace(model=model, data=data, controller=make_controller(model, data))
         reference = env.controller.end_effector_pose()[1].copy()
+        # A square cube has four equivalent edge-aligned grasps. Choose the one
+        # nearest the home yaw, rather than unnecessarily twisting the wrist.
+        grasp_yaw = float((cube_yaw+np.pi/4) % (np.pi/2)-np.pi/4)
+        grasp_quaternion = _quat_multiply(_euler_xyz_to_quat(0,0,grasp_yaw),reference)
         # Both manipulation locations must have reachable downward-facing poses.
-        if not all(env.controller._solve_ik(np.array([*xy, z]), reference,
+        if not all(env.controller._solve_ik(np.array([*xy, z]), grasp_quaternion,
                                            max_iterations=400).converged
                    for xy, z in ((cube_xy, .274), (bowl_xy, .286))):
             continue
@@ -98,6 +105,10 @@ def randomize_scene(model, data, rng, *, max_attempts=100, full_pose=False,
                                 quaternion_wxyz=model.cam_quat[camera].tolist(),
                                 fovy_degrees=float(model.cam_fovy[camera])),
                     cube_position=data.xpos[cube_body].tolist(),
+                    requested_cube_yaw_radians=cube_yaw,
+                    cube_quaternion_wxyz=data.xquat[cube_body].tolist(),
+                    grasp_yaw_radians=grasp_yaw,
+                    grasp_quaternion_wxyz=grasp_quaternion.tolist(),
                     bowl_position=data.xpos[bowl].tolist(), bowl_radius_metres=BOWL_RADIUS,
                     bowl_floor_height_metres=.259, bowl_rim_height_metres=.314,
                     gripper_physics=grip, starting_pose=start,

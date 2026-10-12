@@ -27,6 +27,33 @@ Space starts/pauses/resumes; Esc or closing the viewer exits. Replay uses saved
 motion frames and restores that episode's bowl location. It needs no cloud model.
 The full index is `datasets/panda_pick_bowl/WATCH_TRAJECTORIES.md`.
 
+## Additional cube-rotation examples
+
+The original ten are preserved. Ten additional successful trajectories use
+random cube yaw sampled over ±180°, keeping the cube flat on the table.
+Their replay launchers are `train_009`–`train_014`, `validation_002`–`validation_003`,
+and `test_002`–`test_003`. For example:
+
+```bash
+.venv/bin/python datasets/panda_pick_bowl/train/train_009/replay.py
+.venv/bin/python datasets/panda_pick_bowl/validation/validation_002/replay.py
+```
+
+The grasp is aligned with a rotated cube edge. A cube has four equivalent yaw
+orientations, so the expert selects the equivalent edge-aligned grasp requiring
+the smallest yaw change from the home orientation. The requested cube yaw,
+settled cube quaternion, and grasp orientation are stored in each new episode.
+Initialization and action/state recordings preserve cube rotation in physics
+replay. Roll/pitch are not randomized for the cube; it starts resting flat.
+
+There are now 20 accepted trajectories (14 train / 3 validation / 3 test).
+Further generation is paused for review. New trajectories after the initial ten
+will also randomize cube yaw. To create/resume only these first twenty:
+
+```bash
+caffeinate -i .venv/bin/python -m data_tools.collect_panda_bowl --limit 20
+```
+
 These episodes belong to the final dataset; there are no separate pilot or
 expansion cohorts. After the user approves the examples, resume collection with:
 

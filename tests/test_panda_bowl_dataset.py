@@ -28,6 +28,24 @@ class BowlDatasetTests(unittest.TestCase):
         self.assertEqual(specs[5]['id'],'test_001')
         self.assertEqual({s['initial_gripper'] for s in specs[:2]}, {0,1})
         self.assertEqual(len({s['instruction'] for s in specs}),1)
+        self.assertFalse(any(s['random_cube_yaw'] for s in specs[:10]))
+        self.assertTrue(all(s['random_cube_yaw'] for s in specs[10:]))
+
+    def test_rotated_cube_has_distinct_yaws_and_edge_aligned_grasp(self):
+        yaws=[]
+        for seed in range(4):
+            model=mujoco.MjModel.from_xml_path(str(SCENE_PATH))
+            data=mujoco.MjData(model)
+            _,spec=randomize_scene(model,data,np.random.default_rng(seed),random_cube_yaw=True)
+            yaw=spec['requested_cube_yaw_radians']
+            yaws.append(yaw)
+            self.assertLessEqual(abs(spec['grasp_yaw_radians']),np.pi/4)
+            turns=(yaw-spec['grasp_yaw_radians'])/(np.pi/2)
+            self.assertAlmostEqual(turns,round(turns),places=10)
+            quaternion=np.array(spec['cube_quaternion_wxyz'])
+            self.assertLess(np.linalg.norm(quaternion[1:3]),.001)
+            self.assertAlmostEqual(np.linalg.norm(quaternion),1,places=8)
+        self.assertGreater(np.ptp(yaws),1)
 
     def test_full_start_varies_roll_pitch_yaw_and_settles_closed_gripper(self):
         values=[]

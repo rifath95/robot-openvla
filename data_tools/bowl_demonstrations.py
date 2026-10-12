@@ -80,14 +80,15 @@ def record_episode(folder, scenario):
         with PandaEnv(SCENE_PATH, camera=CAMERA_NAME) as env:
             rng = np.random.default_rng(scenario['random_seed'])
             env.controller, scene = randomize_scene(env.model, env.data, rng, full_pose=True,
-                                                    initial_gripper=scenario['initial_gripper'])
+                                                    initial_gripper=scenario['initial_gripper'],
+                                                    random_cube_yaw=scenario.get('random_cube_yaw',False))
             metadata['scenario'] = dict(scenario, scene=scene)
             metadata['starting_pose'] = scene['starting_pose']
             metadata['physics_seconds_per_action'] = PHYSICS_STEPS * float(env.model.opt.timestep)
             write_json(folder/'episode.json', metadata)
             initial = cube_position(env)
             bowl = np.asarray(scene['bowl_position'])
-            reference = np.asarray(scene['reference_quaternion_wxyz'])
+            grasp_orientation = np.asarray(scene['grasp_quaternion_wxyz'])
             positions = [initial.copy()]
             save_state(folder/'initial_state.npz', env)
 
@@ -133,7 +134,7 @@ def record_episode(folder, scenario):
                 with (folder/'transitions.jsonl').open('a') as stream:
                     stream.write(json.dumps(row, allow_nan=False)+'\n')
 
-            def move(target, opening, stage, orientation=reference):
+            def move(target, opening, stage, orientation=grasp_orientation):
                 print(f'{scenario["id"]}: {stage}', flush=True)
                 for _ in range(160):
                     position, quaternion = env.controller.end_effector_pose()

@@ -3,7 +3,8 @@
 Generated expert demonstrations and training dataset exports belong here.
 
 The new bowl task is in `panda_pick_bowl/{train,validation,test}/`, with the first
-ten accepted trajectories numbered for the final 200/50/50 split. Each includes
+twenty accepted trajectories numbered for the final 200/50/50 split. The original
+ten are preserved; the next ten also randomize cube rotation on the table. Each includes
 `replay.py`; see [the bowl dataset guide](../docs/datasets/PANDA_BOWL_DATASET.md).
 The remaining trajectories are waiting for the user's review.
 Experiment logs, model-driven rollouts and failed prototype runs remain in

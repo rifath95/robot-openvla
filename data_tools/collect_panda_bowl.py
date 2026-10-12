@@ -27,6 +27,7 @@ def scenario(slot, attempt):
     gripper = 0 if mode == 0 else 1 if mode == 1 else float(rng.uniform(.1,.9))
     return dict(id=f'{split}_{rank:03d}', split=split, slot=slot, attempt=attempt,
                 random_seed=[SEED,slot,attempt], initial_gripper=gripper,
+                random_cube_yaw=slot>=10,
                 instruction=INSTRUCTION)
 
 
@@ -38,7 +39,9 @@ def coverage(results):
                         r['starting_pose']['requested_pitch_radians'],
                         r['starting_pose']['requested_yaw_radians'],
                         r['starting_pose']['requested_gripper_open_fraction']] for r in results])
+    cube_yaws=[r.get('cube_yaw_radians',0) for r in results]
     return dict(components=['x','y','z','roll','pitch','yaw','gripper'],
+                cube_yaw_range_degrees=np.rad2deg([min(cube_yaws),max(cube_yaws)]).tolist(),
                 minimum=values.min(axis=0).tolist(), maximum=values.max(axis=0).tolist(),
                 spans=np.ptp(values,axis=0).tolist(),
                 cube_xy_span_metres=np.ptp([r['initial_cube'][:2] for r in results],axis=0).tolist(),
@@ -55,13 +58,19 @@ def collect(folder=DATASET_ROOT, limit=10, max_attempts=30):
                 target_split_counts=dict(train=200,validation=50,test=50),
                 instruction=INSTRUCTION, camera=CAMERA_NAME,
                 randomized_start_components=['x','y','z','roll','pitch','yaw','gripper'],
+                cube_orientation=dict(initial_fixed_orientation_slots=10,
+                                      subsequent_yaw_range_degrees=[-180,180],
+                                      grasp='nearest edge-aligned yaw modulo the cube square symmetry'),
                 sampling='Independent split/slot/attempt seeds; reachable, settled, collision-checked starts. '
                          'Cube and bowl vary over the reachable table interior; not every physical-table point is reachable.',
                 first_ten='First ten retained in final folders; eight train, one validation, one test.',
                 accepted_only='Only successful contact grasps and deterministic physics replays are accepted.')
     plan_path = folder/'collection_plan.json'
-    if plan_path.exists() and json.loads(plan_path.read_text()) != plan:
-        raise ValueError('Dataset plan changed; do not mix incompatible demonstrations')
+    if plan_path.exists():
+        previous_plan=json.loads(plan_path.read_text())
+        legacy_plan={k:v for k,v in plan.items() if k!='cube_orientation'}
+        if previous_plan not in (plan,legacy_plan):
+            raise ValueError('Dataset plan changed; do not mix incompatible demonstrations')
     write_json(plan_path,plan)
     report_path = folder/'collection_report.json'
     previous = json.loads(report_path.read_text()) if report_path.exists() else {}
@@ -103,6 +112,7 @@ def collect(folder=DATASET_ROOT, limit=10, max_attempts=30):
                               episode=str(destination), passed=True, transitions=replay['replayed_transitions'],
                               starting_pose=metadata['starting_pose'], initial_cube=metadata['initial_cube'],
                               bowl_position=metadata['scenario']['scene']['bowl_position'],
+                              cube_yaw_radians=metadata['scenario']['scene']['requested_cube_yaw_radians'],
                               lift_metres=replay['maximum_cube_lift_metres'],
                               bowl_center_distance_metres=replay['bowl_center_distance_metres'])
                 results.append(result)
@@ -125,7 +135,7 @@ def collect(folder=DATASET_ROOT, limit=10, max_attempts=30):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output-dir',type=Path,default=DATASET_ROOT)
-    parser.add_argument('--limit',type=int,choices=(10,300),default=10)
+    parser.add_argument('--limit',type=int,choices=(10,20,300),default=10)
     parser.add_argument('--max-attempts',type=int,default=30)
     args = parser.parse_args()
     collect(args.output_dir,args.limit,args.max_attempts)
