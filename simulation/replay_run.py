@@ -23,7 +23,7 @@ def replay_model(folder):
     return mujoco.MjModel.from_xml_path(str(ROOT/'scene.xml')), 'workspace_camera'
 
 
-def write_launcher(folder):
+def write_launcher(folder, *, demonstration=False):
     """Keep each run playable from its output folder within the repository."""
     launcher = '''"""Offline playback. Run with the repository simulation Python environment."""
 from pathlib import Path
@@ -39,6 +39,11 @@ if __name__ == '__main__':
     launcher = launcher.replace('sys.path.insert(0, str(root))',
                                 f'if not (root / "replay_run.py").exists():\n    root = Path({str(ROOT)!r})\nsys.path.insert(0, str(root))')
     (Path(folder) / 'replay.py').write_text(launcher)
+    if demonstration:
+        action_launcher=launcher.replace('Offline playback.', 'Action replay through IK and physics.')
+        action_launcher=action_launcher.replace('from replay_run import main',
+                                                'from simulation.action_replay import main')
+        (Path(folder)/'replay_actions.py').write_text(action_launcher)
 
 
 def load_frames(folder, model):

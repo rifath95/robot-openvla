@@ -66,7 +66,7 @@ def task_result(initial, bowl, positions, env):
 def record_episode(folder, scenario):
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=False)
-    write_launcher(folder)
+    write_launcher(folder,demonstration=True)
     rows = []
     metadata = dict(schema_version=1, scene_profile='panda_bowl_v1',
                     scene_xml_sha256=scene_fingerprint(), mujoco_version=mujoco.__version__,

@@ -93,7 +93,7 @@ def record_episode(folder, *, cube_xy=None, destination_offset=(0, 0.12), instru
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=False)
     from simulation.replay_run import write_launcher
-    write_launcher(folder)
+    write_launcher(folder,demonstration=True)
     instruction = instruction or ('pick up the red cube and place it 12 cm in the positive world Y direction'
                                   if np.array_equal(offset, [0, .12]) else
                                   f'pick up the red cube and move it {offset[0]*100:g} cm along world X and {offset[1]*100:g} cm along world Y')
