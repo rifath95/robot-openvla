@@ -11,6 +11,30 @@ import cloud.cloud_session as cloud_session
 
 
 class SessionTests(unittest.TestCase):
+    def test_multiple_seeds_share_one_server_until_explicit_quit(self):
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);(root/'.venv/bin').mkdir(parents=True)
+            (root/'.venv/bin/python').touch()
+            key=root/'key';key.touch()
+            argv=['cloud_session.py','--ssh',f'ssh root@host -p 22 -i {key}',
+                  '--task','bowl','--scene-seeds','0','1','2']
+            tunnel=MagicMock();tunnel.poll.return_value=None
+            with patch('sys.argv',argv),patch.object(cloud_session,'ROOT',root), \
+                 patch('cloud.cloud_session.socket.socket'), \
+                 patch('cloud.cloud_session.subprocess.run',return_value=SimpleNamespace(returncode=0)) as run, \
+                 patch('cloud.cloud_session.subprocess.Popen',return_value=tunnel), \
+                 patch('cloud.cloud_session.wait_for_server',return_value={'model_load_seconds':1}) as ready, \
+                 patch('builtins.input',side_effect=['invalid','3','','q']):
+                self.assertEqual(cloud_session.main(),0)
+            commands=[c.args[0] for c in run.call_args_list]
+            trials=[c for c in commands if 'inference.remote_loop' in c]
+            self.assertEqual([c[c.index('--scene-seed')+1] for c in trials],['0','1','2','3','3'])
+            self.assertEqual(sum('input' in c.kwargs for c in run.call_args_list),1)
+            self.assertEqual(sum('cloud_stop.sh' in c[-1] for c in commands),1)
+            self.assertEqual(ready.call_count,5)
+            tunnel.terminate.assert_called_once()
+
     def test_adapter_bootstrap_merges_before_starting_panda_server(self):
         script = cloud_session.bootstrap_script(1800, '/workspace/run/checkpoint_000020')
         self.assertIn('--adapter /workspace/run/checkpoint_000020', script)

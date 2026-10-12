@@ -117,6 +117,8 @@ def main():
     parser.add_argument('--instruction', default='pick up the red cube')
     parser.add_argument('--task', choices=['cube', 'bowl'], default='cube')
     parser.add_argument('--scene-seed', type=int, default=0)
+    parser.add_argument('--scene-seeds', type=int, nargs='+',
+                        help='Run these seeds in order using one loaded model')
     parser.add_argument('--max-runtime-seconds', type=int, default=900, help='Local active limit, excluding pauses')
     parser.add_argument('--server-runtime-seconds', type=int, default=1800, help='Server wall limit AFTER readiness; does not stop pod billing')
     parser.add_argument('--startup-timeout-seconds', type=int, default=600, help='Wait for loading after dependency setup')
@@ -174,17 +176,34 @@ def main():
             while tunnel.poll() is None:
                 time.sleep(1)
             raise RuntimeError('SSH tunnel closed')
+        pending_seeds=iter(args.scene_seeds or [args.scene_seed])
+        scene_seed=next(pending_seeds)
         while True:
+            print(f'Trial scene seed: {scene_seed}. Model remains loaded between trials.', flush=True)
             print('Opening paused simulator: Space starts/pauses/resumes; Esc stops the local trial.', flush=True)
             result = subprocess.run([str(ROOT / '.venv/bin/python'), "-m", 'inference.remote_loop',
                                      '--steps', str(args.steps), '--instruction', args.instruction,
-                                     '--task', args.task, '--scene-seed', str(args.scene_seed),
+                                     '--task', args.task, '--scene-seed', str(scene_seed),
                                      '--startup-info', str(startup_path),
                                      '--max-consecutive-rejections', str(args.max_consecutive_rejections),
                                      '--max-runtime-seconds', str(args.max_runtime_seconds)], cwd=ROOT)
             if result.returncode:
                 print('Trial failed; inspect its status.json and the terminal output.', flush=True)
-            input('Trial finished. Server stays loaded. Enter runs another trial; Ctrl+C ends the session: ')
+            next_seed=next(pending_seeds,None)
+            if next_seed is None:
+                while True:
+                    answer=input('Trial finished. Model stays loaded. Enter repeats this seed; type a seed for another scene; q ends the session: ').strip()
+                    if answer.lower() in ('q','quit','exit'):
+                        return 0
+                    if not answer:
+                        next_seed=scene_seed
+                        break
+                    try:
+                        next_seed=int(answer)
+                        break
+                    except ValueError:
+                        print('Enter an integer scene seed, Enter to repeat, or q to end.',flush=True)
+            scene_seed=next_seed
             wait_for_server(tunnel, 5)
     except KeyboardInterrupt:
         print('\nEnding session...', flush=True)
