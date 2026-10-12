@@ -10,17 +10,37 @@ from training.batch_policy import choose_batch,benchmark_context,context_differe
 
 
 class BatchPolicyTests(unittest.TestCase):
-    def test_diagnostics_identify_exact_mismatch_without_relaxing_compatibility(self):
+    def test_minor_vram_drift_is_tolerated_with_adjusted_headroom_and_diagnostics(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);self.benchmark(root/'run')
             current=dict(self.context,total_vram_bytes=self.context['total_vram_bytes']-1024**2)
             config,record=choose_batch(self.config,current,root)
-            self.assertEqual(record['source'],'configured_fallback')
+            self.assertEqual(record['source'],'compatible_benchmark')
             self.assertEqual(record['benchmarks_considered'][0]['differences'],
                              {'total_vram_bytes':dict(saved=self.context['total_vram_bytes'],
                                                      current=current['total_vram_bytes'])})
-            self.assertEqual(config,self.config)
+            self.assertEqual(config['batch_size'],8)
+            self.assertEqual(record['adjusted_minimum_logged_free_gib'],5-1/1024)
             self.assertEqual(context_differences(self.context,dict(self.context,model_path='different',dataset_checksums_sha256='new')), {})
+
+    def test_capacity_tolerance_cannot_remove_required_headroom(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);self.benchmark(root/'run')
+            path=root/'run/benchmark.json';rows=json.loads(path.read_text())
+            rows[1]['minimum_logged_free_gib']=4.005
+            path.write_text(json.dumps(rows))
+            current=dict(self.context,total_vram_bytes=self.context['total_vram_bytes']-10*2**20)
+            self.assertEqual(choose_batch(self.config,current,root)[0]['batch_size'],4)
+            rows[0].pop('reserved_headroom_gib')
+            path.write_text(json.dumps(rows))
+            self.assertEqual(choose_batch(self.config,current,root)[1]['source'],'configured_fallback')
+
+    def test_capacity_changes_beyond_tolerance_remain_incompatible(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);self.benchmark(root/'run')
+            for reduction in (17*2**20,3*2**30):
+                current=dict(self.context,total_vram_bytes=self.context['total_vram_bytes']-reduction)
+                self.assertEqual(choose_batch(self.config,current,root)[1]['source'],'configured_fallback')
 
     config=dict(batch_size=1,grad_accumulation_steps=4)
     context=dict(gpu='NVIDIA A40',total_vram_bytes=48*2**30,dataset_checksums_sha256='v2',
@@ -30,7 +50,8 @@ class BatchPolicyTests(unittest.TestCase):
         root.mkdir(parents=True)
         (root/'benchmark_metadata.json').write_text(json.dumps(dict(context=context or self.context,mode=mode)))
         rows=[dict(microbatch=b,accumulation=1,status='completed',
-                   headroom_screen_passed=b<9,examples_per_second=s)
+                   headroom_screen_passed=b<9,examples_per_second=s,
+                   reserved_headroom_gib=6,minimum_logged_free_gib=5)
               for b,s in ((4,3.69),(8,3.74),(9,3.94))]
         (root/'benchmark.json').write_text(json.dumps(rows))
 

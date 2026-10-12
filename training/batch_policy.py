@@ -29,6 +29,7 @@ def benchmark_context(config,dataset,model):
 
 
 DEFAULT_INPUT_CONTRACT=dict(pixel_shape=[6,224,224],supervised_tokens=8)
+VRAM_TOLERANCE_BYTES=16*2**20
 
 
 def normalized_context(value):
@@ -47,7 +48,26 @@ def context_differences(saved,current):
 
 def compatible_context(saved,current):
     """Dataset identity is provenance, not a batch-capacity requirement."""
-    return isinstance(saved,dict) and not context_differences(saved,current)
+    if not isinstance(saved,dict):return False
+    differences=context_differences(saved,current)
+    if not differences:return True
+    if set(differences)!={'total_vram_bytes'}:return False
+    a,b=saved.get('total_vram_bytes'),current.get('total_vram_bytes')
+    return (type(a) is int and type(b) is int and a>0 and b>0
+            and abs(a-b)<=VRAM_TOLERANCE_BYTES)
+
+
+def adjusted_headroom(row,saved,current):
+    """Recheck both memory margins when tolerating capacity accounting drift."""
+    delta=(current['total_vram_bytes']-saved['total_vram_bytes'])/2**30
+    if delta==0:return row
+    adjusted=dict(row,vram_adjustment_gib=delta)
+    for key in ('reserved_headroom_gib','minimum_logged_free_gib'):
+        value=row.get(key)
+        if not isinstance(value,(int,float)):return None
+        adjusted[key]=value+delta
+        if not adjusted[key]>=4:return None
+    return adjusted
 
 
 def compatible_reviewed_legacy(root,metadata,row,current):
@@ -100,7 +120,11 @@ def choose_batch(config,context,benchmark_root):
                 if (row.get('status')=='completed' and row.get('headroom_screen_passed') is True
                     and row.get('accumulation')==1 and row.get('microbatch',0)>=1
                     and row.get('examples_per_second',0)>0):
-                    if compatible or compatible_reviewed_legacy(path.parent,metadata,row,context):
+                    if compatible:
+                        row=adjusted_headroom(row,saved_context,context)
+                        if row is None:continue
+                        candidates.append((row['examples_per_second'],path,row))
+                    elif compatible_reviewed_legacy(path.parent,metadata,row,context):
                         candidates.append((row['examples_per_second'],path,row))
         except (OSError,ValueError,KeyError,TypeError) as exc:
             record['benchmarks_considered'].append(dict(benchmark=str(path.parent),error=type(exc).__name__))
@@ -113,4 +137,9 @@ def choose_batch(config,context,benchmark_root):
             benchmark=str(path.parent),context=context,
             compatibility_basis='gpu_model_training_and_input_format',
             reason='Fastest measured candidate passing the memory-headroom screen; accumulation one baseline.')
+        if 'vram_adjustment_gib' in row:
+            record.update(vram_tolerance_bytes=VRAM_TOLERANCE_BYTES,
+                vram_adjustment_gib=row['vram_adjustment_gib'],
+                adjusted_reserved_headroom_gib=row['reserved_headroom_gib'],
+                adjusted_minimum_logged_free_gib=row['minimum_logged_free_gib'])
     return selected,record

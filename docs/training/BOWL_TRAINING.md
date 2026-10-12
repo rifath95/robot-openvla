@@ -13,6 +13,10 @@ accumulation 1, shuffle buffer 512. A compatible A40 benchmark selects the actua
 microbatch; the profile's nominal batch 5 is not used as an unverified fallback.
 If GPU/VRAM/input/model/software compatibility cannot be established, training is
 refused. The previous A5000's fitting batch does not configure an A40.
+VRAM totals may differ by up to 16 MiB between otherwise identical contexts.
+Both measured headroom margins are adjusted for that difference and must still
+meet 4 GiB. Larger capacity changes remain incompatible; the exact byte
+difference is retained in the diagnostic report.
 
 Full validation runs before the first update, every 1,000 updates, and at the
 end when needed. Checkpoints are saved every 1,000 updates and at a normal early
@@ -33,8 +37,9 @@ This prints the actual GPU/VRAM/input/model/software context and the precise
 differences for each saved capacity benchmark. It selects a batch only if the
 existing compatibility and headroom checks pass. It loads no model weights,
 performs no updates, and does not stop the pod. The diagnostic is saved under
-`/workspace/panda-training/batch-checks/`. Share its output before attempting
-another full training launch. Future refused training runs also save
+`/workspace/panda-training/batch-checks/`. This separate command is optional:
+the normal training launch checks compatibility before loading the model and
+proceeds automatically when it passes. Refused training runs also save
 `runs/batch_compatibility.json` inside their session for automatic report download.
 
 ## Start from the Mac
