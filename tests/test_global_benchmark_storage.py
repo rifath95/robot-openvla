@@ -1,6 +1,7 @@
 """Global storage uses copies; local benchmark work retains watchdog behavior."""
 import hashlib
 import json
+import shutil
 from pathlib import Path
 import subprocess
 import sys
@@ -33,6 +34,10 @@ class GlobalBenchmarkTests(unittest.TestCase):
             self.assertEqual((local_dataset/'data.bin').read_bytes(),b'image+action')
             self.assertEqual(metadata['training_reads'],'container_disk')
             self.assertEqual(metadata['source_storage'],'global_volume')
+            bowl=volume/'panda-training/training_bowl_v1'
+            shutil.copytree(dataset,bowl)
+            _,local_bowl,_=stage_inputs(volume,bowl,root/'local-bowl')
+            self.assertEqual((local_bowl/'data.bin').read_bytes(),b'image+action')
             (dataset/'data.bin').write_bytes(b'corrupted')
             with self.assertRaises(ValueError):stage_inputs(volume,dataset,root/'other')
 
@@ -85,6 +90,15 @@ class GlobalBenchmarkTests(unittest.TestCase):
         self.assertIn('training.benchmark_stop --check-only --global-volume /workspace',source)
         self.assertIn('training.benchmark_supervisor --launch',source)
         self.assertIn('--global-volume /workspace',source)
+
+    def test_global_preparation_downloads_bowl_bundle_by_default(self):
+        from cloud.prepare_global_benchmark import main
+        with patch('sys.argv',['prepare','--volume-root','/workspace-global']), \
+             patch('cloud.prepare_global_benchmark.subprocess.run') as run:
+            main()
+        command=run.call_args_list[-1].args[0]
+        self.assertEqual(command[command.index('--bundle')+1],'training_bowl_v1')
+        self.assertEqual(command[command.index('--volume-root')+1],'/workspace-global')
 
 
 if __name__=='__main__':unittest.main()

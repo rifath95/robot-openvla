@@ -16,6 +16,7 @@ import socket
 import time
 
 from cloud.cloud_session import ROOT, REPOSITORY, parse_ssh, ssh_arguments
+from common.paths import BENCHMARK_DATASET
 from analysis.summarize_gpu_benchmarks import comparison
 
 
@@ -207,7 +208,7 @@ def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--ssh',required=True,help='SSH command copied from RunPod Connect')
     p.add_argument('--key',type=Path,help='Optional override of the Mac private-key path')
-    p.add_argument('--dataset',default='/workspace/panda-training/training_v1')
+    p.add_argument('--dataset',default=str(BENCHMARK_DATASET))
     p.add_argument('--max-batch',type=int,default=64)
     p.add_argument('--hard-limit-seconds',type=int,default=3600,help='Cloud supervisor outer limit (default: 60 minutes)')
     p.add_argument('--controlled',action='store_true',help='Use fixed effective-batch-four comparison instead')
@@ -221,13 +222,14 @@ def main():
         auto_stop=(not args.fetch_only and not args.keep_pod_running) or args.stop_after_fetch
         if args.keep_pod_running and args.stop_after_fetch:
             p.error('--keep-pod-running conflicts with --stop-after-fetch')
-        if args.global_volume=='/workspace-global' and args.dataset=='/workspace/panda-training/training_v1':
-            args.dataset='/workspace-global/panda-training/training_v1'
+        if args.global_volume=='/workspace-global' and args.dataset.startswith('/workspace/panda-training/'):
+            args.dataset='/workspace-global/'+args.dataset.removeprefix('/workspace/')
         script=remote_benchmark_script(args.dataset,args.max_batch,args.controlled,auto_stop,prepare_only=args.fetch_only,hard_limit=args.hard_limit_seconds,global_volume=args.global_volume)
     except ValueError as exc:
         p.error(str(exc))
     ssh=ssh_arguments(host,port,key)
     print(f'Connecting to {host}:{port}. The pod must already be running.',flush=True)
+    print(f'Inference and training benchmark dataset: {args.dataset}',flush=True)
     print('Automatic stop after completion, failure, or cloud outer timeout.' if auto_stop else
           'Automatic stop disabled. Stop the pod manually in RunPod afterward.',flush=True)
     code=0

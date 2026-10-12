@@ -33,7 +33,7 @@ def global_preflight(volume):
 
 def stage_inputs(volume,dataset,local_root=LOCAL_ROOT):
     started=time.monotonic();volume=Path(volume);dataset=Path(dataset)
-    if dataset.parent!=volume/'panda-training' or dataset.name not in ('training_v1','training_v2'):
+    if dataset.parent!=volume/'panda-training' or dataset.name not in ('training_v1','training_v2','training_bowl_v1'):
         raise ValueError('Dataset must be a verified named bundle on the selected global volume')
     source=volume/'openvla-7b'
     marker=json.loads((source/'export_complete.json').read_text())

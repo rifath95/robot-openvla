@@ -4,10 +4,18 @@ For B300 and other Blackwell GPUs, build and test the separate candidate image
 using [Blackwell training setup](../training/BLACKWELL_TRAINING_SETUP.md).
 
 The global volume is named **robot-openvla-global-volume**. It is separate from
-the regional network volume used by the running 5,000-update fine-tuning job.
-Do not modify or stop that training pod while preparing this new storage.
+the regional network volume used for fine-tuning. Keep preparation and benchmark
+pods separate from any active training job.
 
-## Original 50-trajectory dataset on Hugging Face
+## Default benchmark dataset: cube to bowl
+
+New benchmarks use `training_bowl_v1`: 300 trajectories (200 train, 50 validation,
+50 test) from the private repository `Maxalderone/robot-openvla-panda-bowl`.
+Its verified revision is `6750b3dad36b0d238c5e101ec70e64a2c36bbc62`. The bundle
+is approximately 4.12 GB and stored at the repository root. Download it onto
+each volume used for benchmarking; missing data does not trigger a fallback.
+
+## Original 50-trajectory dataset on Hugging Face (historical)
 
 The original bundle is now uploaded to the private dataset repository
 `Maxalderone/robot-openvla-panda` under `training_v1`, pinned at
@@ -18,8 +26,9 @@ checksum manifest matches and all referenced files are present.
 
 The earlier upload under `training_v2` contains all 250 trajectories, including
 the original 50 and the newer 200. Its existing pinned revision and downloads
-remain unchanged. Both bundles use the same image/action format, so v1 is enough
-for our short capacity/throughput tests. Such tests do not measure task success.
+remain unchanged. These were used for historical benchmarks. New benchmarks
+default to the bowl bundle; an older bundle requires an explicit selection.
+Such tests do not measure task success.
 
 ## Populate the global volume once
 
@@ -51,7 +60,7 @@ If mounted at `/workspace-global`, use that path instead:
 ```
 
 This command downloads the pinned original OpenVLA weights from Hugging Face
-(approximately 15 GB) and the original dataset (approximately 425 MB) directly
+(approximately 15 GB) and the bowl dataset (approximately 4.12 GB) directly
 to the pod, then copies verified regular files to the global volume. Hugging
 Face caches and dataset staging stay on the pod's local container disk, avoiding
 file locks and directory renames on global storage. Only one preparation pod
@@ -59,7 +68,7 @@ should write these destinations. Do not use them until preparation finishes.
 
 The model completion record is `openvla-7b/export_complete.json`. Dataset hashes
 are verified again after copying, and provenance is recorded at
-`panda-training/training_v1_hf_source.json`. Existing complete datasets are
+`panda-training/training_bowl_v1_hf_source.json`. Existing complete datasets are
 verified and reused without overwriting. If a global dataset copy is interrupted,
 an incomplete destination is rejected; inspect it before retrying rather than
 deleting arbitrary volume contents.
@@ -75,7 +84,7 @@ From the Mac workspace, use the current SSH command from RunPod → Pod → Conn
 caffeinate -i .venv/bin/python benchmark_cloud_session.py \
   --ssh 'ssh root@POD_IP -p POD_PORT -i ~/.ssh/id_ed25519' \
   --global-volume /workspace \
-  --dataset /workspace/panda-training/training_v1
+  --dataset /workspace/panda-training/training_bowl_v1
 ```
 
 Use `/workspace-global` in both paths if that is the actual mount. The launcher

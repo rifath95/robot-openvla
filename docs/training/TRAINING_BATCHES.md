@@ -14,9 +14,10 @@ caffeinate -i .venv/bin/python benchmark_cloud_session.py \
 ```
 
 The pod must already be running with the training image and the network volume.
-The default dataset is the existing `/workspace/panda-training/training_v1`;
-add `--dataset /workspace/panda-training/training_v2` once v2 is downloaded and
-verified. The launcher updates the cloud code, runs the adaptive capacity and
+The default dataset is `/workspace/panda-training/training_bowl_v1`, the new
+300-trajectory cube-to-bowl bundle. Download and verify it on the attached volume
+first. Older bundles are used only when explicitly selected with `--dataset`;
+there is no fallback when the new bundle is missing. The launcher updates the cloud code, runs the adaptive capacity and
 speed test, and automatically downloads all saved benchmark report folders from
 the volume. Future benchmark candidates pass `--no-checkpoints`: they train the
 LoRA adapters for measurement but do not save adapter checkpoint directories.
@@ -200,12 +201,12 @@ are disposable diagnostics, not replacements for the trained adapters. The exist
 1000-update training configuration remains unchanged.
 
 After the Hugging Face upload, launch the existing training-image pod and attach
-the network volume. Download training_v2 and verify its checksums first. In the
+the network volume. Download training_bowl_v1 and verify its checksums first. In the
 cloud terminal, inside /root/robot-openvla, with current main checked out, run:
 
 ```bash
 /opt/openvla/bin/python -m training.benchmark_training_batches \
-  --dataset /workspace/panda-training/training_v2
+  --dataset /workspace/panda-training/training_bowl_v1
 ```
 
 Run this alone on the GPU. Keep the connection open for this foreground benchmark;
@@ -245,11 +246,10 @@ To find the tested memory boundary instead of checking only 1/2/4, run:
 ```bash
 /opt/openvla/bin/python -m training.benchmark_training_batches \
   --find-capacity \
-  --dataset /workspace/panda-training/training_v1
+  --dataset /workspace/panda-training/training_bowl_v1
 ```
 
-This can run on the existing v1 volume copy while the Mac uploads v2 to Hugging
-Face. Its recommendation can be reused for v2 with compatible input/training settings.
+This uses the verified bowl bundle on the volume. Its recommendation can be reused for v2 with compatible input/training settings.
 
 The adaptive mode tests 1, 2, 4, 8, ... until CUDA OOM. It then binary-searches
 between the last fitting and first failing size (e.g. 4 fits, 8 fails, then test

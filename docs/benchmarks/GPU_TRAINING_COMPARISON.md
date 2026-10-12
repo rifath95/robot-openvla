@@ -19,6 +19,7 @@ A fitting batch completed 25 real updates. The short-run capacity applies to tes
 | NVIDIA A40 | Enabled | 44.4 | training_v1 | capacity | 8 (boundary found) | 9 | 4 / 1 | 1.040 | 3.85 | 27.57 / 28.26 | [20261012_003826_853142](../../outputs/gpu-benchmarks/20261012_003826_853142/BATCH_BENCHMARK.md) |
 | NVIDIA RTX A5000 | Disabled | 23.5 | training_v1 | capacity | 2 (boundary found) | 3 | None with headroom | — | — | — | [20261012_025737_894348](../../outputs/gpu-benchmarks/20261012_025737_894348/BATCH_BENCHMARK.md) |
 | NVIDIA A40 | Disabled | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 5 / 1 | 1.421 | 3.52 | 30.70 / 31.90 | [20261012_040855_542920](../../outputs/gpu-benchmarks/20261012_040855_542920/BATCH_BENCHMARK.md) |
+| NVIDIA RTX A5000 | Disabled | 23.5 | training_bowl_v1 | capacity | 2 (boundary found) | 3 | None with headroom | — | — | — | [20261012_044013_885081](../../outputs/gpu-benchmarks/20261012_044013_885081/BATCH_BENCHMARK.md) |
 
 ## Cost for the same amount of training
 
@@ -36,9 +37,10 @@ Rates are the user-confirmed prices for these particular pod runs, saved in `tra
 | NVIDIA A40 | Enabled | 20261012_003826_853142 | $0.59 | 3.85 | 43 min 19 sec | $0.43 |
 | NVIDIA RTX A5000 | Disabled | 20261012_025737_894348 | $0.27 | 2.80* | 59 min 37 sec* | $0.27* |
 | NVIDIA A40 | Disabled | 20261012_040855_542920 | $0.59 | 3.52 | 47 min 23 sec | $0.47 |
+| NVIDIA RTX A5000 | Disabled | 20261012_044013_885081 | $0.27 | 3.30* | 50 min 26 sec* | $0.23* |
 
 * Asterisked estimates ignore the memory-headroom requirement because no tested microbatch passed it, including microbatch 1. They use the fastest fitting candidate for comparison only, are not training recommendations, and are excluded from the cheapest-GPU ranking.
-Asterisked candidates: NVIDIA RTX A5000 (run 20261012_025737_894348): microbatch 2, accumulation 1.
+Asterisked candidates: NVIDIA RTX A5000 (run 20261012_025737_894348): microbatch 2, accumulation 1; NVIDIA RTX A5000 (run 20261012_044013_885081): microbatch 2, accumulation 1.
 
 Lowest estimated training cost among these priced runs: **NVIDIA A40**, **$0.43 per 10,000 examples**.
 **NVIDIA H200** processes examples **3.76× faster** than NVIDIA A40, but costs **2.38× as much per example**.
@@ -398,6 +400,47 @@ Software stack (recorded versions; missing historical values are Unknown):
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | 1 | 1 | capacity | completed | 0.400 | 2.50 | 18.03 / 22.94 | False |
 | 2 | 1 | capacity | completed | 0.715 | 2.80 | 21.31 / 22.91 | False |
+| 3 | 1 | capacity | out_of_memory | — | — | — | — |
+| 4 | 1 | capacity | out_of_memory | — | — | — | — |
+### Run 20261012_044013_885081
+
+Dataset: `/workspace/panda-training/training_bowl_v1`. Model: `/workspace/openvla-7b`.
+Mode: capacity; PyTorch: 2.2.2+cu121; LoRA rank: 32; quantization: False; image augmentation: False.
+Total benchmark time: **3 min 15 sec**.
+GPU ECC: **Disabled** (current); pending mode: **Disabled**.
+Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.
+Capacity finding: **2 (boundary found)**.
+No candidate passed the headroom screen.
+
+Software stack (recorded versions; missing historical values are Unknown):
+
+| Component | Version / setting |
+| --- | --- |
+| Python | 3.11.10 |
+| torch | 2.2.2+cu121 |
+| torchvision | 0.17.2+cu121 |
+| transformers | 4.40.1 |
+| tokenizers | 0.19.1 |
+| peft | 0.11.1 |
+| accelerate | 0.29.3 |
+| timm | 0.9.10 |
+| numpy | 1.26.4 |
+| tensorflow | 2.15.0 |
+| tensorflow-datasets | 4.9.3 |
+| dlimp | 0.0.1 |
+| huggingface-hub | 0.36.2 |
+| PyTorch CUDA runtime | 12.1 |
+| NVIDIA driver | 580.178.04 |
+| Precision | bfloat16 |
+| Attention | eager |
+| Benchmark code commit | 585e10c3491b16772f1bdc2401cf0fd7be8c5c82 |
+
+
+
+| Microbatch | Accumulation | Phase | Status | Seconds/update | Examples/s | Peak allocated / reserved GiB | Headroom screen |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 1 | capacity | completed | 0.403 | 2.48 | 17.90 / 22.85 | False |
+| 2 | 1 | capacity | completed | 0.605 | 3.30 | 21.09 / 22.91 | False |
 | 3 | 1 | capacity | out_of_memory | — | — | — | — |
 | 4 | 1 | capacity | out_of_memory | — | — | — | — |
 

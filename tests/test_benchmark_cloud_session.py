@@ -12,6 +12,22 @@ from cloud.benchmark_cloud_session import extract_reports,fetch_reports,remote_b
 
 
 class BenchmarkSyncTests(unittest.TestCase):
+    def test_default_bowl_dataset_maps_to_global_mount_and_override_is_preserved(self):
+        from types import SimpleNamespace
+        cases=[([], '/workspace/panda-training/training_bowl_v1'),
+               (['--global-volume','/workspace-global'], '/workspace-global/panda-training/training_bowl_v1'),
+               (['--dataset','/workspace/panda-training/training_v1'], '/workspace/panda-training/training_v1')]
+        for flags,expected in cases:
+            with self.subTest(flags=flags), \
+                 patch('sys.argv',['launcher','--ssh','fake']+flags), \
+                 patch('cloud.benchmark_cloud_session.parse_ssh',return_value=('root@fake',22,Path('/tmp/key'))), \
+                 patch('cloud.benchmark_cloud_session.remote_benchmark_script',return_value='script') as script, \
+                 patch('cloud.benchmark_cloud_session.fetch_reports'), \
+                 patch('cloud.benchmark_cloud_session.measure_mac_inference',return_value=None), \
+                 patch('cloud.benchmark_cloud_session.subprocess.run',return_value=SimpleNamespace(returncode=0)):
+                benchmark_cloud_session.main()
+            self.assertEqual(script.call_args.args[0],expected)
+
     def test_launcher_watches_training_after_inference_before_stopping(self):
         from types import SimpleNamespace
         session='/workspace/panda-training/batch-benchmarks/sessions/20261012_120000_123456'

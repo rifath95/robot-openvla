@@ -3,7 +3,7 @@
 Run on the pod, after the dataset download. This does not stop pod billing.
 """
 
-from common.paths import PROJECT_ROOT
+from common.paths import PROJECT_ROOT, BENCHMARK_DATASET
 import argparse
 from datetime import datetime, timezone
 import json
@@ -124,7 +124,7 @@ def write_report(root, results, mode='controlled', maximum=64):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--dataset',type=Path,default=Path('/workspace/panda-training/training_v2'))
+    p.add_argument('--dataset',type=Path,default=BENCHMARK_DATASET)
     p.add_argument('--model',type=Path,default=Path('/workspace/openvla-7b'))
     p.add_argument('--output-root',type=Path,default=Path('/workspace/panda-training/batch-benchmarks'))
     p.add_argument('--find-capacity',action='store_true',help='Double until OOM, then refine the boundary; accumulation one')

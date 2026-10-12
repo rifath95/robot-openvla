@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest.mock import patch
 
 from training.benchmark_training_batches import summarize,write_report,next_capacity_batch,missed_speed_candidates
 from training.integrate_upstream import integrated_source
@@ -10,6 +11,16 @@ from analysis.summarize_gpu_benchmarks import comparison,duration_line,cost_esti
 
 
 class BatchBenchmarkTests(unittest.TestCase):
+    def test_direct_benchmark_defaults_to_bowl_and_refuses_missing_bundle(self):
+        import contextlib
+        import io
+        from training.benchmark_training_batches import main
+        error=io.StringIO()
+        with patch('sys.argv',['benchmark']),patch.object(Path,'is_file',return_value=False), \
+             contextlib.redirect_stderr(error),self.assertRaises(SystemExit):
+            main()
+        self.assertIn('/workspace/panda-training/training_bowl_v1',error.getvalue())
+
     def rows(self):
         return [dict(update=i,elapsed_seconds=100+i*2,train_loss=1,
                      gpu_peak_allocated_gib=18,gpu_peak_reserved_gib=27,

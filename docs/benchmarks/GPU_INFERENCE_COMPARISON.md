@@ -12,6 +12,7 @@ Means are weighted by measured request counts, not an average of rounded table v
 | GPU | Runs | Measured requests | Mean cycle s | Mean request RTT s | Mean prediction s | USD/hour | 100 requests USD | 100 simulator cycles USD |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | NVIDIA A40 | 10 | 674 | 1.512 | 1.014 | 0.313 | 0.59 | 0.0166 | 0.0248 |
+| NVIDIA RTX A5000 | 1 | 20 | — | 1.347 | 0.337 | 0.27 | 0.0101 | — |
 
 ## Full cycle and estimated cost for 100 steps
 
@@ -27,7 +28,7 @@ Means are weighted by measured request counts, not an average of rounded table v
 | NVIDIA A40 | remote_loop_20261011_130030_90592976 | 95/100 | 1.411 | 0.905 | 1.030 | 0.295 | 0.59 | 141.1 | 0.0231 | 0.0240 | Simulator |
 | NVIDIA A40 | remote_loop_20261011_130522_3943abad | 95/100 | 1.421 | 0.920 | 1.045 | 0.292 | 0.59 | 142.1 | 0.0233 | 0.0243 | Simulator |
 | NVIDIA A40 | 20261012_040655_255759 | 20/25 | — | 1.261 | 1.471 | 0.325 | 0.59 | 126.1 | 0.0207 | — | Benchmark (Mac) |
-| NVIDIA RTX A5000 | Not measured | 0 | — | — | — | — | 0.27 | — | — | — | — |
+| NVIDIA RTX A5000 | 20261012_043822_113279 | 20/25 | — | 1.347 | 1.555 | 0.337 | 0.27 | 134.7 | 0.0101 | — | Benchmark (Mac) |
 | NVIDIA RTX A6000 | Not measured | 0 | — | — | — | — | 0.59 | — | — | — | — |
 
 Cost = estimated seconds ÷ 3600 × user-confirmed hourly rate. 100-cycle estimates extrapolate the measured mean, including partial trials; they do not assert task success. Setup-inclusive cost adds recorded model preparation and loading once. It excludes image deployment, adapter merge/export unless covered by recorded preparation, other setup, manual pauses, idle time, shutdown delays and storage charges. Rates are comparison inputs, not historical billing records. Multiple trials can reuse one model loading. For benchmark rows without simulator movements, 100-cycle columns mean 100 requests only: local IK/movement/capture time is unmeasured, not zero. Cloud-only rows cannot estimate Mac RTT costs. Missing measurements stay missing.
@@ -46,6 +47,7 @@ Cost = estimated seconds ÷ 3600 × user-confirmed hourly rate. 100-cycle estima
 | remote_loop_20261011_130030_90592976 | 0.905 | 0.007 | 0.006 | 0.025 | 0.295 | 0.333 | 0.000 | 0.572 |
 | remote_loop_20261011_130522_3943abad | 0.920 | 0.006 | 0.008 | 0.030 | 0.292 | 0.336 | 0.000 | 0.584 |
 | 20261012_040655_255759 | 1.261 | 0.006 | 0.008 | 0.059 | 0.325 | 0.399 | 0.000 | 0.863 |
+| 20261012_043822_113279 | 1.347 | 0.007 | 0.020 | 0.134 | 0.337 | 0.497 | 0.000 | 0.849 |
 
 Server total is inside request RTT, not added to it. RTT minus server total is residual network/tunnel/client overhead, not pure network latency. Receive-body time can itself include waiting for uploaded bytes. Processor and GPU transfer are measured together. Model prediction includes vision encoding, autoregressive action-token generation and decoding to seven values.
 
@@ -63,6 +65,7 @@ Server total is inside request RTT, not added to it. RTT minus server total is r
 | remote_loop_20261011_130030_90592976 | 0.001 | 0.001 | 0.001 | 0.904 | 0.000 |
 | remote_loop_20261011_130522_3943abad | 0.001 | 0.001 | 0.001 | 0.919 | 0.000 |
 | 20261012_040655_255759 | 0.002 | 0.001 | 0.001 | 1.260 | 0.000 |
+| 20261012_043822_113279 | 0.002 | 0.001 | 0.001 | 1.346 | 0.000 |
 
 Send, wait for response headers and read response are included in request RTT. Sending may buffer bytes locally; it is not a separately measured network upload duration. Waiting includes server processing and network delays.
 
@@ -80,6 +83,7 @@ Send, wait for response headers and read response are included in request RTT. S
 | remote_loop_20261011_130030_90592976 | 0.022 | 0.001 | 0.447 | 0.026 | 0.495 | 0.011 |
 | remote_loop_20261011_130522_3943abad | 0.021 | 0.001 | 0.446 | 0.024 | 0.492 | 0.010 |
 | 20261012_040655_255759 | — | — | — | — | — | — |
+| 20261012_043822_113279 | — | — | — | — | — | — |
 
 Full cycle = request RTT + local subtotal + remaining cycle overhead, using records with all required fields. Remaining overhead includes client encoding/connection work and recording outside named stages. Movement may be deliberately paced by the live viewer. Pauses or interruptions within a recorded cycle can affect timing. Each column averages available measurements only; different coverage can prevent exact subtotal agreement.
 
@@ -97,6 +101,7 @@ Full cycle = request RTT + local subtotal + remaining cycle overhead, using reco
 | remote_loop_20261011_130030_90592976 | 44.432 | Not recorded | /workspace/panda-training/sessions/panda-train-20261011-090041-1584/runs/training/checkpoint_003000 | 5.384 | 0.045 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | remote_loop_20261011_130522_3943abad | 44.432 | Not recorded | /workspace/panda-training/sessions/panda-train-20261011-090041-1584/runs/training/checkpoint_005000 | 5.866 | 0.038 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | 20261012_040655_255759 | 47.406 | Disabled | /workspace/openvla-7b | 52.546 | — | Not recorded | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| 20261012_043822_113279 | 23.547 | Disabled | /workspace/openvla-7b | 46.298 | — | Not recorded | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 
 Model loading includes processor setup, checkpoint reading, construction and GPU transfer; it does not isolate storage-to-VRAM time. Historical ECC is not inferred from unrelated training pods.
 

@@ -11,6 +11,7 @@ import sys
 import time
 
 from training.benchmark_stop import stop_pod
+from common.paths import BENCHMARK_DATASET
 from training.detached_run import ROOT, preflight, write_status
 
 BENCHMARK_ROOT=Path('/workspace/panda-training/batch-benchmarks')
@@ -132,7 +133,7 @@ def main():
     p.add_argument('--watch-session',type=Path,help='Watch training after the inference handoff; start no worker')
     p.add_argument('--session-dir',type=Path)
     p.add_argument('--lock-fd',type=int)
-    p.add_argument('--dataset',default='/workspace/panda-training/training_v1')
+    p.add_argument('--dataset',default=str(BENCHMARK_DATASET))
     p.add_argument('--max-batch',type=int,default=64)
     p.add_argument('--controlled',action='store_true')
     p.add_argument('--hard-limit-seconds',type=int,default=3600)
