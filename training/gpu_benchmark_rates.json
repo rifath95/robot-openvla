@@ -31,6 +31,11 @@
       "gpu": "NVIDIA A100-SXM4-80GB",
       "hourly_rate_usd": 1.79,
       "confirmed_on": "2026-10-11"
+    },
+    "20261012_025737_894348": {
+      "gpu": "NVIDIA RTX A5000",
+      "hourly_rate_usd": 0.27,
+      "confirmed_on": "2026-10-12"
     }
   }
 }

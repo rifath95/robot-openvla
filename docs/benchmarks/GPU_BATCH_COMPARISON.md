@@ -17,6 +17,7 @@ A fitting batch completed 25 real updates. The short-run capacity applies to tes
 | NVIDIA H200 | Enabled | 139.8 | training_v1 | capacity | 34 (boundary found) | 35 | 16 / 1 | 1.105 | 14.47 | 65.38 / 71.14 | [20261011_113403_097508](../../outputs/gpu-benchmarks/20261011_113403_097508/BATCH_BENCHMARK.md) |
 | NVIDIA A100-SXM4-80GB | Enabled | 79.3 | training_v1 | capacity | 18 (boundary found) | 19 | 8 / 1 | 0.960 | 8.33 | 40.25 / 42.68 | [20261011_115921_878754](../../outputs/gpu-benchmarks/20261011_115921_878754/BATCH_BENCHMARK.md) |
 | NVIDIA A40 | Enabled | 44.4 | training_v1 | capacity | 8 (boundary found) | 9 | 4 / 1 | 1.040 | 3.85 | 27.57 / 28.26 | [20261012_003826_853142](../../outputs/gpu-benchmarks/20261012_003826_853142/BATCH_BENCHMARK.md) |
+| NVIDIA RTX A5000 | Disabled | 23.5 | training_v1 | capacity | 2 (boundary found) | 3 | None with headroom | — | — | — | [20261012_025737_894348](../../outputs/gpu-benchmarks/20261012_025737_894348/BATCH_BENCHMARK.md) |
 
 ## Cost for the same amount of training
 
@@ -32,6 +33,7 @@ Rates are the user-confirmed prices for these particular pod runs, saved in `tra
 | NVIDIA H200 | Enabled | 20261011_113403_097508 | $5.29 | 14.47 | 11 min 31 sec | $1.02 |
 | NVIDIA A100-SXM4-80GB | Enabled | 20261011_115921_878754 | $1.79 | 8.33 | 20 min 00 sec | $0.60 |
 | NVIDIA A40 | Enabled | 20261012_003826_853142 | $0.59 | 3.85 | 43 min 19 sec | $0.43 |
+| NVIDIA RTX A5000 | Disabled | 20261012_025737_894348 | $0.27 | — | — | — |
 
 Lowest estimated training cost among these priced runs: **NVIDIA A40**, **$0.43 per 10,000 examples**.
 **NVIDIA H200** processes examples **3.76× faster** than NVIDIA A40, but costs **2.38× as much per example**.
@@ -349,6 +351,50 @@ Software stack (recorded versions; missing historical values are Unknown):
 | 10 | 1 | capacity | out_of_memory | — | — | — | — |
 | 12 | 1 | capacity | out_of_memory | — | — | — | — |
 | 16 | 1 | capacity | out_of_memory | — | — | — | — |
+
+## NVIDIA RTX A5000 — 23.5 GiB
+
+### Run 20261012_025737_894348
+
+Dataset: `/workspace/panda-training/training_v1`. Model: `/workspace/openvla-7b`.
+Mode: capacity; PyTorch: 2.2.2+cu121; LoRA rank: 32; quantization: False; image augmentation: False.
+Total benchmark time: **4 min 04 sec**.
+GPU ECC: **Disabled** (current); pending mode: **Disabled**.
+Training uses BF16 autocast and eager attention. See the saved candidate configs for all settings.
+Capacity finding: **2 (boundary found)**.
+No candidate passed the headroom screen.
+
+Software stack (recorded versions; missing historical values are Unknown):
+
+| Component | Version / setting |
+| --- | --- |
+| Python | 3.11.10 |
+| torch | 2.2.2+cu121 |
+| torchvision | 0.17.2+cu121 |
+| transformers | 4.40.1 |
+| tokenizers | 0.19.1 |
+| peft | 0.11.1 |
+| accelerate | 0.29.3 |
+| timm | 0.9.10 |
+| numpy | 1.26.4 |
+| tensorflow | 2.15.0 |
+| tensorflow-datasets | 4.9.3 |
+| dlimp | 0.0.1 |
+| huggingface-hub | 0.36.2 |
+| PyTorch CUDA runtime | 12.1 |
+| NVIDIA driver | 580.178.04 |
+| Precision | bfloat16 |
+| Attention | eager |
+| Benchmark code commit | b842a0274e4096d745859e91e2a8963be6f2bbc0 |
+
+
+
+| Microbatch | Accumulation | Phase | Status | Seconds/update | Examples/s | Peak allocated / reserved GiB | Headroom screen |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | 1 | capacity | completed | 0.400 | 2.50 | 18.03 / 22.94 | False |
+| 2 | 1 | capacity | completed | 0.715 | 2.80 | 21.31 / 22.91 | False |
+| 3 | 1 | capacity | out_of_memory | — | — | — | — |
+| 4 | 1 | capacity | out_of_memory | — | — | — | — |
 
 ## Reading the results
 
