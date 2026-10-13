@@ -1,0 +1,10 @@
+<mujoco model="Panda touch red cube scene">
+  <include file="../../scene.xml"/>
+  <compiler meshdir="../../mujoco_menagerie/franka_emika_panda/assets"/>
+  <worldbody>
+    <!-- Same approved viewing geometry as the bowl task, without a bowl. -->
+    <camera name="touch_camera" pos="1.02 -0.85 1.03"
+      quat="0.852686028858814 0.451545837947678 0.12295967604097446 0.23219347641355872"
+      fovy="45"/>
+  </worldbody>
+</mujoco>

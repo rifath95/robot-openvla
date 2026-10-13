@@ -30,8 +30,12 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
     if [r['index'] for r in rows]!=list(range(1,len(rows)+1)):
         raise ValueError('Demonstration action sequence is not contiguous')
     model,camera=replay_model(folder)
-    if metadata.get('scene_profile')=='panda_bowl_v1':
-        from data_tools.bowl_demonstrations import scene_fingerprint,controller_fingerprint
+    if metadata.get('scene_profile') in ('panda_bowl_v1','panda_touch_v1'):
+        from data_tools.bowl_demonstrations import controller_fingerprint
+        if metadata['scene_profile']=='panda_touch_v1':
+            from simulation.touch_scene import scene_fingerprint
+        else:
+            from data_tools.bowl_demonstrations import scene_fingerprint
         if metadata.get('scene_xml_sha256')!=scene_fingerprint():
             raise ValueError('Scene assets differ from the recorded demonstration')
         if metadata.get('controller_sha256') and (
@@ -153,6 +157,9 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
         if metadata.get('scene_profile')=='panda_bowl_v1':
             from data_tools.bowl_demonstrations import task_result
             report['task_result']=task_result(initial,np.asarray(metadata['scenario']['scene']['bowl_position']),positions,env)
+        elif metadata.get('scene_profile')=='panda_touch_v1':
+            from data_tools.touch_demonstrations import task_result
+            report['task_result']=task_result(env,initial)
         (output/'action_replay_report.json').write_text(json.dumps(report,indent=2)+'\n')
         print(f"Action replay {report['outcome']}: {completed}/{len(rows)} actions; report {output/'action_replay_report.json'}",flush=True)
     return report
