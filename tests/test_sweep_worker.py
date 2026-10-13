@@ -31,10 +31,11 @@ class WorkerTests(unittest.TestCase):
             with patch.object(worker,'PROJECT_ROOT',root),patch.object(worker,'stage_weights',return_value=root/'staged') as stage, \
                 patch.object(worker.subprocess,'run',side_effect=run),patch.object(worker.subprocess,'Popen',return_value=server), \
                 patch.object(worker.subprocess,'check_output',return_value='commit'), \
-                patch.object(worker,'wait_server',return_value=dict(startup_info={})), \
+                patch.object(worker,'wait_server',return_value=dict(startup_info={},server_port=12345)), \
                 patch.object(worker,'write_reports',side_effect=lambda folder,plan,rows,error=None:(folder/'results.json').write_text(json.dumps(dict(plan=plan,trials=rows)))):
                 worker.run(directory,'/sim/python')
             self.assertEqual(len(calls),3)
+            self.assertTrue(all(c[c.index('--server-url')+1]=='http://127.0.0.1:12345' for c in calls))
             self.assertEqual(calls[0][calls[0].index('--target-color')+1],'purple')
             self.assertTrue(all('--no-view' in c and '--start-immediately' in c for c in calls))
             for command in calls:

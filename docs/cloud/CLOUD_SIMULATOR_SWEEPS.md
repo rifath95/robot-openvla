@@ -73,3 +73,7 @@ The cloud-only mode treats a Mac disconnection as permission to continue. The Ma
 ## Cross-platform scene precision
 
 The first cloud continuation stopped before model loading because an exact coordinate comparison rejected NumPy 1.26.4 vs Mac NumPy 2.5.3 rounding. The largest measured difference was 1.11e-16 metres. The check now permits up to 1e-12 metres of arithmetic rounding, still rejects changed coordinates, and feeds the saved plan coordinates directly into each resumed simulator trial. Ordinary interactive scene initialization is unchanged. The launcher returns a failure status when the cloud worker fails, after downloading diagnostics and leaving stopping to the supervisor.
+
+## Loopback port allocation
+
+The next deployment passed EGL rendering and loaded/merged the model in 17.63 seconds, then stopped because port 8001 was already occupied. Cloud sweep servers now bind an OS-assigned available loopback port (`--port 0`) before model loading, retain that socket, and atomically publish the selected port after loading. The worker uses that exact port for health checks and predictions. This avoids fixed-port conflicts and probe/rebind races. The ordinary interactive server still defaults to port 8000.

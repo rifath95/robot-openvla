@@ -152,6 +152,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8000)
+    parser.add_argument("--ready-file",type=Path,help="Publish the bound port after model readiness (port 0 selects an available port)")
     parser.add_argument("--max-runtime-seconds", type=float, default=900)
     parser.add_argument("--mode", choices=("connection_test", "openvla"), default="connection_test")
     parser.add_argument("--model-dir", type=Path)
@@ -164,22 +165,30 @@ def main():
         parser.error("--max-runtime-seconds must be positive")
     if args.host not in ("127.0.0.1", "localhost"):
         parser.error("Use a loopback address and an SSH tunnel; this test server has no authentication")
-    predictor = None
-    if args.mode == "openvla":
-        if args.model_dir is None:
-            parser.error("--model-dir is required for --mode openvla")
-        cache = args.cache_dir.resolve()
-        os.environ["HF_HOME"] = str(cache)
-        os.environ["HF_MODULES_CACHE"] = str(cache / "modules")
-        os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
-        print(f"Loading OpenVLA from {args.model_dir} on {args.device}; HTTP readiness follows successful loading.", flush=True)
-        from inference.openvla_backend import OpenVLAPredictor
-        predictor = OpenVLAPredictor(args.model_dir, device=args.device, unnorm_key=args.unnorm_key, **({"adapter":args.adapter} if args.adapter else {}))
-        print(f"Model loaded in {predictor.load_seconds:.2f}s", flush=True)
+    if not 0<=args.port<=65535:parser.error('--port must be between 0 and 65535')
+    if args.mode=='openvla' and args.model_dir is None:parser.error('--model-dir is required for --mode openvla')
+    # Reserve the socket before expensive loading, without a probe/rebind race.
     with ThreadingHTTPServer((args.host, args.port), Handler) as server:
+        predictor = None
+        if args.mode == "openvla":
+            if args.model_dir is None:
+                parser.error("--model-dir is required for --mode openvla")
+            cache = args.cache_dir.resolve()
+            os.environ["HF_HOME"] = str(cache)
+            os.environ["HF_MODULES_CACHE"] = str(cache / "modules")
+            os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
+            print(f"Loading OpenVLA from {args.model_dir} on {args.device}; HTTP readiness follows successful loading.", flush=True)
+            from inference.openvla_backend import OpenVLAPredictor
+            predictor = OpenVLAPredictor(args.model_dir, device=args.device, unnorm_key=args.unnorm_key, **({"adapter":args.adapter} if args.adapter else {}))
+            print(f"Model loaded in {predictor.load_seconds:.2f}s", flush=True)
         server.mode = args.mode
         server.predictor = predictor
         server.prediction_lock = threading.Lock()
+        if args.ready_file:
+            args.ready_file.parent.mkdir(parents=True,exist_ok=True)
+            temporary=args.ready_file.with_suffix('.tmp')
+            temporary.write_text(json.dumps(dict(host=args.host,port=server.server_port,mode=args.mode))+'\n')
+            temporary.replace(args.ready_file)
         timer = threading.Timer(args.max_runtime_seconds, server.shutdown)
         timer.daemon = True
         timer.start()

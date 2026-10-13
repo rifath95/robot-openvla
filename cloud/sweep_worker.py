@@ -15,13 +15,19 @@ from cloud.sweep_storage import stage_weights
 from cloud.scripted_touch_session import write_reports
 
 
-def wait_server(process,port,seconds=900):
+def wait_server(process,port,seconds=900,ready_file=None):
     deadline=time.monotonic()+seconds
     while time.monotonic()<deadline:
         if process.poll() is not None:raise RuntimeError('Cloud inference server exited; inspect server log')
         try:
-            with urlopen(f'http://127.0.0.1:{port}/health',timeout=2) as response:health=json.load(response)
-            if health.get('model_loaded') is True:return health
+            selected=port
+            if ready_file is not None:
+                selected=json.loads(Path(ready_file).read_text())['port']
+            if type(selected) is not int or not 1<=selected<=65535:raise ValueError('Invalid server port')
+            with urlopen(f'http://127.0.0.1:{selected}/health',timeout=2) as response:health=json.load(response)
+            if health.get('model_loaded') is True:
+                health['server_port']=selected
+                return health
         except (OSError,ValueError):pass
         time.sleep(1)
     raise TimeoutError('Cloud model readiness timeout')
@@ -42,7 +48,7 @@ def summarize(spec,folder,returncode):
     return row
 
 
-def run(directory,sim_python,*,port=8001):
+def run(directory,sim_python,*,port=0):
     directory=Path(directory);payload=json.loads((directory/'results.json').read_text())
     validate_saved(payload);plan=payload['plan'];rows=payload['trials']
     previous=float(plan.get('elapsed_seconds',0));started=time.monotonic()
@@ -68,16 +74,19 @@ def run(directory,sim_python,*,port=8001):
         for checkpoint in checkpoints:
             selected=[s for s in specs if s['checkpoint']==checkpoint]
             server_log=directory/f'cloud_server_{checkpoint:06d}.log'
+            ready_file=local/f'server_ready_{checkpoint:06d}.json'
+            ready_file.unlink(missing_ok=True)
             with server_log.open('a',buffering=1) as log:
                 server=subprocess.Popen([sys.executable,'-u','-m','cloud.connection_server','--mode','openvla',
                     '--model-dir',str(staging/'base'),'--adapter',str(staging/f'checkpoint_{checkpoint:06d}'),
-                    '--unnorm-key','panda_grasp_v1','--device','cuda','--port',str(port),
+                    '--unnorm-key','panda_grasp_v1','--device','cuda','--port',str(port),'--ready-file',str(ready_file),
                     '--max-runtime-seconds',str(plan['timeout_budget']['inner_seconds'])],
                     cwd=PROJECT_ROOT,env=env,stdout=log,stderr=subprocess.STDOUT)
                 try:
-                    health=wait_server(server,port)
+                    health=wait_server(server,port,ready_file=ready_file)
+                    selected_port=health.get('server_port',port)
                     startup=directory/f'startup_cloud_{checkpoint:06d}.json'
-                    startup_info=dict(health.get('startup_info',{}),execution_mode='cloud_sequential',
+                    startup_info=dict(health.get('startup_info',{}),execution_mode='cloud_sequential',server_port=selected_port,
                         adapter_checkpoint=str(training/f'checkpoint_{checkpoint:06d}'))
                     startup.write_text(json.dumps(startup_info,indent=2)+'\n')
                     for spec in selected:
@@ -86,7 +95,7 @@ def run(directory,sim_python,*,port=8001):
                         command=[str(sim_python),'-u','-m','inference.remote_loop','--task',plan['task'],
                             '--instruction',f"touch the {spec['target_color']} cube.",'--scene-seed',str(spec['seed']),
                             '--steps',str(plan['steps']),'--no-view','--start-immediately','--startup-info',str(startup),
-                            '--output-dir',str(trial),'--server-url',f'http://127.0.0.1:{port}',
+                            '--output-dir',str(trial),'--server-url',f'http://127.0.0.1:{selected_port}',
                             '--max-runtime-seconds','180']
                         if plan['task']!='touch':
                             positions_file=local/f"scene_positions_{spec['seed']}.json"
@@ -107,7 +116,7 @@ def run(directory,sim_python,*,port=8001):
                         if (row.get('outcome')=='unmeasured' or row['phase']=='Missing summary'
                             or (row.get('error') and 'Server returned HTTP' in row['error'])):
                             raise RuntimeError('Trial infrastructure failed; diagnostics saved instead of continuing')
-                        wait_server(server,port,30)
+                        wait_server(server,selected_port,30)
                 finally:
                     if server.poll() is None:server.terminate()
                     try:server.wait(timeout=30)
