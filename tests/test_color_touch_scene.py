@@ -11,6 +11,22 @@ from simulation.replay_run import replay_model
 
 
 class ColorSceneTests(unittest.TestCase):
+    def test_expansion_keeps_original_pairs_and_balances_pair_splits(self):
+        from collections import Counter
+        from data_tools.collect_panda_color_touch import pair_spec, PAIRS
+        import numpy as np
+        specs=[pair_spec(i) for i in range(25)]
+        self.assertEqual(Counter(s['split'] for s in specs),
+                         {'train':17,'validation':4,'test':4})
+        self.assertEqual(specs,[pair_spec(i) for i in range(25)])
+        for i,(red,blue) in enumerate(PAIRS):
+            self.assertEqual(specs[i]['cube_positions'],{'red':list(red),'blue':list(blue)})
+        for spec in specs:
+            points=spec['cube_positions']
+            self.assertGreaterEqual(np.linalg.norm(np.array(points['red'])-points['blue']),.12)
+            for xy in points.values():
+                self.assertTrue(.40<=xy[0]<=.68 and -.16<=xy[1]<=.16)
+
     def test_scene_has_two_distinct_colors_and_full_home_state(self):
         model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
         self.assertEqual(model.nq, 23)

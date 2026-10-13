@@ -1,5 +1,7 @@
 # First ten red/blue touch demonstrations
 
+This is the historical review of the first ten. The dataset has since [expanded to 50 demonstrations](COLOR_TOUCH_50.md), preserving all ten.
+
 Local dataset: `datasets/panda_color_touch/`. This is separate from `datasets/panda_touch_cube/`; existing data and interactive inference remain unchanged.
 
 Both colored cubes are present. Each of five predeclared scenes has two demonstrations with identical starting images and robot states: `touch the red cube.` and `touch the blue cube.` Targets vary across sides of the workspace. This small review batch contains 6 training, 2 validation and 2 test trajectories, with both colors balanced in each split. Scene pairs remain in one split to avoid paired-scene leakage.
