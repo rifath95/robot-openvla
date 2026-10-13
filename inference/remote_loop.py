@@ -49,7 +49,7 @@ class ActiveTimer:
             return end - self.started - self.paused_seconds
 
 
-def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red cube",
+def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
              steps=100, timeout_seconds=180, max_runtime_seconds=900,
              max_consecutive_rejections=3,
              output_dir=None, no_view=False, start_immediately=False, startup_info=None,
@@ -60,12 +60,25 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
     import numpy as np
     from simulation.capture_camera import save_rgb_png
     from simulation.panda_env import PandaEnv
-    if task not in ('cube','bowl'):
+    if task not in ('cube','bowl','touch'):
         raise ValueError('Unknown simulation task')
+    if instruction is None:
+        instruction={'cube':'pick up the red cube','bowl':'pick up the red cube and drop it in the blue bowl.',
+                     'touch':'touch the red cube.'}[task]
+    touch_result=None
     env_options={}
     camera='workspace_camera'
     if task=='bowl':
         from simulation.bowl_scene import SCENE_PATH, CAMERA_NAME, randomize_scene
+        env_options=dict(scene_path=SCENE_PATH,camera=CAMERA_NAME)
+        camera=CAMERA_NAME
+
+    if task=='touch':
+        from simulation.touch_scene import SCENE_PATH, CAMERA_NAME, initialize_scene
+        from data_tools.collect_panda_touch import scenario as touch_scenario
+        from data_tools.touch_demonstrations import task_result as touch_task_result
+        from data_tools.panda_demonstrations import cube_position
+        if type(scene_seed) is not int or scene_seed<0:raise ValueError('Touch scene seed must be nonnegative')
         env_options=dict(scene_path=SCENE_PATH,camera=CAMERA_NAME)
         camera=CAMERA_NAME
 
@@ -171,6 +184,15 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                 save(folder/'episode.json',dict(scene_profile='panda_bowl_v1',
                     scene_seed=scene_seed,instruction=instruction,scenario=dict(scene=spec),
                     training_eligible=False))
+            elif task=='touch':
+                touch_spec=touch_scenario(scene_seed)
+                scene=initialize_scene(env,touch_spec['cube_xy'])
+                initial_cube=cube_position(env)
+                touch_result=touch_task_result(env,initial_cube)
+                save(folder/'episode.json',dict(scene_profile='panda_touch_v1',
+                    scene_seed=scene_seed,instruction=instruction,scenario=dict(scene=scene),
+                    demonstration_slot=scene_seed,demonstration_id=touch_spec['id'],
+                    known_collected_position=scene_seed<50,training_eligible=False))
             else:
                 env.controller.step(500)
             if no_view:
@@ -317,6 +339,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                         state(step_dir / "after_state.npz", env)
                         tracking_error = float(np.linalg.norm(env.controller.target_position - after_position))
                         finite = bool(np.all(np.isfinite(env.data.qpos)) and np.all(np.isfinite(env.data.qvel)))
+                        if task=='touch':touch_result=touch_task_result(env,initial_cube)
                     after_capture_seconds = time.perf_counter() - capture_started
                     report = {
                         "step": current_step, "request_id": prediction["request_id"],
@@ -348,6 +371,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                         "request_timings_seconds": prediction["client_timings_seconds"],
                         "server_timings_seconds": prediction.get("timings_seconds"),
                     }
+                    if task=='touch':report['task_result']=touch_result
                     save(step_dir / "execution.json", report)
                     if report["interrupted"]:
                         break
@@ -358,6 +382,9 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                     save(folder / "summary.json", {"completed_steps": len(completed), "steps": completed,
                                                   "rejections": rejections, "prediction_attempts": prediction_attempts})
                     print(f"Action {current_step}: tracking error {tracking_error * 1000:.3f} mm", flush=True)
+                    if task=='touch' and touch_result['success']:
+                        print('Touch task succeeded: verified finger-cube contact.',flush=True)
+                        break
                 status("Stopped" if reason is not None else "Completed", stop_reason=reason)
                 refresh(force=True)
     except KeyboardInterrupt:
@@ -374,7 +401,8 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                                       "requested_steps": steps, "prediction_attempts": prediction_attempts,
                                       "rejected_steps": len(rejections), "rejections": rejections,
                                       "active_seconds": active_timer.elapsed(),
-                                      "elapsed_seconds": time.perf_counter() - started})
+                                      "elapsed_seconds": time.perf_counter() - started,
+                                      **({"task_result":touch_result} if task=='touch' else {})})
         from analysis.run_report import write_run_report
         write_run_report(folder)
         from analysis.summarize_gpu_inference import comparison
@@ -388,8 +416,8 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--server-url", default="http://127.0.0.1:8000")
-    parser.add_argument("--instruction", default="pick up the red cube")
-    parser.add_argument('--task', choices=['cube','bowl'], default='cube')
+    parser.add_argument("--instruction", help="Instruction; defaults to the selected task’s demonstration instruction")
+    parser.add_argument('--task', choices=['cube','bowl','touch'], default='cube')
     parser.add_argument('--scene-seed', type=int, default=0)
     parser.add_argument("--steps", type=int, default=100,
                         help="Maximum observation/prediction cycles, including held/rejected actions")

@@ -65,9 +65,11 @@ def bootstrap_script(runtime, adapter=None, *, require_sampling=False):
     # All variable arguments are shell-quoted; pasted SSH text is never a shell command.
     model_setup = ''
     model_args = ''
+    checkpoint_check = ''
     identity_args=' --adapter '+shlex.quote(str(adapter)) if adapter else ''
     if require_sampling:identity_args+=' --require-sampling'
     if adapter:
+        checkpoint_check='/opt/openvla/bin/python -m cloud.checkpoint_ready '+shlex.quote(str(adapter))+'\n'
         # Merge on container disk, leaving the persistent base and adapter intact.
         model_setup = f'''test -x /opt/openvla/bin/python || {{ echo 'Use the training Docker template for adapter evaluation.'; exit 1; }}
 test -f {shlex.quote(str(adapter) + '/adapter_config.json')} || {{ echo 'Adapter checkpoint not found on the attached volume.'; exit 1; }}
@@ -83,7 +85,7 @@ else
   git -C /root/robot-openvla pull --ff-only
 fi
 cd /root/robot-openvla
-if python3 -m cloud.server_reuse{identity_args}; then
+{checkpoint_check}if python3 -m cloud.server_reuse{identity_args}; then
   echo 'Matching checkpoint already loaded; reusing its server and remaining runtime.'
   exit 0
 fi
@@ -122,8 +124,8 @@ def main():
     parser.add_argument('--adapter', help='Cloud checkpoint directory to merge and evaluate; requires the training template')
     parser.add_argument('--steps', type=int, default=100)
     parser.add_argument('--max-consecutive-rejections', type=int, default=3)
-    parser.add_argument('--instruction', default='pick up the red cube')
-    parser.add_argument('--task', choices=['cube', 'bowl'], default='cube')
+    parser.add_argument('--instruction', help='Task instruction; defaults to the selected task’s demonstration instruction')
+    parser.add_argument('--task', choices=['cube', 'bowl', 'touch'], default='cube')
     parser.add_argument('--scene-seed', type=int, default=0)
     parser.add_argument('--scene-seeds', type=int, nargs='+',
                         help='Run these seeds in order using one loaded model')
@@ -135,6 +137,9 @@ def main():
     from inference.action_sampling import add_sampling_arguments, generation_options
     add_sampling_arguments(parser)
     args = parser.parse_args()
+    if args.instruction is None:
+        args.instruction={'cube':'pick up the red cube','bowl':'pick up the red cube and drop it in the blue bowl.',
+                          'touch':'touch the red cube.'}[args.task]
     try:generation_options(args.sample_actions,args.temperature,args.top_p)
     except ValueError as exc:parser.error(str(exc))
     if any(value <= 0 for value in (args.steps, args.max_consecutive_rejections, args.max_runtime_seconds, args.server_runtime_seconds, args.startup_timeout_seconds)):

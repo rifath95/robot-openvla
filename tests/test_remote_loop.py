@@ -97,6 +97,35 @@ class LoopTests(unittest.TestCase):
             self.assertEqual(summary['steps'][0]['executed_physics_steps'], PHYSICS_STEPS)
             self.assertLess(summary['active_seconds'], summary['elapsed_seconds'])
 
+    def test_touch_stops_when_actual_finger_contact_succeeds(self):
+        import mujoco
+        from unittest.mock import patch
+        initial=dict(success=False,finger_cube_contacts=[],cube_displacement_metres=0.)
+        contact=dict(success=True,finger_cube_contacts=[dict(finger='left_finger',normal_force_newtons=.2)],cube_displacement_metres=0.)
+        prediction=dict(request_id='touch',unnorm_key='panda_grasp_v1',
+                        action=[0,0,-.005,0,0,0,0],client_timings_seconds={})
+        with tempfile.TemporaryDirectory() as tmp:
+            folder=Path(tmp)/'run'
+            with patch('inference.remote_loop.request_prediction',return_value=prediction) as request, \
+                 patch('data_tools.touch_demonstrations.task_result',side_effect=[initial,contact]):
+                run_loop(task='touch',scene_seed=0,steps=5,no_view=True,output_dir=folder)
+            self.assertEqual(request.call_count,1)
+            self.assertEqual(request.call_args.args[1],'touch the red cube.')
+            summary=json.loads((folder/'summary.json').read_text())
+            self.assertEqual(summary['completed_steps'],1)
+            self.assertTrue(summary['task_result']['success'])
+            self.assertEqual(summary['phase'],'Completed')
+            metadata=json.loads((folder/'episode.json').read_text())
+            self.assertEqual(metadata['scene_profile'],'panda_touch_v1')
+            self.assertEqual(metadata['demonstration_id'],'train_001')
+            self.assertEqual(metadata['scenario']['scene']['starting_pose']['requested_position'],[.5,0,.45])
+            self.assertEqual(json.loads((folder/'action_contract.json').read_text())['observation'],
+                             'RGB touch_camera immediately before command; frozen during prediction')
+            from simulation.replay_run import replay_model
+            model,camera=replay_model(folder)
+            self.assertEqual(camera,'touch_camera')
+            self.assertEqual(mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_BODY,'bowl'),-1)
+
     def test_sampling_is_sent_and_saved_for_every_cycle(self):
         self.run_case(sample_actions=True)
 
