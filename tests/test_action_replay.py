@@ -77,5 +77,17 @@ class ActionReplayTests(unittest.TestCase):
             self.assertIn('simulation.action_replay',(folder/'replay_actions.py').read_text())
             self.assertIn('from replay_run import main',(folder/'replay.py').read_text())
 
+    def test_new_demonstrations_reject_controller_provenance_mismatch(self):
+        from data_tools.bowl_demonstrations import controller_fingerprint
+        with tempfile.TemporaryDirectory() as tmp:
+            folder=Path(tmp)/'source';self.episode(folder)
+            path=folder/'episode.json';metadata=json.loads(path.read_text())
+            metadata['controller_sha256']='different';path.write_text(json.dumps(metadata))
+            with self.assertRaisesRegex(ValueError,'Controller differs'):
+                replay_actions(folder,no_view=True,output_dir=Path(tmp)/'mismatch')
+            metadata['controller_sha256']=controller_fingerprint();path.write_text(json.dumps(metadata))
+            with self.assertRaisesRegex(ValueError,'Controller differs'):
+                replay_actions(folder,no_view=True,controller_mode='collection',output_dir=Path(tmp)/'old')
+
 
 if __name__=='__main__':unittest.main()

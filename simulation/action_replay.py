@@ -31,9 +31,12 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
         raise ValueError('Demonstration action sequence is not contiguous')
     model,camera=replay_model(folder)
     if metadata.get('scene_profile')=='panda_bowl_v1':
-        from data_tools.bowl_demonstrations import scene_fingerprint
+        from data_tools.bowl_demonstrations import scene_fingerprint,controller_fingerprint
         if metadata.get('scene_xml_sha256')!=scene_fingerprint():
             raise ValueError('Scene assets differ from the recorded demonstration')
+        if metadata.get('controller_sha256') and (
+                controller_mode!='current' or metadata['controller_sha256']!=controller_fingerprint()):
+            raise ValueError('Controller differs from the version recorded for this demonstration')
     if metadata['action_contract']!=action_contract(camera=camera):
         raise ValueError('Demonstration action convention differs from the current controller')
     data=mujoco.MjData(model)

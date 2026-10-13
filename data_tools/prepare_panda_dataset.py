@@ -21,6 +21,8 @@ def fingerprint(folder):
     folder = Path(folder)
     metadata = json.loads((folder / 'episode.json').read_text())
     fixed = {key: metadata[key] for key in ('action_contract', 'instruction', 'scene_xml_sha256', 'mujoco_version')}
+    if metadata.get('controller_sha256'):
+        fixed['controller_sha256']=metadata['controller_sha256']
     if metadata.get('scenario') is not None:
         fixed['scenario'] = metadata['scenario']
     digest = hashlib.sha256(json.dumps(fixed, sort_keys=True).encode())

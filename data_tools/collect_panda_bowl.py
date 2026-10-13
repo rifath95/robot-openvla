@@ -18,7 +18,7 @@ SPLITS = ['train']*4+['validation','test']
 DATASET_ROOT = DATASETS_ROOT/'panda_pick_bowl'
 
 
-def scenario(slot, attempt, coverage_target=None):
+def scenario(slot, attempt, coverage_target=None,startup_policy='legacy'):
     split = SPLITS[slot % 6]
     rank = sum(SPLITS[i % 6] == split for i in range(slot))+1
     rng = np.random.default_rng([SEED, slot, attempt])
@@ -30,6 +30,10 @@ def scenario(slot, attempt, coverage_target=None):
                 random_cube_yaw=slot>=10,
                 instruction=INSTRUCTION)
     if coverage_target:result['coverage_target']=coverage_target
+    if startup_policy not in ('legacy','state_dependent'):
+        raise ValueError('Unknown demonstration startup policy')
+    if startup_policy!='legacy':
+        result.update(startup_policy=startup_policy,random_cube_yaw=True)
     return result
 
 
@@ -50,13 +54,13 @@ def coverage(results):
                 bowl_xy_span_metres=np.ptp([r['bowl_position'][:2] for r in results],axis=0).tolist())
 
 
-def collect_slot(folder,slot,first_attempt,max_attempts,target):
+def collect_slot(folder,slot,first_attempt,max_attempts,target,startup_policy='legacy'):
     from data_tools.bowl_demonstrations import record_episode, replay_episode
     folder=Path(folder)
     checks=PROJECT_ROOT/'outputs/bowl_collection_checks'
     rejected=[]
     for attempt in range(first_attempt,max_attempts):
-        spec=scenario(slot,attempt,target)
+        spec=scenario(slot,attempt,target,startup_policy)
         destination=folder/spec['split']/spec['id']
         if destination.exists():raise ValueError(f'Unindexed episode already exists: {destination}')
         temporary=checks/f'{spec["id"]}_attempt_{attempt:03d}'
@@ -89,7 +93,7 @@ def collect_slot(folder,slot,first_attempt,max_attempts,target):
     return None,rejected,None
 
 
-def collect(folder=DATASET_ROOT, limit=10, max_attempts=30, workers=1):
+def collect(folder=DATASET_ROOT, limit=10, max_attempts=30, workers=1,startup_policy='legacy'):
     folder = Path(folder).resolve()
     folder.mkdir(parents=True, exist_ok=True)
     for split in set(SPLITS):
@@ -107,6 +111,9 @@ def collect(folder=DATASET_ROOT, limit=10, max_attempts=30, workers=1):
                          'Cube and bowl vary over the reachable table interior; not every physical-table point is reachable.',
                 first_ten='First ten retained in final folders; eight train, one validation, one test.',
                 accepted_only='Only successful contact grasps and deterministic physics replays are accepted.')
+    if startup_policy!='legacy':
+        plan.update(startup_policy=startup_policy,controller_policy='holding_correction_v1')
+        plan['cube_orientation']['initial_fixed_orientation_slots']=0
     plan_path = folder/'collection_plan.json'
     if plan_path.exists():
         previous_plan=json.loads(plan_path.read_text())
@@ -148,7 +155,7 @@ def collect(folder=DATASET_ROOT, limit=10, max_attempts=30, workers=1):
         if any(row['slot']==slot for row in results):continue
         start=max((r['attempt'] for r in failures if r['slot']==slot),default=-1)+1
         jobs.append((folder,slot,start,max_attempts,
-                     coverage_plan['assignments'].get(str(slot)) if coverage_plan else None))
+                     coverage_plan['assignments'].get(str(slot)) if coverage_plan else None,startup_policy))
     def accept(outcome):
         result,rejected,temporary=outcome
         failures.extend(rejected)
@@ -189,8 +196,9 @@ def main():
     parser.add_argument('--limit',type=int,choices=(10,20,300),default=10)
     parser.add_argument('--max-attempts',type=int,default=30)
     parser.add_argument('--workers',type=int,choices=(1,2,4),default=1)
+    parser.add_argument('--startup-policy',choices=('legacy','state_dependent'),default='legacy')
     args = parser.parse_args()
-    collect(args.output_dir,args.limit,args.max_attempts,args.workers)
+    collect(args.output_dir,args.limit,args.max_attempts,args.workers,args.startup_policy)
 
 
 if __name__ == '__main__':

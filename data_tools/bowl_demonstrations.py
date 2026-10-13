@@ -25,6 +25,12 @@ def scene_fingerprint():
         PROJECT_ROOT/'mujoco_menagerie/franka_emika_panda/panda.xml'))).hexdigest()
 
 
+def controller_fingerprint():
+    return hashlib.sha256(b''.join((PROJECT_ROOT/name).read_bytes() for name in (
+        'simulation/panda_controller.py','simulation/panda_actions.py',
+        'simulation/ik_retries.py'))).hexdigest()
+
+
 def configure_recorded_scene(model, metadata):
     configure_grip(model)
     position = np.asarray(metadata['scenario']['scene']['bowl_position'], dtype=float)
@@ -75,6 +81,12 @@ def record_episode(folder, scenario):
                     source='scripted expert with privileged object coordinates; physical contact grasp',
                     scenario=scenario, success=False, training_eligible=False,
                     physics_seconds_per_action=.4)
+    policy=scenario.get('startup_policy','legacy')
+    if policy not in ('legacy','state_dependent'):
+        raise ValueError('Unknown demonstration startup policy')
+    metadata['startup_policy']=policy
+    metadata['controller_policy']='holding_correction_v1'
+    metadata['controller_sha256']=controller_fingerprint()
     write_json(folder/'episode.json', metadata)
     try:
         with PandaEnv(SCENE_PATH, camera=CAMERA_NAME) as env:
@@ -147,8 +159,11 @@ def record_episode(folder, scenario):
                     act([*delta, *rotation, opening], stage)
                 raise RuntimeError(f'Waypoint did not settle during {stage}')
 
-            # Open even if the initial gripper is closed; reorient above table/rim.
-            act([0, 0, 0, 0, 0, 0, 1], 'open_for_pickup')
+            # In the state-dependent collection, opening accompanies the first
+            # necessary clearance/reorientation movement. No separate opening
+            # hold is recorded, including for already-open starts.
+            if policy=='legacy':
+                act([0, 0, 0, 0, 0, 0, 1], 'open_for_pickup')
             position, orientation = env.controller.end_effector_pose()
             move([*position[:2], max(position[2], .50)], 1, 'clear_start', orientation)
             move([*position[:2], max(position[2], .50)], 1, 'orient_for_grasp')
@@ -179,6 +194,8 @@ def record_episode(folder, scenario):
 def replay_episode(folder):
     folder = Path(folder)
     metadata = json.loads((folder/'episode.json').read_text())
+    if metadata.get('controller_sha256') not in (None,controller_fingerprint()):
+        raise ValueError('Episode controller differs from collection; do not certify it with different control code')
     if (metadata['scene_xml_sha256'] != scene_fingerprint() or metadata['mujoco_version'] != mujoco.__version__
         or metadata['action_contract'] != action_contract(camera=CAMERA_NAME) or not metadata['success']):
         raise ValueError('Episode scene, action convention, version, or success mismatch')

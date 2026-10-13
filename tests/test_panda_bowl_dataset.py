@@ -14,6 +14,16 @@ from simulation.replay_run import replay_model
 
 
 class BowlDatasetTests(unittest.TestCase):
+    def test_state_dependent_profile_keeps_ids_and_rotates_cube_from_first_slot(self):
+        for slot in range(10):
+            old=scenario(slot,0)
+            new=scenario(slot,0,startup_policy='state_dependent')
+            self.assertEqual(new['id'],old['id'])
+            self.assertEqual(new['initial_gripper'],old['initial_gripper'])
+            self.assertEqual(new['startup_policy'],'state_dependent')
+            self.assertTrue(new['random_cube_yaw'])
+        with self.assertRaises(ValueError):scenario(0,0,startup_policy='unknown')
+
     def test_slots_have_exact_splits_unique_ids_and_reproducible_seeds(self):
         specs = [scenario(slot,0) for slot in range(300)]
         self.assertEqual({split:sum(s['split']==split for s in specs)
