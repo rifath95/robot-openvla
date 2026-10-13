@@ -46,6 +46,9 @@ class ReuseTests(unittest.TestCase):
             marker=outputs/'cloud_server_identity.json';marker.write_text(json.dumps(record))
             ready=lambda:dict(status='ready',mode='openvla',model_loaded=True)
             self.assertTrue(reusable(outputs,identity,proc_root=root/'proc',health_reader=ready))
+            self.assertFalse(reusable(outputs,identity,proc_root=root/'proc',health_reader=ready,require_sampling=True))
+            sampling_ready=lambda:dict(ready(),action_sampling_available=True)
+            self.assertTrue(reusable(outputs,identity,proc_root=root/'proc',health_reader=sampling_ready,require_sampling=True))
             for health in [dict(status='loading',mode='openvla',model_loaded=False),
                            dict(status='ready',mode='connection_test',model_loaded=False)]:
                 self.assertFalse(reusable(outputs,identity,proc_root=root/'proc',health_reader=lambda:health))

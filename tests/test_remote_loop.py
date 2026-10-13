@@ -97,7 +97,10 @@ class LoopTests(unittest.TestCase):
             self.assertEqual(summary['steps'][0]['executed_physics_steps'], PHYSICS_STEPS)
             self.assertLess(summary['active_seconds'], summary['elapsed_seconds'])
 
-    def run_case(self, *, fail_second=False, stop_during_request=False, rejection_cycles=(), steps=3, unnorm_key='bridge_orig'):
+    def test_sampling_is_sent_and_saved_for_every_cycle(self):
+        self.run_case(sample_actions=True)
+
+    def run_case(self, *, fail_second=False, stop_during_request=False, rejection_cycles=(), steps=3, unnorm_key='bridge_orig', sample_actions=False):
         requests = []
         stop = threading.Event()
 
@@ -114,6 +117,8 @@ class LoopTests(unittest.TestCase):
                                -0.0052476346, -0.0242258626, -0.0016785094, 0.9960784314],
                     'timings_seconds': {'model_inference': 0.01},
                 }
+                if request.get('generation_options'):
+                    reply['generation_options']=dict(request['generation_options'],action_tokens_only=True)
                 body = json.dumps(reply).encode()
                 self.send_response(500 if fail_second and len(requests) == 2 else 200)
                 self.send_header('Content-Length', str(len(body)))
@@ -130,7 +135,8 @@ class LoopTests(unittest.TestCase):
             startup_path = Path(directory) / 'startup.json'
             startup_path.write_text(json.dumps({'model_load_seconds': 44.64, 'gpu': {'name': 'fixture'}}))
             kwargs = dict(startup_info=startup_path, server_url=f'http://127.0.0.1:{server.server_port}', steps=steps,
-                          max_runtime_seconds=30, no_view=True, output_dir=output, stop_event=stop)
+                          max_runtime_seconds=30, no_view=True, output_dir=output, stop_event=stop,
+                          sample_actions=sample_actions,temperature=.7,top_p=.95)
             original_solver = PandaController._solve_ik
             def solver(controller, *args, **kwargs):
                 if len(requests) in rejection_cycles:
@@ -143,6 +149,10 @@ class LoopTests(unittest.TestCase):
                 else:
                     with patch.object(PandaController, '_solve_ik', solver):
                         run_loop(**kwargs)
+                if sample_actions:
+                    expected=dict(do_sample=True,temperature=.7,top_p=.95,top_k=0,num_beams=1)
+                    self.assertEqual(json.loads((output/'generation_options.json').read_text()),expected)
+                    self.assertTrue(all(r['generation_options']==expected for r in requests))
                 summary = json.loads((output / 'summary.json').read_text())
                 status = json.loads((output / 'status.json').read_text())
                 self.assertEqual(json.loads((output / 'startup_info.json').read_text())['model_load_seconds'], 44.64)

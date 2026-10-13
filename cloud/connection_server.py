@@ -47,6 +47,7 @@ class Handler(BaseHTTPRequestHandler):
                              "model_loaded": self.server.predictor is not None,
                              "model_load_seconds": getattr(self.server.predictor, "load_seconds", None),
                              "startup_info": getattr(self.server.predictor, "startup_info", {}),
+                             "action_sampling_available": getattr(self.server.predictor, "action_sampling_available", False),
                              "matched_diagnostic_available": callable(getattr(self.server.predictor, 'diagnose', None))})
 
     def do_POST(self):
@@ -78,6 +79,10 @@ class Handler(BaseHTTPRequestHandler):
                 raise ValueError("instruction must be nonempty and at most 4096 characters")
             if not isinstance(encoded, str):
                 raise ValueError("image_png_base64 must be a string")
+            from inference.action_sampling import validate_options
+            generation = validate_options(payload.get('generation_options'))
+            if self.path == '/diagnose' and generation['do_sample']:
+                raise ValueError('Matched diagnostics use greedy generation')
             expert_action = payload.get('expert_action')
             if self.path == '/diagnose':
                 if (not isinstance(expert_action, list) or len(expert_action) != 7
@@ -104,13 +109,20 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == '/diagnose' and not callable(getattr(self.server.predictor, 'diagnose', None)):
             self.send_json(409, {'error': 'Matched diagnostic requires an updated loaded OpenVLA server'})
             return
+        if generation['do_sample'] and not getattr(self.server.predictor, 'action_sampling_available', False):
+            self.send_json(409, {'error': 'Action sampling requires an updated loaded OpenVLA server'})
+            return
         if self.server.predictor is not None:
             if not self.server.prediction_lock.acquire(blocking=False):
                 self.send_json(503, {"error": "Model is busy; wait for the current prediction to finish", "request_id": request_id})
                 return
             try:
-                inference = (self.server.predictor.diagnose(rgb, instruction, expert_action)
-                             if self.path == '/diagnose' else self.server.predictor.predict(rgb, instruction))
+                if self.path == '/diagnose':
+                    inference = self.server.predictor.diagnose(rgb, instruction, expert_action)
+                elif generation['do_sample']:
+                    inference = self.server.predictor.predict(rgb, instruction, generation=generation)
+                else:
+                    inference = self.server.predictor.predict(rgb, instruction)
             except Exception as exc:
                 self.log_error("Prediction failed: %s", exc)
                 self.send_json(500, {"error": "OpenVLA prediction failed; inspect the server log", "request_id": request_id})

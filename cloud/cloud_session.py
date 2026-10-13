@@ -61,11 +61,12 @@ def ssh_arguments(host, port, key):
             '-o', 'ServerAliveCountMax=3', '-i', str(key), '-p', str(port), host]
 
 
-def bootstrap_script(runtime, adapter=None):
+def bootstrap_script(runtime, adapter=None, *, require_sampling=False):
     # All variable arguments are shell-quoted; pasted SSH text is never a shell command.
     model_setup = ''
     model_args = ''
     identity_args=' --adapter '+shlex.quote(str(adapter)) if adapter else ''
+    if require_sampling:identity_args+=' --require-sampling'
     if adapter:
         # Merge on container disk, leaving the persistent base and adapter intact.
         model_setup = f'''test -x /opt/openvla/bin/python || {{ echo 'Use the training Docker template for adapter evaluation.'; exit 1; }}
@@ -131,7 +132,11 @@ def main():
     parser.add_argument('--startup-timeout-seconds', type=int, default=600, help='Wait for loading after dependency setup')
     parser.add_argument('--setup-only', action='store_true', help='Keep server/tunnel ready without opening the simulator')
     parser.add_argument('--stop-server', action='store_true', help='Stop the cloud model server without running a trial')
+    from inference.action_sampling import add_sampling_arguments, generation_options
+    add_sampling_arguments(parser)
     args = parser.parse_args()
+    try:generation_options(args.sample_actions,args.temperature,args.top_p)
+    except ValueError as exc:parser.error(str(exc))
     if any(value <= 0 for value in (args.steps, args.max_consecutive_rejections, args.max_runtime_seconds, args.server_runtime_seconds, args.startup_timeout_seconds)):
         parser.error('Step counts and time limits must be positive')
     try:
@@ -158,7 +163,7 @@ def main():
         subprocess.run(ssh + ['true'], check=True)
         print('Updating cloud code and preparing the server...', flush=True)
         remote_started = True  # Also clean up if interrupted just after background launch.
-        subprocess.run(ssh + ['bash -s'], input=bootstrap_script(args.server_runtime_seconds, args.adapter).encode(), check=True)
+        subprocess.run(ssh + ['bash -s'], input=bootstrap_script(args.server_runtime_seconds, args.adapter, require_sampling=args.sample_actions).encode(), check=True)
         tunnel = subprocess.Popen(ssh[:-1] + ['-o', 'ExitOnForwardFailure=yes', '-N',
                                   '-L', '127.0.0.1:8000:127.0.0.1:8000', host])
         def check_liveness():
@@ -198,7 +203,9 @@ def main():
                                      '--task', args.task, '--scene-seed', str(scene_seed),
                                      '--startup-info', str(startup_path),
                                      '--max-consecutive-rejections', str(args.max_consecutive_rejections),
-                                     '--max-runtime-seconds', str(args.max_runtime_seconds)], cwd=ROOT)
+                                     '--max-runtime-seconds', str(args.max_runtime_seconds),
+                                     *(['--sample-actions','--temperature',str(args.temperature),'--top-p',str(args.top_p)]
+                                       if args.sample_actions else [])], cwd=ROOT)
             if result.returncode:
                 print('Trial failed; inspect its status.json and the terminal output.', flush=True)
             next_seed=next(pending_seeds,None)

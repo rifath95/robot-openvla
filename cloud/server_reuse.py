@@ -39,7 +39,7 @@ def read_health():
         return json.load(response)
 
 
-def reusable(outputs,identity,*,proc_root=Path('/proc'),health_reader=read_health):
+def reusable(outputs,identity,*,proc_root=Path('/proc'),health_reader=read_health,require_sampling=False):
     try:
         outputs=Path(outputs)
         pid=int((outputs/'cloud_server.pid').read_text().strip())
@@ -48,7 +48,8 @@ def reusable(outputs,identity,*,proc_root=Path('/proc'),health_reader=read_healt
             return False
         health=health_reader()
         return (health.get('status')=='ready' and health.get('mode')=='openvla'
-                and health.get('model_loaded') is True)
+                and health.get('model_loaded') is True
+                and (not require_sampling or health.get('action_sampling_available') is True))
     except (OSError,ValueError,KeyError,IndexError):
         return False
 
@@ -76,6 +77,7 @@ def main():
     parser.add_argument('--adapter')
     parser.add_argument('--outputs',type=Path,default=Path('outputs'))
     parser.add_argument('--record',action='store_true')
+    parser.add_argument('--require-sampling',action='store_true')
     args=parser.parse_args()
     try:
         identity=requested_identity(args.base,args.adapter)
@@ -85,7 +87,7 @@ def main():
     if args.record:
         record_identity(args.outputs,identity)
         return 0
-    return 0 if reusable(args.outputs,identity) else 1
+    return 0 if reusable(args.outputs,identity,require_sampling=args.require_sampling) else 1
 
 
 if __name__=='__main__':raise SystemExit(main())

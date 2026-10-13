@@ -32,7 +32,7 @@ def capture_png(path):
 
 def request_prediction(image_path, instruction, *, server_url="http://127.0.0.1:8000",
                        expected_mode="openvla", timeout_seconds=180,
-                       request_id=None, progress=None, expert_action=None):
+                       request_id=None, progress=None, expert_action=None, generation=None):
     """Request and validate one action, without touching any simulation state."""
     url = urlsplit(server_url)
     if url.scheme != "http" or not url.hostname or url.path not in ("", "/") or url.query or url.fragment or url.username:
@@ -51,6 +51,12 @@ def request_prediction(image_path, instruction, *, server_url="http://127.0.0.1:
                 or not 0 <= expert_action[6] <= 1):
             raise ValueError('Matched diagnostic requires seven finite expert values and OpenVLA mode')
         payload['expert_action'] = expert_action
+    if generation is not None:
+        from inference.action_sampling import validate_options
+        generation = validate_options(generation)
+        if expert_action is not None and generation['do_sample']:
+            raise ValueError('Matched diagnostics use greedy generation')
+        payload['generation_options'] = generation
     body = json.dumps(payload, allow_nan=False).encode()
     encoded = time.perf_counter()
     if progress:
@@ -98,6 +104,10 @@ def request_prediction(image_path, instruction, *, server_url="http://127.0.0.1:
                 values = teacher.get(field)
                 if not isinstance(values, list) or len(values) != 7 or any(type(x) is not value_type for x in values):
                     raise ValueError(f'Invalid teacher-forced components: {field}')
+        if generation and generation['do_sample']:
+            applied=result.get('generation_options',{})
+            if any(applied.get(k)!=v for k,v in generation.items()) or applied.get('action_tokens_only') is not True:
+                raise ValueError('Server did not confirm requested action sampling; update the model server')
         result["client_timings_seconds"] = {
             "encode_request": encoded - started,
             "connect": connected - connect_started,

@@ -18,7 +18,8 @@ class SessionTests(unittest.TestCase):
             (root/'.venv/bin/python').touch()
             key=root/'key';key.touch()
             argv=['cloud_session.py','--ssh',f'ssh root@host -p 22 -i {key}',
-                  '--task','bowl','--scene-seeds','0','1','2']
+                  '--task','bowl','--scene-seeds','0','1','2',
+                  '--sample-actions','--temperature','.7','--top-p','.95']
             tunnel=MagicMock();tunnel.poll.return_value=None
             with patch('sys.argv',argv),patch.object(cloud_session,'ROOT',root), \
                  patch('cloud.cloud_session.socket.socket'), \
@@ -30,6 +31,10 @@ class SessionTests(unittest.TestCase):
             commands=[c.args[0] for c in run.call_args_list]
             trials=[c for c in commands if 'inference.remote_loop' in c]
             self.assertEqual([c[c.index('--scene-seed')+1] for c in trials],['0','1','2','3','3'])
+            self.assertTrue(all('--sample-actions' in c for c in trials))
+            self.assertTrue(all(c[c.index('--temperature')+1]=='0.7' for c in trials))
+            self.assertTrue(all(c[c.index('--top-p')+1]=='0.95' for c in trials))
+            self.assertIn('--require-sampling',run.call_args_list[1].kwargs['input'].decode())
             self.assertEqual(sum('input' in c.kwargs for c in run.call_args_list),1)
             self.assertEqual(sum('cloud_stop.sh' in c[-1] for c in commands),0)
             self.assertEqual(ready.call_count,5)

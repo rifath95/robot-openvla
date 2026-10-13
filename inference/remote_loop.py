@@ -53,7 +53,9 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
              steps=100, timeout_seconds=180, max_runtime_seconds=900,
              max_consecutive_rejections=3,
              output_dir=None, no_view=False, start_immediately=False, startup_info=None,
-             stop_event=None, task='cube', scene_seed=0):
+             stop_event=None, task='cube', scene_seed=0, sample_actions=False, temperature=1., top_p=1.):
+    from inference.action_sampling import generation_options
+    generation=generation_options(sample_actions,temperature,top_p)
     import mujoco
     import numpy as np
     from simulation.capture_camera import save_rgb_png
@@ -159,6 +161,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
 
     print(f"Results and status: {folder}", flush=True)
     save(folder / "action_contract.json", action_contract(camera=camera))
+    save(folder / "generation_options.json", generation)
     status(phase)
     try:
         with PandaEnv(**env_options) as env:
@@ -210,7 +213,8 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction="pick up the red
                         try:
                             response = request_prediction(path, instruction, server_url=server_url,
                                                           timeout_seconds=min(timeout_seconds, max(0.01, max_runtime_seconds - active_timer.elapsed())),
-                                                          expected_mode="openvla")
+                                                          expected_mode="openvla",
+                                                          **({"generation": generation} if sample_actions else {}))
                             destination.put((response, None))
                         except Exception as exc:
                             destination.put((None, exc))
@@ -398,6 +402,8 @@ def main():
     parser.add_argument("--output-dir", type=Path)
     parser.add_argument("--no-view", action="store_true")
     parser.add_argument("--start-immediately", action="store_true")
+    from inference.action_sampling import add_sampling_arguments
+    add_sampling_arguments(parser)
     args = parser.parse_args()
     if not args.no_view:
         from simulation.viewer import _restart_with_mjpython

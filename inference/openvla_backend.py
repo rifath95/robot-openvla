@@ -11,6 +11,8 @@ from inference.openvla_prompt import action_prompt
 
 
 class OpenVLAPredictor:
+    action_sampling_available = True
+
     def __init__(self, model_dir, *, device="cuda", unnorm_key="bridge_orig"):
         import torch
         from transformers import AutoModelForVision2Seq, AutoProcessor
@@ -77,7 +79,14 @@ class OpenVLAPredictor:
         elif self.device == "mps":
             self.torch.mps.synchronize()
 
-    def predict(self, image, instruction):
+    def predict(self, image, instruction, *, generation=None):
+        from inference.action_sampling import validate_options, ActionTokenLogitsProcessor
+        options = validate_options(generation)
+        extra = {}
+        if options["do_sample"]:
+            from transformers import LogitsProcessorList
+            extra["logits_processor"] = LogitsProcessorList([ActionTokenLogitsProcessor(
+                self.model.vocab_size, self.model.config.n_action_bins)])
         torch = self.torch
         started = time.perf_counter()
         prompt = action_prompt(instruction)
@@ -94,7 +103,7 @@ class OpenVLAPredictor:
         prepared = time.perf_counter()
         with torch.inference_mode():
             raw_action = self.model.predict_action(
-                **inputs, unnorm_key=self.unnorm_key, do_sample=False,
+                **inputs, unnorm_key=self.unnorm_key, **options, **extra,
             )
         self.synchronize()
         predicted = time.perf_counter()
@@ -105,6 +114,7 @@ class OpenVLAPredictor:
             raise RuntimeError("OpenVLA did not return seven finite action values")
         return {
             "action": action,
+            "generation_options": dict(options, action_tokens_only=True) if options["do_sample"] else options,
             "unnorm_key": self.unnorm_key,
             "device": self.device,
             "dtype": str(self.dtype),
