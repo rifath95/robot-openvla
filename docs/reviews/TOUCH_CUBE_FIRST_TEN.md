@@ -1,5 +1,8 @@
 # Touch-cube demonstrations for review
 
+The collection has since been expanded to 50 while preserving these ten.
+See [the 50-trajectory review](TOUCH_CUBE_50.md) for current counts and checks.
+
 Created locally on 2026-10-13 in `datasets/panda_touch_cube`.
 The pick-and-place and bowl datasets are unchanged. This collection is separate;
 its first ten already use their final numbered training/validation/test folders.
