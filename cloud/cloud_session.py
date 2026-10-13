@@ -125,8 +125,9 @@ def main():
     parser.add_argument('--steps', type=int, default=100)
     parser.add_argument('--max-consecutive-rejections', type=int, default=3)
     parser.add_argument('--instruction', help='Task instruction; defaults to the selected task’s demonstration instruction')
-    parser.add_argument('--task', choices=['cube', 'bowl', 'touch', 'color_touch'], default='cube')
-    parser.add_argument('--target-color', choices=['red','blue'])
+    parser.add_argument('--task', choices=['cube', 'bowl', 'touch', 'color_touch','color_transfer'], default='cube')
+    parser.add_argument('--target-color')
+    parser.add_argument('--cube-colors',nargs=2)
     parser.add_argument('--scene-seed', type=int, default=0)
     parser.add_argument('--scene-seeds', type=int, nargs='+',
                         help='Run these seeds in order using one loaded model')
@@ -138,13 +139,21 @@ def main():
     from inference.action_sampling import add_sampling_arguments, generation_options
     add_sampling_arguments(parser)
     args = parser.parse_args()
-    if args.task=='color_touch':
+    if args.task=='color_transfer':
+        from simulation.color_palette import select_instruction
+        args.cube_colors=args.cube_colors or ['black','purple']
+        try:
+            args.instruction,slot,names=select_instruction(args.instruction,args.target_color,args.cube_colors)
+            args.target_color=names[slot]
+        except ValueError as exc:parser.error(str(exc))
+    elif args.task=='color_touch':
         from inference.color_touch_task import select_instruction
         try:args.instruction,args.target_color=select_instruction(args.instruction,args.target_color)
         except ValueError as exc:parser.error(str(exc))
     elif args.instruction is None:
         args.instruction={'cube':'pick up the red cube','bowl':'pick up the red cube and drop it in the blue bowl.',
                           'touch':'touch the red cube.'}[args.task]
+    if args.cube_colors and args.task!='color_transfer':parser.error('--cube-colors requires color_transfer')
     try:generation_options(args.sample_actions,args.temperature,args.top_p)
     except ValueError as exc:parser.error(str(exc))
     if any(value <= 0 for value in (args.steps, args.max_consecutive_rejections, args.max_runtime_seconds, args.server_runtime_seconds, args.startup_timeout_seconds)):
@@ -211,7 +220,8 @@ def main():
             result = subprocess.run([str(ROOT / '.venv/bin/python'), "-m", 'inference.remote_loop',
                                      '--steps', str(args.steps), '--instruction', args.instruction,
                                      '--task', args.task, '--scene-seed', str(scene_seed),
-                                     *(['--target-color',args.target_color] if args.task=='color_touch' else []),
+                                     *(['--target-color',args.target_color] if args.task in ('color_touch','color_transfer') else []),
+                                     *(['--cube-colors',*args.cube_colors] if args.task=='color_transfer' else []),
                                      '--startup-info', str(startup_path),
                                      '--max-consecutive-rejections', str(args.max_consecutive_rejections),
                                      '--max-runtime-seconds', str(args.max_runtime_seconds),

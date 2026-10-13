@@ -18,6 +18,7 @@ Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 - [Repeated cloud control with a live local simulator](cloud/REMOTE_LOOP.md)
 - [Separate automatic touch-checkpoint evaluation](cloud/SCRIPTED_TOUCH_EVALUATION.md)
 - [Scripted paired red/blue checkpoint evaluation](cloud/SCRIPTED_COLOR_TOUCH_EVALUATION.md)
+- [Unseen-color transfer evaluation and chance comparison](cloud/COLOR_TRANSFER_EVALUATION.md)
 - [One cloud-predicted robot movement](cloud/REMOTE_SINGLE_ACTION.md)
 - [RunPod connection guide: Mac camera → cloud OpenVLA → Mac action](cloud/RUNPOD_CONNECTION_GUIDE.md)
 
