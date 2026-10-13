@@ -70,6 +70,7 @@ def bootstrap_script(runtime, adapter=None):
         # Merge on container disk, leaving the persistent base and adapter intact.
         model_setup = f'''test -x /opt/openvla/bin/python || {{ echo 'Use the training Docker template for adapter evaluation.'; exit 1; }}
 test -f {shlex.quote(str(adapter) + '/adapter_config.json')} || {{ echo 'Adapter checkpoint not found on the attached volume.'; exit 1; }}
+python3 -m cloud.evaluation_storage
 merged_dir="$(mktemp -d /root/panda-evaluation-XXXXXXXX)"
 /opt/openvla/bin/python -m training.merge_adapter --base-model /workspace/openvla-7b --adapter {shlex.quote(str(adapter))} --output "$merged_dir/model"
 '''
