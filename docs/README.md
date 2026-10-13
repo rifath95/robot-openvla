@@ -45,6 +45,7 @@ Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 ## Audits and findings
 
 - [Touch-cube checkpoint trials and training curves](reviews/TOUCH_CHECKPOINT_TRIALS.md)
+- [80 scripted touch trials at unseen cube positions](reviews/TOUCH_SCRIPTED_EVALUATION.md)
 - [Check expert images through the cloud inference pipeline](reviews/EXPERT_EVALUATION.md)
 - [Compare teacher forcing and normal generation](reviews/MATCHED_EVALUATION.md)
 - [Phase 3: approach learning after 1,000 updates](reviews/PHASE3_LEARNING_REVIEW.md)
