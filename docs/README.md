@@ -54,6 +54,7 @@ Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 
 ## Audits and findings
 
+- [Four-color sweep: base, all checkpoints, and stronger unseen-color generalization](reviews/FOUR_COLOR_MODEL_SWEEP_REVIEW.md)
 - [Red/blue wrong-cube and alignment failure diagnosis](reviews/COLOR_TOUCH_FAILURE_DIAGNOSIS.md)
 - [Red/blue paired simulator sweep review](reviews/COLOR_TOUCH_SCRIPTED_REVIEW.md)
 - [Red/blue touch 500-update training review](reviews/COLOR_TOUCH_TRAINING_REVIEW.md)
