@@ -16,6 +16,12 @@ def replay_model(folder):
     import mujoco
     metadata_path = Path(folder)/'episode.json'
     metadata = json.loads(metadata_path.read_text()) if metadata_path.is_file() else {}
+    if metadata.get('scene_profile') == 'panda_multi_color_touch_v1':
+        from simulation.multi_color_scene import scene_path, CAMERA_NAME, configure_colors
+        names=metadata['cube_colors']
+        model=mujoco.MjModel.from_xml_path(str(scene_path(len(names))))
+        configure_colors(model,names)
+        return model,CAMERA_NAME
     if metadata.get('scene_profile') == 'panda_color_transfer_v1':
         from simulation.color_touch_scene import SCENE_PATH,CAMERA_NAME
         from simulation.color_palette import configure_colors

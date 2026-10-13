@@ -45,6 +45,10 @@ def summarize(spec,folder,returncode):
         row.update(target_color=spec['target_color'],wrong_contact=outcome.get('wrong_cube_contact',False),
             outcome=outcome['outcome'],first_contact=outcome.get('first_contact'))
     if spec['cube_colors'] is not None:row.update(color_pair=spec['color_pair'],cube_colors=spec['cube_colors'])
+    if spec.get('cube_count'):
+        row.update(cube_count=spec['cube_count'],color_set=spec['color_set'],contacted_colors=outcome.get('contacted_colors',[]))
+        row.setdefault('target_color',spec['target_color'])
+        row.setdefault('outcome','unmeasured')
     return row
 
 
@@ -52,8 +56,15 @@ def run(directory,sim_python,*,port=0):
     directory=Path(directory);payload=json.loads((directory/'results.json').read_text())
     validate_saved(payload);plan=payload['plan'];rows=payload['trials']
     previous=float(plan.get('elapsed_seconds',0));started=time.monotonic()
+    if plan['task']=='multi_color_touch':
+        rows[:]=[r for r in rows if r.get('outcome')!='unmeasured' and r.get('phase')!='Missing summary']
     done={r['directory'] for r in rows};specs=[s for s in trial_specs(plan) if s['directory'] not in done]
     checkpoints=sorted({s['checkpoint'] for s in specs})
+    minimum=plan.get('minimum_results_free_gib',0)
+    if minimum and rows:
+        minimum=min(minimum,2+max(0,minimum-2)*len(specs)/len(list(trial_specs(plan))))
+    if minimum and shutil.disk_usage(directory).free<minimum*1024**3:
+        raise RuntimeError(f'Need {minimum:.1f} GiB free on the results volume before this sweep')
     base=Path('/workspace/openvla-7b')
     training=Path('/workspace/panda-training/sessions')/plan['training_session']/'runs/training'
     adapter_indices={n for n in checkpoints if n!=0 or not plan.get('include_base_model')}
@@ -66,6 +77,12 @@ def run(directory,sim_python,*,port=0):
         seed_check="from data_tools.collect_panda_color_touch import pair_spec; from cloud.sweep_plan import validate_scene_positions; validate_scene_positions([pair_spec(s)['cube_positions'] for s in "+repr(plan['scene_seeds'])+"], "+repr(plan['cube_positions'])+"); "
     else:seed_check=''
     probe=seed_check+"from simulation.panda_env import PandaEnv; from simulation.color_touch_scene import SCENE_PATH,CAMERA_NAME; e=PandaEnv(SCENE_PATH,camera=CAMERA_NAME); print(e.observe().shape); e.close()"
+    if plan['task']=='multi_color_touch':
+        probe="from simulation.panda_env import PandaEnv; from simulation.multi_color_scene import scene_path,CAMERA_NAME,positions; from cloud.sweep_plan import validate_multi_scene_positions; "
+        for n in plan['cube_counts']:
+            for i,seed in enumerate(plan['scene_seeds']):
+                probe+=f"validate_multi_scene_positions(positions({seed},{n}),{plan['multi_cube_positions'][str(n)][i]!r}); "
+            probe+=f"e=PandaEnv(scene_path({n}),camera=CAMERA_NAME); print(e.observe().shape); e.close(); "
     subprocess.run([str(sim_python),'-c',probe],cwd=PROJECT_ROOT,env=env,check=True,timeout=120)
     plan.setdefault('execution_segments',[]).append(dict(mode='cloud_sequential',started_at_utc=datetime.now(timezone.utc).isoformat(),
         code_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=PROJECT_ROOT,text=True).strip(),remaining_trials=len(specs),
@@ -104,8 +121,9 @@ def run(directory,sim_python,*,port=0):
                             '--output-dir',str(trial),'--server-url',f'http://127.0.0.1:{selected_port}',
                             '--max-runtime-seconds','180']
                         if plan['task']!='touch':
-                            positions_file=local/f"scene_positions_{spec['seed']}.json"
-                            positions_file.write_text(json.dumps(plan['cube_positions'][plan['scene_seeds'].index(spec['seed'])]))
+                            positions_file=local/f"scene_positions_{spec.get('cube_count',2)}_{spec['seed']}.json"
+                            layouts=plan['multi_cube_positions'][str(spec['cube_count'])] if plan['task']=='multi_color_touch' else plan['cube_positions']
+                            positions_file.write_text(json.dumps(layouts[plan['scene_seeds'].index(spec['seed'])]))
                             command+=['--target-color',spec['target_color'],'--scene-positions',str(positions_file)]
                         if spec['cube_colors']:command+=['--cube-colors',*spec['cube_colors']]
                         print(f"Checkpoint {checkpoint}, seed {spec['seed']}, target {spec['target_color']}",flush=True)

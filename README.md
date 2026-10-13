@@ -34,7 +34,9 @@ experiments, findings, saved artifacts and limitations, and the
 [final model sweep review](docs/reviews/FOUR_COLOR_MODEL_SWEEP_REVIEW.md) for the
 480-trial evaluation. The original pick-and-place objective was narrowed after
 unsuccessful grasp/lift experiments; reliable model-driven pick-and-place remains
-open. Phase 4 is planned; no new experiment has started.
+open. Phase 4 is planned; no new experiment has started. The next prepared evaluation
+tests [color selection among 4, 5 and 6 cubes](docs/cloud/MULTI_COLOR_MODEL_SWEEP.md)
+with the base model and all five checkpoints.
 
 ## Goal
 

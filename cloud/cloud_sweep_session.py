@@ -26,7 +26,7 @@ with tarfile.open(fileobj=sys.stdout.buffer,mode='w|gz') as archive:
 def extract_results(archive,destination):
     with tarfile.open(archive,'r:gz') as stream:
         members=stream.getmembers()
-        if len(members)>100000 or sum(m.size for m in members)>10*1024**3:raise ValueError('Sweep archive exceeds limits')
+        if len(members)>600000 or sum(m.size for m in members)>20*1024**3:raise ValueError('Sweep archive exceeds limits')
         for member in members:
             name=PurePosixPath(member.name)
             if (not member.isfile() or name.is_absolute() or '..' in name.parts or

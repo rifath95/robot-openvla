@@ -12,7 +12,21 @@ def timeout_budget(estimated_seconds):
 
 def trial_specs(plan):
     task=plan['task']
-    if task not in ('touch','color_touch','color_transfer'):raise ValueError('Unsupported scripted task')
+    if task not in ('touch','color_touch','color_transfer','multi_color_touch'):raise ValueError('Unsupported scripted task')
+    if task=='multi_color_touch':
+        for checkpoint in plan['checkpoints']:
+            for group_index,group in enumerate(plan['color_sets']):
+                for count in plan['cube_counts']:
+                    palette=group['colors'][:count]
+                    for index,seed in enumerate(plan['scene_seeds']):
+                        offset=(index+group_index)%count
+                        colors=palette[offset:]+palette[:offset]
+                        for target in palette:
+                            prefix='base_model' if checkpoint==0 and plan.get('include_base_model') else f'checkpoint_{checkpoint:06d}'
+                            name=f'{prefix}_{group["name"]}_{count}c_seed_{seed}_{target}'
+                            yield dict(checkpoint=checkpoint,seed=seed,target_color=target,cube_colors=colors,
+                                color_pair=None,color_set=group['name'],cube_count=count,directory=name)
+        return
     for checkpoint in plan['checkpoints']:
         if task=='color_transfer':
             pairs=plan['color_pairs']
@@ -43,6 +57,20 @@ def validate_saved(payload):
         colors={'red','blue','black','purple','green','yellow','orange','white','pink','brown','cyan'}
         pairs=plan['color_pairs']
         if not pairs or any(len(p)!=2 or len(set(p))!=2 or not set(p)<=colors for p in pairs):raise ValueError('Invalid color pairs')
+    if plan['task']=='multi_color_touch':
+        import re
+        from simulation.multi_color_scene import validate_colors, validate_positions
+        counts=plan['cube_counts'];groups=plan['color_sets']
+        if not counts or len(set(counts))!=len(counts) or any(type(n)is not int or n not in (4,5,6) for n in counts):raise ValueError('Invalid cube counts')
+        if not groups or len({g['name'] for g in groups})!=len(groups):raise ValueError('Duplicate color sets')
+        for g in groups:
+            if not re.fullmatch('[a-z][a-z0-9_]*',g['name']):raise ValueError('Invalid color-set name')
+            validate_colors(g['colors'])
+            if len(g['colors'])<max(counts):raise ValueError('Palette too short')
+        for count in counts:
+            layouts=plan['multi_cube_positions'][str(count)]
+            if len(layouts)!=len(plan['scene_seeds']):raise ValueError('Scene count differs')
+            for value in layouts:validate_positions(value,count)
     if plan.get('include_base_model') and (0 not in plan['checkpoints'] or plan.get('action_statistics_checkpoint',50) not in plan['checkpoints']):
         raise ValueError('Base comparison requires baseline index 0 and its statistics reference checkpoint')
     specs={s['directory']:s for s in trial_specs(plan)}
@@ -52,6 +80,8 @@ def validate_saved(payload):
         if spec is None or any(row.get(k)!=spec[k] for k in ('checkpoint','seed')):raise ValueError('Trial outside saved plan')
         if plan['task']!='touch' and row.get('target_color')!=spec['target_color']:raise ValueError('Wrong trial target')
         if plan['task']=='color_transfer' and any(row.get(k)!=spec[k] for k in ('cube_colors','color_pair')):raise ValueError('Trial colors differ')
+        if plan['task']=='multi_color_touch' and any(row.get(k)!=spec[k] for k in ('cube_colors','color_set','cube_count')):
+            raise ValueError('Trial multi-cube scene differs')
     return specs
 
 
@@ -77,3 +107,10 @@ def validate_scene_positions(actual, expected, tolerance=1e-12):
             for a,b in zip(generated[slot],saved[slot]):
                 if not math.isfinite(a) or not math.isfinite(b) or abs(a-b)>tolerance:
                     raise ValueError('Saved scene positions differ from this checkout')
+
+
+def validate_multi_scene_positions(actual,expected,tolerance=1e-12):
+    from simulation.multi_color_scene import validate_positions
+    validate_positions(actual,len(actual));validate_positions(expected,len(actual))
+    if set(actual)!=set(expected) or any(abs(a-b)>tolerance for slot in actual for a,b in zip(actual[slot],expected[slot])):
+        raise ValueError('Saved multi-cube positions differ from this checkout')

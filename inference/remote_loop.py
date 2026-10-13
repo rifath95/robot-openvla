@@ -62,7 +62,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
     import numpy as np
     from simulation.capture_camera import save_rgb_png
     from simulation.panda_env import PandaEnv
-    if task not in ('cube','bowl','touch','color_touch','color_transfer'):
+    if task not in ('cube','bowl','touch','color_touch','color_transfer','multi_color_touch'):
         raise ValueError('Unknown simulation task')
     if task=='color_touch':
         from inference.color_touch_task import select_instruction, ContactOutcome
@@ -72,12 +72,21 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
         from inference.color_touch_task import ContactOutcome
         instruction,target_slot,color_names=transfer_instruction(instruction,target_color,cube_colors or ['black','purple'])
         target_color=color_names[target_slot]
+    elif task=='multi_color_touch':
+        from simulation.multi_color_scene import validate_colors, ContactOutcome
+        validate_colors(cube_colors or [])
+        if target_color not in cube_colors:raise ValueError('Requested color must be visible')
+        expected=f'touch the {target_color} cube.'
+        if instruction is not None and instruction.strip().lower().rstrip('.')!=expected.rstrip('.'):
+            raise ValueError('Instruction and target color disagree')
+        instruction=instruction or expected
+        color_names={f'cube_{i}':c for i,c in enumerate(cube_colors)}
     elif cube_colors is not None:
         raise ValueError('Cube color overrides require the separate color_transfer task')
     if instruction is None:
         instruction={'cube':'pick up the red cube','bowl':'pick up the red cube and drop it in the blue bowl.',
                      'touch':'touch the red cube.'}[task]
-    if scene_positions is not None and task not in ('color_touch','color_transfer'):
+    if scene_positions is not None and task not in ('color_touch','color_transfer','multi_color_touch'):
         raise ValueError('Saved scene positions require a two-cube task')
     touch_result=None
     env_options={}
@@ -101,6 +110,11 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
         from data_tools.collect_panda_color_touch import pair_spec
         if type(scene_seed) is not int or scene_seed<0:raise ValueError('Color scene seed must be nonnegative')
         env_options=dict(scene_path=SCENE_PATH,camera=CAMERA_NAME)
+        camera=CAMERA_NAME
+
+    if task=='multi_color_touch':
+        from simulation.multi_color_scene import scene_path, CAMERA_NAME
+        env_options=dict(scene_path=scene_path(len(cube_colors)),camera=CAMERA_NAME)
         camera=CAMERA_NAME
 
     if type(steps) is not int or steps < 1:
@@ -232,6 +246,20 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
                     scenario=dict(scene=scene,target_color=target_color),
                     known_collected_position=scene_seed<25,training_eligible=False,
                     **({'cube_colors':color_names} if task=='color_transfer' else {})))
+            elif task=='multi_color_touch':
+                from simulation.multi_color_scene import positions, initialize_scene
+                value=positions(scene_seed,len(cube_colors))
+                if scene_positions is not None:
+                    from cloud.sweep_plan import validate_multi_scene_positions
+                    saved=json.loads(Path(scene_positions).read_text())
+                    validate_multi_scene_positions(value,saved)
+                    value=saved
+                scene=initialize_scene(env,value,color_names)
+                color_outcome=ContactOutcome(env,target_color,color_names)
+                color_outcome.observe(env);touch_result=color_outcome.result(env)
+                save(folder/'episode.json',dict(scene_profile='panda_multi_color_touch_v1',scene_seed=scene_seed,
+                    instruction=instruction,target_color=target_color,cube_colors=color_names,
+                    scenario=dict(scene=scene,target_color=target_color),training_eligible=False))
             else:
                 env.controller.step(500)
             if no_view:
@@ -361,7 +389,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
                         count = min(20, PHYSICS_STEPS - executed_steps)
                         with viewer.lock() if viewer is not None else nullcontext():
                             env.controller.step(count)
-                            if task in ('color_touch','color_transfer'):color_outcome.observe(env)
+                            if task in ('color_touch','color_transfer','multi_color_touch'):color_outcome.observe(env)
                             motion_poses.append(env.data.qpos.copy())
                             motion_times.append(float(env.data.time))
                         executed_steps += count
@@ -380,7 +408,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
                         tracking_error = float(np.linalg.norm(env.controller.target_position - after_position))
                         finite = bool(np.all(np.isfinite(env.data.qpos)) and np.all(np.isfinite(env.data.qvel)))
                         if task=='touch':touch_result=touch_task_result(env,initial_cube)
-                        if task in ('color_touch','color_transfer'):touch_result=color_outcome.result(env)
+                        if task in ('color_touch','color_transfer','multi_color_touch'):touch_result=color_outcome.result(env)
                     after_capture_seconds = time.perf_counter() - capture_started
                     report = {
                         "step": current_step, "request_id": prediction["request_id"],
@@ -412,7 +440,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
                         "request_timings_seconds": prediction["client_timings_seconds"],
                         "server_timings_seconds": prediction.get("timings_seconds"),
                     }
-                    if task in ('touch','color_touch','color_transfer'):report['task_result']=touch_result
+                    if task in ('touch','color_touch','color_transfer','multi_color_touch'):report['task_result']=touch_result
                     save(step_dir / "execution.json", report)
                     if report["interrupted"]:
                         break
@@ -426,7 +454,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
                     if task=='touch' and touch_result['success']:
                         print('Touch task succeeded: verified finger-cube contact.',flush=True)
                         break
-                    if task in ('color_touch','color_transfer') and (touch_result['correct_cube_contact'] or touch_result['wrong_cube_contact']):
+                    if task in ('color_touch','color_transfer','multi_color_touch') and (touch_result['correct_cube_contact'] or touch_result['wrong_cube_contact']):
                         print('Color touch task ended: '+touch_result['outcome'],flush=True)
                         break
                 status("Stopped" if reason is not None else "Completed", stop_reason=reason)
@@ -446,7 +474,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
                                       "rejected_steps": len(rejections), "rejections": rejections,
                                       "active_seconds": active_timer.elapsed(),
                                       "elapsed_seconds": time.perf_counter() - started,
-                                      **({"task_result":touch_result} if task in ('touch','color_touch','color_transfer') else {})})
+                                      **({"task_result":touch_result} if task in ('touch','color_touch','color_transfer','multi_color_touch') else {})})
         from analysis.run_report import write_run_report
         write_run_report(folder)
         from analysis.summarize_gpu_inference import comparison
@@ -461,9 +489,9 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--server-url", default="http://127.0.0.1:8000")
     parser.add_argument("--instruction", help="Instruction; defaults to the selected task’s demonstration instruction")
-    parser.add_argument('--task', choices=['cube','bowl','touch','color_touch','color_transfer'], default='cube')
+    parser.add_argument('--task', choices=['cube','bowl','touch','color_touch','color_transfer','multi_color_touch'], default='cube')
     parser.add_argument('--target-color')
-    parser.add_argument('--cube-colors',nargs=2)
+    parser.add_argument('--cube-colors',nargs='+')
     parser.add_argument('--scene-seed', type=int, default=0)
     parser.add_argument('--scene-positions',type=Path,help='Use verified saved two-cube coordinates for cross-platform resume')
     parser.add_argument("--steps", type=int, default=100,

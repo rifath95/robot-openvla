@@ -1,0 +1,48 @@
+<mujoco model="Panda 5 color-cube touch evaluation">
+  <include file="../../mujoco_menagerie/franka_emika_panda/panda.xml" />
+  <compiler meshdir="../../mujoco_menagerie/franka_emika_panda/assets" />
+  <visual>
+    <headlight diffuse="0.6 0.6 0.6" ambient="0.3 0.3 0.3" specular="0 0 0" />
+    <global azimuth="120" elevation="-25" />
+  </visual>
+  <asset>
+    <texture name="floor_texture" type="2d" builtin="checker" rgb1="0.2 0.3 0.4" rgb2="0.1 0.2 0.3" width="300" height="300" />
+    <material name="floor_material" texture="floor_texture" texrepeat="5 5" texuniform="true" />
+  </asset>
+  <worldbody>
+    <light pos="0.5 0 2" dir="0 0 -1" directional="true" />
+    <geom name="floor" type="plane" size="2 2 0.05" material="floor_material" />
+    <camera name="workspace_camera" pos="1.25 -1.15 0.95" xyaxes="0.676 0.737 0 -0.339 0.311 0.888" fovy="50" />
+    <body name="table" pos="0.55 0 0">
+      <geom name="table_top" type="box" pos="0 0 0.225" size="0.25 0.3 0.025" rgba="0.55 0.38 0.22 1" />
+      <geom name="table_leg_1" type="box" pos="-0.21 -0.26 0.1" size="0.025 0.025 0.1" rgba="0.3 0.3 0.3 1" />
+      <geom name="table_leg_2" type="box" pos="-0.21 0.26 0.1" size="0.025 0.025 0.1" rgba="0.3 0.3 0.3 1" />
+      <geom name="table_leg_3" type="box" pos="0.21 -0.26 0.1" size="0.025 0.025 0.1" rgba="0.3 0.3 0.3 1" />
+      <geom name="table_leg_4" type="box" pos="0.21 0.26 0.1" size="0.025 0.025 0.1" rgba="0.3 0.3 0.3 1" />
+    </body>
+    <camera name="touch_camera" pos="1.02 -0.85 1.03" quat="0.852686028858814 0.451545837947678 0.12295967604097446 0.23219347641355872" fovy="45" />
+    <body name="cube_0" pos="2.0 2 0.271">
+      <freejoint name="cube_0_joint" />
+      <geom name="cube_0_geom" type="box" size="0.02 0.02 0.02" mass="0.05" rgba=".85 .15 .1 1" friction="1 0.005 0.0001" />
+    </body>
+    <body name="cube_1" pos="2.1 2 0.271">
+      <freejoint name="cube_1_joint" />
+      <geom name="cube_1_geom" type="box" size="0.02 0.02 0.02" mass="0.05" rgba=".85 .15 .1 1" friction="1 0.005 0.0001" />
+    </body>
+    <body name="cube_2" pos="2.2 2 0.271">
+      <freejoint name="cube_2_joint" />
+      <geom name="cube_2_geom" type="box" size="0.02 0.02 0.02" mass="0.05" rgba=".85 .15 .1 1" friction="1 0.005 0.0001" />
+    </body>
+    <body name="cube_3" pos="2.3 2 0.271">
+      <freejoint name="cube_3_joint" />
+      <geom name="cube_3_geom" type="box" size="0.02 0.02 0.02" mass="0.05" rgba=".85 .15 .1 1" friction="1 0.005 0.0001" />
+    </body>
+    <body name="cube_4" pos="2.4 2 0.271">
+      <freejoint name="cube_4_joint" />
+      <geom name="cube_4_geom" type="box" size="0.02 0.02 0.02" mass="0.05" rgba=".85 .15 .1 1" friction="1 0.005 0.0001" />
+    </body>
+  </worldbody>
+  <keyframe>
+    <key name="scene_home" qpos="0 0 0 -1.57079 0 1.57079 -0.7853 0.04 0.04 2.0 2 .271 1 0 0 0 2.1 2 .271 1 0 0 0 2.2 2 .271 1 0 0 0 2.3 2 .271 1 0 0 0 2.4 2 .271 1 0 0 0" ctrl="0 0 0 -1.57079 0 1.57079 -0.7853 255" />
+  </keyframe>
+</mujoco>

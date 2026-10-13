@@ -1,0 +1,61 @@
+{
+  "training_session": "panda-train-20261013-110217-1084",
+  "dataset_manifest": "datasets/panda_four_color_touch/manifest.json",
+  "include_base_model": true,
+  "action_statistics_checkpoint": 50,
+  "checkpoints": [
+    0,
+    50,
+    100,
+    300,
+    500,
+    1000
+  ],
+  "training_colors": [
+    "red",
+    "blue",
+    "green",
+    "yellow"
+  ],
+  "scene_seeds": [
+    2000,
+    2001,
+    2002,
+    2003,
+    2004,
+    2005
+  ],
+  "steps": 50,
+  "estimated_seconds": 21600,
+  "task": "multi_color_touch",
+  "cube_counts": [
+    4,
+    5,
+    6
+  ],
+  "color_sets": [
+    {
+      "name": "trained_plus_reserved",
+      "colors": [
+        "red",
+        "blue",
+        "green",
+        "yellow",
+        "black",
+        "white"
+      ]
+    },
+    {
+      "name": "reserved_only",
+      "colors": [
+        "black",
+        "white",
+        "purple",
+        "orange",
+        "cyan",
+        "pink"
+      ]
+    }
+  ],
+  "minimum_results_free_gib": 8
+}

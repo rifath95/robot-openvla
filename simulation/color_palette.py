@@ -1,5 +1,4 @@
 """Fixed display colors for evaluation; collision geometry stays unchanged."""
-import mujoco
 
 PALETTE = {
     'red': (.85, .15, .1, 1), 'blue': (.1, .25, .9, 1),
@@ -19,6 +18,7 @@ def color_mapping(colors):
 
 
 def configure_colors(model, names):
+    import mujoco
     if set(names)!= {'red','blue'}:
         raise ValueError('Color mapping must cover both cube identities')
     color_mapping([names['red'],names['blue']])

@@ -6,10 +6,10 @@ from simulation.panda_actions import make_controller
 from simulation.panda_controller import _euler_xyz_to_quat, _quat_multiply, _orientation_error
 
 
-def robot_contacts(model, data):
+def robot_contacts(model, data, *, environment_bodies=()):
     """Return penetrating robot contacts; cube/table contact is expected."""
     environment = {mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, name)
-                   for name in ('world', 'table', 'cube', 'blue_cube', 'plate', 'bowl')}
+                   for name in ('world', 'table', 'cube', 'blue_cube', 'plate', 'bowl', *environment_bodies)}
     contacts = []
     for contact in data.contact:
         bodies = [int(model.geom_bodyid[g]) for g in (contact.geom1, contact.geom2)]
@@ -20,7 +20,7 @@ def robot_contacts(model, data):
 
 
 def initialize_start_pose(env, position, yaw, reference_quaternion, *, roll=0, pitch=0,
-                          gripper=1, yaw_limit=1.3):
+                          gripper=1, yaw_limit=1.3, environment_bodies=()):
     position = np.asarray(position, dtype=float)
     if position.shape != (3,) or not np.isfinite(position).all():
         raise ValueError('Starting position must have three finite coordinates')
@@ -39,7 +39,7 @@ def initialize_start_pose(env, position, yaw, reference_quaternion, *, roll=0, p
     env.data.ctrl[controller.actuator_ids] = result.joint_targets
     env.data.ctrl[controller.gripper_actuator_id] = 255 * gripper
     mujoco.mj_forward(env.model, env.data)
-    if robot_contacts(env.model, env.data):
+    if robot_contacts(env.model, env.data, environment_bodies=environment_bodies):
         raise ValueError('Starting pose has a penetrating robot contact')
     env.controller = make_controller(env.model, env.data)
     env.controller.step(500)
@@ -47,7 +47,7 @@ def initialize_start_pose(env, position, yaw, reference_quaternion, *, roll=0, p
     if not np.isfinite(env.data.qpos).all() or not np.isfinite(env.data.qvel).all() or np.max(
             np.abs(env.data.qvel)) > .02:
         raise ValueError('Starting state is non-finite or still moving after settling')
-    if robot_contacts(env.model, env.data):
+    if robot_contacts(env.model, env.data, environment_bodies=environment_bodies):
         raise ValueError('Starting pose develops a penetrating robot contact while settling')
     if np.linalg.norm(actual_position - position) > .003 or np.linalg.norm(
             _orientation_error(quaternion, actual_quaternion)) > .03:
