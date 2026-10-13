@@ -18,6 +18,7 @@ from cloud.connection_client import request_prediction
 from inference.openvla_single_action import adapt_bridge_action
 from simulation.panda_actions import PHYSICS_STEPS, action_contract, from_controller_action, to_controller_action
 from simulation.control_diagnostics import pose_diagnostics
+from simulation.viewer_text import show_instruction
 
 ROOT = PROJECT_ROOT
 
@@ -147,7 +148,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
     def refresh(force=False):
         nonlocal last_refresh
         if viewer is not None and viewer.is_running() and (force or time.perf_counter() - last_refresh >= 1 / 30):
-            viewer.set_texts((mujoco.mjtFontScale.mjFONTSCALE_150,
+            show_instruction(viewer, instruction, (mujoco.mjtFontScale.mjFONTSCALE_150,
                              mujoco.mjtGridPos.mjGRID_TOPLEFT,
                              f"Cloud OpenVLA | {prediction_attempts}/{steps} cycles | {len(completed)} moves | {len(rejections)} held",
                              f"{'PAUSED' if paused.is_set() else phase}\nSpace: start/pause/resume | Esc: stop\nClose window: stop | Active limit: {max_runtime_seconds:g}s (pauses excluded)"))

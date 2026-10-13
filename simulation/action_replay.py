@@ -16,6 +16,7 @@ from common.paths import PROJECT_ROOT
 from data_tools.panda_demonstrations import restore_state, save_state, cube_position
 from simulation.panda_actions import action_contract, make_controller, to_controller_action
 from simulation.replay_run import replay_model, write_launcher
+from simulation.viewer_text import show_instruction
 
 
 def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None,controller_mode='current'):
@@ -81,7 +82,7 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
             if not viewer.is_running() or stopped:
                 stopped=True
                 return False
-            viewer.set_texts((mujoco.mjtFontScale.mjFONTSCALE_150,mujoco.mjtGridPos.mjGRID_TOPLEFT,
+            show_instruction(viewer, metadata.get('instruction'), (mujoco.mjtFontScale.mjFONTSCALE_150,mujoco.mjtGridPos.mjGRID_TOPLEFT,
                              f'Action replay | {label}',
                              'Space: start/pause/resume | Esc / close: stop'+(' | Paused' if paused else '')))
             viewer.sync()

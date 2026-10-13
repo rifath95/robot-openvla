@@ -17,6 +17,7 @@ import glfw
 
 from simulation.viewer import _restart_with_mjpython
 from simulation.bowl_scene import CAMERA_NAME, SCENE_PATH, randomize_scene
+from simulation.viewer_text import show_instruction
 TRANSLATION_STEP = 0.025  # metres
 ROTATION_STEP = 0.10  # radians
 
@@ -26,6 +27,8 @@ ROTATION_STEP = 0.10  # radians
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--seed', type=int, help='Repeat the same random scene and reset sequence')
+    parser.add_argument('--instruction', default='pick up the red cube and drop it in the blue bowl.',
+                        help='Task text displayed in the viewer')
     parser.add_argument('--headless', action='store_true', help='Save a scene preview without opening a window')
     parser.add_argument('--output-dir', type=Path, default=Path('outputs/bowl_scene_preview'))
     args = parser.parse_args()
@@ -74,7 +77,7 @@ def main() -> None:
     def show_controls(viewer):
         mode = "ROTATE" if rotation_mode else "MOVE"
         axes = "roll / pitch / yaw" if rotation_mode else "world X / Y / Z"
-        viewer.set_texts((
+        show_instruction(viewer, args.instruction, (
             mujoco.mjtFontScale.mjFONTSCALE_150,
             mujoco.mjtGridPos.mjGRID_TOPLEFT,
             f"Panda: {mode}",

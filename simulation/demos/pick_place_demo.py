@@ -20,6 +20,7 @@ from simulation.panda_controller import PandaController
 from simulation.panda_actions import TRANSLATION_LIMIT, make_controller
 from simulation.viewer import _restart_with_mjpython
 from simulation.capture_camera import save_rgb_png
+from simulation.viewer_text import show_instruction
 
 
 def sequence(controller, snapshot=lambda name: None):
@@ -114,6 +115,7 @@ def main():
                 save_rgb_png(output / f"{name}.png", renderer.render())
 
         if viewer:
+            show_instruction(viewer, 'pick up the red cube and place it 12 cm sideways.')
             print("Pick/place begins in 3 seconds", flush=True)
             time.sleep(3)
         steps = sequence(controller, snapshot)

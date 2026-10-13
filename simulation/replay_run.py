@@ -4,6 +4,8 @@ from common.paths import PROJECT_ROOT
 import argparse
 from pathlib import Path
 import time
+import json
+from simulation.viewer_text import show_instruction
 
 ROOT = PROJECT_ROOT
 
@@ -113,6 +115,8 @@ def main(argv=None):
         _restart_with_mjpython()
     import mujoco
     model, camera = replay_model(args.run_dir)
+    metadata_path = args.run_dir/'episode.json'
+    instruction = json.loads(metadata_path.read_text()).get('instruction') if metadata_path.is_file() else None
     frames, approximate = load_frames(args.run_dir, model)
     print(f'Loaded {len(frames)} poses from {args.run_dir}')
     if approximate:
@@ -155,7 +159,7 @@ def main(argv=None):
                     else:
                         paused = True
             previous = now
-            viewer.set_texts((mujoco.mjtFontScale.mjFONTSCALE_150, mujoco.mjtGridPos.mjGRID_TOPLEFT,
+            show_instruction(viewer, instruction, (mujoco.mjtFontScale.mjFONTSCALE_150, mujoco.mjtGridPos.mjGRID_TOPLEFT,
                              f'Offline replay | {frames[index][0]} | pose {index + 1}/{len(frames)}',
                              'Space: start/pause/resume | Esc / close: exit' + (' | Finished' if index == len(frames)-1 else '')))
             viewer.sync()
