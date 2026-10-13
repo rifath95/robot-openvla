@@ -13,6 +13,24 @@ from training.checkpoint_schedule import validation_due
 
 
 class TouchTrainingProfileTests(unittest.TestCase):
+    def test_color_profile_has_requested_saves_and_pinned_dataset(self):
+        from cloud.download_training_dataset import COLOR_TOUCH_REVISION
+        from training.checkpoint_schedule import checkpoint_due
+        c=json.loads((PROJECT_ROOT/'training/color_touch_50_500.json').read_text())
+        self.assertEqual(select_dataset(c),Path('/workspace/panda-training/training_color_touch_v1'))
+        self.assertEqual(c['checkpoint_updates'],[50,100,300,500])
+        self.assertEqual(c['validation_updates'],[0,50,100,300,500])
+        self.assertEqual(c['expected_split_counts'],dict(
+            train=dict(episodes=34,transitions=609),validation=dict(episodes=8,transitions=136),
+            test=dict(episodes=8,transitions=142)))
+        self.assertEqual((c['batch_size'],c['grad_accumulation_steps'],c['max_steps']),(8,1,500))
+        self.assertEqual(c['learning_rate'],.0001)
+        self.assertEqual(c['batch_policy'],'config')
+        self.assertEqual(bundle_source('training_color_touch_v1'),
+                         ('Maxalderone/robot-openvla-panda-color-touch',COLOR_TOUCH_REVISION,''))
+        with patch.dict('os.environ',{'PANDA_CHECKPOINT_UPDATES':json.dumps(c['checkpoint_updates'])}):
+            self.assertEqual([i for i in range(501) if checkpoint_due(i,100)], [50,100,300,500])
+
     def config(self):
         return json.loads((PROJECT_ROOT/'training/touch_cube_50_500.json').read_text())
 
