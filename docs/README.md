@@ -16,6 +16,7 @@ Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 - [Camera-to-server connection test](cloud/CONNECTION_TEST.md)
 - [One cloud OpenVLA prediction, displayed on the Mac](cloud/REMOTE_INFERENCE.md)
 - [Repeated cloud control with a live local simulator](cloud/REMOTE_LOOP.md)
+- [Separate automatic touch-checkpoint evaluation](cloud/SCRIPTED_TOUCH_EVALUATION.md)
 - [One cloud-predicted robot movement](cloud/REMOTE_SINGLE_ACTION.md)
 - [RunPod connection guide: Mac camera → cloud OpenVLA → Mac action](cloud/RUNPOD_CONNECTION_GUIDE.md)
 
@@ -43,6 +44,7 @@ Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 
 ## Audits and findings
 
+- [Touch-cube checkpoint trials and training curves](reviews/TOUCH_CHECKPOINT_TRIALS.md)
 - [Check expert images through the cloud inference pipeline](reviews/EXPERT_EVALUATION.md)
 - [Compare teacher forcing and normal generation](reviews/MATCHED_EVALUATION.md)
 - [Phase 3: approach learning after 1,000 updates](reviews/PHASE3_LEARNING_REVIEW.md)
