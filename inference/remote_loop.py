@@ -54,15 +54,19 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
              steps=100, timeout_seconds=180, max_runtime_seconds=900,
              max_consecutive_rejections=3,
              output_dir=None, no_view=False, start_immediately=False, startup_info=None,
-             stop_event=None, task='cube', scene_seed=0, sample_actions=False, temperature=1., top_p=1.):
+             stop_event=None, task='cube', scene_seed=0, sample_actions=False, temperature=1., top_p=1.,
+             target_color=None):
     from inference.action_sampling import generation_options
     generation=generation_options(sample_actions,temperature,top_p)
     import mujoco
     import numpy as np
     from simulation.capture_camera import save_rgb_png
     from simulation.panda_env import PandaEnv
-    if task not in ('cube','bowl','touch'):
+    if task not in ('cube','bowl','touch','color_touch'):
         raise ValueError('Unknown simulation task')
+    if task=='color_touch':
+        from inference.color_touch_task import select_instruction, ContactOutcome
+        instruction,target_color=select_instruction(instruction,target_color)
     if instruction is None:
         instruction={'cube':'pick up the red cube','bowl':'pick up the red cube and drop it in the blue bowl.',
                      'touch':'touch the red cube.'}[task]
@@ -80,6 +84,13 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
         from data_tools.touch_demonstrations import task_result as touch_task_result
         from data_tools.panda_demonstrations import cube_position
         if type(scene_seed) is not int or scene_seed<0:raise ValueError('Touch scene seed must be nonnegative')
+        env_options=dict(scene_path=SCENE_PATH,camera=CAMERA_NAME)
+        camera=CAMERA_NAME
+
+    if task=='color_touch':
+        from simulation.color_touch_scene import SCENE_PATH, CAMERA_NAME, initialize_scene
+        from data_tools.collect_panda_color_touch import pair_spec
+        if type(scene_seed) is not int or scene_seed<0:raise ValueError('Color scene seed must be nonnegative')
         env_options=dict(scene_path=SCENE_PATH,camera=CAMERA_NAME)
         camera=CAMERA_NAME
 
@@ -194,6 +205,16 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
                     scene_seed=scene_seed,instruction=instruction,scenario=dict(scene=scene),
                     demonstration_slot=scene_seed,demonstration_id=touch_spec['id'],
                     known_collected_position=scene_seed<50,training_eligible=False))
+            elif task=='color_touch':
+                spec=pair_spec(scene_seed)
+                scene=initialize_scene(env,spec['cube_positions'])
+                color_outcome=ContactOutcome(env,target_color)
+                color_outcome.observe(env)
+                touch_result=color_outcome.result(env)
+                save(folder/'episode.json',dict(scene_profile='panda_color_touch_v1',
+                    scene_seed=scene_seed,instruction=instruction,target_color=target_color,
+                    scenario=dict(scene=scene,target_color=target_color),
+                    known_collected_position=scene_seed<25,training_eligible=False))
             else:
                 env.controller.step(500)
             if no_view:
@@ -323,6 +344,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
                         count = min(20, PHYSICS_STEPS - executed_steps)
                         with viewer.lock() if viewer is not None else nullcontext():
                             env.controller.step(count)
+                            if task=='color_touch':color_outcome.observe(env)
                             motion_poses.append(env.data.qpos.copy())
                             motion_times.append(float(env.data.time))
                         executed_steps += count
@@ -341,6 +363,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
                         tracking_error = float(np.linalg.norm(env.controller.target_position - after_position))
                         finite = bool(np.all(np.isfinite(env.data.qpos)) and np.all(np.isfinite(env.data.qvel)))
                         if task=='touch':touch_result=touch_task_result(env,initial_cube)
+                        if task=='color_touch':touch_result=color_outcome.result(env)
                     after_capture_seconds = time.perf_counter() - capture_started
                     report = {
                         "step": current_step, "request_id": prediction["request_id"],
@@ -372,7 +395,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
                         "request_timings_seconds": prediction["client_timings_seconds"],
                         "server_timings_seconds": prediction.get("timings_seconds"),
                     }
-                    if task=='touch':report['task_result']=touch_result
+                    if task in ('touch','color_touch'):report['task_result']=touch_result
                     save(step_dir / "execution.json", report)
                     if report["interrupted"]:
                         break
@@ -385,6 +408,9 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
                     print(f"Action {current_step}: tracking error {tracking_error * 1000:.3f} mm", flush=True)
                     if task=='touch' and touch_result['success']:
                         print('Touch task succeeded: verified finger-cube contact.',flush=True)
+                        break
+                    if task=='color_touch' and (touch_result['correct_cube_contact'] or touch_result['wrong_cube_contact']):
+                        print('Color touch task ended: '+touch_result['outcome'],flush=True)
                         break
                 status("Stopped" if reason is not None else "Completed", stop_reason=reason)
                 refresh(force=True)
@@ -403,7 +429,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
                                       "rejected_steps": len(rejections), "rejections": rejections,
                                       "active_seconds": active_timer.elapsed(),
                                       "elapsed_seconds": time.perf_counter() - started,
-                                      **({"task_result":touch_result} if task=='touch' else {})})
+                                      **({"task_result":touch_result} if task in ('touch','color_touch') else {})})
         from analysis.run_report import write_run_report
         write_run_report(folder)
         from analysis.summarize_gpu_inference import comparison
@@ -418,7 +444,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--server-url", default="http://127.0.0.1:8000")
     parser.add_argument("--instruction", help="Instruction; defaults to the selected task’s demonstration instruction")
-    parser.add_argument('--task', choices=['cube','bowl','touch'], default='cube')
+    parser.add_argument('--task', choices=['cube','bowl','touch','color_touch'], default='cube')
+    parser.add_argument('--target-color', choices=['red','blue'])
     parser.add_argument('--scene-seed', type=int, default=0)
     parser.add_argument("--steps", type=int, default=100,
                         help="Maximum observation/prediction cycles, including held/rejected actions")
