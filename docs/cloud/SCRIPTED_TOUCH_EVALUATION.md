@@ -16,15 +16,15 @@ caffeinate -i .venv/bin/python -m cloud.scripted_touch_session \
 
 Defaults:
 
-- Checkpoints 100, 300 and 500, with sampling off.
-- The same 20 predetermined unseen seeds, 1000–1019, for every checkpoint: 60 trials total.
+- Checkpoints 50, 100, 300 and 500, with sampling off.
+- The same 20 predetermined unseen seeds, 1000–1019, for every checkpoint: 80 trials total.
 - Fixed initial arm pose and camera; only cube XY varies within the existing dataset bounds.
 - Instruction: `touch the red cube.`
 - Up to 50 actions and 180 active seconds per trial. Stop on contact or an existing controller/connection failure.
 - One model load per checkpoint; the model stays loaded for all 20 positions.
 - Continue after individual trial failures while the server remains healthy; abort if the server becomes unavailable.
 
-Optional `--checkpoints 40 100 300 500` includes checkpoint 40. `--scene-seeds` accepts unique seeds >=50; the script checks positions against the local dataset manifest. `--steps`, `--trial-timeout-seconds` and `--startup-timeout-seconds` set limits. The local dataset manifest must remain available for the unseen-position check.
+Optional `--checkpoints 40 50 100 300 500` includes checkpoint 40. `--scene-seeds` accepts unique seeds >=50; the script checks positions against the local dataset manifest. `--steps`, `--trial-timeout-seconds` and `--startup-timeout-seconds` set limits. The local dataset manifest must remain available for the unseen-position check.
 
 ## Saved results and shutdown
 

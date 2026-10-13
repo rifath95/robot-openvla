@@ -119,7 +119,7 @@ def main():
     parser.add_argument('--ssh', required=True)
     parser.add_argument('--key', type=Path)
     parser.add_argument('--training-session', required=True)
-    parser.add_argument('--checkpoints', type=int, nargs='+', default=[100, 300, 500])
+    parser.add_argument('--checkpoints', type=int, nargs='+', default=[50, 100, 300, 500])
     parser.add_argument('--scene-seeds', type=int, nargs='+')
     parser.add_argument('--steps', type=int, default=50)
     parser.add_argument('--trial-timeout-seconds', type=int, default=180)
