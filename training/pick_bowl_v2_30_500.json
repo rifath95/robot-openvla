@@ -1,0 +1,53 @@
+{
+  "dataset_bundle": "training_bowl_v2_30",
+  "expected_camera": "bowl_camera",
+  "expected_split_counts": {
+    "train": {
+      "episodes": 20,
+      "transitions": 2279
+    },
+    "validation": {
+      "episodes": 5,
+      "transitions": 539
+    },
+    "test": {
+      "episodes": 5,
+      "transitions": 590
+    }
+  },
+  "batch_size": 5,
+  "grad_accumulation_steps": 1,
+  "max_steps": 500,
+  "save_steps": 100,
+  "learning_rate": 0.0001,
+  "lora_rank": 32,
+  "lora_dropout": 0.0,
+  "use_lora": true,
+  "use_quantization": false,
+  "image_aug": false,
+  "shuffle_buffer_size": 512,
+  "validation_every": 100,
+  "validation_max_batches": 0,
+  "max_runtime_seconds": 3600,
+  "hard_limit_seconds": 5400,
+  "require_benchmark": true,
+  "expected_gpu": "NVIDIA A40",
+  "minimum_free_disk_gib": 9,
+  "checkpoint_updates": [
+    0,
+    10,
+    20,
+    30,
+    40,
+    50,
+    60,
+    70,
+    80,
+    90,
+    100,
+    200,
+    300,
+    400,
+    500
+  ]
+}

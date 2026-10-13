@@ -131,7 +131,7 @@ def collect(folder=DATASET_ROOT, limit=10, max_attempts=30, workers=1,startup_po
         if not report['passed'] or report['episode_sha256'] != fingerprint(episode):
             raise ValueError(f'Previously accepted episode changed: {episode}')
     coverage_plan=None
-    if limit>20:
+    if limit==300:
         from data_tools.bowl_coverage import build_plan,write_summary
         coverage_path=folder/'coverage_plan.json'
         expected=build_plan([row for row in results if row['slot']<20])
@@ -193,7 +193,7 @@ def collect(folder=DATASET_ROOT, limit=10, max_attempts=30, workers=1,startup_po
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--output-dir',type=Path,default=DATASET_ROOT)
-    parser.add_argument('--limit',type=int,choices=(10,20,300),default=10)
+    parser.add_argument('--limit',type=int,choices=(10,20,30,300),default=10)
     parser.add_argument('--max-attempts',type=int,default=30)
     parser.add_argument('--workers',type=int,choices=(1,2,4),default=1)
     parser.add_argument('--startup-policy',choices=('legacy','state_dependent'),default='legacy')

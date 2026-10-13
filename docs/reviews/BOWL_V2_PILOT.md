@@ -1,4 +1,74 @@
-# Revised bowl demonstrations: first ten for review
+# Revised bowl demonstrations: 30-trajectory short training test
+
+The first ten were reviewed and approved. On 2026-10-13, another twenty were
+added to the same numbered collection; the original ten were retained unchanged.
+All thirty pass continuous physics action replay and meaningful-start checks.
+
+| Split | Trajectories | Training examples (action steps) |
+| --- | ---: | ---: |
+| Training | 20 | 2,279 |
+| Validation | 5 | 539 |
+| Test | 5 | 590 |
+
+The checked portable bundle is `datasets/panda_pick_bowl_v2/training_bowl_v2_30`
+(about 423 MB). All exported source images, instructions and actions match, and
+the official processor checks pass. `WATCH_TRAJECTORIES.md` now lists all thirty
+in Training / Validation / Test order. This small collection makes no exhaustive
+coverage claim. The old 300-trajectory dataset remains unchanged.
+
+## Short training configuration
+
+`training/pick_bowl_v2_30_500.json` starts from the unchanged pretrained model
+with fresh LoRA adapters. It selects the fastest compatible safe A40 benchmark
+recommendation automatically; it does not resume the earlier bowl adapter.
+
+- Maximum 500 optimizer updates, accumulation 1.
+- Adapter checkpoints: 0, 10, 20, ..., 100, 200, 300, 400, 500.
+- Update 0 saves the initialized adapter before learning, after baseline validation.
+- Full validation of all 539 validation examples at 0, 100, 200, 300, 400, 500.
+- Test examples are held out from training and validation.
+- Inner limit 1 hour; outer supervisor limit 90 minutes.
+- 9 GiB minimum free volume space: fifteen adapters occupy roughly 7 GB.
+- Checkpoints, metrics, plots and session status remain on the volume before
+  the supervisor requests a pod stop; connected Macs fetch reports automatically.
+- If a runtime cap ends training early, the loop also attempts to save that
+  final update even if it is outside the requested schedule.
+
+No cloud training has been launched for this collection yet.
+
+Upload from your local terminal (the command creates the private repository if
+needed and supports resuming; retain the bundle's `.cache` directory):
+
+```bash
+caffeinate -i .venv-training/bin/hf upload-large-folder \
+  Maxalderone/robot-openvla-panda-bowl-v2 \
+  datasets/panda_pick_bowl_v2/training_bowl_v2_30 \
+  --repo-type dataset --private --num-workers 4
+```
+
+After upload completes, copy its full Hugging Face commit SHA. On a preparation
+pod with the training template, network volume and HF read secret:
+
+```bash
+cd /root/robot-openvla
+git pull --ff-only
+/opt/openvla/bin/python -m cloud.download_training_dataset \
+  --bundle training_bowl_v2_30 --revision UPLOAD_COMMIT_SHA
+```
+
+Replace `UPLOAD_COMMIT_SHA` with the completed upload's actual revision. After
+checksum verification, launch from the local Mac terminal:
+
+```bash
+caffeinate -i .venv/bin/python -m cloud.training_cloud_session \
+  --ssh 'CURRENT_POD_SSH_COMMAND' \
+  --config training/pick_bowl_v2_30_500.json
+```
+
+Use the pod's current SSH command in place of `CURRENT_POD_SSH_COMMAND`.
+There is no Docker rebuild required for these repository-level changes.
+
+## Original first-ten review record
 
 Generated locally on 2026-10-13 under `datasets/panda_pick_bowl_v2`.
 The previous 300-trajectory dataset is unchanged. No new fine-tuning or upload

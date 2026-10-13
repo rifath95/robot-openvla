@@ -15,7 +15,7 @@ def integrated_source():
         nonlocal source
         if source.count(old)!=1:raise ValueError(f'Upstream integration anchor changed: {old[:60]}')
         source=source.replace(old,new)
-    replace('import wandb','from training.runtime import metrics as wandb\nfrom training.runtime import validate, save_adapter, budget_expired, record_model\nfrom training.panda_rlds import PandaRLDSDataset')
+    replace('import wandb','from training.runtime import metrics as wandb\nfrom training.runtime import validate, save_adapter, budget_expired, record_model\nfrom training.panda_rlds import PandaRLDSDataset\nfrom training.checkpoint_schedule import checkpoint_due')
     replace('        vla = get_peft_model(vla, lora_config)',
             '        from training.continuation import attach_lora\n        vla = attach_lora(vla, lora_config)')
     replace('        vla.print_trainable_parameters()',
@@ -24,7 +24,9 @@ def integrated_source():
     replace('    # Train!',
             '    # Record the validation baseline before any optimizer updates.\n'
             '    validate(vla, cfg, batch_transform, collator, device_id, 0)\n'
-            '    wandb.plot()\n\n    # Train!')
+            '    wandb.plot()\n'
+            '    if checkpoint_due(0, cfg.save_steps):\n'
+            '        save_adapter(vla, processor, cfg, vla_dataset, 0)\n\n    # Train!')
     replace('gradient_step_idx = batch_idx // cfg.grad_accumulation_steps',
             'gradient_step_idx = (batch_idx + 1) // cfg.grad_accumulation_steps')
     replace('                        "train_loss": smoothened_loss,',
@@ -46,7 +48,7 @@ def integrated_source():
                 if gradient_step_idx % int(os.environ["PANDA_VALIDATE_EVERY"]) == 0:
                     validate(vla, cfg, batch_transform, collator, device_id, gradient_step_idx)
                 finished = gradient_step_idx >= cfg.max_steps or budget_expired()
-                if gradient_step_idx % cfg.save_steps == 0 or finished:
+                if checkpoint_due(gradient_step_idx, cfg.save_steps) or finished:
                     save_adapter(vla, processor, cfg, vla_dataset, gradient_step_idx)
                 if finished:
                     wandb.plot()

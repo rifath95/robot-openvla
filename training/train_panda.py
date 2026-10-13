@@ -44,6 +44,9 @@ def main():
         except (ValueError,OSError) as exc:p.error(str(exc))
     for key in ['batch_size','grad_accumulation_steps','max_steps','save_steps','validation_every','max_runtime_seconds']:
         if config[key]<1:p.error(f'{key} must be positive')
+    from training.checkpoint_schedule import validate_schedule
+    try: checkpoint_updates=validate_schedule(config.pop('checkpoint_updates',None),config['max_steps'])
+    except ValueError as exc:p.error(str(exc))
     if config['validation_max_batches']<0:p.error('validation_max_batches must be zero (full split) or positive')
     if not config['use_lora'] or config['use_quantization'] or config['image_aug']:
         p.error('This initial integration requires LoRA, unquantized weights, and disabled augmentation')
@@ -76,6 +79,7 @@ def main():
     if run.exists():p.error('Run already exists; choose a new run name')
     env=os.environ.copy()
     env.update(PANDA_RUN_DIR=str(run),PANDA_UPSTREAM_REVISION=pin['revision'],
+        PANDA_CHECKPOINT_UPDATES=json.dumps(checkpoint_updates) if checkpoint_updates is not None else '',
         PANDA_VALIDATE_EVERY=str(config.pop('validation_every')),
         PANDA_VALIDATION_MAX_BATCHES=str(config.pop('validation_max_batches')),
         PANDA_MAX_RUNTIME=str(config.pop('max_runtime_seconds')),

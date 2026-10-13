@@ -30,6 +30,7 @@ class Metrics:
             max_runtime_seconds=int(os.environ['PANDA_MAX_RUNTIME']),
             initial_adapter=os.environ.get('PANDA_INITIAL_ADAPTER') or None,
             continuation_mode='adapter_weights_fresh_optimizer' if os.environ.get('PANDA_INITIAL_ADAPTER') else 'fresh_base',
+            checkpoint_updates=json.loads(os.environ['PANDA_CHECKPOINT_UPDATES']) if os.environ.get('PANDA_CHECKPOINT_UPDATES') else None,
             checkpoint_saving=os.environ.get('PANDA_SAVE_CHECKPOINTS','1')!='0',
             note='Runtime guard is checked between updates; it does not stop pod billing.'),indent=2)+'\n')
         if hasattr(self,'model_details'):

@@ -19,6 +19,10 @@ BOWL_REVISION='6750b3dad36b0d238c5e101ec70e64a2c36bbc62'
 
 
 def bundle_source(bundle, repo=None, revision=None):
+    if bundle=='training_bowl_v2_30':
+        if not revision:
+            raise ValueError('The pilot bundle requires --revision from its completed upload')
+        return repo or 'Maxalderone/robot-openvla-panda-bowl-v2', revision, ''
     if bundle=='training_bowl_v1':
         return repo or BOWL_REPOSITORY, revision or BOWL_REVISION, ''
     if bundle not in ('training_v1','training_v2'):
@@ -104,7 +108,7 @@ def copy_verified_bundle(bundle,destination,checksums):
 def main():
     p=argparse.ArgumentParser(description=__doc__)
     p.add_argument('--repo',help='Override the selected bundle’s Hugging Face repository')
-    p.add_argument('--bundle',choices=('training_v1','training_v2','training_bowl_v1'),default='training_v2')
+    p.add_argument('--bundle',choices=('training_v1','training_v2','training_bowl_v1','training_bowl_v2_30'),default='training_v2')
     p.add_argument('--revision',help='Override the selected bundle’s pinned completed upload')
     p.add_argument('--volume-root',type=Path,default=Path('/workspace'))
     p.add_argument('--global-volume',action='store_true',help='Download on container disk and copy regular files to global storage')
