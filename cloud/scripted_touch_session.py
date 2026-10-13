@@ -75,6 +75,39 @@ def write_reports(folder, plan, rows, error=None):
     (folder / 'REPORT.md').write_text('\n'.join(lines) + '\n')
 
 
+def resume_rows(folder, plan):
+    """Reuse measured trials, including task failures; never select only successes."""
+    saved=json.loads((folder/'results.json').read_text())
+    previous=saved['plan']
+    for key in ('checkpoints','scene_seeds','cube_positions','steps','sampling','task','training_session','color_pairs'):
+        if previous.get(key)!=plan.get(key):
+            raise ValueError(f'Resume plan differs: {key}')
+    rows=saved['trials']
+    if len({r['directory'] for r in rows})!=len(rows):raise ValueError('Duplicate saved trials')
+    for row in rows:
+        name=row['directory']
+        if Path(name).name!=name:raise ValueError('Invalid saved trial directory')
+        summary=folder/name/'summary.json'
+        if not summary.is_file():raise ValueError('Saved trial summary missing; inspect before resuming')
+        data=json.loads(summary.read_text())
+        if data.get('phase')!=row['phase'] or data.get('completed_steps')!=row['completed_steps']:
+            raise ValueError('Saved summary differs from recorded trial')
+    backup=folder/f'results_before_resume_{time.time_ns()}.json'
+    backup.write_text(json.dumps(saved,indent=2)+'\n')
+    return rows,float(previous.get('elapsed_seconds',0))
+
+
+def collect_server_diagnostics(ssh, folder):
+    """Best-effort bounded log capture before shutdown, without reading secrets."""
+    command="cd /root/robot-openvla && tail -c 262144 outputs/cloud_server.log"
+    try:
+        result=subprocess.run(ssh+[command],capture_output=True,timeout=20)
+        if result.returncode==0:
+            (folder/f'cloud_server_failure_{time.time_ns()}.log').write_bytes(result.stdout)
+    except Exception as exc:
+        print(f'Cloud server log could not be collected: {exc}',flush=True)
+
+
 def run_trials(args, folder, ssh):
     task=getattr(args,'task','touch')
     started=time.monotonic()
@@ -110,12 +143,35 @@ def run_trials(args, folder, ssh):
         from simulation.color_palette import parse_pairs
         plan['color_pairs']=parse_pairs(getattr(args,'color_pairs',None))
         plan['instruction']='Touch each visible color in turn'
+    previous_elapsed=0
     rows = []
+    if getattr(args,'resume',None):
+        rows,previous_elapsed=resume_rows(folder,plan)
+        print(f'Resuming with {len(rows)} saved trials; their outcomes are retained.',flush=True)
+    done={r['directory'] for r in rows}
     write_reports(folder, plan, rows)
     tunnel = None
     error = None
     try:
         for checkpoint in args.checkpoints:
+            if task=='color_transfer':
+                trial_specs=[]
+                for pair_index,pair in enumerate(plan['color_pairs']):
+                    for index,seed in enumerate(seeds):
+                        colors=pair[::-1] if (index+pair_index)%2 else pair
+                        for color in pair:trial_specs.append((seed,color,colors,':'.join(pair)))
+            else:
+                trial_specs=[(seed,color,None,None) for seed in seeds for color in
+                             (('red','blue') if task=='color_touch' else ('red',))]
+            def trial_name(spec):
+                seed,color,colors,pair_name=spec
+                suffix=f'_{color}' if task in ('color_touch','color_transfer') else ''
+                if task=='color_transfer':suffix=f'_{pair_name.replace(":","-")}{suffix}'
+                return f'checkpoint_{checkpoint:06d}_seed_{seed}{suffix}'
+            pending=[spec for spec in trial_specs if trial_name(spec) not in done]
+            if not pending:
+                print(f'Checkpoint {checkpoint}: all trials already saved; skipping model load.',flush=True)
+                continue
             adapter = f'/workspace/panda-training/sessions/{args.training_session}/runs/training/checkpoint_{checkpoint:06d}'
             subprocess.run(ssh + ['bash -s'], input=bootstrap_script(21600, adapter).encode(),
                            check=True, timeout=args.startup_timeout_seconds)
@@ -126,20 +182,15 @@ def run_trials(args, folder, ssh):
             health = wait_for_server(tunnel, args.startup_timeout_seconds)
             startup = dict(health.get('startup_info', {}), adapter_checkpoint=adapter)
             startup_path = folder / f'startup_{checkpoint:06d}.json'
+            if startup_path.exists():
+                startup_path.rename(startup_path.with_name(startup_path.stem+f'_before_resume_{time.time_ns()}.json'))
             startup_path.write_text(json.dumps(startup, indent=2) + '\n')
-            if task=='color_transfer':
-                trial_specs=[]
-                for pair_index,pair in enumerate(plan['color_pairs']):
-                    for index,seed in enumerate(seeds):
-                        colors=pair[::-1] if (index+pair_index)%2 else pair
-                        for color in pair:trial_specs.append((seed,color,colors,':'.join(pair)))
-            else:
-                trial_specs=[(seed,color,None,None) for seed in seeds for color in
-                             (('red','blue') if task=='color_touch' else ('red',))]
-            for seed,color,colors,pair_name in trial_specs:
+            for seed,color,colors,pair_name in pending:
                 suffix=f'_{color}' if task in ('color_touch','color_transfer') else ''
                 if task=='color_transfer':suffix=f'_{pair_name.replace(":","-")}{suffix}'
                 trial = folder / f'checkpoint_{checkpoint:06d}_seed_{seed}{suffix}'
+                if trial.exists():
+                    trial.rename(trial.with_name(trial.name+f'_interrupted_{time.time_ns()}'))
                 instruction=f'touch the {color} cube.'
                 print(f'Checkpoint {checkpoint}, seed {seed}, target {color}: automatic trial starts.', flush=True)
                 command = [str(ROOT / '.venv/bin/python'), '-m', 'inference.remote_loop',
@@ -173,16 +224,20 @@ def run_trials(args, folder, ssh):
                         outcome=outcome.get('outcome','unmeasured'),
                         first_contact=outcome.get('first_contact'))
                 if task=='color_transfer':rows[-1].update(color_pair=pair_name,cube_colors=colors)
-                plan['elapsed_seconds']=time.monotonic()-started
+                plan['elapsed_seconds']=previous_elapsed+time.monotonic()-started
                 write_reports(folder, plan, rows)
                 print(f'  {rows[-1]["phase"]}; contact={rows[-1]["contact"]}', flush=True)
                 # An unhealthy connection aborts the sweep instead of recording 60 bogus failures.
-                wait_for_server(tunnel, 5)
+                try:
+                    wait_for_server(tunnel, 30)
+                except TimeoutError as exc:
+                    raise RuntimeError('Inference server became unavailable between trials (30-second health check).') from exc
     except BaseException as exc:
         error = str(exc) or type(exc).__name__
+        collect_server_diagnostics(ssh,folder)
         raise
     finally:
-        plan['elapsed_seconds']=time.monotonic()-started
+        plan['elapsed_seconds']=previous_elapsed+time.monotonic()-started
         write_reports(folder, plan, rows, error)
         if tunnel is not None:
             tunnel.terminate()
@@ -196,6 +251,7 @@ def run_trials(args, folder, ssh):
 def main(default_task='touch'):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--ssh', required=True)
+    parser.add_argument('--resume',type=Path,help='Existing local sweep directory; retain recorded outcomes and skip saved trials')
     parser.add_argument('--key', type=Path)
     parser.add_argument('--training-session', required=True)
     parser.add_argument('--task',choices=['touch','color_touch','color_transfer'],default=default_task)
@@ -231,7 +287,13 @@ def main(default_task='touch'):
     prefix='scripted_color_transfer' if args.task=='color_transfer' else 'scripted_color_touch' if args.task=='color_touch' else 'scripted_touch'
     name = f'{prefix}_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}'
     folder = ROOT / 'outputs' / name
-    folder.mkdir(parents=True)
+    if args.resume:
+        folder=args.resume.resolve()
+        if not folder.is_relative_to((ROOT/'outputs').resolve()) or not (folder/'results.json').is_file():
+            parser.error('--resume must select a saved sweep inside outputs/')
+        name=folder.name
+    else:
+        folder.mkdir(parents=True)
     control = f'cd /root/robot-openvla && /opt/openvla/bin/python -m cloud.scripted_eval_control --session {name}'
     ready = False
     code = 0
@@ -255,7 +317,7 @@ def main(default_task='touch'):
             # Copy compact reports before stopping; images/actions are already on the Mac.
             try:
                 payload = {p.name: p.read_text() for p in folder.glob('*')
-                           if p.name in ('REPORT.md', 'results.json','statistics.json')}
+                           if p.name in ('REPORT.md', 'results.json','statistics.json') or p.name.startswith('cloud_server_failure_')}
                 destination = '/workspace/panda-training/scripted-evaluations/' + name
                 script = ('import json,pathlib,sys; p=pathlib.Path(' + repr(destination) + '); '
                           'p.mkdir(parents=True,exist_ok=True); '

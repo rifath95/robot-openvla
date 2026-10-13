@@ -62,3 +62,16 @@ The compact Markdown/JSON reports are copied to `/workspace/panda-training/scrip
 ## Local checks before renting a pod
 
 Recolored previews were rendered. Expert-action sequences targeting black in each of the two physical slots reached the correct measured color while reproducing the original expert physics to numerical precision. Replays preserve the actual assigned colors. Statistical tests cover chance-level paired behavior, a small above-half result, consistent paired successes and no-contact-only data. Existing red/blue and single-cube launch/inference/replay regressions also pass. These checks verify the evaluator, not the trained model's unseen-color success.
+
+## Resume an interrupted sweep
+
+Use the same checkpoint/seed/color-pair settings and add `--resume outputs/<saved-sweep>`. The launcher validates the saved plan and summaries, retains every measured outcome including task failures, skips recorded trials, and avoids loading checkpoints whose trials are all saved. Original result and startup records are backed up before updates. Images and actions remain in the same folder. Incomplete unrecorded directories are retained under an `_interrupted_` suffix before retry.
+
+```bash
+caffeinate -i .venv/bin/python -m cloud.scripted_color_transfer_session \
+  --ssh 'ssh root@HOST -p PORT -i ~/.ssh/id_ed25519_maxalderone' \
+  --training-session panda-train-20261013-074359-896 \
+  --resume outputs/scripted_color_transfer_20261013_100305_2a5212fb
+```
+
+A between-trial health failure waits 30 seconds and reports server unavailability separately from initial model loading. On failure, the launcher attempts to capture the last 256 KiB of the cloud server log before shutdown, storing it locally and including it in the compact volume report copy. Collection is best effort if SSH has failed.

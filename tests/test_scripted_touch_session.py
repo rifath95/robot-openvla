@@ -57,6 +57,8 @@ class ScriptedTouchTests(unittest.TestCase):
                     patch.object(session.subprocess, 'Popen', return_value=tunnel), \
                     patch.object(session, 'wait_for_server', return_value={'startup_info': {}}):
                 session.run_trials(args, folder, ['ssh', 'root@host'])
+                args.resume=folder
+                session.run_trials(args, folder, ['ssh', 'root@host'])
             self.assertEqual([c[c.index('--scene-seed')+1] for c in commands],
                              ['1000', '1001', '1000', '1001'])
             self.assertTrue(all('--no-view' in c and '--start-immediately' in c for c in commands))
@@ -88,6 +90,13 @@ class ScriptedTouchTests(unittest.TestCase):
             stops = [c for c in calls if 'cloud.scripted_eval_control' in c[-1]
                      and '--check-only' not in c[-1]]
             self.assertEqual(len(stops), 1)
+
+    def test_resume_rejects_changed_plan_before_reusing_outcomes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder=Path(tmp)
+            (folder/'results.json').write_text(json.dumps(dict(plan=dict(steps=50),trials=[])))
+            with self.assertRaisesRegex(ValueError,'steps'):
+                session.resume_rows(folder,dict(steps=100))
 
     def test_collected_position_rejected_before_model_setup(self):
         from data_tools.collect_panda_touch import scenario

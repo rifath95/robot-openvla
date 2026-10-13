@@ -11,7 +11,7 @@ Means are weighted by measured request counts, not an average of rounded table v
 
 | GPU | Runs | Measured requests | Mean cycle s | Mean request RTT s | Mean prediction s | USD/hour | 100 requests USD | 100 simulator cycles USD |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| NVIDIA A40 | 271 | 5438 | 1.393 | 1.136 | 0.335 | 0.59 | 0.0186 | 0.0228 |
+| NVIDIA A40 | 289 | 5745 | 1.426 | 1.178 | 0.334 | 0.59 | 0.0193 | 0.0234 |
 | NVIDIA RTX A5000 | 1 | 20 | — | 1.347 | 0.337 | 0.27 | 0.0101 | — |
 
 ## Full cycle and estimated cost for 100 steps
@@ -184,30 +184,48 @@ Means are weighted by measured request counts, not an average of rounded table v
 | NVIDIA A40 | checkpoint_000050_seed_1003_black-purple_purple | 20/25 | 1.255 | 1.178 | 1.304 | 0.360 | 0.59 | 125.5 | 0.0206 | 0.0218 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1003_green-yellow_green | 17/22 | 1.293 | 1.218 | 1.453 | 0.343 | 0.59 | 129.3 | 0.0212 | 0.0224 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1003_green-yellow_yellow | 19/24 | 1.232 | 1.152 | 1.457 | 0.326 | 0.59 | 123.2 | 0.0202 | 0.0214 | Simulator |
+| NVIDIA A40 | checkpoint_000050_seed_1003_orange-white_orange | 20/25 | 1.441 | 1.353 | 2.415 | 0.336 | 0.59 | 144.1 | 0.0236 | 0.0248 | Simulator |
+| NVIDIA A40 | checkpoint_000050_seed_1003_orange-white_white | 19/24 | 1.323 | 1.237 | 1.953 | 0.324 | 0.59 | 132.3 | 0.0217 | 0.0229 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1004_black-purple_black | 20/25 | 1.273 | 1.183 | 1.339 | 0.366 | 0.59 | 127.3 | 0.0209 | 0.0221 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1004_black-purple_purple | 19/24 | 1.234 | 1.148 | 1.316 | 0.352 | 0.59 | 123.4 | 0.0202 | 0.0214 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1004_green-yellow_green | 20/25 | 1.241 | 1.162 | 1.419 | 0.334 | 0.59 | 124.1 | 0.0203 | 0.0216 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1004_green-yellow_yellow | 21/26 | 1.245 | 1.178 | 1.342 | 0.329 | 0.59 | 124.5 | 0.0204 | 0.0216 | Simulator |
+| NVIDIA A40 | checkpoint_000050_seed_1004_orange-white_orange | 20/25 | 1.231 | 1.142 | 1.249 | 0.343 | 0.59 | 123.1 | 0.0202 | 0.0214 | Simulator |
+| NVIDIA A40 | checkpoint_000050_seed_1004_orange-white_white | 17/22 | 1.301 | 1.212 | 1.527 | 0.352 | 0.59 | 130.1 | 0.0213 | 0.0225 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1005_black-purple_black | 18/23 | 1.224 | 1.136 | 1.285 | 0.346 | 0.59 | 122.4 | 0.0201 | 0.0213 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1005_black-purple_purple | 18/23 | 1.251 | 1.156 | 1.314 | 0.360 | 0.59 | 125.1 | 0.0205 | 0.0217 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1005_green-yellow_green | 18/23 | 1.249 | 1.163 | 1.328 | 0.315 | 0.59 | 124.9 | 0.0205 | 0.0217 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1005_green-yellow_yellow | 19/24 | 1.254 | 1.172 | 1.287 | 0.341 | 0.59 | 125.4 | 0.0206 | 0.0218 | Simulator |
+| NVIDIA A40 | checkpoint_000050_seed_1005_orange-white_orange | 13/18 | 1.275 | 1.188 | 1.304 | 0.307 | 0.59 | 127.5 | 0.0209 | 0.0221 | Simulator |
+| NVIDIA A40 | checkpoint_000050_seed_1005_orange-white_white | 15/20 | 1.241 | 1.152 | 1.271 | 0.336 | 0.59 | 124.1 | 0.0203 | 0.0216 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1006_black-purple_black | 18/23 | 1.572 | 1.487 | 2.640 | 0.324 | 0.59 | 157.2 | 0.0258 | 0.0270 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1006_black-purple_purple | 20/25 | 1.219 | 1.133 | 1.236 | 0.326 | 0.59 | 121.9 | 0.0200 | 0.0212 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1006_green-yellow_green | 19/24 | 1.207 | 1.128 | 1.437 | 0.312 | 0.59 | 120.7 | 0.0198 | 0.0210 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1006_green-yellow_yellow | 18/23 | 1.198 | 1.122 | 1.177 | 0.318 | 0.59 | 119.8 | 0.0196 | 0.0208 | Simulator |
+| NVIDIA A40 | checkpoint_000050_seed_1006_orange-white_orange | 19/24 | 1.213 | 1.125 | 1.225 | 0.338 | 0.59 | 121.3 | 0.0199 | 0.0211 | Simulator |
+| NVIDIA A40 | checkpoint_000050_seed_1006_orange-white_white | 21/26 | 1.275 | 1.189 | 1.413 | 0.350 | 0.59 | 127.5 | 0.0209 | 0.0221 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1007_black-purple_black | 11/16 | 1.262 | 1.177 | 1.376 | 0.335 | 0.59 | 126.2 | 0.0207 | 0.0219 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1007_black-purple_purple | 19/24 | 1.251 | 1.163 | 1.333 | 0.324 | 0.59 | 125.1 | 0.0205 | 0.0217 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1007_green-yellow_green | 21/26 | 1.269 | 1.189 | 1.403 | 0.359 | 0.59 | 126.9 | 0.0208 | 0.0220 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1007_green-yellow_yellow | 12/17 | 1.214 | 1.140 | 1.291 | 0.316 | 0.59 | 121.4 | 0.0199 | 0.0211 | Simulator |
+| NVIDIA A40 | checkpoint_000050_seed_1007_orange-white_orange | 13/18 | 1.257 | 1.169 | 1.278 | 0.359 | 0.59 | 125.7 | 0.0206 | 0.0218 | Simulator |
+| NVIDIA A40 | checkpoint_000050_seed_1007_orange-white_white | 20/25 | 2.128 | 2.037 | 4.612 | 0.329 | 0.59 | 212.8 | 0.0349 | 0.0361 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1008_black-purple_black | 22/27 | 1.262 | 1.176 | 1.273 | 0.360 | 0.59 | 126.2 | 0.0207 | 0.0219 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1008_black-purple_purple | 18/23 | 1.232 | 1.154 | 1.294 | 0.338 | 0.59 | 123.2 | 0.0202 | 0.0214 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1008_green-yellow_green | 19/24 | 1.229 | 1.144 | 1.253 | 0.334 | 0.59 | 122.9 | 0.0201 | 0.0214 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1008_green-yellow_yellow | 19/24 | 1.338 | 1.256 | 1.498 | 0.322 | 0.59 | 133.8 | 0.0219 | 0.0231 | Simulator |
+| NVIDIA A40 | checkpoint_000050_seed_1008_orange-white_orange | 20/25 | 2.317 | 2.224 | 4.312 | 0.339 | 0.59 | 231.7 | 0.0380 | 0.0392 | Simulator |
+| NVIDIA A40 | checkpoint_000050_seed_1008_orange-white_white | 17/22 | 3.259 | 3.168 | 7.359 | 0.310 | 0.59 | 325.9 | 0.0534 | 0.0546 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1009_black-purple_black | 21/26 | 1.245 | 1.184 | 1.346 | 0.344 | 0.59 | 124.5 | 0.0204 | 0.0216 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1009_black-purple_purple | 11/16 | 1.261 | 1.200 | 1.386 | 0.344 | 0.59 | 126.1 | 0.0207 | 0.0219 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1009_green-yellow_green | 12/17 | 1.541 | 1.452 | 1.671 | 0.338 | 0.59 | 154.1 | 0.0253 | 0.0265 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1009_green-yellow_yellow | 19/24 | 1.188 | 1.102 | 1.225 | 0.315 | 0.59 | 118.8 | 0.0195 | 0.0207 | Simulator |
+| NVIDIA A40 | checkpoint_000050_seed_1009_orange-white_orange | 16/21 | 2.400 | 2.313 | 5.088 | 0.316 | 0.59 | 240.0 | 0.0393 | 0.0405 | Simulator |
+| NVIDIA A40 | checkpoint_000050_seed_1009_orange-white_white | 12/17 | 4.814 | 4.722 | 9.396 | 0.327 | 0.59 | 481.4 | 0.0789 | 0.0801 | Simulator |
+| NVIDIA A40 | checkpoint_000100_seed_1000_black-purple_black | 13/18 | 2.499 | 2.402 | 4.275 | 0.340 | 0.59 | 249.9 | 0.0410 | 0.0420 | Simulator |
+| NVIDIA A40 | checkpoint_000100_seed_1000_black-purple_purple | 16/21 | 2.148 | 2.053 | 4.716 | 0.322 | 0.59 | 214.8 | 0.0352 | 0.0362 | Simulator |
+| NVIDIA A40 | checkpoint_000100_seed_1001_black-purple_black | 15/20 | 3.074 | 2.979 | 5.302 | 0.306 | 0.59 | 307.4 | 0.0504 | 0.0514 | Simulator |
+| NVIDIA A40 | checkpoint_000100_seed_1001_black-purple_purple | 21/26 | 2.794 | 2.702 | 4.992 | 0.314 | 0.59 | 279.4 | 0.0458 | 0.0468 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1000 | 12/17 | 1.194 | 1.109 | 1.184 | 0.318 | 0.59 | 119.4 | 0.0196 | 0.0205 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1001 | 22/27 | 1.272 | 1.190 | 1.328 | 0.325 | 0.59 | 127.2 | 0.0208 | 0.0218 | Simulator |
 | NVIDIA A40 | checkpoint_000050_seed_1002 | 12/17 | 1.267 | 1.180 | 1.373 | 0.321 | 0.59 | 126.7 | 0.0208 | 0.0217 | Simulator |
@@ -464,30 +482,48 @@ Cost = estimated seconds ÷ 3600 × user-confirmed hourly rate. 100-cycle estima
 | checkpoint_000050_seed_1003_black-purple_purple | 1.178 | 0.007 | 0.010 | 0.068 | 0.360 | 0.444 | 0.000 | 0.734 |
 | checkpoint_000050_seed_1003_green-yellow_green | 1.218 | 0.006 | 0.010 | 0.087 | 0.343 | 0.446 | 0.000 | 0.772 |
 | checkpoint_000050_seed_1003_green-yellow_yellow | 1.152 | 0.006 | 0.008 | 0.079 | 0.326 | 0.418 | 0.000 | 0.733 |
+| checkpoint_000050_seed_1003_orange-white_orange | 1.353 | 0.144 | 0.008 | 0.080 | 0.336 | 0.568 | 0.000 | 0.785 |
+| checkpoint_000050_seed_1003_orange-white_white | 1.237 | 0.079 | 0.008 | 0.078 | 0.324 | 0.489 | 0.000 | 0.748 |
 | checkpoint_000050_seed_1004_black-purple_black | 1.183 | 0.006 | 0.011 | 0.068 | 0.366 | 0.450 | 0.000 | 0.732 |
 | checkpoint_000050_seed_1004_black-purple_purple | 1.148 | 0.006 | 0.010 | 0.067 | 0.352 | 0.435 | 0.000 | 0.713 |
 | checkpoint_000050_seed_1004_green-yellow_green | 1.162 | 0.005 | 0.009 | 0.091 | 0.334 | 0.440 | 0.000 | 0.723 |
 | checkpoint_000050_seed_1004_green-yellow_yellow | 1.178 | 0.006 | 0.010 | 0.111 | 0.329 | 0.456 | 0.000 | 0.722 |
+| checkpoint_000050_seed_1004_orange-white_orange | 1.142 | 0.006 | 0.010 | 0.079 | 0.343 | 0.438 | 0.000 | 0.704 |
+| checkpoint_000050_seed_1004_orange-white_white | 1.212 | 0.040 | 0.010 | 0.106 | 0.352 | 0.508 | 0.000 | 0.704 |
 | checkpoint_000050_seed_1005_black-purple_black | 1.136 | 0.006 | 0.010 | 0.072 | 0.346 | 0.434 | 0.000 | 0.702 |
 | checkpoint_000050_seed_1005_black-purple_purple | 1.156 | 0.006 | 0.010 | 0.077 | 0.360 | 0.452 | 0.000 | 0.705 |
 | checkpoint_000050_seed_1005_green-yellow_green | 1.163 | 0.006 | 0.008 | 0.117 | 0.315 | 0.446 | 0.000 | 0.717 |
 | checkpoint_000050_seed_1005_green-yellow_yellow | 1.172 | 0.006 | 0.010 | 0.075 | 0.341 | 0.432 | 0.000 | 0.740 |
+| checkpoint_000050_seed_1005_orange-white_orange | 1.188 | 0.006 | 0.008 | 0.162 | 0.307 | 0.483 | 0.000 | 0.705 |
+| checkpoint_000050_seed_1005_orange-white_white | 1.152 | 0.006 | 0.009 | 0.100 | 0.336 | 0.450 | 0.000 | 0.701 |
 | checkpoint_000050_seed_1006_black-purple_black | 1.487 | 0.243 | 0.008 | 0.074 | 0.324 | 0.648 | 0.000 | 0.839 |
 | checkpoint_000050_seed_1006_black-purple_purple | 1.133 | 0.006 | 0.009 | 0.083 | 0.326 | 0.424 | 0.000 | 0.709 |
 | checkpoint_000050_seed_1006_green-yellow_green | 1.128 | 0.006 | 0.007 | 0.048 | 0.312 | 0.372 | 0.000 | 0.756 |
 | checkpoint_000050_seed_1006_green-yellow_yellow | 1.122 | 0.007 | 0.009 | 0.070 | 0.318 | 0.404 | 0.000 | 0.718 |
+| checkpoint_000050_seed_1006_orange-white_orange | 1.125 | 0.006 | 0.010 | 0.068 | 0.338 | 0.422 | 0.000 | 0.703 |
+| checkpoint_000050_seed_1006_orange-white_white | 1.189 | 0.030 | 0.009 | 0.082 | 0.350 | 0.471 | 0.000 | 0.718 |
 | checkpoint_000050_seed_1007_black-purple_black | 1.177 | 0.005 | 0.009 | 0.071 | 0.335 | 0.421 | 0.000 | 0.756 |
 | checkpoint_000050_seed_1007_black-purple_purple | 1.163 | 0.007 | 0.008 | 0.084 | 0.324 | 0.423 | 0.000 | 0.740 |
 | checkpoint_000050_seed_1007_green-yellow_green | 1.189 | 0.007 | 0.010 | 0.101 | 0.359 | 0.477 | 0.000 | 0.712 |
 | checkpoint_000050_seed_1007_green-yellow_yellow | 1.140 | 0.007 | 0.009 | 0.079 | 0.316 | 0.411 | 0.000 | 0.729 |
+| checkpoint_000050_seed_1007_orange-white_orange | 1.169 | 0.006 | 0.009 | 0.090 | 0.359 | 0.464 | 0.000 | 0.704 |
+| checkpoint_000050_seed_1007_orange-white_white | 2.037 | 0.264 | 0.009 | 0.059 | 0.329 | 0.661 | 0.000 | 1.376 |
 | checkpoint_000050_seed_1008_black-purple_black | 1.176 | 0.006 | 0.009 | 0.101 | 0.360 | 0.475 | 0.000 | 0.701 |
 | checkpoint_000050_seed_1008_black-purple_purple | 1.154 | 0.007 | 0.009 | 0.094 | 0.338 | 0.448 | 0.000 | 0.707 |
 | checkpoint_000050_seed_1008_green-yellow_green | 1.144 | 0.007 | 0.010 | 0.079 | 0.334 | 0.431 | 0.000 | 0.713 |
 | checkpoint_000050_seed_1008_green-yellow_yellow | 1.256 | 0.006 | 0.007 | 0.215 | 0.322 | 0.549 | 0.000 | 0.707 |
+| checkpoint_000050_seed_1008_orange-white_orange | 2.224 | 0.179 | 0.008 | 0.076 | 0.339 | 0.602 | 0.000 | 1.621 |
+| checkpoint_000050_seed_1008_orange-white_white | 3.168 | 1.225 | 0.009 | 0.070 | 0.310 | 1.613 | 0.000 | 1.555 |
 | checkpoint_000050_seed_1009_black-purple_black | 1.184 | 0.007 | 0.010 | 0.094 | 0.344 | 0.455 | 0.000 | 0.729 |
 | checkpoint_000050_seed_1009_black-purple_purple | 1.200 | 0.007 | 0.009 | 0.110 | 0.344 | 0.470 | 0.000 | 0.730 |
 | checkpoint_000050_seed_1009_green-yellow_green | 1.452 | 0.006 | 0.008 | 0.399 | 0.338 | 0.750 | 0.000 | 0.702 |
 | checkpoint_000050_seed_1009_green-yellow_yellow | 1.102 | 0.006 | 0.008 | 0.071 | 0.315 | 0.400 | 0.000 | 0.702 |
+| checkpoint_000050_seed_1009_orange-white_orange | 2.313 | 0.815 | 0.008 | 0.090 | 0.316 | 1.229 | 0.000 | 1.085 |
+| checkpoint_000050_seed_1009_orange-white_white | 4.722 | 1.755 | 0.010 | 0.082 | 0.327 | 2.175 | 0.000 | 2.547 |
+| checkpoint_000100_seed_1000_black-purple_black | 2.402 | 0.600 | 0.012 | 0.091 | 0.340 | 1.043 | 0.000 | 1.359 |
+| checkpoint_000100_seed_1000_black-purple_purple | 2.053 | 0.401 | 0.010 | 0.082 | 0.322 | 0.815 | 0.000 | 1.238 |
+| checkpoint_000100_seed_1001_black-purple_black | 2.979 | 0.854 | 0.010 | 0.078 | 0.306 | 1.247 | 0.000 | 1.732 |
+| checkpoint_000100_seed_1001_black-purple_purple | 2.702 | 0.613 | 0.010 | 0.102 | 0.314 | 1.040 | 0.000 | 1.663 |
 | checkpoint_000050_seed_1000 | 1.109 | 0.005 | 0.010 | 0.036 | 0.318 | 0.369 | 0.000 | 0.740 |
 | checkpoint_000050_seed_1001 | 1.190 | 0.006 | 0.011 | 0.113 | 0.325 | 0.455 | 0.000 | 0.735 |
 | checkpoint_000050_seed_1002 | 1.180 | 0.006 | 0.010 | 0.123 | 0.321 | 0.459 | 0.000 | 0.720 |
@@ -743,30 +779,48 @@ Server total is inside request RTT, not added to it. RTT minus server total is r
 | checkpoint_000050_seed_1003_black-purple_purple | 0.001 | 0.004 | 0.001 | 1.177 | 0.000 |
 | checkpoint_000050_seed_1003_green-yellow_green | 0.000 | 0.002 | 0.000 | 1.217 | 0.000 |
 | checkpoint_000050_seed_1003_green-yellow_yellow | 0.001 | 0.002 | 0.000 | 1.152 | 0.000 |
+| checkpoint_000050_seed_1003_orange-white_orange | 0.000 | 0.004 | 0.001 | 1.352 | 0.000 |
+| checkpoint_000050_seed_1003_orange-white_white | 0.000 | 0.004 | 0.001 | 1.236 | 0.000 |
 | checkpoint_000050_seed_1004_black-purple_black | 0.000 | 0.004 | 0.001 | 1.182 | 0.000 |
 | checkpoint_000050_seed_1004_black-purple_purple | 0.000 | 0.004 | 0.001 | 1.147 | 0.000 |
 | checkpoint_000050_seed_1004_green-yellow_green | 0.000 | 0.002 | 0.000 | 1.162 | 0.000 |
 | checkpoint_000050_seed_1004_green-yellow_yellow | 0.001 | 0.003 | 0.000 | 1.177 | 0.000 |
+| checkpoint_000050_seed_1004_orange-white_orange | 0.001 | 0.004 | 0.001 | 1.141 | 0.000 |
+| checkpoint_000050_seed_1004_orange-white_white | 0.000 | 0.004 | 0.001 | 1.211 | 0.000 |
 | checkpoint_000050_seed_1005_black-purple_black | 0.000 | 0.004 | 0.001 | 1.135 | 0.000 |
 | checkpoint_000050_seed_1005_black-purple_purple | 0.000 | 0.004 | 0.001 | 1.155 | 0.000 |
 | checkpoint_000050_seed_1005_green-yellow_green | 0.000 | 0.003 | 0.001 | 1.162 | 0.000 |
 | checkpoint_000050_seed_1005_green-yellow_yellow | 0.001 | 0.004 | 0.001 | 1.171 | 0.000 |
+| checkpoint_000050_seed_1005_orange-white_orange | 0.000 | 0.005 | 0.001 | 1.186 | 0.000 |
+| checkpoint_000050_seed_1005_orange-white_white | 0.000 | 0.004 | 0.001 | 1.151 | 0.000 |
 | checkpoint_000050_seed_1006_black-purple_black | 0.001 | 0.003 | 0.001 | 1.486 | 0.000 |
 | checkpoint_000050_seed_1006_black-purple_purple | 0.000 | 0.003 | 0.001 | 1.132 | 0.000 |
 | checkpoint_000050_seed_1006_green-yellow_green | 0.001 | 0.004 | 0.001 | 1.127 | 0.000 |
 | checkpoint_000050_seed_1006_green-yellow_yellow | 0.000 | 0.004 | 0.001 | 1.122 | 0.000 |
+| checkpoint_000050_seed_1006_orange-white_orange | 0.000 | 0.004 | 0.001 | 1.124 | 0.000 |
+| checkpoint_000050_seed_1006_orange-white_white | 0.000 | 0.004 | 0.001 | 1.188 | 0.000 |
 | checkpoint_000050_seed_1007_black-purple_black | 0.000 | 0.004 | 0.001 | 1.176 | 0.000 |
 | checkpoint_000050_seed_1007_black-purple_purple | 0.000 | 0.004 | 0.001 | 1.162 | 0.000 |
 | checkpoint_000050_seed_1007_green-yellow_green | 0.000 | 0.004 | 0.000 | 1.188 | 0.000 |
 | checkpoint_000050_seed_1007_green-yellow_yellow | 0.000 | 0.004 | 0.001 | 1.139 | 0.000 |
+| checkpoint_000050_seed_1007_orange-white_orange | 0.001 | 0.004 | 0.001 | 1.168 | 0.000 |
+| checkpoint_000050_seed_1007_orange-white_white | 0.000 | 0.003 | 0.001 | 2.036 | 0.000 |
 | checkpoint_000050_seed_1008_black-purple_black | 0.001 | 0.004 | 0.001 | 1.175 | 0.000 |
 | checkpoint_000050_seed_1008_black-purple_purple | 0.000 | 0.003 | 0.000 | 1.154 | 0.000 |
 | checkpoint_000050_seed_1008_green-yellow_green | 0.001 | 0.004 | 0.000 | 1.143 | 0.000 |
 | checkpoint_000050_seed_1008_green-yellow_yellow | 0.000 | 0.004 | 0.001 | 1.255 | 0.000 |
+| checkpoint_000050_seed_1008_orange-white_orange | 0.000 | 0.003 | 0.000 | 2.223 | 0.000 |
+| checkpoint_000050_seed_1008_orange-white_white | 0.000 | 0.002 | 0.000 | 3.167 | 0.000 |
 | checkpoint_000050_seed_1009_black-purple_black | 0.000 | 0.004 | 0.001 | 1.183 | 0.000 |
 | checkpoint_000050_seed_1009_black-purple_purple | 0.000 | 0.003 | 0.000 | 1.200 | 0.000 |
 | checkpoint_000050_seed_1009_green-yellow_green | 0.001 | 0.005 | 0.001 | 1.452 | 0.000 |
 | checkpoint_000050_seed_1009_green-yellow_yellow | 0.000 | 0.004 | 0.001 | 1.101 | 0.000 |
+| checkpoint_000050_seed_1009_orange-white_orange | 0.001 | 0.002 | 0.000 | 2.313 | 0.000 |
+| checkpoint_000050_seed_1009_orange-white_white | 0.001 | 0.002 | 0.000 | 4.721 | 0.000 |
+| checkpoint_000100_seed_1000_black-purple_black | 0.000 | 0.004 | 0.001 | 2.401 | 0.000 |
+| checkpoint_000100_seed_1000_black-purple_purple | 0.000 | 0.004 | 0.001 | 2.052 | 0.000 |
+| checkpoint_000100_seed_1001_black-purple_black | 0.001 | 0.004 | 0.001 | 2.978 | 0.000 |
+| checkpoint_000100_seed_1001_black-purple_purple | 0.000 | 0.004 | 0.001 | 2.701 | 0.000 |
 | checkpoint_000050_seed_1000 | 0.001 | 0.001 | 0.001 | 1.108 | 0.000 |
 | checkpoint_000050_seed_1001 | 0.000 | 0.001 | 0.001 | 1.189 | 0.000 |
 | checkpoint_000050_seed_1002 | 0.000 | 0.001 | 0.001 | 1.179 | 0.000 |
@@ -1022,30 +1076,48 @@ Send, wait for response headers and read response are included in request RTT. S
 | checkpoint_000050_seed_1003_black-purple_purple | 0.017 | 0.001 | 0.017 | 0.029 | 0.063 | 0.014 |
 | checkpoint_000050_seed_1003_green-yellow_green | 0.017 | 0.001 | 0.018 | 0.028 | 0.063 | 0.012 |
 | checkpoint_000050_seed_1003_green-yellow_yellow | 0.018 | 0.002 | 0.019 | 0.027 | 0.065 | 0.015 |
+| checkpoint_000050_seed_1003_orange-white_orange | 0.017 | 0.002 | 0.024 | 0.028 | 0.071 | 0.016 |
+| checkpoint_000050_seed_1003_orange-white_white | 0.017 | 0.002 | 0.025 | 0.025 | 0.070 | 0.016 |
 | checkpoint_000050_seed_1004_black-purple_black | 0.017 | 0.002 | 0.026 | 0.030 | 0.074 | 0.016 |
 | checkpoint_000050_seed_1004_black-purple_purple | 0.017 | 0.002 | 0.024 | 0.027 | 0.070 | 0.016 |
 | checkpoint_000050_seed_1004_green-yellow_green | 0.017 | 0.002 | 0.019 | 0.027 | 0.064 | 0.014 |
 | checkpoint_000050_seed_1004_green-yellow_yellow | 0.016 | 0.001 | 0.013 | 0.025 | 0.055 | 0.012 |
+| checkpoint_000050_seed_1004_orange-white_orange | 0.018 | 0.003 | 0.026 | 0.026 | 0.073 | 0.016 |
+| checkpoint_000050_seed_1004_orange-white_white | 0.017 | 0.003 | 0.025 | 0.027 | 0.071 | 0.018 |
 | checkpoint_000050_seed_1005_black-purple_black | 0.017 | 0.002 | 0.024 | 0.028 | 0.071 | 0.017 |
 | checkpoint_000050_seed_1005_black-purple_purple | 0.017 | 0.003 | 0.027 | 0.031 | 0.077 | 0.018 |
 | checkpoint_000050_seed_1005_green-yellow_green | 0.017 | 0.002 | 0.024 | 0.026 | 0.069 | 0.016 |
 | checkpoint_000050_seed_1005_green-yellow_yellow | 0.017 | 0.002 | 0.023 | 0.027 | 0.069 | 0.014 |
+| checkpoint_000050_seed_1005_orange-white_orange | 0.017 | 0.002 | 0.025 | 0.025 | 0.070 | 0.017 |
+| checkpoint_000050_seed_1005_orange-white_white | 0.017 | 0.003 | 0.026 | 0.024 | 0.070 | 0.020 |
 | checkpoint_000050_seed_1006_black-purple_black | 0.017 | 0.002 | 0.023 | 0.027 | 0.069 | 0.016 |
 | checkpoint_000050_seed_1006_black-purple_purple | 0.017 | 0.002 | 0.024 | 0.027 | 0.071 | 0.016 |
 | checkpoint_000050_seed_1006_green-yellow_green | 0.017 | 0.002 | 0.020 | 0.025 | 0.064 | 0.015 |
 | checkpoint_000050_seed_1006_green-yellow_yellow | 0.018 | 0.001 | 0.014 | 0.027 | 0.061 | 0.015 |
+| checkpoint_000050_seed_1006_orange-white_orange | 0.017 | 0.003 | 0.026 | 0.024 | 0.070 | 0.018 |
+| checkpoint_000050_seed_1006_orange-white_white | 0.017 | 0.003 | 0.025 | 0.025 | 0.070 | 0.016 |
 | checkpoint_000050_seed_1007_black-purple_black | 0.017 | 0.002 | 0.022 | 0.029 | 0.070 | 0.015 |
 | checkpoint_000050_seed_1007_black-purple_purple | 0.017 | 0.002 | 0.025 | 0.029 | 0.073 | 0.015 |
 | checkpoint_000050_seed_1007_green-yellow_green | 0.019 | 0.002 | 0.019 | 0.027 | 0.066 | 0.014 |
 | checkpoint_000050_seed_1007_green-yellow_yellow | 0.017 | 0.001 | 0.017 | 0.025 | 0.061 | 0.013 |
+| checkpoint_000050_seed_1007_orange-white_orange | 0.017 | 0.002 | 0.026 | 0.027 | 0.072 | 0.016 |
+| checkpoint_000050_seed_1007_orange-white_white | 0.017 | 0.002 | 0.025 | 0.029 | 0.074 | 0.018 |
 | checkpoint_000050_seed_1008_black-purple_black | 0.017 | 0.002 | 0.024 | 0.028 | 0.070 | 0.016 |
 | checkpoint_000050_seed_1008_black-purple_purple | 0.018 | 0.002 | 0.019 | 0.027 | 0.065 | 0.013 |
 | checkpoint_000050_seed_1008_green-yellow_green | 0.017 | 0.002 | 0.022 | 0.028 | 0.070 | 0.016 |
 | checkpoint_000050_seed_1008_green-yellow_yellow | 0.017 | 0.002 | 0.020 | 0.028 | 0.068 | 0.014 |
+| checkpoint_000050_seed_1008_orange-white_orange | 0.018 | 0.002 | 0.026 | 0.031 | 0.077 | 0.017 |
+| checkpoint_000050_seed_1008_orange-white_white | 0.017 | 0.003 | 0.026 | 0.028 | 0.074 | 0.017 |
 | checkpoint_000050_seed_1009_black-purple_black | 0.016 | 0.001 | 0.012 | 0.021 | 0.050 | 0.011 |
 | checkpoint_000050_seed_1009_black-purple_purple | 0.015 | 0.001 | 0.011 | 0.023 | 0.050 | 0.011 |
 | checkpoint_000050_seed_1009_green-yellow_green | 0.017 | 0.002 | 0.021 | 0.034 | 0.073 | 0.016 |
 | checkpoint_000050_seed_1009_green-yellow_yellow | 0.017 | 0.002 | 0.024 | 0.026 | 0.069 | 0.017 |
+| checkpoint_000050_seed_1009_orange-white_orange | 0.017 | 0.002 | 0.025 | 0.026 | 0.070 | 0.017 |
+| checkpoint_000050_seed_1009_orange-white_white | 0.017 | 0.002 | 0.026 | 0.030 | 0.075 | 0.017 |
+| checkpoint_000100_seed_1000_black-purple_black | 0.017 | 0.002 | 0.025 | 0.034 | 0.078 | 0.019 |
+| checkpoint_000100_seed_1000_black-purple_purple | 0.017 | 0.003 | 0.026 | 0.031 | 0.077 | 0.018 |
+| checkpoint_000100_seed_1001_black-purple_black | 0.016 | 0.002 | 0.026 | 0.034 | 0.079 | 0.017 |
+| checkpoint_000100_seed_1001_black-purple_purple | 0.017 | 0.002 | 0.024 | 0.032 | 0.075 | 0.016 |
 | checkpoint_000050_seed_1000 | 0.017 | 0.003 | 0.024 | 0.027 | 0.070 | 0.015 |
 | checkpoint_000050_seed_1001 | 0.017 | 0.002 | 0.022 | 0.028 | 0.069 | 0.013 |
 | checkpoint_000050_seed_1002 | 0.017 | 0.003 | 0.024 | 0.030 | 0.073 | 0.014 |
@@ -1301,30 +1373,48 @@ Full cycle = request RTT + local subtotal + remaining cycle overhead, using reco
 | checkpoint_000050_seed_1003_black-purple_purple | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1003_green-yellow_green | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1003_green-yellow_yellow | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000050_seed_1003_orange-white_orange | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000050_seed_1003_orange-white_white | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1004_black-purple_black | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1004_black-purple_purple | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1004_green-yellow_green | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1004_green-yellow_yellow | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000050_seed_1004_orange-white_orange | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000050_seed_1004_orange-white_white | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1005_black-purple_black | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1005_black-purple_purple | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1005_green-yellow_green | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1005_green-yellow_yellow | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000050_seed_1005_orange-white_orange | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000050_seed_1005_orange-white_white | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1006_black-purple_black | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1006_black-purple_purple | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1006_green-yellow_green | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1006_green-yellow_yellow | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000050_seed_1006_orange-white_orange | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000050_seed_1006_orange-white_white | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1007_black-purple_black | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1007_black-purple_purple | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1007_green-yellow_green | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1007_green-yellow_yellow | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000050_seed_1007_orange-white_orange | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000050_seed_1007_orange-white_white | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1008_black-purple_black | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1008_black-purple_purple | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1008_green-yellow_green | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1008_green-yellow_yellow | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000050_seed_1008_orange-white_orange | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000050_seed_1008_orange-white_white | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1009_black-purple_black | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1009_black-purple_purple | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1009_green-yellow_green | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1009_green-yellow_yellow | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000050_seed_1009_orange-white_orange | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000050_seed_1009_orange-white_white | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000050 | 7.331 | 0.046 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000100_seed_1000_black-purple_black | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000100 | 6.330 | 0.042 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000100_seed_1000_black-purple_purple | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000100 | 6.330 | 0.042 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000100_seed_1001_black-purple_black | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000100 | 6.330 | 0.042 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
+| checkpoint_000100_seed_1001_black-purple_purple | 44.422 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-074359-896/runs/training/checkpoint_000100 | 6.330 | 0.042 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1000 | 44.424 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-034928-1786/runs/training/checkpoint_000050 | 5.836 | 0.043 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1001 | 44.424 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-034928-1786/runs/training/checkpoint_000050 | 5.836 | 0.043 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
 | checkpoint_000050_seed_1002 | 44.424 | Not recorded | /workspace/panda-training/sessions/panda-train-20261013-034928-1786/runs/training/checkpoint_000050 | 5.836 | 0.043 | nfs4 | 2.2.2+cu121 / 4.40.1 | torch.bfloat16 / eager |
