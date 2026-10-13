@@ -30,6 +30,7 @@ Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 
 ## Fine-tuning
 
+- [Archived touch checkpoint 300 and restore instructions](training/TOUCH_CHECKPOINT_ARCHIVE.md)
 - [A40 cube-to-bowl training profile and launch](training/BOWL_TRAINING.md)
 - [Blackwell training and benchmark image](training/BLACKWELL_TRAINING_SETUP.md)
 - [Phase 3: prepare, fine-tune, and evaluate OpenVLA](training/PHASE3_TRAINING.md)
