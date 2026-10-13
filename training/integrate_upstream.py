@@ -15,7 +15,7 @@ def integrated_source():
         nonlocal source
         if source.count(old)!=1:raise ValueError(f'Upstream integration anchor changed: {old[:60]}')
         source=source.replace(old,new)
-    replace('import wandb','from training.runtime import metrics as wandb\nfrom training.runtime import validate, save_adapter, budget_expired, record_model\nfrom training.panda_rlds import PandaRLDSDataset\nfrom training.checkpoint_schedule import checkpoint_due')
+    replace('import wandb','from training.runtime import metrics as wandb\nfrom training.runtime import validate, save_adapter, budget_expired, record_model\nfrom training.panda_rlds import PandaRLDSDataset\nfrom training.checkpoint_schedule import checkpoint_due, validation_due')
     replace('        vla = get_peft_model(vla, lora_config)',
             '        from training.continuation import attach_lora\n        vla = attach_lora(vla, lora_config)')
     replace('        vla.print_trainable_parameters()',
@@ -45,7 +45,7 @@ def integrated_source():
     start=source.index('            # Save Model Checkpoint =>>')
     end=source.index('\n\n\nif __name__',start)
     source=source[:start]+'''            if (batch_idx + 1) % cfg.grad_accumulation_steps == 0:
-                if gradient_step_idx % int(os.environ["PANDA_VALIDATE_EVERY"]) == 0:
+                if validation_due(gradient_step_idx, int(os.environ["PANDA_VALIDATE_EVERY"])):
                     validate(vla, cfg, batch_transform, collator, device_id, gradient_step_idx)
                 finished = gradient_step_idx >= cfg.max_steps or budget_expired()
                 if checkpoint_due(gradient_step_idx, cfg.save_steps) or finished:

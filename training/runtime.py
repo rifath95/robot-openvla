@@ -26,6 +26,7 @@ class Metrics:
         (self.directory/'experiment.json').write_text(json.dumps(dict(name=name,
             upstream_revision=os.environ['PANDA_UPSTREAM_REVISION'],
             validation_every=int(os.environ['PANDA_VALIDATE_EVERY']),
+            validation_updates=json.loads(os.environ['PANDA_VALIDATION_UPDATES']) if os.environ.get('PANDA_VALIDATION_UPDATES') else None,
             validation_max_batches=int(os.environ['PANDA_VALIDATION_MAX_BATCHES']),
             max_runtime_seconds=int(os.environ['PANDA_MAX_RUNTIME']),
             initial_adapter=os.environ.get('PANDA_INITIAL_ADAPTER') or None,

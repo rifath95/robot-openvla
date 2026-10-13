@@ -3,13 +3,13 @@ import json
 import os
 
 
-def validate_schedule(updates, maximum):
+def validate_schedule(updates, maximum, *, name="checkpoint_updates"):
     if updates is None:
         return None
     if (not isinstance(updates, list) or not updates or
         any(type(update) is not int or update < 0 or update > maximum for update in updates) or
         updates != sorted(set(updates))):
-        raise ValueError('checkpoint_updates must be sorted unique integers between 0 and max_steps')
+        raise ValueError(f'{name} must be sorted unique integers between 0 and max_steps')
     return updates
 
 
@@ -18,3 +18,10 @@ def checkpoint_due(update, interval):
     if schedule:
         return update in json.loads(schedule)
     return update > 0 and update % interval == 0
+
+
+def validation_due(update, interval):
+    schedule = os.environ.get('PANDA_VALIDATION_UPDATES', '')
+    if schedule:
+        return update in json.loads(schedule)
+    return update % interval == 0

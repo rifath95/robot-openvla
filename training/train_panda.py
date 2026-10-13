@@ -21,7 +21,7 @@ def main():
     p.add_argument('--no-checkpoints',action='store_true',help='Benchmark only: skip adapter saves while retaining metrics and reports')
     p.add_argument('--prepare-only',action='store_true',help='Print launch command without running training')
     p.add_argument('--run-name',help='Optional unique run name inside output-root (used by detached supervisor)')
-    p.add_argument('--batch-policy',choices=('auto','config'),default='auto',help='Reuse matching benchmark recommendation, or keep configured batch settings')
+    p.add_argument('--batch-policy',choices=('auto','config'),default=None,help='Reuse matching benchmark recommendation, or keep configured batch settings')
     p.add_argument('--benchmark-root',type=Path,default=Path('/workspace/panda-training/batch-benchmarks'))
     p.add_argument('--require-benchmark',action='store_true',help='Refuse training if no compatible automatic recommendation exists')
     args=p.parse_args()
@@ -37,6 +37,9 @@ def main():
     profile_requires_benchmark=config.pop('require_benchmark',False)
     require_benchmark=args.require_benchmark or profile_requires_benchmark
     expected_gpu=config.pop('expected_gpu',None)
+    args.batch_policy=args.batch_policy or config.pop('batch_policy','auto')
+    config.pop('batch_policy',None)
+    if args.batch_policy not in ('auto','config'):p.error('batch_policy must be auto or config')
     adapter=None
     if args.adapter:
         from training.continuation import validate_adapter
@@ -45,7 +48,9 @@ def main():
     for key in ['batch_size','grad_accumulation_steps','max_steps','save_steps','validation_every','max_runtime_seconds']:
         if config[key]<1:p.error(f'{key} must be positive')
     from training.checkpoint_schedule import validate_schedule
-    try: checkpoint_updates=validate_schedule(config.pop('checkpoint_updates',None),config['max_steps'])
+    try:
+        checkpoint_updates=validate_schedule(config.pop('checkpoint_updates',None),config['max_steps'])
+        validation_updates=validate_schedule(config.pop('validation_updates',None),config['max_steps'],name='validation_updates')
     except ValueError as exc:p.error(str(exc))
     if config['validation_max_batches']<0:p.error('validation_max_batches must be zero (full split) or positive')
     if not config['use_lora'] or config['use_quantization'] or config['image_aug']:
@@ -65,7 +70,11 @@ def main():
         if require_benchmark and batch_selection['source']!='compatible_benchmark':
             p.error('No compatible safe benchmark recommendation. Training was not started; see batch_compatibility.json for exact differences.')
     else:
-        if require_benchmark or expected_gpu:p.error('This profile requires automatic benchmark selection')
+        if require_benchmark:p.error('This profile requires automatic benchmark selection')
+        if expected_gpu:
+            import torch
+            if not torch.cuda.is_available() or torch.cuda.get_device_properties(torch.cuda.current_device()).name!=expected_gpu:
+                p.error(f'This training profile requires {expected_gpu}')
         batch_selection=dict(policy='config',source='configuration',microbatch=config['batch_size'],
             accumulation=config['grad_accumulation_steps'],
             effective_batch=config['batch_size']*config['grad_accumulation_steps'])
@@ -80,6 +89,7 @@ def main():
     env=os.environ.copy()
     env.update(PANDA_RUN_DIR=str(run),PANDA_UPSTREAM_REVISION=pin['revision'],
         PANDA_CHECKPOINT_UPDATES=json.dumps(checkpoint_updates) if checkpoint_updates is not None else '',
+        PANDA_VALIDATION_UPDATES=json.dumps(validation_updates) if validation_updates is not None else '',
         PANDA_VALIDATE_EVERY=str(config.pop('validation_every')),
         PANDA_VALIDATION_MAX_BATCHES=str(config.pop('validation_max_batches')),
         PANDA_MAX_RUNTIME=str(config.pop('max_runtime_seconds')),
