@@ -9,7 +9,7 @@ from simulation.panda_controller import _euler_xyz_to_quat, _quat_multiply, _ori
 def robot_contacts(model, data):
     """Return penetrating robot contacts; cube/table contact is expected."""
     environment = {mujoco.mj_name2id(model, mujoco.mjtObj.mjOBJ_BODY, name)
-                   for name in ('world', 'table', 'cube', 'plate', 'bowl')}
+                   for name in ('world', 'table', 'cube', 'blue_cube', 'plate', 'bowl')}
     contacts = []
     for contact in data.contact:
         bodies = [int(model.geom_bodyid[g]) for g in (contact.geom1, contact.geom2)]
@@ -72,7 +72,7 @@ def unsafe_motion_contacts(model, data):
     unsafe = []
     for contact in robot_contacts(model, data):
         names = set(contact['bodies'])
-        allowed = names <= gripper | {'cube', 'table'}
+        allowed = names <= gripper | {'cube', 'blue_cube', 'table'}
         if not allowed or ('table' in names and contact['distance'] < -.004):
             unsafe.append(contact)
     return unsafe

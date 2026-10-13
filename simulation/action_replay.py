@@ -30,9 +30,11 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
     if [r['index'] for r in rows]!=list(range(1,len(rows)+1)):
         raise ValueError('Demonstration action sequence is not contiguous')
     model,camera=replay_model(folder)
-    if metadata.get('scene_profile') in ('panda_bowl_v1','panda_touch_v1'):
+    if metadata.get('scene_profile') in ('panda_bowl_v1','panda_touch_v1','panda_color_touch_v1'):
         from data_tools.bowl_demonstrations import controller_fingerprint
-        if metadata['scene_profile']=='panda_touch_v1':
+        if metadata['scene_profile']=='panda_color_touch_v1':
+            from simulation.color_touch_scene import scene_fingerprint
+        elif metadata['scene_profile']=='panda_touch_v1':
             from simulation.touch_scene import scene_fingerprint
         else:
             from data_tools.bowl_demonstrations import scene_fingerprint
@@ -160,6 +162,16 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
         elif metadata.get('scene_profile')=='panda_touch_v1':
             from data_tools.touch_demonstrations import task_result
             report['task_result']=task_result(env,initial)
+        elif metadata.get('scene_profile')=='panda_color_touch_v1':
+            from data_tools.color_touch_demonstrations import task_result
+            from simulation.color_touch_scene import cube_position as colored_position
+            color=metadata['scenario']['target_color']
+            with np.load(folder/'initial_state.npz') as saved:
+                initial_data=mujoco.MjData(model)
+                initial_data.qpos[:]=saved['qpos']
+                mujoco.mj_forward(model,initial_data)
+            initial_color=colored_position(SimpleNamespace(model=model,data=initial_data),color)
+            report['task_result']=task_result(env,initial_color,color)
         (output/'action_replay_report.json').write_text(json.dumps(report,indent=2)+'\n')
         print(f"Action replay {report['outcome']}: {completed}/{len(rows)} actions; report {output/'action_replay_report.json'}",flush=True)
     return report
