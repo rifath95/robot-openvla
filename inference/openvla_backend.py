@@ -13,7 +13,7 @@ from inference.openvla_prompt import action_prompt
 class OpenVLAPredictor:
     action_sampling_available = True
 
-    def __init__(self, model_dir, *, device="cuda", unnorm_key="bridge_orig", adapter=None):
+    def __init__(self, model_dir, *, device="cuda", unnorm_key="bridge_orig", adapter=None, action_statistics=None):
         import torch
         from transformers import AutoModelForVision2Seq, AutoProcessor
 
@@ -52,6 +52,10 @@ class OpenVLAPredictor:
             self.synchronize()
             merge_seconds = time.perf_counter()-base_loaded
         self.synchronize()
+        if action_statistics is not None:
+            stats=json.loads(Path(action_statistics).read_text())
+            self.model.norm_stats.update(stats)
+            self.model.config.norm_stats=self.model.norm_stats
         self.load_seconds = time.perf_counter() - started
         metrics_path = PROJECT_ROOT / 'outputs/cloud_startup.json'
         self.startup_info = json.loads(metrics_path.read_text()) if metrics_path.exists() else {}
@@ -82,6 +86,8 @@ class OpenVLAPredictor:
         if len(stats["q01"]) != 7 or len(stats["q99"]) != 7:
             raise ValueError("This server requires a model with seven action components")
         self.startup_info['action_statistics'] = stats
+        if action_statistics is not None:
+            self.startup_info['action_statistics_source']=str(Path(action_statistics).resolve())
         if adapter is not None:
             self.startup_info['evaluation_provenance']=dict(base_model=str(folder),adapter_checkpoint=str(adapter),merge_location=device,merge_method='in_memory')
         provenance = folder / 'evaluation_provenance.json'

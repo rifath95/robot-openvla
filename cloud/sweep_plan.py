@@ -23,7 +23,8 @@ def trial_specs(plan):
                 for target in pair:
                     suffix=f'_{target}' if task!='touch' else ''
                     if task=='color_transfer':suffix=f'_{"-".join(pair)}'+suffix
-                    name=f'checkpoint_{checkpoint:06d}_seed_{seed}{suffix}'
+                    prefix='base_model' if checkpoint==0 and plan.get('include_base_model') else f'checkpoint_{checkpoint:06d}'
+                    name=f'{prefix}_seed_{seed}{suffix}'
                     yield dict(checkpoint=checkpoint,seed=seed,target_color=target,
                         cube_colors=colors if task=='color_transfer' else None,
                         color_pair=':'.join(pair) if task=='color_transfer' else None,directory=name)
@@ -42,6 +43,8 @@ def validate_saved(payload):
         colors={'red','blue','black','purple','green','yellow','orange','white','pink','brown','cyan'}
         pairs=plan['color_pairs']
         if not pairs or any(len(p)!=2 or len(set(p))!=2 or not set(p)<=colors for p in pairs):raise ValueError('Invalid color pairs')
+    if plan.get('include_base_model') and (0 not in plan['checkpoints'] or plan.get('action_statistics_checkpoint',50) not in plan['checkpoints']):
+        raise ValueError('Base comparison requires baseline index 0 and its statistics reference checkpoint')
     specs={s['directory']:s for s in trial_specs(plan)}
     if len({r['directory'] for r in rows})!=len(rows):raise ValueError('Duplicate trial records')
     for row in rows:

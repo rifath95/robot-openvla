@@ -1,0 +1,52 @@
+{
+  "training_session": "panda-train-20261013-110217-1084",
+  "dataset_manifest": "datasets/panda_four_color_touch/manifest.json",
+  "include_base_model": true,
+  "action_statistics_checkpoint": 50,
+  "checkpoints": [
+    0,
+    50,
+    100,
+    300,
+    500,
+    1000
+  ],
+  "training_colors": [
+    "red",
+    "blue",
+    "green",
+    "yellow"
+  ],
+  "color_pairs": [
+    [
+      "red",
+      "blue"
+    ],
+    [
+      "green",
+      "yellow"
+    ],
+    [
+      "black",
+      "purple"
+    ],
+    [
+      "orange",
+      "white"
+    ]
+  ],
+  "scene_seeds": [
+    1000,
+    1001,
+    1002,
+    1003,
+    1004,
+    1005,
+    1006,
+    1007,
+    1008,
+    1009
+  ],
+  "steps": 50,
+  "estimated_seconds": 10800
+}

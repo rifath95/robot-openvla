@@ -95,10 +95,17 @@ fi
 
 def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--ssh',required=True)
-    p.add_argument('--resume',type=Path,required=True,help='Local saved sweep folder, also used for downloads')
+    selection=p.add_mutually_exclusive_group(required=True)
+    selection.add_argument('--resume',type=Path,help='Local saved sweep folder, also used for downloads')
+    selection.add_argument('--profile',type=Path,help='Create a fresh sweep from a local JSON profile')
     p.add_argument('--fetch-only',action='store_true');p.add_argument('--launch-only',action='store_true')
     p.add_argument('--estimated-seconds',type=float,help='Override conservative unbatched estimate; buffers remain one hour each')
-    args=p.parse_args();folder=args.resume.resolve()
+    args=p.parse_args()
+    if args.profile:
+        if args.fetch_only:p.error('--fetch-only requires --resume')
+        from cloud.create_sweep_plan import create
+        folder=create(args.profile)
+    else:folder=args.resume.resolve()
     if not folder.is_relative_to((PROJECT_ROOT/'outputs').resolve()) or not (folder/'results.json').is_file():p.error('Select saved sweep under outputs/')
     name=folder.name
     if not re.fullmatch(r'scripted_[A-Za-z0-9_]+',name):p.error('Invalid sweep folder name')
@@ -108,9 +115,10 @@ def main():
     if args.fetch_only:fetch(ssh,remote,folder);return 0
     budget=estimate_remaining(payload)
     if not budget['remaining_trials']:p.error('All trials are already saved; nothing to launch')
-    if args.estimated_seconds is not None:
+    chosen_estimate=args.estimated_seconds if args.estimated_seconds is not None else payload['plan'].get('estimated_seconds')
+    if chosen_estimate is not None:
         from cloud.sweep_plan import timeout_budget
-        budget.update(timeout_budget(args.estimated_seconds))
+        budget.update(timeout_budget(chosen_estimate))
     payload['plan']['timeout_budget']=budget
     payload['plan']['execution_mode']='cloud_sequential'
     code_name=name+'_'+uuid.uuid4().hex[:8]

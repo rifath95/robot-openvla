@@ -56,7 +56,9 @@ def run(directory,sim_python,*,port=0):
     checkpoints=sorted({s['checkpoint'] for s in specs})
     base=Path('/workspace/openvla-7b')
     training=Path('/workspace/panda-training/sessions')/plan['training_session']/'runs/training'
-    staging=stage_weights(base,{n:training/f'checkpoint_{n:06d}' for n in checkpoints},Path('/root/panda-sweep-cache')/directory.name)
+    adapter_indices={n for n in checkpoints if n!=0 or not plan.get('include_base_model')}
+    if 0 in checkpoints and plan.get('include_base_model'):adapter_indices.add(plan.get('action_statistics_checkpoint',50))
+    staging=stage_weights(base,{n:training/f'checkpoint_{n:06d}' for n in sorted(adapter_indices)},Path('/root/panda-sweep-cache')/directory.name)
     local=PROJECT_ROOT/'outputs/cloud-sweeps'/directory.name;local.mkdir(parents=True,exist_ok=True)
     env=os.environ.copy();env.pop('RUNPOD_API_KEY',None);env['MUJOCO_GL']='egl';env['PYOPENGL_PLATFORM']='egl'
     # Render once before expensive model loading; a dependency/graphics failure is explicit.
@@ -77,8 +79,11 @@ def run(directory,sim_python,*,port=0):
             ready_file=local/f'server_ready_{checkpoint:06d}.json'
             ready_file.unlink(missing_ok=True)
             with server_log.open('a',buffering=1) as log:
+                is_base=checkpoint==0 and plan.get('include_base_model')
+                model_args=(['--action-statistics',str(staging/f"checkpoint_{plan.get('action_statistics_checkpoint',50):06d}"/'dataset_statistics.json')]
+                    if is_base else ['--adapter',str(staging/f'checkpoint_{checkpoint:06d}')])
                 server=subprocess.Popen([sys.executable,'-u','-m','cloud.connection_server','--mode','openvla',
-                    '--model-dir',str(staging/'base'),'--adapter',str(staging/f'checkpoint_{checkpoint:06d}'),
+                    '--model-dir',str(staging/'base'),*model_args,
                     '--unnorm-key','panda_grasp_v1','--device','cuda','--port',str(port),'--ready-file',str(ready_file),
                     '--max-runtime-seconds',str(plan['timeout_budget']['inner_seconds'])],
                     cwd=PROJECT_ROOT,env=env,stdout=log,stderr=subprocess.STDOUT)
@@ -87,7 +92,8 @@ def run(directory,sim_python,*,port=0):
                     selected_port=health.get('server_port',port)
                     startup=directory/f'startup_cloud_{checkpoint:06d}.json'
                     startup_info=dict(health.get('startup_info',{}),execution_mode='cloud_sequential',server_port=selected_port,
-                        adapter_checkpoint=str(training/f'checkpoint_{checkpoint:06d}'))
+                        adapter_checkpoint=None if is_base else str(training/f'checkpoint_{checkpoint:06d}'),
+                        model_label='Pretrained base' if is_base else f'Checkpoint {checkpoint}')
                     startup.write_text(json.dumps(startup_info,indent=2)+'\n')
                     for spec in selected:
                         trial=local/spec['directory']
@@ -107,6 +113,7 @@ def run(directory,sim_python,*,port=0):
                             try:code=subprocess.run(command,cwd=PROJECT_ROOT,env=env,stdout=log,stderr=subprocess.STDOUT,timeout=420).returncode
                             except subprocess.TimeoutExpired:code='timeout'
                         row=summarize(spec,trial,code)
+                        row['model_label']='Pretrained base' if is_base else f'Checkpoint {checkpoint}'
                         destination=directory/spec['directory']
                         if destination.exists():destination.rename(destination.with_name(destination.name+f'_interrupted_{time.time_ns()}'))
                         if trial.exists():shutil.copytree(trial,destination)
