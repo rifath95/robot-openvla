@@ -148,8 +148,10 @@ def main():
                 # Keep heartbeat fresh during a potentially large download.
                 from cloud.sweep_heartbeat import Heartbeat
                 with Heartbeat(ssh,remote):fetch(ssh,remote,folder)
+                failed=item['status'].get('outcome')!='completed'
+                if failed:print('Cloud sweep did not complete; failure diagnostics are saved locally.',flush=True)
                 print('Cloud supervisor requests pod stop. Confirm Stopped in RunPod.',flush=True)
-                return 0
+                return 1 if failed else 0
             time.sleep(10)
     except (KeyboardInterrupt,subprocess.SubprocessError,OSError) as exc:
         print(f'Watcher disconnected ({type(exc).__name__}). Cloud sweep continues and handles pod stopping. Fetch results later.',flush=True)

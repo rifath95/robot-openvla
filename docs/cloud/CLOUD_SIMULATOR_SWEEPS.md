@@ -69,3 +69,7 @@ The cloud-only mode treats a Mac disconnection as permission to continue. The Ma
 ## Validation before paid deployment
 
 44 local checks cover timeout calculations, missed heartbeats, worker failure, worker termination, checkpoint/seed/target mapping, preserved measured failures, weight copy integrity, GPU merge call order, result archive validation, old-image preservation, and unchanged interactive paths. A local end-to-end fixture verified that every transmitted image matched the demonstration and that recorded expert actions still touched the correct cube. The first deployment still needs to validate Linux EGL rendering and the GPU in-memory merge; this occurs in the same supervised sweep before its remaining trials, rather than a separate paid job.
+
+## Cross-platform scene precision
+
+The first cloud continuation stopped before model loading because an exact coordinate comparison rejected NumPy 1.26.4 vs Mac NumPy 2.5.3 rounding. The largest measured difference was 1.11e-16 metres. The check now permits up to 1e-12 metres of arithmetic rounding, still rejects changed coordinates, and feeds the saved plan coordinates directly into each resumed simulator trial. Ordinary interactive scene initialization is unchanged. The launcher returns a failure status when the cloud worker fails, after downloading diagnostics and leaving stopping to the supervisor.

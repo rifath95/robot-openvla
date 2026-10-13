@@ -55,7 +55,7 @@ def run(directory,sim_python,*,port=8001):
     env=os.environ.copy();env.pop('RUNPOD_API_KEY',None);env['MUJOCO_GL']='egl';env['PYOPENGL_PLATFORM']='egl'
     # Render once before expensive model loading; a dependency/graphics failure is explicit.
     if plan['task'] in ('color_touch','color_transfer'):
-        seed_check="from data_tools.collect_panda_color_touch import pair_spec; assert [pair_spec(s)['cube_positions'] for s in "+repr(plan['scene_seeds'])+"]=="+repr(plan['cube_positions'])+", 'Saved scene positions differ from this checkout'; "
+        seed_check="from data_tools.collect_panda_color_touch import pair_spec; from cloud.sweep_plan import validate_scene_positions; validate_scene_positions([pair_spec(s)['cube_positions'] for s in "+repr(plan['scene_seeds'])+"], "+repr(plan['cube_positions'])+"); "
     else:seed_check=''
     probe=seed_check+"from simulation.panda_env import PandaEnv; from simulation.color_touch_scene import SCENE_PATH,CAMERA_NAME; e=PandaEnv(SCENE_PATH,camera=CAMERA_NAME); print(e.observe().shape); e.close()"
     subprocess.run([str(sim_python),'-c',probe],cwd=PROJECT_ROOT,env=env,check=True,timeout=120)
@@ -88,7 +88,10 @@ def run(directory,sim_python,*,port=8001):
                             '--steps',str(plan['steps']),'--no-view','--start-immediately','--startup-info',str(startup),
                             '--output-dir',str(trial),'--server-url',f'http://127.0.0.1:{port}',
                             '--max-runtime-seconds','180']
-                        if plan['task']!='touch':command+=['--target-color',spec['target_color']]
+                        if plan['task']!='touch':
+                            positions_file=local/f"scene_positions_{spec['seed']}.json"
+                            positions_file.write_text(json.dumps(plan['cube_positions'][plan['scene_seeds'].index(spec['seed'])]))
+                            command+=['--target-color',spec['target_color'],'--scene-positions',str(positions_file)]
                         if spec['cube_colors']:command+=['--cube-colors',*spec['cube_colors']]
                         print(f"Checkpoint {checkpoint}, seed {spec['seed']}, target {spec['target_color']}",flush=True)
                         with (directory/'trials.log').open('a',buffering=1) as log:

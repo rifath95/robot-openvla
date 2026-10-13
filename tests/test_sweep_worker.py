@@ -37,6 +37,9 @@ class WorkerTests(unittest.TestCase):
             self.assertEqual(len(calls),3)
             self.assertEqual(calls[0][calls[0].index('--target-color')+1],'purple')
             self.assertTrue(all('--no-view' in c and '--start-immediately' in c for c in calls))
+            for command in calls:
+                coordinates=Path(command[command.index('--scene-positions')+1])
+                self.assertEqual(json.loads(coordinates.read_text()),plan['cube_positions'][0])
             result=json.loads((directory/'results.json').read_text())
             self.assertEqual(len(result['trials']),4);self.assertEqual(result['trials'][0],saved[0])
             self.assertTrue(all(r['execution_mode']=='cloud_sequential' for r in result['trials'][1:]))

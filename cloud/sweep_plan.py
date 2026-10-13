@@ -62,3 +62,15 @@ def estimate_remaining(payload):
     checkpoints={s['checkpoint'] for name,s in specs.items() if name not in {r['directory'] for r in payload['trials']}}
     estimate=remaining*seconds_per_trial+600+120*len(checkpoints)
     return dict(remaining_trials=remaining,seconds_per_trial=seconds_per_trial,**timeout_budget(estimate))
+
+
+def validate_scene_positions(actual, expected, tolerance=1e-12):
+    """Reject changed scenes while accepting sub-picometre arithmetic rounding."""
+    if len(actual)!=len(expected):raise ValueError('Saved scene count differs from this checkout')
+    for generated,saved in zip(actual,expected):
+        if set(generated)!= {'red','blue'} or set(saved)!= {'red','blue'}:raise ValueError('Invalid cube identities')
+        for slot in ('red','blue'):
+            if len(generated[slot])!=2 or len(saved[slot])!=2:raise ValueError('Invalid cube position')
+            for a,b in zip(generated[slot],saved[slot]):
+                if not math.isfinite(a) or not math.isfinite(b) or abs(a-b)>tolerance:
+                    raise ValueError('Saved scene positions differ from this checkout')

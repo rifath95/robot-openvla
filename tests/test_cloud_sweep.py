@@ -30,6 +30,15 @@ class CloudSweepTests(unittest.TestCase):
         for value in (0,-1,float('nan'),float('inf')):
             with self.assertRaises(ValueError):timeout_budget(value)
 
+    def test_scene_check_accepts_rounding_but_rejects_changed_positions(self):
+        from cloud.sweep_plan import validate_scene_positions
+        original=[{'red':[.4,.1],'blue':[.6,-.1]}]
+        rounded=[{'red':[.4+1e-16,.1],'blue':[.6,-.1]}]
+        validate_scene_positions(rounded,original)
+        for other in ([{'red':[.400001,.1],'blue':[.6,-.1]}],
+                      [{'red':[float('nan'),.1],'blue':[.6,-.1]}]):
+            with self.assertRaises(ValueError):validate_scene_positions(other,original)
+
     def test_resume_retains_failed_outcomes_and_only_remaining_checkpoints(self):
         data=payload();specs=validate_saved(data);done={r['directory'] for r in data['trials']}
         remaining=[s for name,s in specs.items() if name not in done]

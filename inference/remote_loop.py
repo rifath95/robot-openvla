@@ -55,7 +55,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
              max_consecutive_rejections=3,
              output_dir=None, no_view=False, start_immediately=False, startup_info=None,
              stop_event=None, task='cube', scene_seed=0, sample_actions=False, temperature=1., top_p=1.,
-             target_color=None, cube_colors=None):
+             target_color=None, cube_colors=None, scene_positions=None):
     from inference.action_sampling import generation_options
     generation=generation_options(sample_actions,temperature,top_p)
     import mujoco
@@ -77,6 +77,8 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
     if instruction is None:
         instruction={'cube':'pick up the red cube','bowl':'pick up the red cube and drop it in the blue bowl.',
                      'touch':'touch the red cube.'}[task]
+    if scene_positions is not None and task not in ('color_touch','color_transfer'):
+        raise ValueError('Saved scene positions require a two-cube task')
     touch_result=None
     env_options={}
     camera='workspace_camera'
@@ -214,6 +216,11 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
                     known_collected_position=scene_seed<50,training_eligible=False))
             elif task in ('color_touch','color_transfer'):
                 spec=pair_spec(scene_seed)
+                if scene_positions is not None:
+                    saved_positions=json.loads(Path(scene_positions).read_text())
+                    from cloud.sweep_plan import validate_scene_positions
+                    validate_scene_positions([spec['cube_positions']],[saved_positions])
+                    spec=dict(spec,cube_positions=saved_positions)
                 scene=initialize_scene(env,spec['cube_positions'])
                 if task=='color_transfer':configure_colors(env.model,color_names)
                 color_outcome=ContactOutcome(env,target_slot if task=='color_transfer' else target_color,
@@ -458,6 +465,7 @@ def main():
     parser.add_argument('--target-color')
     parser.add_argument('--cube-colors',nargs=2)
     parser.add_argument('--scene-seed', type=int, default=0)
+    parser.add_argument('--scene-positions',type=Path,help='Use verified saved two-cube coordinates for cross-platform resume')
     parser.add_argument("--steps", type=int, default=100,
                         help="Maximum observation/prediction cycles, including held/rejected actions")
     parser.add_argument("--max-consecutive-rejections", type=int, default=3,
