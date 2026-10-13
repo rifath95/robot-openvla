@@ -4,7 +4,7 @@ This extends the reviewed two-cube task to red, blue, green, and yellow. There a
 
 Each of 150 scenes is demonstrated twice, once per target color. All six unordered color pairs have 25 scenes, and each color is requested 75 times. The existing 50 red/blue demonstrations are copied byte-for-byte into the new dataset; the other 250 are new demonstrations. Both target instructions for a scene remain in the same split: 200 training, 50 validation, and 50 test trajectories.
 
-New positions are independently seeded within the existing workspace (X 0.40–0.68 m, Y −0.16–0.16 m), with at least 0.12 m separation. Cube identities are swapped between colors across scenes. Position plans are fixed before collection. A failed demonstration stops collection and saves diagnostics rather than drawing an easier replacement. The collection scene indices are 0–149; the currently running unseen-color evaluation uses scene indices 1000–1009.
+New positions are independently seeded within the existing workspace (X 0.40–0.68 m, Y −0.16–0.16 m), with at least 0.12 m separation. Cube identities are swapped between colors across scenes. Position plans are fixed before collection. A failed demonstration stops collection and saves diagnostics rather than drawing an easier replacement. The collection scene indices are 0–149; the completed unseen-color evaluation uses scene indices 1000–1009.
 
 The expert uses positions to script bounded translation actions, ending at verified finger contact with the requested cube. Every new demonstration is independently replayed through continuous physics. Collection rejects wrong-cube contact, unsafe contact, and tracking error above 5 mm. Images and instructions alone are the intended policy inputs; object positions and physical cube slot identities are verification metadata.
 
@@ -30,7 +30,7 @@ All 5,672 files from the original 50 demonstrations were preserved byte-for-byte
 - `datasets/panda_four_color_touch/REVIEW_AUDIT.json`: integrity checks, split counts, and replay accuracy.
 - `datasets/panda_four_color_touch/training_four_color_touch_v1/`: separate portable RLDS upload bundle, including verification and SHA256 checksums.
 
-The original `datasets/panda_color_touch` dataset and its prepared bundle are retained. Existing checkpoints are unaffected. Training on this expanded dataset has not been launched.
+The original `datasets/panda_color_touch` dataset and its prepared bundle are retained. Existing checkpoints are unaffected. Training and the 480-trial baseline/checkpoint sweep are complete. See the [Phase 3 completion summary](PHASE3_COMPLETION.md) and [final sweep review](FOUR_COLOR_MODEL_SWEEP_REVIEW.md).
 
 ## Reproduce
 

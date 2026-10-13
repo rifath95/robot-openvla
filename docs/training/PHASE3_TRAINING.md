@@ -1,4 +1,10 @@
-# Phase 3: prepare, fine-tune, and evaluate OpenVLA
+# Phase 3: original pick-and-place training guide
+
+**Historical guide. Phase 3 completed on October 13, 2026 with the narrower
+color-guided touching task.** See the [completion summary](../reviews/PHASE3_COMPLETION.md)
+for achieved results and limits, and [four-color training](FOUR_COLOR_TOUCH_TRAINING.md)
+for the final experiment. The preparation, next-run notes and pick-and-place
+completion criteria below describe the earlier experiments, not the current status.
 
 The expanded **250-trajectory** package is now ready locally as `training_v2`
 (176 train / 37 validation / 37 test; 19,625 valid action examples). Use

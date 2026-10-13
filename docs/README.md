@@ -1,6 +1,8 @@
 # Documentation index
 
-Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
+**Phases 1–3 are complete; Phase 4 is planned.** Start with the
+[Phase 3 completion summary](reviews/PHASE3_COMPLETION.md) for achieved results
+and limitations, and [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 
 ## Simulation and controls
 
@@ -40,7 +42,7 @@ Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 - [Archived touch checkpoint 300 and restore instructions](training/TOUCH_CHECKPOINT_ARCHIVE.md)
 - [A40 cube-to-bowl training profile and launch](training/BOWL_TRAINING.md)
 - [Blackwell training and benchmark image](training/BLACKWELL_TRAINING_SETUP.md)
-- [Phase 3: prepare, fine-tune, and evaluate OpenVLA](training/PHASE3_TRAINING.md)
+- [Phase 3: historical pick-and-place training guide](training/PHASE3_TRAINING.md)
 - [First cloud LoRA test — October 10, 2026](training/SMOKE_REVIEW.md)
 - [Measure training microbatch size on the A40](training/TRAINING_BATCHES.md)
 - [Detached training with automatic pod stop](training/TRAINING_OVERNIGHT.md)
@@ -54,6 +56,7 @@ Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 
 ## Audits and findings
 
+- [Phase 3 completion: experiments, achievements and remaining limits](reviews/PHASE3_COMPLETION.md)
 - [Four-color sweep: base, all checkpoints, and stronger unseen-color generalization](reviews/FOUR_COLOR_MODEL_SWEEP_REVIEW.md)
 - [Red/blue wrong-cube and alignment failure diagnosis](reviews/COLOR_TOUCH_FAILURE_DIAGNOSIS.md)
 - [Red/blue paired simulator sweep review](reviews/COLOR_TOUCH_SCRIPTED_REVIEW.md)

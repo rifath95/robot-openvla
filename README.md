@@ -2,7 +2,7 @@
 
 A robotics workspace for connecting a simulated Franka Panda arm to OpenVLA. Development currently runs on a MacBook using Python and MuJoCo 3.14.0, without ROS.
 
-Last updated: 2026-10-12. Update this document as milestones, run instructions, and model locations change.
+Last updated: 2026-10-13. Update this document as milestones, run instructions, and model locations change.
 
 Code is organized by purpose: `simulation/`, `inference/`, `cloud/`,
 `data_tools/`, `training/`, and `analysis/`. Tests live in `tests/`, dependency
@@ -12,9 +12,8 @@ See the [repository layout](docs/REPOSITORY_LAYOUT.md) and
 The small root launchers preserve familiar commands such as
 `.venv/bin/python end_effector_demo.py` and `.venv/bin/python cloud_session.py`.
 
-For the planned A40 microbatch speed/memory comparison, see
-[TRAINING_BATCHES.md](docs/training/TRAINING_BATCHES.md). GPU benchmarking is pending; the
-existing training batch configuration is unchanged.
+For measured GPU batch capacity, memory headroom and speed selection, see
+[TRAINING_BATCHES.md](docs/training/TRAINING_BATCHES.md).
 The cross-GPU capacity and throughput table is in
 [GPU_TRAINING_COMPARISON.md](docs/benchmarks/GPU_TRAINING_COMPARISON.md), including the measured A40
 capacity and throughput. Use `benchmark_cloud_session.py` on the Mac to run the
@@ -24,17 +23,18 @@ For batch-one prediction latency, the Mac/cloud timing breakdown, and estimated
 [GPU_INFERENCE_COMPARISON.md](docs/benchmarks/GPU_INFERENCE_COMPARISON.md).
 New simulator trials automatically refresh that report from saved measurements.
 
-**Phases 1 and 2 are complete. Phase 3 is the current focus:** collect and
-validate varied pick-and-place demonstrations, fine-tune OpenVLA for our Panda
-setup, and evaluate task success on unseen scenes. Phase 4 will explore additional
-tasks and transfer beyond the fine-tuning demonstrations.
+**Phases 1, 2, and 3 are complete.** Phase 3 established reproducible Panda
+fine-tuning and measured instruction-guided cube touching. The final four-color
+checkpoint achieved **95% correct contact on seen colors (38/40)** and **82.5%
+on unseen colors (33/40)**, compared with **17.5% unseen success for the pretrained
+base**. Black, purple, orange, and white were absent from fine-tuning.
 
-The Phase 3 foundation already includes the shared **`panda_grasp_v1`** action
-convention, expert recorder, sequential replay, and Panda dataset statistics.
-One 72-action scripted contact pick/place passed recording/replay (13.7 cm lift,
-2.0 mm placement error). This verifies data collection. OpenVLA has since been
-fine-tuned, but successful model-driven pick-and-place has not been demonstrated.
-See [PANDA_DEMONSTRATIONS.md](docs/datasets/PANDA_DEMONSTRATIONS.md).
+See the [Phase 3 completion summary](docs/reviews/PHASE3_COMPLETION.md) for the
+experiments, findings, saved artifacts and limitations, and the
+[final model sweep review](docs/reviews/FOUR_COLOR_MODEL_SWEEP_REVIEW.md) for the
+480-trial evaluation. The original pick-and-place objective was narrowed after
+unsuccessful grasp/lift experiments; reliable model-driven pick-and-place remains
+open. Phase 4 is planned; no new experiment has started.
 
 ## Goal
 
@@ -58,7 +58,7 @@ The seven values are `[dx, dy, dz, droll, dpitch, dyaw, gripper]`: three positio
 | --- | --- | --- |
 | 1 | Establish local simulation, seven-value control, and OpenVLA inference. | **Completed** |
 | 2 | Connect local simulation to cloud OpenVLA and demonstrate a live repeated control loop. | **Completed** |
-| 3 | Adapt OpenVLA to our Panda setup for pick-and-place using validated demonstrations and held-out evaluation. | **Current — first fine-tuning/evaluation complete; expanding dataset coverage** |
+| 3 | Adapt OpenVLA to our Panda setup and evaluate instruction-guided touching on new scenes, including unseen colors. | **Completed — fine-tuning and 480-trial baseline/checkpoint comparison** |
 | 4 | Expand to other tasks and measure transfer to tasks excluded from fine-tuning. | **Planned** |
 
 ### Phase 1 — completed: local foundation
@@ -94,72 +94,42 @@ recovery still need verification together in a long real cloud trial. The Panda
 convention defines our interface; it does not establish pretrained Bridge-to-Panda
 policy calibration. Session/server limits do not terminate the rented pod or stop billing.
 
-### Phase 3 — current: pick-and-place adaptation
+### Phase 3 — completed: Panda adaptation and color-guided touching
 
-**Goal:** fine-tune the pretrained OpenVLA model to perform pick-and-place reliably
-in our Panda environment, and measure performance on scenes excluded from training.
+The phase began with pick-and-place demonstrations, cloud LoRA training and
+simulator trials. More data and lower losses did not establish successful pickup.
+We investigated controller continuity, action replay, teacher-forced versus
+normally generated actions, and supervision that depended on the script's hidden
+phase. We then narrowed the task to cube touching to test adaptation separately
+from grasping and multi-stage planning.
 
-Already implemented:
+- Built replay-verified demonstrations, portable RLDS bundles, training-only
+  action statistics, and Hugging Face upload/download with checksum verification.
+- Added reproducible LoRA training, checkpoint/validation schedules, loss plots,
+  timings, GPU benchmarks and detached cloud supervisors with pod-stop requests.
+- Demonstrated single-cube touch contact at 20/20 new positions with checkpoint
+  300 (17/20 clean completions), then instruction-dependent red/blue selection.
+- Expanded to 300 four-color demonstrations: 200 train, 50 validation, 50 test.
+  Trained fresh from OpenVLA for 1,000 updates at microbatch 8, accumulation 1,
+  learning rate 0.0001 and LoRA rank 32.
+- Evaluated the base and five checkpoints in 480 automated cloud trials. The
+  final checkpoint achieved 71/80 correct contacts, including 33/40 for reserved
+  unseen colors. Both target instructions succeeded in 14/20 unseen paired scenes.
 
-- A versioned action contract covering world-frame metres, rotation order, grasp point, gripper values, bounds, and a fixed 0.4 s execution interval.
-- An expert recorder that pairs each observation/instruction with the accepted bounded command actually executed, plus measured motion and simulator state.
-- Sequential replay verification, dataset eligibility checks, and Panda-specific action statistics.
-- One successful 72-transition scripted episode and a verified staging dataset; this is a pipeline check, not sufficient training coverage.
+This demonstrates useful unseen-color generalization consistent with pretrained
+color knowledge remaining usable after adaptation. It does not establish broad
+robotic task competence or solve the original pick-and-place objective.
+The [completion summary](docs/reviews/PHASE3_COMPLETION.md) records the full scope
+and evidence; [training](docs/training/FOUR_COLOR_TOUCH_TRAINING.md) and
+[sweep](docs/cloud/FOUR_COLOR_MODEL_SWEEP.md) guides reproduce the final experiment.
 
-Phase 3 collection has started with a reproducible ten-scene pilot: six training,
-two validation and two test scenes, assigned before recording. This checks spatial
-variation and split handling; all ten expert episodes passed recording/replay
-(425 training / 142 validation / 145 test transitions). It is not yet a sufficient
-fine-tuning dataset or a measurement of OpenVLA task success.
+### Phase 4 — planned: broader skills and transfer
 
-The first expansion is complete: 40 additional expert episodes passed task and
-replay checks, giving **50 trajectories (36 train / 7 validation / 7 test)** and
-**3,609 transitions**. It adds placement directions, approach offsets, grasp yaw
-and starting arm poses; training statistics use only training episodes. See
-`datasets/panda_pick_place/WATCH_TRAJECTORIES.md` to watch all 50 locally.
-The dataset is now packaged as portable TFDS/RLDS episodes, with fixed splits
-and training-only normalization. A pinned integration of the official OpenVLA
-LoRA script adds periodic validation, local loss plots, adapter checkpoints and
-a 20-update smoke-test configuration. See [PHASE3_TRAINING.md](docs/training/PHASE3_TRAINING.md)
-for preparation, image-build, upload and training commands. The first cloud
-LoRA test completed 20 updates and saved adapters: final training loss 2.881,
-validation loss 3.794 on 64 held-out examples, peak PyTorch allocation 18.01 GiB.
-See [the smoke-test review](docs/training/SMOKE_REVIEW.md). The 1,000-update run
-completed with checkpoints at 250/500/750/1000 and full 507-example validation.
-Validation loss largely plateaued after 500 updates. Live trials approach and
-close near the cube but have not completed pick-and-place. An 80-image matched
-diagnostic found errors in both normal generation and teacher forcing.
-
-The broader collection completed **200 new verified trajectories**, including
-an audited 20-trajectory pilot, with substantially different initial hand XYZ
-positions and yaw angles. The new cohort reserves entire scene combinations
-for validation/test. Existing demonstrations, uploaded data and model checkpoints
-remain intact. There are now **250 total trajectories** (176 train / 37 validation
-/ 37 test). The new hand starts span 28.5 / 43.6 / 20.8 cm in X/Y/Z and about
-−66° to +66° yaw. See [BROAD_PANDA_DATASET.md](docs/datasets/BROAD_PANDA_DATASET.md) for collection,
-audit and per-trajectory replay instructions.
-
-Remaining goals:
-
-1. Upload the locally verified `training_v2` RLDS bundle, keeping the original dataset and held-out splits intact. See [TRAINING_V2.md](docs/datasets/TRAINING_V2.md).
-2. Train and compare checkpoints on the expanded dataset, checking both generated actions and validation loss.
-3. Evaluate the adapted model on fixed held-out pick-and-place scenarios against the pretrained baseline, with separate results for legacy and broad starting poses.
-
-Record success rate, grasp/lift/placement outcomes, IK rejections, latency, and
-cloud cost. Phase 3 is complete when the dataset and training path are reproducible
-and the adapted model has been observed and evaluated live on held-out scenarios,
-with results compared with the pretrained baseline. Document limited success
-honestly; perfect performance is not a prerequisite for assessing the experiment.
-Training and exploratory live evaluation have run; controlled held-out task-success assessment remains. See
-[PANDA_DEMONSTRATIONS.md](docs/datasets/PANDA_DEMONSTRATIONS.md) for the current data workflow.
-
-### Phase 4 — planned: broader tasks and transfer
-
-Expand beyond pick-and-place, for example to pushing, stacking, or opening drawers.
-First measure which pretrained skills transfer after adaptation without new task
-demonstrations. Add mixed-task demonstrations where needed and evaluate both new
-skills and retention of pick-and-place performance. This does not require assuming
-a separate model or fine-tuning run for every task.
+Choose the next experiment separately: broaden touch-task robustness, introduce
+a distinct grasp/lift skill, or evaluate additional language/visual transfer.
+Compare each extension with the Phase 3 baseline and measure retention of the
+existing touch/color skill. Reliable pick-and-place, broad starting-pose coverage
+and real-robot transfer remain future goals.
 
 ## What works so far
 
@@ -427,21 +397,16 @@ The successful test used `bridge_orig` action statistics. These statistics are f
 
 ## Current status and next intended work
 
-**Phases 1 and 2 are complete; Phase 3 is current.** The Mac/cloud observation,
-prediction, and movement loop has been demonstrated with live viewing and saved
-per-step results. Local controller recovery and the shared Panda action/data
-contract have been tested. OpenVLA task success and custom-domain fine-tuning
-remain to be established.
+**Phases 1–3 are complete; Phase 4 is planned.** The current demonstrated skill
+is instruction-guided cube touching, with successful transfer to colors excluded
+from fine-tuning. Checkpoint 1,000 from `panda-train-20261013-110217-1084` is the
+best observed model in the final sweep. See the
+[Phase 3 completion summary](docs/reviews/PHASE3_COMPLETION.md) before choosing
+the next experiment.
 
-**Next:** collect varied, replay-verified pick-and-place demonstrations and reserve
-held-out evaluation scenes, then prepare the training dataset and run an initial
-budgeted fine-tuning experiment. The successful scripted episode is the data
-pipeline's first check. See [Project phases](#project-phases) for completed work,
-remaining goals, and the planned Phase 4 expansion.
-
-Use [CLOUD_QUICKSTART.md](docs/cloud/CLOUD_QUICKSTART.md) for existing remote sessions and
-[PANDA_DEMONSTRATIONS.md](docs/datasets/PANDA_DEMONSTRATIONS.md) for local recording/replay.
-Running both simulation and inference in the cloud remains an optional separate
-path described in [CLOUD_SETUP.md](docs/cloud/CLOUD_SETUP.md), rather than a Phase 2 requirement.
+Use [CLOUD_QUICKSTART.md](docs/cloud/CLOUD_QUICKSTART.md) for remote sessions,
+[FOUR_COLOR_TOUCH_TRAINING.md](docs/training/FOUR_COLOR_TOUCH_TRAINING.md) for the
+final training profile, and [CLOUD_SIMULATOR_SWEEPS.md](docs/cloud/CLOUD_SIMULATOR_SWEEPS.md)
+for cloud-only trials, saved results and resume behavior.
 
 Upstream references: [OpenVLA](https://github.com/openvla/openvla), [checkpoint](https://huggingface.co/openvla/openvla-7b), [LoRA fine-tuning](https://github.com/openvla/openvla#fine-tuning-openvla-via-lora), [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie).
