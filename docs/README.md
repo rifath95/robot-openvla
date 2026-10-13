@@ -49,6 +49,7 @@ Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 
 ## Audits and findings
 
+- [Red/blue paired simulator sweep review](reviews/COLOR_TOUCH_SCRIPTED_REVIEW.md)
 - [Red/blue touch 500-update training review](reviews/COLOR_TOUCH_TRAINING_REVIEW.md)
 - [Touch-cube checkpoint trials and training curves](reviews/TOUCH_CHECKPOINT_TRIALS.md)
 - [80 scripted touch trials at unseen cube positions](reviews/TOUCH_SCRIPTED_EVALUATION.md)
