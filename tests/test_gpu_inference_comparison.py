@@ -47,6 +47,13 @@ class InferenceComparisonTests(unittest.TestCase):
             self.assertIn('Not recorded',text)
             self.assertLess(text.index('## Full cycle'),text.index('## Remote request breakdown'))
 
+    def test_cloud_simulator_timings_do_not_enter_mac_network_comparison(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            folder=self.make_run(Path(tmp))
+            path=folder/'startup_info.json';data=json.loads(path.read_text())
+            data['execution_mode']='cloud_sequential';path.write_text(json.dumps(data))
+            self.assertIsNone(measurement(folder))
+
     def test_short_run_does_not_invent_steady_state_timings(self):
         with tempfile.TemporaryDirectory() as tmp:
             folder=self.make_run(Path(tmp))

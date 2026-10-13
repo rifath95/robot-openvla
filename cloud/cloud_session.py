@@ -61,7 +61,7 @@ def ssh_arguments(host, port, key):
             '-o', 'ServerAliveCountMax=3', '-i', str(key), '-p', str(port), host]
 
 
-def bootstrap_script(runtime, adapter=None, *, require_sampling=False):
+def bootstrap_script(runtime, adapter=None, *, require_sampling=False, update_repo=True):
     # All variable arguments are shell-quoted; pasted SSH text is never a shell command.
     model_setup = ''
     model_args = ''
@@ -78,13 +78,14 @@ merged_dir="$(mktemp -d /root/panda-evaluation-XXXXXXXX)"
 /opt/openvla/bin/python -m training.merge_adapter --base-model /workspace/openvla-7b --adapter {shlex.quote(str(adapter))} --output "$merged_dir/model"
 '''
         model_args = ' "$merged_dir/model" panda_grasp_v1'
-    return f'''set -euo pipefail
-if [[ ! -d /root/robot-openvla ]]; then
+    repository_setup = f'''if [[ ! -d /root/robot-openvla ]]; then
   git clone {shlex.quote(REPOSITORY)} /root/robot-openvla
 else
   git -C /root/robot-openvla pull --ff-only
 fi
-cd /root/robot-openvla
+''' if update_repo else 'test -d /root/robot-openvla/.git\n'
+    return f'''set -euo pipefail
+{repository_setup}cd /root/robot-openvla
 {checkpoint_check}if python3 -m cloud.server_reuse{identity_args}; then
   echo 'Matching checkpoint already loaded; reusing its server and remaining runtime.'
   exit 0

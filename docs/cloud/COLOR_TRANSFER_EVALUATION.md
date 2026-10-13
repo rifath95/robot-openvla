@@ -75,3 +75,5 @@ caffeinate -i .venv/bin/python -m cloud.scripted_color_transfer_session \
 ```
 
 A between-trial health failure waits 30 seconds and reports server unavailability separately from initial model loading. On failure, the launcher attempts to capture the last 256 KiB of the cloud server log before shutdown, storing it locally and including it in the compact volume report copy. Collection is best effort if SSH has failed.
+
+For cloud execution that continues when your Mac disconnects, see [Detached cloud simulator sweeps](CLOUD_SIMULATOR_SWEEPS.md). The original Mac-driven launchers now include a cloud-side disconnect watchdog.

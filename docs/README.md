@@ -11,6 +11,7 @@ Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 
 ## Cloud sessions and inference
 
+- [Detached cloud simulator sweeps, resume and disconnect protection](cloud/CLOUD_SIMULATOR_SWEEPS.md)
 - [One-command cloud sessions](cloud/CLOUD_QUICKSTART.md)
 - [Cloud GPU inference setup](cloud/CLOUD_SETUP.md)
 - [Camera-to-server connection test](cloud/CONNECTION_TEST.md)

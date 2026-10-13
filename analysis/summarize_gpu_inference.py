@@ -41,6 +41,8 @@ def percentile(values, fraction):
 
 def measurement(folder, warmup=5, benchmark=None):
     startup = benchmark['startup_info'] if benchmark else read_json(folder/'startup_info.json')
+    # Cloud simulator cycles are not Mac-to-cloud hardware/network benchmarks.
+    if startup.get('execution_mode')=='cloud_sequential':return None
     cloud_only=bool(benchmark and not benchmark.get('mac_requests'))
     rows = ((benchmark.get('mac_requests') or benchmark['cloud_requests']) if benchmark else
             [read_json(p) for p in sorted(folder.glob('step_*/execution.json'))])

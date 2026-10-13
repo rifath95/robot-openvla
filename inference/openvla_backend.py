@@ -13,7 +13,7 @@ from inference.openvla_prompt import action_prompt
 class OpenVLAPredictor:
     action_sampling_available = True
 
-    def __init__(self, model_dir, *, device="cuda", unnorm_key="bridge_orig"):
+    def __init__(self, model_dir, *, device="cuda", unnorm_key="bridge_orig", adapter=None):
         import torch
         from transformers import AutoModelForVision2Seq, AutoProcessor
 
@@ -40,6 +40,18 @@ class OpenVLAPredictor:
             attn_implementation="eager", device_map={"": device},
         ).eval()
         self.synchronize()
+        base_loaded = time.perf_counter()
+        merge_seconds = 0.0
+        if adapter is not None:
+            from peft import PeftModel
+            adapter=Path(adapter).resolve()
+            self.model=PeftModel.from_pretrained(self.model,str(adapter)).merge_and_unload().eval()
+            stats=json.loads((adapter/'dataset_statistics.json').read_text())
+            self.model.norm_stats.update(stats)
+            self.model.config.norm_stats=self.model.norm_stats
+            self.synchronize()
+            merge_seconds = time.perf_counter()-base_loaded
+        self.synchronize()
         self.load_seconds = time.perf_counter() - started
         metrics_path = PROJECT_ROOT / 'outputs/cloud_startup.json'
         self.startup_info = json.loads(metrics_path.read_text()) if metrics_path.exists() else {}
@@ -47,7 +59,8 @@ class OpenVLAPredictor:
         self.startup_info.update({
             'model_dir': str(folder), 'unnorm_key': unnorm_key,
             'model_load_seconds': self.load_seconds,
-            'loading_note': 'Processor setup, checkpoint reading, model construction and device transfer, synchronized at completion; not isolated storage-to-VRAM time.',
+            'loading_note': 'Processor setup, checkpoint reading, model construction, device transfer and optional in-memory adapter merge; synchronized at completion. Not isolated storage-to-VRAM time.',
+            'base_load_seconds': base_loaded-started, 'adapter_merge_seconds': merge_seconds,
             'device': device, 'dtype': str(self.dtype), 'attention': 'eager',
             'pytorch_version': torch.__version__, 'transformers_version': transformers.__version__,
             'instruction_processing': 'lowercase to match official RLDSBatchTransform',
@@ -69,6 +82,8 @@ class OpenVLAPredictor:
         if len(stats["q01"]) != 7 or len(stats["q99"]) != 7:
             raise ValueError("This server requires a model with seven action components")
         self.startup_info['action_statistics'] = stats
+        if adapter is not None:
+            self.startup_info['evaluation_provenance']=dict(base_model=str(folder),adapter_checkpoint=str(adapter),merge_location=device,merge_method='in_memory')
         provenance = folder / 'evaluation_provenance.json'
         if provenance.is_file():
             self.startup_info['evaluation_provenance'] = json.loads(provenance.read_text())

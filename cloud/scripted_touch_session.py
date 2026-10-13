@@ -152,7 +152,16 @@ def run_trials(args, folder, ssh):
     write_reports(folder, plan, rows)
     tunnel = None
     error = None
+    staged=None
     try:
+        if getattr(args,'in_memory_merge',False):
+            checkpoints=[n for n in args.checkpoints if any(s['checkpoint']==n and s['directory'] not in done
+                for s in __import__('cloud.sweep_plan',fromlist=['trial_specs']).trial_specs(plan))]
+            staging='/root/panda-sweep-cache/'+folder.name
+            adapters={n:f'/workspace/panda-training/sessions/{args.training_session}/runs/training/checkpoint_{n:06d}' for n in checkpoints}
+            script='from cloud.sweep_storage import stage_weights; stage_weights('+repr('/workspace/openvla-7b')+', '+repr(adapters)+', '+repr(staging)+')'
+            subprocess.run(ssh+['cd /root/robot-openvla && /opt/openvla/bin/python -c '+shlex.quote(script)],check=True,timeout=900)
+            staged=staging
         for checkpoint in args.checkpoints:
             if task=='color_transfer':
                 trial_specs=[]
@@ -173,7 +182,11 @@ def run_trials(args, folder, ssh):
                 print(f'Checkpoint {checkpoint}: all trials already saved; skipping model load.',flush=True)
                 continue
             adapter = f'/workspace/panda-training/sessions/{args.training_session}/runs/training/checkpoint_{checkpoint:06d}'
-            subprocess.run(ssh + ['bash -s'], input=bootstrap_script(21600, adapter).encode(),
+            if staged:
+                from cloud.sweep_server_setup import setup_script
+                bootstrap=setup_script(staged+'/base',staged+f'/checkpoint_{checkpoint:06d}',getattr(args,'outer_seconds',21600))
+            else:bootstrap=bootstrap_script(21600, adapter, update_repo=False)
+            subprocess.run(ssh + ['bash -s'], input=bootstrap.encode(),
                            check=True, timeout=args.startup_timeout_seconds)
             if tunnel is None:
                 host = ssh[-1]
@@ -260,6 +273,7 @@ def main(default_task='touch'):
     parser.add_argument('--scene-seeds', type=int, nargs='+')
     parser.add_argument('--steps', type=int, default=50)
     parser.add_argument('--trial-timeout-seconds', type=int, default=180)
+    parser.add_argument('--estimated-seconds',type=float,help='Whole-sweep estimate; inner adds 1 hour and outer adds another hour')
     parser.add_argument('--startup-timeout-seconds', type=int, default=900)
     args = parser.parse_args()
     if args.task=='color_transfer':
@@ -296,18 +310,36 @@ def main(default_task='touch'):
         folder.mkdir(parents=True)
     control = f'cd /root/robot-openvla && /opt/openvla/bin/python -m cloud.scripted_eval_control --session {name}'
     ready = False
+    heartbeat=None
     code = 0
     print('Keep the Mac awake and connected. This dedicated inference pod will be stopped at the end.', flush=True)
     try:
-        setup = f'set -e\nif [ -d /root/robot-openvla/.git ]; then git -C /root/robot-openvla pull --ff-only; else git clone {REPOSITORY} /root/robot-openvla; fi\n'
+        setup = f'set -e\nflock -n /root/panda-sweep-supervisor.lock -c true\nif [ -d /root/robot-openvla/.git ]; then git -C /root/robot-openvla pull --ff-only; else git clone {REPOSITORY} /root/robot-openvla; fi\n'
         subprocess.run(ssh + ['bash -s'], input=setup.encode(), check=True, timeout=120)
         if args.task in ('color_touch','color_transfer'):
             # This check is before arming cleanup, so rejecting the training pod
             # cannot stop it through the launcher's finally block.
             subprocess.run(ssh+[control+' --check-only --refuse-training'],check=True,timeout=90)
-        ready = True
         if args.task not in ('color_touch','color_transfer'):
             subprocess.run(ssh + [control + ' --check-only'], check=True, timeout=90)
+        from cloud.sweep_plan import timeout_budget
+        if args.estimated_seconds is not None:estimate=args.estimated_seconds
+        elif args.resume:
+            from cloud.sweep_plan import estimate_remaining
+            estimate=estimate_remaining(json.loads((folder/'results.json').read_text()))['estimated_seconds']
+        else:
+            pairs=len(args.color_pairs or ['black:purple','green:yellow','orange:white']) if args.task=='color_transfer' else 1
+            targets=2 if args.task!='touch' else 1
+            seeds=len(args.scene_seeds or list(range(1000,1010 if args.task!='touch' else 1020)))
+            estimate=len(args.checkpoints)*pairs*targets*seeds*60+600+len(args.checkpoints)*120
+        budget=timeout_budget(estimate);args.outer_seconds=budget['outer_seconds'];args.in_memory_merge=True
+        remote='/workspace/panda-training/scripted-evaluations/'+name
+        arm='cd /root/robot-openvla && /opt/openvla/bin/python -m cloud.sweep_supervisor --launch --mode client_watchdog --directory '+shlex.quote(remote)+' --estimated-seconds '+str(estimate)
+        subprocess.run(ssh+[arm],check=True,timeout=60)
+        ready=True
+        from cloud.sweep_heartbeat import Heartbeat
+        heartbeat=Heartbeat(ssh,remote);heartbeat.__enter__()
+        print(f"Mac disconnect watchdog armed (3-minute heartbeat grace). Inner: {budget['inner_seconds']}s; outer: {budget['outer_seconds']}s.",flush=True)
         run_trials(args, folder, ssh)
     except (Exception, KeyboardInterrupt) as exc:
         print(f'Scripted evaluation ended: {exc or type(exc).__name__}', flush=True)
@@ -327,6 +359,10 @@ def main(default_task='touch'):
             except Exception as exc:
                 print(f'Volume report copy failed; local results retained: {exc}', flush=True)
                 code = 1
+            if heartbeat is not None:
+                heartbeat.__exit__(None,None,None)
+                try:subprocess.run(ssh+['touch '+shlex.quote(remote+'/client_finished')],check=True,timeout=20)
+                except (OSError,subprocess.SubprocessError):pass
             print('Requesting stop of the inference pod...', flush=True)
             try:
                 if subprocess.run(ssh + [control], timeout=100).returncode:

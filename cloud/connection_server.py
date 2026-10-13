@@ -155,6 +155,7 @@ def main():
     parser.add_argument("--max-runtime-seconds", type=float, default=900)
     parser.add_argument("--mode", choices=("connection_test", "openvla"), default="connection_test")
     parser.add_argument("--model-dir", type=Path)
+    parser.add_argument("--adapter",type=Path,help="Merge this adapter in memory after loading the base")
     parser.add_argument("--device", choices=("cuda", "mps", "cpu"), default="cuda")
     parser.add_argument("--unnorm-key", default="bridge_orig")
     parser.add_argument("--cache-dir", type=Path, default=(PROJECT_ROOT / '.cache-openvla-server'))
@@ -173,7 +174,7 @@ def main():
         os.environ.setdefault("PYTORCH_ENABLE_MPS_FALLBACK", "1")
         print(f"Loading OpenVLA from {args.model_dir} on {args.device}; HTTP readiness follows successful loading.", flush=True)
         from inference.openvla_backend import OpenVLAPredictor
-        predictor = OpenVLAPredictor(args.model_dir, device=args.device, unnorm_key=args.unnorm_key)
+        predictor = OpenVLAPredictor(args.model_dir, device=args.device, unnorm_key=args.unnorm_key, **({"adapter":args.adapter} if args.adapter else {}))
         print(f"Model loaded in {predictor.load_seconds:.2f}s", flush=True)
     with ThreadingHTTPServer((args.host, args.port), Handler) as server:
         server.mode = args.mode
