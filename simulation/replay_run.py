@@ -24,7 +24,11 @@ def replay_model(folder):
         return model,CAMERA_NAME
     if metadata.get('scene_profile') == 'panda_color_touch_v1':
         from simulation.color_touch_scene import SCENE_PATH, CAMERA_NAME
-        return mujoco.MjModel.from_xml_path(str(SCENE_PATH)), CAMERA_NAME
+        model = mujoco.MjModel.from_xml_path(str(SCENE_PATH))
+        if metadata.get('cube_colors'):
+            from simulation.color_palette import configure_colors
+            configure_colors(model, metadata['cube_colors'])
+        return model, CAMERA_NAME
     if metadata.get('scene_profile') == 'panda_touch_v1':
         from simulation.touch_scene import SCENE_PATH, CAMERA_NAME
         return mujoco.MjModel.from_xml_path(str(SCENE_PATH)), CAMERA_NAME

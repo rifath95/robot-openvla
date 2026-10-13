@@ -26,6 +26,7 @@ Start with [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 
 - [First ten paired red/blue touch demonstrations](reviews/COLOR_TOUCH_FIRST_TEN.md)
 - [Expanded 50-demonstration red/blue touch dataset](reviews/COLOR_TOUCH_50.md)
+- [300-demonstration four-color touch dataset](reviews/FOUR_COLOR_TOUCH_300.md)
 - [Broad starting-pose demonstrations](datasets/BROAD_PANDA_DATASET.md)
 - [Panda convention and expert demonstrations](datasets/PANDA_DEMONSTRATIONS.md)
 - [Expanded dataset: training_v2](datasets/TRAINING_V2.md)

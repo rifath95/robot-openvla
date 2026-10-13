@@ -25,7 +25,8 @@ def task_result(env, initial, color):
 
 def record_episode(folder, scenario):
     color = scenario['target_color']
-    instruction = f'touch the {color} cube.'
+    names = scenario.get('cube_colors', {'red': 'red', 'blue': 'blue'})
+    instruction = f'touch the {names[color]} cube.'
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=False)
     write_launcher(folder, demonstration=True)
@@ -39,6 +40,10 @@ def record_episode(folder, scenario):
     try:
         with PandaEnv(SCENE_PATH, camera=CAMERA_NAME) as env:
             scene=initialize_scene(env, scenario['cube_positions'])
+            if 'cube_colors' in scenario:
+                from simulation.color_palette import configure_colors
+                configure_colors(env.model, names)
+                metadata['cube_colors'] = names
             metadata['scenario']=dict(scenario, scene=scene)
             metadata['starting_pose']=scene['starting_pose']
             metadata['physics_seconds_per_action']=PHYSICS_STEPS*float(env.model.opt.timestep)
@@ -109,6 +114,9 @@ def replay_episode(folder):
     rows=[json.loads(line) for line in (folder/'transitions.jsonl').read_text().splitlines()]
     errors=[]
     with PandaEnv(SCENE_PATH,camera=CAMERA_NAME) as env:
+        if metadata.get('cube_colors'):
+            from simulation.color_palette import configure_colors
+            configure_colors(env.model, metadata['cube_colors'])
         restore_state(folder/'initial_state.npz',env);initial=cube_position(env, color)
         for row in rows:
             ik=env.controller.apply_action(to_controller_action(row['action']))
