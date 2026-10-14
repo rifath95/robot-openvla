@@ -68,8 +68,15 @@ examples are not an automatic remedy for controller or phase-transition issues.
 The portable RLDS bundle was subsequently prepared as
 `datasets/panda_lift_cube/training_lift_v1/`. All 50 trajectories, observations,
 instructions and action labels passed source matching, checksum verification
-and official OpenVLA processor checks. HF upload and training are not yet
-confirmed. The update/checkpoint schedule above remains a recommendation.
+and official OpenVLA processor checks. The user has started the HF upload; completion and training are not yet
+confirmed. The prepared profile is `training/lift_cube_50_500.json`: batch 8,
+accumulation 1, learning rate 0.0001, LoRA rank 32, 500 updates, with checkpoints
+and full validation at 0, 50, 100, 300 and 500. It starts from pretrained OpenVLA.
+The estimated pilot duration is roughly 20–30 minutes on A40; the inner limit
+is 90 minutes and the outer limit is 150 minutes, including an hour of buffer
+and an additional hour for outer cleanup. Actual speed and validation affect
+the estimate. The dataset downloader accepts `--bundle training_lift_v1` with
+`--revision` pinned to the completed HF upload before deployment.
 
 Upload from the local repository terminal:
 
