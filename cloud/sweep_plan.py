@@ -53,6 +53,8 @@ def validate_saved(payload):
     for field in ('checkpoints','scene_seeds'):
         values=plan[field]
         if not values or len(set(values))!=len(values) or any(type(x)is not int or x<0 for x in values):raise ValueError('Invalid plan indices')
+    wait=plan.get('checkpoint_wait_seconds',0)
+    if type(wait) is not int or not 0<=wait<=3600:raise ValueError('Checkpoint wait must be between 0 and 3600 seconds')
     if plan['task']=='lift':
         from inference.lift_task import cube_position_for_seed,validate_positions
         expected=[{'red':cube_position_for_seed(seed)} for seed in plan['scene_seeds']]

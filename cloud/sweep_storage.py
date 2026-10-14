@@ -6,7 +6,7 @@ from pathlib import Path
 from cloud.checkpoint_ready import check_ready
 
 
-def stage_weights(base, adapters, destination):
+def stage_weights(base, adapters, destination, *, incremental=False):
     base=Path(base);destination=Path(destination)
     sources={'base':base,**{f'checkpoint_{int(n):06d}':Path(p) for n,p in adapters.items()}}
     for name,source in sources.items():
@@ -17,17 +17,22 @@ def stage_weights(base, adapters, destination):
     needed=sum(p.stat().st_size for rows in files.values() for p in rows)
     destination.parent.mkdir(parents=True,exist_ok=True)
     marker=destination/'staging.json'
+    records=[];existing=set()
     if marker.exists():
         saved=json.loads(marker.read_text())
-        if saved['sources']!={k:str(v.resolve()) for k,v in sources.items()}:raise ValueError('Staging identity differs')
+        identity={k:str(v.resolve()) for k,v in sources.items()}
+        if (not incremental and saved['sources']!=identity) or any(identity.get(k)!=v for k,v in saved['sources'].items()):
+            raise ValueError('Staging identity differs')
         for row in saved['files']:
             p=destination/row['path']
             if not p.is_file() or p.stat().st_size!=row['bytes']:raise ValueError('Staged weight missing or truncated')
-        return destination
+        existing=set(saved['sources']);records=saved['files']
+        if existing==set(sources):return destination
+        needed=sum(p.stat().st_size for name,rows in files.items() if name not in existing for p in rows)
     if shutil.disk_usage(destination.parent).free<needed+2*1024**3:raise ValueError('Container disk needs space for base, adapters and 2 GiB reserve')
     destination.mkdir(exist_ok=True)
-    records=[]
     for name,source in sources.items():
+        if name in existing:continue
         for original in files[name]:
             relative=Path(name)/original.relative_to(source)
             target=destination/relative;target.parent.mkdir(parents=True,exist_ok=True)
@@ -39,5 +44,7 @@ def stage_weights(base, adapters, destination):
             temporary.replace(target)
             records.append(dict(path=str(relative),bytes=count,sha256=digest.hexdigest()))
         print(f'Staged {name} from volume to container disk.',flush=True)
-    marker.write_text(json.dumps(dict(sources={k:str(v.resolve()) for k,v in sources.items()},files=records),indent=2)+'\n')
+    temporary=marker.with_suffix('.tmp')
+    temporary.write_text(json.dumps(dict(sources={k:str(v.resolve()) for k,v in sources.items()},files=records),indent=2)+'\n')
+    temporary.replace(marker)
     return destination

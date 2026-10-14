@@ -35,6 +35,25 @@ def wait_server(process,port,seconds=900,ready_file=None):
     raise TimeoutError('Cloud model readiness timeout')
 
 
+def wait_checkpoint(folder,seconds=0,status_path=None):
+    """Wait only for a complete save; never load a checkpoint being written."""
+    from cloud.checkpoint_ready import check_ready
+    deadline=time.monotonic()+seconds;announced=False
+    while True:
+        try:return check_ready(folder)
+        except (OSError,ValueError,KeyError,TypeError) as exc:
+            if not seconds or time.monotonic()>=deadline:
+                raise RuntimeError(f'Checkpoint did not finish saving within {seconds}s: {folder}') from exc
+        if status_path is not None and Path(status_path).is_file():
+            try:status=json.loads(Path(status_path).read_text())
+            except (OSError,ValueError):status={}
+            if status.get('phase') in ('completed','incomplete','training_failed','wrapper_failed','wall_limit_reached','awaiting_sync'):
+                raise RuntimeError(f'Training ended without required complete checkpoint: {folder}')
+        if not announced:
+            print(f'Waiting for fully saved checkpoint: {folder} (up to {seconds}s)',flush=True);announced=True
+        time.sleep(min(5,max(0,deadline-time.monotonic())))
+
+
 def summarize(spec,folder,returncode):
     summary=json.loads((folder/'summary.json').read_text()) if (folder/'summary.json').exists() else {}
     status=json.loads((folder/'status.json').read_text()) if (folder/'status.json').exists() else {}
@@ -73,9 +92,26 @@ def run(directory,sim_python,*,port=0):
         raise RuntimeError(f'Need {minimum:.1f} GiB free on the results volume before this sweep')
     base=Path('/workspace/openvla-7b')
     training=Path('/workspace/panda-training/sessions')/plan['training_session']/'runs/training'
-    adapter_indices={n for n in checkpoints if n!=0 or not plan.get('include_base_model')}
-    if 0 in checkpoints and plan.get('include_base_model'):adapter_indices.add(plan.get('action_statistics_checkpoint',50))
-    staging=stage_weights(base,{n:training/f'checkpoint_{n:06d}' for n in sorted(adapter_indices)},Path('/root/panda-sweep-cache')/directory.name)
+    pending_wait=plan.get('checkpoint_wait_seconds',0)
+    incremental=bool(pending_wait)
+    if incremental:
+        first=plan.get('action_statistics_checkpoint',50) if 0 in checkpoints and plan.get('include_base_model') else checkpoints[0]
+        wait_checkpoint(training/f'checkpoint_{first:06d}',pending_wait,training.parent.parent/'status.json')
+        staged_adapters={first:training/f'checkpoint_{first:06d}'}
+    else:
+        adapter_indices={n for n in checkpoints if n!=0 or not plan.get('include_base_model')}
+        if 0 in checkpoints and plan.get('include_base_model'):adapter_indices.add(plan.get('action_statistics_checkpoint',50))
+        staged_adapters={n:training/f'checkpoint_{n:06d}' for n in sorted(adapter_indices)}
+    cache=Path('/root/panda-sweep-cache')/directory.name
+    if incremental and (cache/'staging.json').is_file():
+        cached=json.loads((cache/'staging.json').read_text())
+        allowed=set(plan['checkpoints'])|{plan.get('action_statistics_checkpoint',50)}
+        for name in cached['sources']:
+            if name=='base':continue
+            index=int(name.removeprefix('checkpoint_'))
+            if index not in allowed:raise ValueError('Staged checkpoint outside sweep plan')
+            staged_adapters[index]=training/f'checkpoint_{index:06d}'
+    staging=stage_weights(base,dict(staged_adapters),cache)
     local=output_path('cloud-sweeps',root=PROJECT_ROOT/'outputs')/directory.name;local.mkdir(parents=True,exist_ok=True)
     env=os.environ.copy();env.pop('RUNPOD_API_KEY',None);env['MUJOCO_GL']='egl';env['PYOPENGL_PLATFORM']='egl'
     # Render once before expensive model loading; a dependency/graphics failure is explicit.
@@ -99,6 +135,11 @@ def run(directory,sim_python,*,port=0):
     error=None
     try:
         for checkpoint in checkpoints:
+            is_base=checkpoint==0 and plan.get('include_base_model')
+            if incremental and not is_base and checkpoint not in staged_adapters:
+                wait_checkpoint(training/f'checkpoint_{checkpoint:06d}',pending_wait,training.parent.parent/'status.json')
+                staged_adapters[checkpoint]=training/f'checkpoint_{checkpoint:06d}'
+                staging=stage_weights(base,dict(staged_adapters),cache,incremental=True)
             selected=[s for s in specs if s['checkpoint']==checkpoint]
             server_log=directory/f'cloud_server_{checkpoint:06d}.log'
             ready_file=local/f'server_ready_{checkpoint:06d}.json'

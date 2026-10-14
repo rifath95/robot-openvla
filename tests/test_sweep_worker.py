@@ -10,10 +10,17 @@ from cloud.sweep_plan import trial_specs,timeout_budget
 
 class WorkerTests(unittest.TestCase):
     def test_resume_dispatch_and_persistent_results(self):
+        self.run_case()
+
+    def test_wait_and_stage_only_when_next_checkpoint_is_needed(self):
+        self.run_case(pending=True)
+
+    def run_case(self,pending=False):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);directory=root/'sweep';directory.mkdir()
             plan=dict(task='color_transfer',checkpoints=[100,300],scene_seeds=[1000],color_pairs=[['black','purple']],
                 steps=50,sampling=False,cube_positions=[{'red':[.4,.1],'blue':[.6,-.1]}],training_session='panda-train-test',timeout_budget=timeout_budget(100))
+            if pending:plan['checkpoint_wait_seconds']=30
             specs=list(trial_specs(plan))
             saved=[dict(specs[0],phase='Failed',completed_steps=10,outcome='no_contact',contact=False)]
             (directory/'results.json').write_text(json.dumps(dict(plan=plan,trials=saved)))
@@ -32,6 +39,7 @@ class WorkerTests(unittest.TestCase):
                 patch.object(worker.subprocess,'run',side_effect=run),patch.object(worker.subprocess,'Popen',return_value=server), \
                 patch.object(worker.subprocess,'check_output',return_value='commit'), \
                 patch.object(worker,'wait_server',return_value=dict(startup_info={},server_port=12345)), \
+                patch.object(worker,'wait_checkpoint') as ready, \
                 patch.object(worker,'write_reports',side_effect=lambda folder,plan,rows,error=None:(folder/'results.json').write_text(json.dumps(dict(plan=plan,trials=rows)))):
                 worker.run(directory,'/sim/python')
             self.assertEqual(len(calls),3)
@@ -45,6 +53,11 @@ class WorkerTests(unittest.TestCase):
             self.assertEqual(len(result['trials']),4);self.assertEqual(result['trials'][0],saved[0])
             self.assertTrue(all(r['execution_mode']=='cloud_sequential' for r in result['trials'][1:]))
             for row in result['trials'][1:]:self.assertEqual((directory/row['directory']/'before.png').read_bytes(),b'pixels')
-            self.assertEqual(stage.call_count,1)
+            self.assertEqual(stage.call_count,2 if pending else 1)
+            if pending:
+                self.assertEqual([call.args[0].name for call in ready.call_args_list],['checkpoint_000100','checkpoint_000300'])
+                self.assertEqual(set(stage.call_args_list[0].args[1]),{100})
+                self.assertEqual(set(stage.call_args_list[1].args[1]),{100,300})
+                self.assertTrue(stage.call_args_list[1].kwargs['incremental'])
 
 if __name__=='__main__':unittest.main()
