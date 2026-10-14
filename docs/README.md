@@ -84,3 +84,5 @@ For result folders and replay locations, see the [local outputs layout](OUTPUT_L
 - [Phase 4 lift dataset expanded to 300](reviews/LIFT_CUBE_300.md): preserved pilot demonstrations, split counts, verification and training setup.
 
 - [Phase 4 bowl placement: first ten](reviews/PLACE_BOWL_FIRST_TEN.md): blue bowl interior, fixed lift start, physical placement and replay checks.
+
+- [Phase 4 bowl placement expanded to 50](reviews/PLACE_BOWL_50.md): verified examples, upload bundle and proposed pilot configuration.

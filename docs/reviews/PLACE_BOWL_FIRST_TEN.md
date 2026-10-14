@@ -62,5 +62,5 @@ After user review, extend the same directory with:
 ```
 
 The first ten recordings remain. A 50-trajectory collection uses 34 training,
-8 validation and 8 test episodes. No expansion, bundle export, HF upload or
-training has been started for this direction yet.
+8 validation and 8 test episodes. The first ten were subsequently approved and [expanded to 50](PLACE_BOWL_50.md).
+No HF upload or training has started for this direction yet.

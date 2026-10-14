@@ -45,7 +45,7 @@ base achieved 0/10. The dataset is now [expanded to 300](docs/reviews/LIFT_CUBE_
 for a 1,000-update run. This small evaluation demonstrates progress, not broad
 reliability; the expanded dataset has not yet been trained.
 
-A parallel bowl-placement direction now has [ten reviewable demonstrations](docs/reviews/PLACE_BOWL_FIRST_TEN.md), using a blue bowl interior and the same controller. Expansion waits for review.
+A parallel bowl-placement direction now has [50 verified demonstrations](docs/reviews/PLACE_BOWL_50.md), preserving the reviewed first ten and using a blue bowl interior and the same controller. The portable upload bundle is prepared.
 
 ## Goal
 

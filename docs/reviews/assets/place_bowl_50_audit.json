@@ -1,0 +1,428 @@
+{
+  "trajectories": 50,
+  "split_counts": {
+    "train": 34,
+    "validation": 8,
+    "test": 8
+  },
+  "split_transitions": {
+    "train": 2446,
+    "validation": 596,
+    "test": 586
+  },
+  "stage_counts": {
+    "approach": 584,
+    "lower_to_grasp": 621,
+    "close": 50,
+    "lift": 674,
+    "transfer_to_bowl": 1049,
+    "lower_above_bowl": 300,
+    "drop": 50,
+    "retreat": 300
+  },
+  "all_replays_passed": true,
+  "controller_unchanged": true,
+  "first_ten_preserved": true,
+  "results": [
+    {
+      "id": "train_001",
+      "split": "train",
+      "transitions": 79,
+      "maximum_lift_metres": 0.14539380889541276,
+      "bowl_center_distance_metres": 0.0012248607091257398,
+      "replay_error": 1.838085239569409e-12
+    },
+    {
+      "id": "train_002",
+      "split": "train",
+      "transitions": 77,
+      "maximum_lift_metres": 0.15051351242221023,
+      "bowl_center_distance_metres": 0.0010815623905926516,
+      "replay_error": 1.37293995616794e-12
+    },
+    {
+      "id": "train_003",
+      "split": "train",
+      "transitions": 71,
+      "maximum_lift_metres": 0.14990085797538705,
+      "bowl_center_distance_metres": 0.0007404075690768646,
+      "replay_error": 1.5249607132616916e-13
+    },
+    {
+      "id": "train_004",
+      "split": "train",
+      "transitions": 69,
+      "maximum_lift_metres": 0.1467782158962389,
+      "bowl_center_distance_metres": 0.00041745626971251363,
+      "replay_error": 0.0
+    },
+    {
+      "id": "validation_001",
+      "split": "validation",
+      "transitions": 73,
+      "maximum_lift_metres": 0.14673189454573704,
+      "bowl_center_distance_metres": 0.0018877763843703833,
+      "replay_error": 0.0
+    },
+    {
+      "id": "test_001",
+      "split": "test",
+      "transitions": 73,
+      "maximum_lift_metres": 0.14676851218319953,
+      "bowl_center_distance_metres": 0.0009963901303263886,
+      "replay_error": 7.5664391333158e-14
+    },
+    {
+      "id": "train_005",
+      "split": "train",
+      "transitions": 68,
+      "maximum_lift_metres": 0.14686527161185386,
+      "bowl_center_distance_metres": 0.0014476398676158536,
+      "replay_error": 6.303818897774779e-12
+    },
+    {
+      "id": "train_006",
+      "split": "train",
+      "transitions": 74,
+      "maximum_lift_metres": 0.1453108681115532,
+      "bowl_center_distance_metres": 0.0008825707668033863,
+      "replay_error": 2.5122126601218042e-12
+    },
+    {
+      "id": "train_007",
+      "split": "train",
+      "transitions": 75,
+      "maximum_lift_metres": 0.14691473890251266,
+      "bowl_center_distance_metres": 0.0005284178283507368,
+      "replay_error": 1.0820233597996776e-12
+    },
+    {
+      "id": "train_008",
+      "split": "train",
+      "transitions": 82,
+      "maximum_lift_metres": 0.1508217519439225,
+      "bowl_center_distance_metres": 0.0016911174575443776,
+      "replay_error": 0.0
+    },
+    {
+      "id": "validation_002",
+      "split": "validation",
+      "transitions": 64,
+      "maximum_lift_metres": 0.14668206671707712,
+      "bowl_center_distance_metres": 0.0007383221954549795,
+      "replay_error": 0.0
+    },
+    {
+      "id": "test_002",
+      "split": "test",
+      "transitions": 69,
+      "maximum_lift_metres": 0.14689140172588872,
+      "bowl_center_distance_metres": 0.0008838947336161039,
+      "replay_error": 7.389644451905042e-13
+    },
+    {
+      "id": "train_009",
+      "split": "train",
+      "transitions": 63,
+      "maximum_lift_metres": 0.14551940601767055,
+      "bowl_center_distance_metres": 0.0006246665419067812,
+      "replay_error": 8.957279362675763e-13
+    },
+    {
+      "id": "train_010",
+      "split": "train",
+      "transitions": 72,
+      "maximum_lift_metres": 0.146761897992586,
+      "bowl_center_distance_metres": 0.0011082481636317866,
+      "replay_error": 3.95516952522712e-14
+    },
+    {
+      "id": "train_011",
+      "split": "train",
+      "transitions": 68,
+      "maximum_lift_metres": 0.14678789278880572,
+      "bowl_center_distance_metres": 0.0012926342770561033,
+      "replay_error": 2.6856294965682537e-13
+    },
+    {
+      "id": "train_012",
+      "split": "train",
+      "transitions": 69,
+      "maximum_lift_metres": 0.14698238811786019,
+      "bowl_center_distance_metres": 0.0009983154576269065,
+      "replay_error": 4.712341628021477e-13
+    },
+    {
+      "id": "validation_003",
+      "split": "validation",
+      "transitions": 75,
+      "maximum_lift_metres": 0.1452435258980126,
+      "bowl_center_distance_metres": 0.0007227923843598546,
+      "replay_error": 1.1897660816367603e-12
+    },
+    {
+      "id": "test_003",
+      "split": "test",
+      "transitions": 81,
+      "maximum_lift_metres": 0.1518072847992989,
+      "bowl_center_distance_metres": 0.0020764904166650708,
+      "replay_error": 3.6964875604894587e-13
+    },
+    {
+      "id": "train_013",
+      "split": "train",
+      "transitions": 72,
+      "maximum_lift_metres": 0.14860728830146608,
+      "bowl_center_distance_metres": 0.0014905973484103086,
+      "replay_error": 0.0
+    },
+    {
+      "id": "train_014",
+      "split": "train",
+      "transitions": 65,
+      "maximum_lift_metres": 0.14629595959814884,
+      "bowl_center_distance_metres": 0.0005820017338834185,
+      "replay_error": 1.8745005547771143e-12
+    },
+    {
+      "id": "train_015",
+      "split": "train",
+      "transitions": 68,
+      "maximum_lift_metres": 0.14646274396304354,
+      "bowl_center_distance_metres": 0.0011864528287463866,
+      "replay_error": 7.309569616253953e-13
+    },
+    {
+      "id": "train_016",
+      "split": "train",
+      "transitions": 78,
+      "maximum_lift_metres": 0.14505280351564276,
+      "bowl_center_distance_metres": 0.0011931198156680733,
+      "replay_error": 0.0
+    },
+    {
+      "id": "validation_004",
+      "split": "validation",
+      "transitions": 82,
+      "maximum_lift_metres": 0.146780255936712,
+      "bowl_center_distance_metres": 0.0015004945656109847,
+      "replay_error": 8.069933610244107e-13
+    },
+    {
+      "id": "test_004",
+      "split": "test",
+      "transitions": 61,
+      "maximum_lift_metres": 0.14683097832295333,
+      "bowl_center_distance_metres": 0.0008450935288098906,
+      "replay_error": 2.5540680681501726e-12
+    },
+    {
+      "id": "train_017",
+      "split": "train",
+      "transitions": 74,
+      "maximum_lift_metres": 0.14814780452661086,
+      "bowl_center_distance_metres": 0.00026757656687648114,
+      "replay_error": 1.4462042674523445e-13
+    },
+    {
+      "id": "train_018",
+      "split": "train",
+      "transitions": 70,
+      "maximum_lift_metres": 0.14537087019315453,
+      "bowl_center_distance_metres": 0.0008586656888986647,
+      "replay_error": 2.86420887007921e-12
+    },
+    {
+      "id": "train_019",
+      "split": "train",
+      "transitions": 66,
+      "maximum_lift_metres": 0.14689083999779212,
+      "bowl_center_distance_metres": 0.0006525446605897595,
+      "replay_error": 1.7388313011679202e-12
+    },
+    {
+      "id": "train_020",
+      "split": "train",
+      "transitions": 79,
+      "maximum_lift_metres": 0.1452474733688388,
+      "bowl_center_distance_metres": 0.001331117931592861,
+      "replay_error": 0.0
+    },
+    {
+      "id": "validation_005",
+      "split": "validation",
+      "transitions": 79,
+      "maximum_lift_metres": 0.14534943139704148,
+      "bowl_center_distance_metres": 0.00121389253207498,
+      "replay_error": 0.0
+    },
+    {
+      "id": "test_005",
+      "split": "test",
+      "transitions": 73,
+      "maximum_lift_metres": 0.146651369766382,
+      "bowl_center_distance_metres": 0.0006895573077643227,
+      "replay_error": 2.4397275978624405e-12
+    },
+    {
+      "id": "train_021",
+      "split": "train",
+      "transitions": 64,
+      "maximum_lift_metres": 0.1468570020495122,
+      "bowl_center_distance_metres": 0.0004315834992964326,
+      "replay_error": 4.9709962560896503e-14
+    },
+    {
+      "id": "train_022",
+      "split": "train",
+      "transitions": 67,
+      "maximum_lift_metres": 0.1467142951849585,
+      "bowl_center_distance_metres": 0.002704635769737506,
+      "replay_error": 0.0
+    },
+    {
+      "id": "train_023",
+      "split": "train",
+      "transitions": 76,
+      "maximum_lift_metres": 0.15081456084920009,
+      "bowl_center_distance_metres": 0.00010579716094181533,
+      "replay_error": 7.19979631469414e-13
+    },
+    {
+      "id": "train_024",
+      "split": "train",
+      "transitions": 81,
+      "maximum_lift_metres": 0.14677177589459256,
+      "bowl_center_distance_metres": 0.0012675033959299157,
+      "replay_error": 6.216138714876251e-13
+    },
+    {
+      "id": "validation_006",
+      "split": "validation",
+      "transitions": 79,
+      "maximum_lift_metres": 0.14689216558363266,
+      "bowl_center_distance_metres": 0.0008936376413695451,
+      "replay_error": 0.0
+    },
+    {
+      "id": "test_006",
+      "split": "test",
+      "transitions": 79,
+      "maximum_lift_metres": 0.1451694932844529,
+      "bowl_center_distance_metres": 0.0008989715040879453,
+      "replay_error": 4.780049377938102e-12
+    },
+    {
+      "id": "train_025",
+      "split": "train",
+      "transitions": 71,
+      "maximum_lift_metres": 0.14688732980844604,
+      "bowl_center_distance_metres": 0.0012665202572184932,
+      "replay_error": 2.2382096176443156e-13
+    },
+    {
+      "id": "train_026",
+      "split": "train",
+      "transitions": 68,
+      "maximum_lift_metres": 0.14534215160553732,
+      "bowl_center_distance_metres": 0.001134636247587089,
+      "replay_error": 1.1440848268762238e-13
+    },
+    {
+      "id": "train_027",
+      "split": "train",
+      "transitions": 68,
+      "maximum_lift_metres": 0.1451553489036626,
+      "bowl_center_distance_metres": 0.0013186243365798517,
+      "replay_error": 1.1347589534693725e-12
+    },
+    {
+      "id": "train_028",
+      "split": "train",
+      "transitions": 75,
+      "maximum_lift_metres": 0.14667424865344708,
+      "bowl_center_distance_metres": 0.0010916148505647127,
+      "replay_error": 2.052691350229452e-12
+    },
+    {
+      "id": "validation_007",
+      "split": "validation",
+      "transitions": 74,
+      "maximum_lift_metres": 0.14530060706864434,
+      "bowl_center_distance_metres": 0.0014906344517151878,
+      "replay_error": 0.0
+    },
+    {
+      "id": "test_007",
+      "split": "test",
+      "transitions": 71,
+      "maximum_lift_metres": 0.14681414430724782,
+      "bowl_center_distance_metres": 0.0005473680896783922,
+      "replay_error": 1.177147268549561e-11
+    },
+    {
+      "id": "train_029",
+      "split": "train",
+      "transitions": 70,
+      "maximum_lift_metres": 0.1466693715522337,
+      "bowl_center_distance_metres": 0.0008281601711079297,
+      "replay_error": 0.0
+    },
+    {
+      "id": "train_030",
+      "split": "train",
+      "transitions": 73,
+      "maximum_lift_metres": 0.14690359467196185,
+      "bowl_center_distance_metres": 0.0008291879189239175,
+      "replay_error": 0.0
+    },
+    {
+      "id": "train_031",
+      "split": "train",
+      "transitions": 79,
+      "maximum_lift_metres": 0.14512968693465012,
+      "bowl_center_distance_metres": 0.0012658228610395114,
+      "replay_error": 1.9038659537784497e-12
+    },
+    {
+      "id": "train_032",
+      "split": "train",
+      "transitions": 78,
+      "maximum_lift_metres": 0.14660554015171762,
+      "bowl_center_distance_metres": 0.0009065178577820162,
+      "replay_error": 5.589417817475351e-13
+    },
+    {
+      "id": "validation_008",
+      "split": "validation",
+      "transitions": 70,
+      "maximum_lift_metres": 0.1507588358500832,
+      "bowl_center_distance_metres": 0.0005178443319968339,
+      "replay_error": 3.270016834700836e-12
+    },
+    {
+      "id": "test_008",
+      "split": "test",
+      "transitions": 79,
+      "maximum_lift_metres": 0.14544089471766686,
+      "bowl_center_distance_metres": 0.0009312802093925437,
+      "replay_error": 1.6686652060116103e-13
+    },
+    {
+      "id": "train_033",
+      "split": "train",
+      "transitions": 69,
+      "maximum_lift_metres": 0.1454802819125665,
+      "bowl_center_distance_metres": 0.0019887252284339404,
+      "replay_error": 7.018136072289849e-13
+    },
+    {
+      "id": "train_034",
+      "split": "train",
+      "transitions": 68,
+      "maximum_lift_metres": 0.14675192672658632,
+      "bowl_center_distance_metres": 0.0013122539293824137,
+      "replay_error": 0.0
+    }
+  ]
+}
