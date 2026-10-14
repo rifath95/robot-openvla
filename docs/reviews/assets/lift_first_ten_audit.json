@@ -1,0 +1,164 @@
+{
+  "trajectories": 10,
+  "split_counts": {
+    "train": 8,
+    "validation": 1,
+    "test": 1
+  },
+  "total_transitions": 334,
+  "replay_verified": true,
+  "updated_controller_sha256": "06285e938bf6713a35fa9ffc27f90538c1e45b42869a840eec70b4ebf306fa5e",
+  "no_stationary_lift_tail": true,
+  "results": [
+    {
+      "id": "train_001",
+      "split": "train",
+      "transitions": 32,
+      "lift_cm": 7.440898206559882,
+      "continuous_seconds": 1.120000000000374,
+      "replay_error": 6.271350626307903e-15,
+      "max_tracking_mm": 1.6083834169521525,
+      "stages": {
+        "approach_above_cube": 14,
+        "lower_to_grasp": 9,
+        "close_gripper": 1,
+        "lift": 8
+      }
+    },
+    {
+      "id": "train_002",
+      "split": "train",
+      "transitions": 32,
+      "lift_cm": 7.4447217746949015,
+      "continuous_seconds": 1.120000000000374,
+      "replay_error": 3.552713678800501e-15,
+      "max_tracking_mm": 1.5872317485119227,
+      "stages": {
+        "approach_above_cube": 14,
+        "lower_to_grasp": 9,
+        "close_gripper": 1,
+        "lift": 8
+      }
+    },
+    {
+      "id": "train_003",
+      "split": "train",
+      "transitions": 32,
+      "lift_cm": 7.439913861420743,
+      "continuous_seconds": 1.120000000000374,
+      "replay_error": 0.0,
+      "max_tracking_mm": 1.591761427580242,
+      "stages": {
+        "approach_above_cube": 14,
+        "lower_to_grasp": 9,
+        "close_gripper": 1,
+        "lift": 8
+      }
+    },
+    {
+      "id": "train_004",
+      "split": "train",
+      "transitions": 34,
+      "lift_cm": 7.429470334467425,
+      "continuous_seconds": 1.120000000000374,
+      "replay_error": 0.0,
+      "max_tracking_mm": 1.607960913721919,
+      "stages": {
+        "approach_above_cube": 16,
+        "lower_to_grasp": 9,
+        "close_gripper": 1,
+        "lift": 8
+      }
+    },
+    {
+      "id": "validation_001",
+      "split": "validation",
+      "transitions": 37,
+      "lift_cm": 7.430988003733424,
+      "continuous_seconds": 1.120000000000374,
+      "replay_error": 3.9968028886505635e-15,
+      "max_tracking_mm": 1.6008896992872237,
+      "stages": {
+        "approach_above_cube": 19,
+        "lower_to_grasp": 9,
+        "close_gripper": 1,
+        "lift": 8
+      }
+    },
+    {
+      "id": "test_001",
+      "split": "test",
+      "transitions": 33,
+      "lift_cm": 7.445170194506995,
+      "continuous_seconds": 1.120000000000374,
+      "replay_error": 0.0,
+      "max_tracking_mm": 1.6074584535536798,
+      "stages": {
+        "approach_above_cube": 15,
+        "lower_to_grasp": 9,
+        "close_gripper": 1,
+        "lift": 8
+      }
+    },
+    {
+      "id": "train_005",
+      "split": "train",
+      "transitions": 31,
+      "lift_cm": 7.44314654119072,
+      "continuous_seconds": 1.120000000000374,
+      "replay_error": 1.095295297127573e-14,
+      "max_tracking_mm": 1.5876296383783932,
+      "stages": {
+        "approach_above_cube": 13,
+        "lower_to_grasp": 9,
+        "close_gripper": 1,
+        "lift": 8
+      }
+    },
+    {
+      "id": "train_006",
+      "split": "train",
+      "transitions": 32,
+      "lift_cm": 7.437234744515414,
+      "continuous_seconds": 1.120000000000374,
+      "replay_error": 0.0,
+      "max_tracking_mm": 1.5912729645112462,
+      "stages": {
+        "approach_above_cube": 14,
+        "lower_to_grasp": 9,
+        "close_gripper": 1,
+        "lift": 8
+      }
+    },
+    {
+      "id": "train_007",
+      "split": "train",
+      "transitions": 34,
+      "lift_cm": 7.430950798140229,
+      "continuous_seconds": 1.120000000000374,
+      "replay_error": 0.0,
+      "max_tracking_mm": 1.6056877423334208,
+      "stages": {
+        "approach_above_cube": 16,
+        "lower_to_grasp": 9,
+        "close_gripper": 1,
+        "lift": 8
+      }
+    },
+    {
+      "id": "train_008",
+      "split": "train",
+      "transitions": 37,
+      "lift_cm": 7.4074758999698895,
+      "continuous_seconds": 1.120000000000374,
+      "replay_error": 1.354472090042691e-14,
+      "max_tracking_mm": 1.6026311165954654,
+      "stages": {
+        "approach_above_cube": 19,
+        "lower_to_grasp": 9,
+        "close_gripper": 1,
+        "lift": 8
+      }
+    }
+  ]
+}

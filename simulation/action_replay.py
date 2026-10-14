@@ -33,9 +33,11 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
     if [r['index'] for r in rows]!=list(range(1,len(rows)+1)):
         raise ValueError('Demonstration action sequence is not contiguous')
     model,camera=replay_model(folder)
-    if metadata.get('scene_profile') in ('panda_bowl_v1','panda_touch_v1','panda_color_touch_v1'):
+    if metadata.get('scene_profile') in ('panda_bowl_v1','panda_touch_v1','panda_color_touch_v1','panda_lift_v1'):
         from data_tools.bowl_demonstrations import controller_fingerprint
-        if metadata['scene_profile']=='panda_color_touch_v1':
+        if metadata['scene_profile']=='panda_lift_v1':
+            from simulation.lift_scene import scene_fingerprint
+        elif metadata['scene_profile']=='panda_color_touch_v1':
             from simulation.color_touch_scene import scene_fingerprint
         elif metadata['scene_profile']=='panda_touch_v1':
             from simulation.touch_scene import scene_fingerprint
@@ -53,6 +55,10 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
     restore_state(folder/'initial_state.npz',env)
     # Restore once only. Subsequent states must result from executing the actions.
     initial=cube_position(env);positions=[initial.copy()]
+    lift_tracker=None
+    if metadata.get('scene_profile')=='panda_lift_v1':
+        from simulation.lift_scene import LiftSuccess
+        lift_tracker=LiftSuccess(initial)
     output=Path(output_dir) if output_dir else output_path(f'action_replay_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}')
     output.mkdir(parents=True,exist_ok=False)
     (output/'episode.json').write_text(json.dumps(dict(metadata,training_eligible=False,
@@ -120,6 +126,7 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
                     started=time.perf_counter();count=min(20,physics_steps-executed)
                     with viewer.lock() if viewer is not None else nullcontext():
                         env.controller.step(count)
+                        if lift_tracker is not None:lift_tracker.observe(env)
                         poses.append(data.qpos.copy());times.append(float(data.time))
                     executed+=count
                     if viewer is not None:
@@ -159,6 +166,7 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
                     maximum_cube_lift_metres=float(max(p[2] for p in positions)-initial[2]),
                     maximum_recorded_qpos_difference=max((r['recorded_qpos_max_difference'] for r in results),default=0),
                     note='Recorded-pose differences are measured, not corrected. Collection mode reproduces the pre-holding-fix actuator target assignment, not an arbitrary historical code version.')
+        if lift_tracker is not None:report['task_result']=lift_tracker.last
         if metadata.get('scene_profile')=='panda_bowl_v1':
             from data_tools.bowl_demonstrations import task_result
             report['task_result']=task_result(initial,np.asarray(metadata['scenario']['scene']['bowl_position']),positions,env)

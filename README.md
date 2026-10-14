@@ -37,9 +37,10 @@ experiments, findings, saved artifacts and limitations, and the
 [final model sweep review](docs/reviews/FOUR_COLOR_MODEL_SWEEP_REVIEW.md) for the
 480-trial evaluation. The original pick-and-place objective was narrowed after
 unsuccessful grasp/lift experiments; reliable model-driven pick-and-place remains
-open. Phase 4 is planned; no new experiment has started. The next prepared evaluation
-tests [color selection among 4, 5 and 6 cubes](docs/cloud/MULTI_COLOR_MODEL_SWEEP.md)
-with the base model and all five checkpoints.
+open. The [multi-cube sweep review](docs/reviews/MULTI_CUBE_MODEL_SWEEP_REVIEW.md)
+recommends checkpoint 300 for that harder color-selection task. Phase 4 has started
+with [ten single-cube grasp/lift demonstrations](docs/reviews/LIFT_CUBE_FIRST_TEN.md),
+awaiting review before expansion or training.
 
 ## Goal
 
@@ -128,10 +129,13 @@ The [completion summary](docs/reviews/PHASE3_COMPLETION.md) records the full sco
 and evidence; [training](docs/training/FOUR_COLOR_TOUCH_TRAINING.md) and
 [sweep](docs/cloud/FOUR_COLOR_MODEL_SWEEP.md) guides reproduce the final experiment.
 
-### Phase 4 — planned: broader skills and transfer
+### Phase 4 — started: single-cube grasping and lifting
 
-Choose the next experiment separately: broaden touch-task robustness, introduce
-a distinct grasp/lift skill, or evaluate additional language/visual transfer.
+The first ten replay-verified grasp/lift demonstrations are ready for review in
+`datasets/panda_lift_cube/`. The arm starts in a fixed pose with an open gripper;
+cube positions vary. See the [pilot review](docs/reviews/LIFT_CUBE_FIRST_TEN.md).
+No fine-tuning has started for this task. Expand only after the demonstrations
+are reviewed, then evaluate actual lift success before adding color distractors.
 Compare each extension with the Phase 3 baseline and measure retention of the
 existing touch/color skill. Reliable pick-and-place, broad starting-pose coverage
 and real-robot transfer remain future goals.
@@ -402,12 +406,12 @@ The successful test used `bridge_orig` action statistics. These statistics are f
 
 ## Current status and next intended work
 
-**Phases 1–3 are complete; Phase 4 is planned.** The current demonstrated skill
+**Phases 1–3 are complete; Phase 4's lift dataset is awaiting review.** The current learned skill
 is instruction-guided cube touching, with successful transfer to colors excluded
 from fine-tuning. Checkpoint 1,000 from `panda-train-20261013-110217-1084` is the
-best observed model in the final sweep. See the
-[Phase 3 completion summary](docs/reviews/PHASE3_COMPLETION.md) before choosing
-the next experiment.
+best observed model in the two-cube sweep; checkpoint 300 leads the multi-cube
+sweep. The [lift pilot review](docs/reviews/LIFT_CUBE_FIRST_TEN.md) describes the
+next experiment. It demonstrates expert execution, not a trained lift policy.
 
 Use [CLOUD_QUICKSTART.md](docs/cloud/CLOUD_QUICKSTART.md) for remote sessions,
 [FOUR_COLOR_TOUCH_TRAINING.md](docs/training/FOUR_COLOR_TOUCH_TRAINING.md) for the
