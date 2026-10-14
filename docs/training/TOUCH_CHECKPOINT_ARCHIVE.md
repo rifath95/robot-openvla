@@ -34,7 +34,14 @@ On a new cloud pod, download this same model repository and pinned revision into
 
 The project inference workflow can merge it with the matching OpenVLA base weights using `training.merge_adapter`. The adapter can initialize further fine-tuning, but no optimizer state is included, so it is not an exact optimizer-state resume.
 
-## Approved volume cleanup
+## October 14 follow-up
+
+The network-volume copy of checkpoint 300's adapter weight was removed during
+[the follow-up cleanup](../reviews/VOLUME_CLEANUP_20261014.md). Its metadata and
+reports remain, and the verified HF archive above is the restore source.
+The newer four-color checkpoints are retained separately.
+
+## Approved volume cleanup (October 13 snapshot)
 
 After upload verification, removed the other 14 checkpoints from this session and `/workspace/panda-training/training_touch_v1`. Retained:
 

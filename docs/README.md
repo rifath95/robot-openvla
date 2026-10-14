@@ -58,6 +58,7 @@ and limitations, and [repository layout](REPOSITORY_LAYOUT.md) for code location
 
 ## Audits and findings
 
+- [October 14 volume cleanup and retained checkpoints/results](reviews/VOLUME_CLEANUP_20261014.md)
 - [Phase 3 completion: experiments, achievements and remaining limits](reviews/PHASE3_COMPLETION.md)
 - [Four-color sweep: base, all checkpoints, and stronger unseen-color generalization](reviews/FOUR_COLOR_MODEL_SWEEP_REVIEW.md)
 - [Red/blue wrong-cube and alignment failure diagnosis](reviews/COLOR_TOUCH_FAILURE_DIAGNOSIS.md)

@@ -4,6 +4,16 @@ The new `cloud.cloud_sweep_session` mode runs MuJoCo, rendering, inference, and 
 
 The ordinary interactive simulator workflow stays available. This mode runs sequential trials (inference batch one). OpenVLA's upstream generation wrapper explicitly rejects larger batches; batching was deferred rather than replacing its decoder. Physics runs on CPU; headless EGL rendering and model inference use the pod GPU.
 
+## Choose result delivery before renting the next pod
+
+Remind the user to choose direct Mac download or cloud-to-Hugging-Face archiving
+while preparing the sweep, before deployment. With a slow Mac connection, uploading
+from the pod to HF allows GPU stopping before the later Mac download. Prepare that
+flow and the HF write credential in advance. The current sweep launcher does not
+automatically invoke the separate [HF archive helper](HF_SWEEP_ARCHIVE.md).
+For the completed 1,080-trial multi-cube sweep, the user chose to finish the direct
+download already in progress and skip HF upload.
+
 ## Resume the interrupted color-transfer sweep
 
 Checkpoint 50 and checkpoint 100 each have 60 recorded trials. Those 120 outcomes, including task failures, remain unchanged. The new worker executes only checkpoint 300 and 500, for 120 remaining trials. Recorded results retain their original execution mode; new rows and startup metadata identify cloud execution. Linux/EGL rendering can differ slightly from Mac rendering; this change is recorded and timing measurements should not be pooled as identical Mac-to-cloud measurements.
