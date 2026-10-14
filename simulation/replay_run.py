@@ -30,6 +30,11 @@ def replay_model(folder):
         model=mujoco.MjModel.from_xml_path(str(scene_path(len(names))))
         configure_colors(model,names)
         return model,CAMERA_NAME
+    if metadata.get('scene_profile') == 'panda_color_lift_v1':
+        from simulation.color_lift_scene import SCENE_PATH,CAMERA_NAME,configure_grip
+        from simulation.color_palette import configure_colors
+        model=mujoco.MjModel.from_xml_path(str(SCENE_PATH));configure_grip(model)
+        configure_colors(model,metadata['cube_colors']);return model,CAMERA_NAME
     if metadata.get('scene_profile') == 'panda_color_transfer_v1':
         from simulation.color_touch_scene import SCENE_PATH,CAMERA_NAME
         from simulation.color_palette import configure_colors

@@ -18,6 +18,20 @@ from simulation.panda_actions import PHYSICS_STEPS
 
 
 class LoopTests(unittest.TestCase):
+    def test_two_cube_lift_start_uses_open_gripper_and_matching_replay_colors(self):
+        from simulation.replay_run import replay_model
+        with tempfile.TemporaryDirectory() as tmp:
+            output=Path(tmp)/'run';stop=threading.Event();stop.set()
+            run_loop(task='color_lift',scene_seed=1000,target_color='yellow',cube_colors=['blue','yellow'],
+                steps=1,no_view=True,stop_event=stop,output_dir=output)
+            metadata=json.loads((output/'episode.json').read_text())
+            self.assertEqual(metadata['instruction'],'pick up the yellow cube.')
+            self.assertEqual(metadata['scene_profile'],'panda_color_lift_v1')
+            self.assertEqual(metadata['scenario']['scene']['starting_pose']['requested_gripper_open_fraction'],1)
+            model,camera=replay_model(output);self.assertEqual(camera,'touch_camera')
+            result=json.loads((output/'summary.json').read_text())['task_result']
+            self.assertFalse(result['correct_cube_lift']);self.assertFalse(result['wrong_cube_lift'])
+
     def test_placement_start_records_matching_blue_scene(self):
         from simulation.replay_run import replay_model
         from inference.place_bowl_task import layout

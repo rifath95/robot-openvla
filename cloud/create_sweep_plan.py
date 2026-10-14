@@ -35,7 +35,7 @@ def create(profile):
                 if any(sum((a-b)**2 for a,b in zip(xy,old))<1e-12 for old in list(episode.get('cube_positions',{'red':episode.get('cube_xy')}).values())+([episode['bowl_position'][:2]] if plan['task']=='place_bowl' else [])):
                     raise ValueError('Evaluation position appears in the collected dataset')
     payload=dict(plan=plan,trials=[],launcher_error=None);validate_saved(payload)
-    prefix='scripted_place_bowl_models' if plan['task']=='place_bowl' else 'scripted_lift_models' if plan['task']=='lift' else 'scripted_multi_color_models' if plan['task']=='multi_color_touch' else 'scripted_four_color_models'
+    prefix='scripted_color_lift_models' if plan['task']=='color_lift' else 'scripted_place_bowl_models' if plan['task']=='place_bowl' else 'scripted_lift_models' if plan['task']=='lift' else 'scripted_multi_color_models' if plan['task']=='multi_color_touch' else 'scripted_four_color_models'
     name=f'{prefix}_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}'
     folder=output_path(name,root=PROJECT_ROOT/'outputs');folder.mkdir(parents=True)
     from cloud.scripted_touch_session import write_reports

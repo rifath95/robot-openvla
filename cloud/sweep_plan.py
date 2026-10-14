@@ -12,7 +12,7 @@ def timeout_budget(estimated_seconds):
 
 def trial_specs(plan):
     task=plan['task']
-    if task not in ('touch','lift','place_bowl','color_touch','color_transfer','multi_color_touch'):raise ValueError('Unsupported scripted task')
+    if task not in ('touch','lift','place_bowl','color_touch','color_transfer','color_lift','multi_color_touch'):raise ValueError('Unsupported scripted task')
     if task=='multi_color_touch':
         for checkpoint in plan['checkpoints']:
             for group_index,group in enumerate(plan['color_sets']):
@@ -28,7 +28,7 @@ def trial_specs(plan):
                                 color_pair=None,color_set=group['name'],cube_count=count,directory=name)
         return
     for checkpoint in plan['checkpoints']:
-        if task=='color_transfer':
+        if task in ('color_transfer','color_lift'):
             pairs=plan['color_pairs']
         else:pairs=[['red','blue']] if task=='color_touch' else [['red']]
         for pair_index,pair in enumerate(pairs):
@@ -36,12 +36,12 @@ def trial_specs(plan):
                 colors=pair[::-1] if (index+pair_index)%2 else pair
                 for target in pair:
                     suffix=f'_{target}' if task not in ('touch','lift','place_bowl') else ''
-                    if task=='color_transfer':suffix=f'_{"-".join(pair)}'+suffix
+                    if task in ('color_transfer','color_lift'):suffix=f'_{"-".join(pair)}'+suffix
                     prefix='base_model' if checkpoint==0 and plan.get('include_base_model') else f'checkpoint_{checkpoint:06d}'
                     name=f'{prefix}_seed_{seed}{suffix}'
                     yield dict(checkpoint=checkpoint,seed=seed,target_color=target,
-                        cube_colors=colors if task=='color_transfer' else None,
-                        color_pair=':'.join(pair) if task=='color_transfer' else None,directory=name)
+                        cube_colors=colors if task in ('color_transfer','color_lift') else None,
+                        color_pair=':'.join(pair) if task in ('color_transfer','color_lift') else None,directory=name)
 
 
 def validate_saved(payload):
@@ -62,7 +62,7 @@ def validate_saved(payload):
         from inference.lift_task import cube_position_for_seed,validate_positions
         expected=[{'red':cube_position_for_seed(seed)} for seed in plan['scene_seeds']]
         validate_positions(plan.get('cube_positions'),expected)
-    if plan['task']=='color_transfer':
+    if plan['task'] in ('color_transfer','color_lift'):
         colors={'red','blue','black','purple','green','yellow','orange','white','pink','brown','cyan'}
         pairs=plan['color_pairs']
         if not pairs or any(len(p)!=2 or len(set(p))!=2 or not set(p)<=colors for p in pairs):raise ValueError('Invalid color pairs')
@@ -88,7 +88,7 @@ def validate_saved(payload):
         spec=specs.get(row['directory'])
         if spec is None or any(row.get(k)!=spec[k] for k in ('checkpoint','seed')):raise ValueError('Trial outside saved plan')
         if plan['task'] not in ('touch','lift','place_bowl') and row.get('target_color')!=spec['target_color']:raise ValueError('Wrong trial target')
-        if plan['task']=='color_transfer' and any(row.get(k)!=spec[k] for k in ('cube_colors','color_pair')):raise ValueError('Trial colors differ')
+        if plan['task'] in ('color_transfer','color_lift') and any(row.get(k)!=spec[k] for k in ('cube_colors','color_pair')):raise ValueError('Trial colors differ')
         if plan['task']=='multi_color_touch' and any(row.get(k)!=spec[k] for k in ('cube_colors','color_set','cube_count')):
             raise ValueError('Trial multi-cube scene differs')
     return specs

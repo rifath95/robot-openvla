@@ -19,7 +19,7 @@ def cube_position(env, color):
     return env.data.xpos[mujoco.mj_name2id(env.model, mujoco.mjtObj.mjOBJ_BODY, BODIES[color])].copy()
 
 
-def initialize_scene(env, positions):
+def initialize_scene(env, positions, *, gripper=0):
     for xy in positions.values():
         if len(xy) != 2 or not np.isfinite(xy).all() or not (
                 CUBE_X_BOUNDS[0] <= xy[0] <= CUBE_X_BOUNDS[1] and
@@ -28,7 +28,7 @@ def initialize_scene(env, positions):
     if set(positions) != set(BODIES) or np.linalg.norm(np.array(positions['red'])-positions['blue']) < .12:
         raise ValueError('Require separated red and blue cubes')
     reference = env.controller.end_effector_pose()[1].copy()
-    starting = initialize_start_pose(env, START_POSITION, 0, reference, gripper=0)
+    starting = initialize_start_pose(env, START_POSITION, 0, reference, gripper=gripper)
     for color, body in BODIES.items():
         joint = mujoco.mj_name2id(env.model, mujoco.mjtObj.mjOBJ_JOINT,
                                  'cube_joint' if color == 'red' else 'blue_cube_joint')
