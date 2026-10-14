@@ -1,0 +1,948 @@
+{
+  "sweep": "scripted_multi_color_models_20261013_164548_eeda379b",
+  "trials": 1080,
+  "scene_groups": 216,
+  "across_model_initial_inputs": 180,
+  "all_trial_summaries_match": true,
+  "all_instructions_match": true,
+  "all_initial_scenes_match": true,
+  "identical_initial_images_across_models": 66,
+  "identical_initial_images_within_instruction_groups": 93,
+  "models": [
+    {
+      "checkpoint": 0,
+      "all": {
+        "trials": 180,
+        "correct": 0,
+        "wrong": 0,
+        "no_contact": 180,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 0,
+        "success_rate": 0.0,
+        "choice_accuracy": null
+      },
+      "seen": {
+        "trials": 72,
+        "correct": 0,
+        "wrong": 0,
+        "no_contact": 72,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 0,
+        "success_rate": 0.0,
+        "choice_accuracy": null
+      },
+      "unseen": {
+        "trials": 108,
+        "correct": 0,
+        "wrong": 0,
+        "no_contact": 108,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 0,
+        "success_rate": 0.0,
+        "choice_accuracy": null
+      },
+      "by_cube_count": {
+        "4": {
+          "trials": 48,
+          "correct": 0,
+          "wrong": 0,
+          "no_contact": 48,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 0,
+          "success_rate": 0.0,
+          "choice_accuracy": null
+        },
+        "5": {
+          "trials": 60,
+          "correct": 0,
+          "wrong": 0,
+          "no_contact": 60,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 0,
+          "success_rate": 0.0,
+          "choice_accuracy": null
+        },
+        "6": {
+          "trials": 72,
+          "correct": 0,
+          "wrong": 0,
+          "no_contact": 72,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 0,
+          "success_rate": 0.0,
+          "choice_accuracy": null
+        }
+      },
+      "by_unseen_color": {
+        "black": {
+          "trials": 30,
+          "correct": 0,
+          "wrong": 0,
+          "no_contact": 30,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 0,
+          "success_rate": 0.0,
+          "choice_accuracy": null
+        },
+        "white": {
+          "trials": 24,
+          "correct": 0,
+          "wrong": 0,
+          "no_contact": 24,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 0,
+          "success_rate": 0.0,
+          "choice_accuracy": null
+        },
+        "purple": {
+          "trials": 18,
+          "correct": 0,
+          "wrong": 0,
+          "no_contact": 18,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 0,
+          "success_rate": 0.0,
+          "choice_accuracy": null
+        },
+        "orange": {
+          "trials": 18,
+          "correct": 0,
+          "wrong": 0,
+          "no_contact": 18,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 0,
+          "success_rate": 0.0,
+          "choice_accuracy": null
+        },
+        "cyan": {
+          "trials": 12,
+          "correct": 0,
+          "wrong": 0,
+          "no_contact": 12,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 0,
+          "success_rate": 0.0,
+          "choice_accuracy": null
+        },
+        "pink": {
+          "trials": 6,
+          "correct": 0,
+          "wrong": 0,
+          "no_contact": 6,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 0,
+          "success_rate": 0.0,
+          "choice_accuracy": null
+        }
+      },
+      "reserved_multi_target_scenes": 0,
+      "fully_correct_scenes": {
+        "4_trained_plus_reserved": 0,
+        "4_reserved_only": 0,
+        "5_trained_plus_reserved": 0,
+        "5_reserved_only": 0,
+        "6_trained_plus_reserved": 0,
+        "6_reserved_only": 0
+      },
+      "failed_trials": 180,
+      "tracking_failures": 180
+    },
+    {
+      "checkpoint": 50,
+      "all": {
+        "trials": 180,
+        "correct": 29,
+        "wrong": 15,
+        "no_contact": 136,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 27,
+        "success_rate": 0.16111111111111112,
+        "choice_accuracy": 0.6590909090909091
+      },
+      "seen": {
+        "trials": 72,
+        "correct": 12,
+        "wrong": 6,
+        "no_contact": 54,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 11,
+        "success_rate": 0.16666666666666666,
+        "choice_accuracy": 0.6666666666666666
+      },
+      "unseen": {
+        "trials": 108,
+        "correct": 17,
+        "wrong": 9,
+        "no_contact": 82,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 16,
+        "success_rate": 0.1574074074074074,
+        "choice_accuracy": 0.6538461538461539
+      },
+      "by_cube_count": {
+        "4": {
+          "trials": 48,
+          "correct": 12,
+          "wrong": 5,
+          "no_contact": 31,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 12,
+          "success_rate": 0.25,
+          "choice_accuracy": 0.7058823529411765
+        },
+        "5": {
+          "trials": 60,
+          "correct": 10,
+          "wrong": 5,
+          "no_contact": 45,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 8,
+          "success_rate": 0.16666666666666666,
+          "choice_accuracy": 0.6666666666666666
+        },
+        "6": {
+          "trials": 72,
+          "correct": 7,
+          "wrong": 5,
+          "no_contact": 60,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 7,
+          "success_rate": 0.09722222222222222,
+          "choice_accuracy": 0.5833333333333334
+        }
+      },
+      "by_unseen_color": {
+        "black": {
+          "trials": 30,
+          "correct": 2,
+          "wrong": 3,
+          "no_contact": 25,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 2,
+          "success_rate": 0.06666666666666667,
+          "choice_accuracy": 0.4
+        },
+        "white": {
+          "trials": 24,
+          "correct": 1,
+          "wrong": 3,
+          "no_contact": 20,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 1,
+          "success_rate": 0.041666666666666664,
+          "choice_accuracy": 0.25
+        },
+        "purple": {
+          "trials": 18,
+          "correct": 4,
+          "wrong": 2,
+          "no_contact": 12,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 4,
+          "success_rate": 0.2222222222222222,
+          "choice_accuracy": 0.6666666666666666
+        },
+        "orange": {
+          "trials": 18,
+          "correct": 7,
+          "wrong": 0,
+          "no_contact": 11,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 7,
+          "success_rate": 0.3888888888888889,
+          "choice_accuracy": 1.0
+        },
+        "cyan": {
+          "trials": 12,
+          "correct": 3,
+          "wrong": 1,
+          "no_contact": 8,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 2,
+          "success_rate": 0.25,
+          "choice_accuracy": 0.75
+        },
+        "pink": {
+          "trials": 6,
+          "correct": 0,
+          "wrong": 0,
+          "no_contact": 6,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 0,
+          "success_rate": 0.0,
+          "choice_accuracy": null
+        }
+      },
+      "reserved_multi_target_scenes": 5,
+      "fully_correct_scenes": {
+        "4_trained_plus_reserved": 0,
+        "4_reserved_only": 0,
+        "5_trained_plus_reserved": 0,
+        "5_reserved_only": 0,
+        "6_trained_plus_reserved": 0,
+        "6_reserved_only": 0
+      },
+      "failed_trials": 139,
+      "tracking_failures": 139
+    },
+    {
+      "checkpoint": 100,
+      "all": {
+        "trials": 180,
+        "correct": 68,
+        "wrong": 15,
+        "no_contact": 97,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 66,
+        "success_rate": 0.37777777777777777,
+        "choice_accuracy": 0.8192771084337349
+      },
+      "seen": {
+        "trials": 72,
+        "correct": 40,
+        "wrong": 6,
+        "no_contact": 26,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 38,
+        "success_rate": 0.5555555555555556,
+        "choice_accuracy": 0.8695652173913043
+      },
+      "unseen": {
+        "trials": 108,
+        "correct": 28,
+        "wrong": 9,
+        "no_contact": 71,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 28,
+        "success_rate": 0.25925925925925924,
+        "choice_accuracy": 0.7567567567567568
+      },
+      "by_cube_count": {
+        "4": {
+          "trials": 48,
+          "correct": 22,
+          "wrong": 8,
+          "no_contact": 18,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 21,
+          "success_rate": 0.4583333333333333,
+          "choice_accuracy": 0.7333333333333333
+        },
+        "5": {
+          "trials": 60,
+          "correct": 25,
+          "wrong": 6,
+          "no_contact": 29,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 24,
+          "success_rate": 0.4166666666666667,
+          "choice_accuracy": 0.8064516129032258
+        },
+        "6": {
+          "trials": 72,
+          "correct": 21,
+          "wrong": 1,
+          "no_contact": 50,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 21,
+          "success_rate": 0.2916666666666667,
+          "choice_accuracy": 0.9545454545454546
+        }
+      },
+      "by_unseen_color": {
+        "black": {
+          "trials": 30,
+          "correct": 5,
+          "wrong": 1,
+          "no_contact": 24,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 5,
+          "success_rate": 0.16666666666666666,
+          "choice_accuracy": 0.8333333333333334
+        },
+        "white": {
+          "trials": 24,
+          "correct": 7,
+          "wrong": 3,
+          "no_contact": 14,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 7,
+          "success_rate": 0.2916666666666667,
+          "choice_accuracy": 0.7
+        },
+        "purple": {
+          "trials": 18,
+          "correct": 4,
+          "wrong": 3,
+          "no_contact": 11,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 4,
+          "success_rate": 0.2222222222222222,
+          "choice_accuracy": 0.5714285714285714
+        },
+        "orange": {
+          "trials": 18,
+          "correct": 9,
+          "wrong": 2,
+          "no_contact": 7,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 9,
+          "success_rate": 0.5,
+          "choice_accuracy": 0.8181818181818182
+        },
+        "cyan": {
+          "trials": 12,
+          "correct": 1,
+          "wrong": 0,
+          "no_contact": 11,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 1,
+          "success_rate": 0.08333333333333333,
+          "choice_accuracy": 1.0
+        },
+        "pink": {
+          "trials": 6,
+          "correct": 2,
+          "wrong": 0,
+          "no_contact": 4,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 2,
+          "success_rate": 0.3333333333333333,
+          "choice_accuracy": 1.0
+        }
+      },
+      "reserved_multi_target_scenes": 8,
+      "fully_correct_scenes": {
+        "4_trained_plus_reserved": 0,
+        "4_reserved_only": 0,
+        "5_trained_plus_reserved": 0,
+        "5_reserved_only": 0,
+        "6_trained_plus_reserved": 0,
+        "6_reserved_only": 0
+      },
+      "failed_trials": 99,
+      "tracking_failures": 99
+    },
+    {
+      "checkpoint": 300,
+      "all": {
+        "trials": 180,
+        "correct": 133,
+        "wrong": 6,
+        "no_contact": 41,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 132,
+        "success_rate": 0.7388888888888889,
+        "choice_accuracy": 0.9568345323741008
+      },
+      "seen": {
+        "trials": 72,
+        "correct": 65,
+        "wrong": 0,
+        "no_contact": 7,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 65,
+        "success_rate": 0.9027777777777778,
+        "choice_accuracy": 1.0
+      },
+      "unseen": {
+        "trials": 108,
+        "correct": 68,
+        "wrong": 6,
+        "no_contact": 34,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 67,
+        "success_rate": 0.6296296296296297,
+        "choice_accuracy": 0.918918918918919
+      },
+      "by_cube_count": {
+        "4": {
+          "trials": 48,
+          "correct": 40,
+          "wrong": 0,
+          "no_contact": 8,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 40,
+          "success_rate": 0.8333333333333334,
+          "choice_accuracy": 1.0
+        },
+        "5": {
+          "trials": 60,
+          "correct": 49,
+          "wrong": 3,
+          "no_contact": 8,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 48,
+          "success_rate": 0.8166666666666667,
+          "choice_accuracy": 0.9423076923076923
+        },
+        "6": {
+          "trials": 72,
+          "correct": 44,
+          "wrong": 3,
+          "no_contact": 25,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 44,
+          "success_rate": 0.6111111111111112,
+          "choice_accuracy": 0.9361702127659575
+        }
+      },
+      "by_unseen_color": {
+        "black": {
+          "trials": 30,
+          "correct": 21,
+          "wrong": 0,
+          "no_contact": 9,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 21,
+          "success_rate": 0.7,
+          "choice_accuracy": 1.0
+        },
+        "white": {
+          "trials": 24,
+          "correct": 8,
+          "wrong": 1,
+          "no_contact": 15,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 8,
+          "success_rate": 0.3333333333333333,
+          "choice_accuracy": 0.8888888888888888
+        },
+        "purple": {
+          "trials": 18,
+          "correct": 14,
+          "wrong": 1,
+          "no_contact": 3,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 14,
+          "success_rate": 0.7777777777777778,
+          "choice_accuracy": 0.9333333333333333
+        },
+        "orange": {
+          "trials": 18,
+          "correct": 16,
+          "wrong": 0,
+          "no_contact": 2,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 15,
+          "success_rate": 0.8888888888888888,
+          "choice_accuracy": 1.0
+        },
+        "cyan": {
+          "trials": 12,
+          "correct": 6,
+          "wrong": 4,
+          "no_contact": 2,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 6,
+          "success_rate": 0.5,
+          "choice_accuracy": 0.6
+        },
+        "pink": {
+          "trials": 6,
+          "correct": 3,
+          "wrong": 0,
+          "no_contact": 3,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 3,
+          "success_rate": 0.5,
+          "choice_accuracy": 1.0
+        }
+      },
+      "reserved_multi_target_scenes": 17,
+      "fully_correct_scenes": {
+        "4_trained_plus_reserved": 5,
+        "4_reserved_only": 2,
+        "5_trained_plus_reserved": 4,
+        "5_reserved_only": 1,
+        "6_trained_plus_reserved": 0,
+        "6_reserved_only": 0
+      },
+      "failed_trials": 42,
+      "tracking_failures": 42
+    },
+    {
+      "checkpoint": 500,
+      "all": {
+        "trials": 180,
+        "correct": 130,
+        "wrong": 9,
+        "no_contact": 41,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 129,
+        "success_rate": 0.7222222222222222,
+        "choice_accuracy": 0.935251798561151
+      },
+      "seen": {
+        "trials": 72,
+        "correct": 65,
+        "wrong": 2,
+        "no_contact": 5,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 65,
+        "success_rate": 0.9027777777777778,
+        "choice_accuracy": 0.9701492537313433
+      },
+      "unseen": {
+        "trials": 108,
+        "correct": 65,
+        "wrong": 7,
+        "no_contact": 36,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 64,
+        "success_rate": 0.6018518518518519,
+        "choice_accuracy": 0.9027777777777778
+      },
+      "by_cube_count": {
+        "4": {
+          "trials": 48,
+          "correct": 38,
+          "wrong": 1,
+          "no_contact": 9,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 37,
+          "success_rate": 0.7916666666666666,
+          "choice_accuracy": 0.9743589743589743
+        },
+        "5": {
+          "trials": 60,
+          "correct": 48,
+          "wrong": 3,
+          "no_contact": 9,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 48,
+          "success_rate": 0.8,
+          "choice_accuracy": 0.9411764705882353
+        },
+        "6": {
+          "trials": 72,
+          "correct": 44,
+          "wrong": 5,
+          "no_contact": 23,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 44,
+          "success_rate": 0.6111111111111112,
+          "choice_accuracy": 0.8979591836734694
+        }
+      },
+      "by_unseen_color": {
+        "black": {
+          "trials": 30,
+          "correct": 19,
+          "wrong": 1,
+          "no_contact": 10,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 18,
+          "success_rate": 0.6333333333333333,
+          "choice_accuracy": 0.95
+        },
+        "white": {
+          "trials": 24,
+          "correct": 8,
+          "wrong": 3,
+          "no_contact": 13,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 8,
+          "success_rate": 0.3333333333333333,
+          "choice_accuracy": 0.7272727272727273
+        },
+        "purple": {
+          "trials": 18,
+          "correct": 12,
+          "wrong": 1,
+          "no_contact": 5,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 12,
+          "success_rate": 0.6666666666666666,
+          "choice_accuracy": 0.9230769230769231
+        },
+        "orange": {
+          "trials": 18,
+          "correct": 16,
+          "wrong": 0,
+          "no_contact": 2,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 16,
+          "success_rate": 0.8888888888888888,
+          "choice_accuracy": 1.0
+        },
+        "cyan": {
+          "trials": 12,
+          "correct": 6,
+          "wrong": 2,
+          "no_contact": 4,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 6,
+          "success_rate": 0.5,
+          "choice_accuracy": 0.75
+        },
+        "pink": {
+          "trials": 6,
+          "correct": 4,
+          "wrong": 0,
+          "no_contact": 2,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 4,
+          "success_rate": 0.6666666666666666,
+          "choice_accuracy": 1.0
+        }
+      },
+      "reserved_multi_target_scenes": 18,
+      "fully_correct_scenes": {
+        "4_trained_plus_reserved": 4,
+        "4_reserved_only": 2,
+        "5_trained_plus_reserved": 3,
+        "5_reserved_only": 0,
+        "6_trained_plus_reserved": 1,
+        "6_reserved_only": 0
+      },
+      "failed_trials": 45,
+      "tracking_failures": 45
+    },
+    {
+      "checkpoint": 1000,
+      "all": {
+        "trials": 180,
+        "correct": 127,
+        "wrong": 9,
+        "no_contact": 44,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 124,
+        "success_rate": 0.7055555555555556,
+        "choice_accuracy": 0.9338235294117647
+      },
+      "seen": {
+        "trials": 72,
+        "correct": 69,
+        "wrong": 0,
+        "no_contact": 3,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 69,
+        "success_rate": 0.9583333333333334,
+        "choice_accuracy": 1.0
+      },
+      "unseen": {
+        "trials": 108,
+        "correct": 58,
+        "wrong": 9,
+        "no_contact": 41,
+        "multiple": 0,
+        "unmeasured": 0,
+        "clean_correct": 55,
+        "success_rate": 0.5370370370370371,
+        "choice_accuracy": 0.8656716417910447
+      },
+      "by_cube_count": {
+        "4": {
+          "trials": 48,
+          "correct": 40,
+          "wrong": 1,
+          "no_contact": 7,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 38,
+          "success_rate": 0.8333333333333334,
+          "choice_accuracy": 0.975609756097561
+        },
+        "5": {
+          "trials": 60,
+          "correct": 44,
+          "wrong": 4,
+          "no_contact": 12,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 43,
+          "success_rate": 0.7333333333333333,
+          "choice_accuracy": 0.9166666666666666
+        },
+        "6": {
+          "trials": 72,
+          "correct": 43,
+          "wrong": 4,
+          "no_contact": 25,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 43,
+          "success_rate": 0.5972222222222222,
+          "choice_accuracy": 0.9148936170212766
+        }
+      },
+      "by_unseen_color": {
+        "black": {
+          "trials": 30,
+          "correct": 17,
+          "wrong": 3,
+          "no_contact": 10,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 17,
+          "success_rate": 0.5666666666666667,
+          "choice_accuracy": 0.85
+        },
+        "white": {
+          "trials": 24,
+          "correct": 8,
+          "wrong": 3,
+          "no_contact": 13,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 8,
+          "success_rate": 0.3333333333333333,
+          "choice_accuracy": 0.7272727272727273
+        },
+        "purple": {
+          "trials": 18,
+          "correct": 11,
+          "wrong": 2,
+          "no_contact": 5,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 9,
+          "success_rate": 0.6111111111111112,
+          "choice_accuracy": 0.8461538461538461
+        },
+        "orange": {
+          "trials": 18,
+          "correct": 16,
+          "wrong": 0,
+          "no_contact": 2,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 16,
+          "success_rate": 0.8888888888888888,
+          "choice_accuracy": 1.0
+        },
+        "cyan": {
+          "trials": 12,
+          "correct": 3,
+          "wrong": 0,
+          "no_contact": 9,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 2,
+          "success_rate": 0.25,
+          "choice_accuracy": 1.0
+        },
+        "pink": {
+          "trials": 6,
+          "correct": 3,
+          "wrong": 1,
+          "no_contact": 2,
+          "multiple": 0,
+          "unmeasured": 0,
+          "clean_correct": 3,
+          "success_rate": 0.5,
+          "choice_accuracy": 0.75
+        }
+      },
+      "reserved_multi_target_scenes": 15,
+      "fully_correct_scenes": {
+        "4_trained_plus_reserved": 5,
+        "4_reserved_only": 1,
+        "5_trained_plus_reserved": 2,
+        "5_reserved_only": 0,
+        "6_trained_plus_reserved": 1,
+        "6_reserved_only": 0
+      },
+      "failed_trials": 49,
+      "tracking_failures": 49
+    }
+  ],
+  "checkpoint300_target_slots": {
+    "correct_cube": {
+      "0": 22,
+      "1": 31,
+      "2": 25,
+      "3": 31,
+      "4": 19,
+      "5": 5
+    },
+    "no_contact": {
+      "0": 13,
+      "2": 9,
+      "3": 5,
+      "5": 6,
+      "4": 4,
+      "1": 4
+    },
+    "wrong_cube": {
+      "0": 1,
+      "1": 1,
+      "4": 1,
+      "2": 2,
+      "5": 1
+    }
+  },
+  "elapsed_seconds": 15554.404245722108,
+  "image_pixel_comparison": {
+    "across_models_max_channel_difference": 1.0,
+    "across_models_max_changed_pixels": 1,
+    "within_instruction_groups": {
+      "max_channel_difference": 1.0,
+      "max_changed_pixels": 1,
+      "max_mean_difference": 3.2552083333333335e-06
+    }
+  }
+}
