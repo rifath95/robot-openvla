@@ -154,6 +154,30 @@ def pipeline_archive(source,staging,payload,repo,token,receipt):
         for f in futures:f.result()
     return upload_verify(staging,repo,source.name,token,staging.parent/(source.name+'-verification'),archives_uploaded=True)
 
+def cleanup_verified(config):
+    """Delete only a verified sweep and its packed cache, retaining provenance/reports."""
+    source=Path(config['source']);receipt=Path(config['receipt'])
+    verified=json.loads((receipt/'receipt.json').read_text())
+    if (verified.get('verified') is not True or verified.get('repo_id')!=config['repo']
+        or verified.get('path_in_repo')!=source.name or not verified.get('revision')
+        or source.is_symlink() or source.resolve().parent!=SWEEPS.resolve()
+        or not re.fullmatch('scripted_[A-Za-z0-9_]+',source.name)):
+        raise ValueError('Refusing cleanup without the matching verified archive and sweep path')
+    reports=Path(config['staging'])/'reports'
+    if not reports.is_dir():raise ValueError('Retained compact reports are missing; no cleanup performed')
+    shutil.copytree(reports,receipt/'reports',dirs_exist_ok=True)
+    removed=[]
+    folders=(source,receipt/'packed-parts')
+    if any(folder.is_symlink() for folder in folders):raise ValueError('Refusing cleanup through a symlink')
+    for folder in folders:
+        if folder.exists():
+            print(f'Deleting verified volume copy: {folder}',flush=True)
+            shutil.rmtree(folder);removed.append(str(folder))
+    write_status(receipt/'cleanup.json',dict(verified_revision=verified['revision'],removed=removed,
+        reports_retained=str(receipt/'reports'),completed_at_utc=datetime.now(timezone.utc).isoformat()))
+    print('Verified source and packing cache cleaned; reports, receipt and logs retained.',flush=True)
+
+
 def worker(config):
     source=Path(config['source']);receipt=Path(config['receipt']);status=receipt/'status.json'
     try:
@@ -172,7 +196,10 @@ def worker(config):
         verified['verified_at_utc']=datetime.now(timezone.utc).isoformat()
         write_status(receipt/'receipt.json',verified)
         write_status(status,dict(phase='verified',**verified))
-        print('Upload verified. Original sweep remains on the network volume.',flush=True)
+        if config.get('delete_after_verification'):
+            cleanup_verified(config)
+        else:
+            print('Upload verified. Original sweep remains on the network volume.',flush=True)
         return 0
     except Exception as exc:
         # Log type only: third-party HTTP exceptions can contain credential-bearing requests.
@@ -186,7 +213,7 @@ def worker_batch(config):
     receipt=Path(config['receipt']);verified=[]
     for job in config['jobs']:
         print(f"Archiving sweep: {Path(job['source']).name}",flush=True)
-        selected=dict(job,repo=config['repo'],token=config['token'])
+        selected=dict(job,repo=config['repo'],token=config['token'],delete_after_verification=False)
         if worker(selected)!=0:
             write_status(receipt/'status.json',dict(phase='failed',completed_sweeps=[v['sweep'] for v in verified],failed_sweep=Path(job['source']).name))
             return 1
@@ -194,6 +221,9 @@ def worker_batch(config):
         if result.get('verified') is not True:raise ValueError('Sweep verification receipt missing')
         verified.append(dict(sweep=Path(job['source']).name,receipt=result))
     write_status(receipt/'receipt.json',dict(verified=True,sweeps=verified))
+    if config.get('delete_after_verification'):
+        for job in config['jobs']:
+            cleanup_verified(dict(job,repo=config['repo']))
     write_status(receipt/'status.json',dict(phase='verified',completed_sweeps=[v['sweep'] for v in verified]))
     print('All requested sweep uploads verified.',flush=True)
     return 0
@@ -231,6 +261,7 @@ def main():
     selection=p.add_mutually_exclusive_group()
     selection.add_argument('--sweep');selection.add_argument('--sweeps',nargs='+',help='Upload multiple sweeps sequentially and stop once afterward')
     p.add_argument('--repo',default='Maxalderone/robot-openvla-simulator-results')
+    p.add_argument('--delete-after-verification',action='store_true',help='Delete verified sweep source and packing cache; retain receipts, logs and compact reports')
     p.add_argument('--estimated-seconds',type=float,default=3600)
     internal=p.add_mutually_exclusive_group();internal.add_argument('--supervise',action='store_true');internal.add_argument('--worker',action='store_true')
     a=p.parse_args()
@@ -268,7 +299,7 @@ def main():
         batch='batch_'+hashlib.sha256(json.dumps(names).encode()).hexdigest()[:12]
         receipt=receipts/batch;receipt.mkdir(parents=True,exist_ok=True)
         config=dict(jobs=jobs,receipt=str(receipt),lock_fds=[lock.fileno() for lock in locks])
-    config.update(repo=a.repo,token=token,pod_id=pod_id,pod_key=key,estimated_seconds=a.estimated_seconds)
+    config.update(repo=a.repo,token=token,pod_id=pod_id,pod_key=key,estimated_seconds=a.estimated_seconds,delete_after_verification=a.delete_after_verification)
     env=os.environ.copy()
     for name in ('HF_TOKEN','RUNPOD_API_KEY'):env.pop(name,None)
     with (receipt/'upload.log').open('a',buffering=1) as log:
@@ -278,7 +309,8 @@ def main():
     print(f'Detached HF archive upload started for {len(names)} sweep(s). Mac may disconnect.',flush=True)
     print('Log:',receipt/'upload.log',flush=True)
     print(f"Inner limit: {budget['inner_seconds']/3600:g} h; outer budget: {budget['outer_seconds']/3600:g} h.",flush=True)
-    print('Pod stop requested after all selected uploads verify, or on failure/timeout; original results remain on the volume.',flush=True)
+    print('Verified sources and packing caches will be deleted; receipts, logs and compact reports retained.' if a.delete_after_verification else 'Original results remain on the volume.',flush=True)
+    print('Pod stop requested after all selected uploads verify, or on failure/timeout.',flush=True)
     return 0
 
 if __name__=='__main__':raise SystemExit(main())

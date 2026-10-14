@@ -84,3 +84,15 @@ log with `tail -F`. After detached launch the Mac may disconnect. The default
 one-hour estimate yields a two-hour inner and three-hour outer deadline for
 the combined job. Verification checks downloaded bytes at each pinned HF commit.
 Cleanup remains separate and requires the per-sweep verified receipt.
+
+### Authorized cleanup after both verified uploads
+
+For the current lift and bowl transfers, add `--delete-after-verification` to
+the combined command. The job first uploads and verifies both complete sweeps.
+Only then does it retain compact reports alongside each verification receipt
+and delete each original sweep folder and its `packed-parts` cache from the
+network volume. Logs, receipts and training artifacts remain. Failed upload or
+verification skips this cleanup; interrupted deletion may leave residual files
+but the already verified HF archives remain available. A cleanup receipt records
+the deleted paths. The same supervisor requests pod stop after cleanup or on
+failure/timeout. Without this explicit flag, the default still retains originals.

@@ -156,10 +156,41 @@ class ArchiveTests(unittest.TestCase):
             def upload(job):
                 if job['source']=='scripted_second':return 1
                 (first/'receipt.json').write_text('{"verified":true}');return 0
-            with patch.object(arch,'worker',side_effect=upload):
-                self.assertEqual(arch.worker_batch(dict(jobs=jobs,receipt=str(root),repo='user/private',token='secret')),1)
+            with patch.object(arch,'worker',side_effect=upload),patch.object(arch,'cleanup_verified') as cleanup:
+                self.assertEqual(arch.worker_batch(dict(jobs=jobs,receipt=str(root),repo='user/private',token='secret',delete_after_verification=True)),1)
+                cleanup.assert_not_called()
             self.assertTrue((first/'receipt.json').exists());self.assertFalse((root/'receipt.json').exists())
             self.assertEqual(json.loads((root/'status.json').read_text())['completed_sweeps'],['scripted_first'])
+
+    def test_cleanup_requires_verified_receipt_and_retains_reports(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);sweeps=root/'volume/sweeps';source=sweeps/'scripted_example';source.mkdir(parents=True)
+            (source/'image.png').write_bytes(b'pixels')
+            receipt=root/'receipt';receipt.mkdir();packed=receipt/'packed-parts';packed.mkdir();(packed/'part.tar.gz').write_bytes(b'archive')
+            stage=root/'container/stage';(stage/'reports').mkdir(parents=True);(stage/'reports/REPORT.md').write_text('report')
+            config=dict(source=str(source),receipt=str(receipt),staging=str(stage),repo='user/private')
+            (receipt/'receipt.json').write_text('{"verified":false}')
+            with patch.object(arch,'SWEEPS',sweeps):
+                with self.assertRaises(ValueError):arch.cleanup_verified(config)
+                self.assertTrue(source.exists() and packed.exists())
+                verified=dict(verified=True,repo_id='user/private',path_in_repo='scripted_example',revision='uploaded-commit')
+                (receipt/'receipt.json').write_text(json.dumps(verified));arch.cleanup_verified(config)
+            self.assertFalse(source.exists());self.assertFalse(packed.exists())
+            self.assertTrue((receipt/'receipt.json').exists());self.assertTrue((receipt/'cleanup.json').exists())
+            self.assertEqual((receipt/'reports/REPORT.md').read_text(),'report')
+
+    def test_batch_cleanup_happens_only_after_both_uploads_verify(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);jobs=[]
+            for name in ('scripted_lift','scripted_bowl'):
+                r=root/name;r.mkdir();jobs.append(dict(source=name,receipt=str(r),staging='stage'))
+            events=[]
+            def upload(job):
+                self.assertFalse(job['delete_after_verification'])
+                events.append('upload '+job['source']);Path(job['receipt'],'receipt.json').write_text('{"verified":true}');return 0
+            with patch.object(arch,'worker',side_effect=upload),patch.object(arch,'cleanup_verified',side_effect=lambda job:events.append('cleanup '+job['source'])):
+                arch.worker_batch(dict(jobs=jobs,receipt=str(root),repo='user/private',token='secret',delete_after_verification=True))
+            self.assertEqual(events,['upload scripted_lift','upload scripted_bowl','cleanup scripted_lift','cleanup scripted_bowl'])
 
     def test_supervisor_timeout_kills_job_then_stops(self):
         with tempfile.TemporaryDirectory() as tmp:
