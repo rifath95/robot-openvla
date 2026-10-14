@@ -58,6 +58,8 @@ tail -F /workspace/panda-training/scripted-evaluations/scripted_multi_color_mode
 
 See [cloud sweeps](CLOUD_SIMULATOR_SWEEPS.md) for disconnect, resume and stop details.
 
+For slow Mac downloads, [archive the completed sweep to Hugging Face and stop the pod](HF_SWEEP_ARCHIVE.md), then download without renting a GPU.
+
 ## Saved comparisons
 
 `REPORT.md`, `statistics.json` and `results.json` are refreshed after each completed trial. Each trial retains images, actions, simulator states, motion frames, timings and replay commands. The reports separate:

@@ -13,6 +13,7 @@ and limitations, and [repository layout](REPOSITORY_LAYOUT.md) for code location
 
 ## Cloud sessions and inference
 
+- [Archive completed sweep results to Hugging Face, then stop the pod](cloud/HF_SWEEP_ARCHIVE.md)
 - [Prepared multi-cube color selection sweep: 4, 5 and 6 cubes](cloud/MULTI_COLOR_MODEL_SWEEP.md)
 - [Detached cloud simulator sweeps, resume and disconnect protection](cloud/CLOUD_SIMULATOR_SWEEPS.md)
 - [Four-color model sweep: pretrained base and every checkpoint](cloud/FOUR_COLOR_MODEL_SWEEP.md)
