@@ -115,4 +115,4 @@ Follow the [final training guide](../training/FOUR_COLOR_TOUCH_TRAINING.md) and 
 
 This is a simulated touch result, not grasping, lifting, placement or real-robot success. Contact need not be centered or gentle and may move the cube. Initial arm pose, camera and cube orientation are fixed; variation is limited to the declared scene workspace and color assignments. Ten scenes per pair limit precision, and reusing this suite to choose checkpoints makes fresh evaluation desirable before broader claims.
 
-Phase 4 started October 14 with a [ten-demonstration single-cube grasp/lift pilot](LIFT_CUBE_FIRST_TEN.md), awaiting review before expansion or training. Preserve the Phase 3 model and evaluation as a reference, and measure both the new skill and retention of color-guided touching.
+Phase 4 started October 14 with a [ten-demonstration single-cube grasp/lift pilot](LIFT_CUBE_FIRST_TEN.md), then [expanded to 50 verified demonstrations](LIFT_CUBE_50.md) after review. Fine-tuning has not started for this task. Preserve the Phase 3 model and evaluation as a reference, and measure both the new skill and retention of color-guided touching.

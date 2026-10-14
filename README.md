@@ -39,8 +39,8 @@ experiments, findings, saved artifacts and limitations, and the
 unsuccessful grasp/lift experiments; reliable model-driven pick-and-place remains
 open. The [multi-cube sweep review](docs/reviews/MULTI_CUBE_MODEL_SWEEP_REVIEW.md)
 recommends checkpoint 300 for that harder color-selection task. Phase 4 has started
-with [ten single-cube grasp/lift demonstrations](docs/reviews/LIFT_CUBE_FIRST_TEN.md),
-awaiting review before expansion or training.
+with single-cube grasp/lift demonstrations, now [expanded to 50](docs/reviews/LIFT_CUBE_50.md)
+after review of the first ten. A short fine-tuning pilot is recommended; training has not started.
 
 ## Goal
 
@@ -131,11 +131,11 @@ and evidence; [training](docs/training/FOUR_COLOR_TOUCH_TRAINING.md) and
 
 ### Phase 4 — started: single-cube grasping and lifting
 
-The first ten replay-verified grasp/lift demonstrations are ready for review in
+Fifty replay-verified grasp/lift demonstrations are available in
 `datasets/panda_lift_cube/`. The arm starts in a fixed pose with an open gripper;
-cube positions vary. See the [pilot review](docs/reviews/LIFT_CUBE_FIRST_TEN.md).
-No fine-tuning has started for this task. Expand only after the demonstrations
-are reviewed, then evaluate actual lift success before adding color distractors.
+cube positions vary. See the [50-trajectory review](docs/reviews/LIFT_CUBE_50.md).
+No fine-tuning has started for this task. Run a short pilot and evaluate actual
+lift success before expanding further or adding color distractors.
 Compare each extension with the Phase 3 baseline and measure retention of the
 existing touch/color skill. Reliable pick-and-place, broad starting-pose coverage
 and real-robot transfer remain future goals.
@@ -406,11 +406,11 @@ The successful test used `bridge_orig` action statistics. These statistics are f
 
 ## Current status and next intended work
 
-**Phases 1–3 are complete; Phase 4's lift dataset is awaiting review.** The current learned skill
+**Phases 1–3 are complete; Phase 4's 50-trajectory lift dataset is ready for pilot preparation.** The current learned skill
 is instruction-guided cube touching, with successful transfer to colors excluded
 from fine-tuning. Checkpoint 1,000 from `panda-train-20261013-110217-1084` is the
 best observed model in the two-cube sweep; checkpoint 300 leads the multi-cube
-sweep. The [lift pilot review](docs/reviews/LIFT_CUBE_FIRST_TEN.md) describes the
+sweep. The [50-trajectory lift review](docs/reviews/LIFT_CUBE_50.md) describes the
 next experiment. It demonstrates expert execution, not a trained lift policy.
 
 Use [CLOUD_QUICKSTART.md](docs/cloud/CLOUD_QUICKSTART.md) for remote sessions,

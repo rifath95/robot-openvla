@@ -1,6 +1,6 @@
 # Documentation index
 
-**Phases 1–3 are complete; Phase 4's lift pilot is awaiting review.** Start with the
+**Phases 1–3 are complete; Phase 4 has 50 verified lift demonstrations, with training not yet started.** Start with the
 [Phase 3 completion summary](reviews/PHASE3_COMPLETION.md) for achieved results
 and limitations, and [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 
@@ -35,6 +35,7 @@ For result folders and replay locations, see the [local outputs layout](OUTPUT_L
 ## Demonstrations and datasets
 
 - [First ten single-cube grasp/lift demonstrations](reviews/LIFT_CUBE_FIRST_TEN.md)
+- [Expanded 50-demonstration lift dataset and recommended pilot](reviews/LIFT_CUBE_50.md)
 - [First ten paired red/blue touch demonstrations](reviews/COLOR_TOUCH_FIRST_TEN.md)
 - [Expanded 50-demonstration red/blue touch dataset](reviews/COLOR_TOUCH_50.md)
 - [300-demonstration four-color touch dataset](reviews/FOUR_COLOR_TOUCH_300.md)

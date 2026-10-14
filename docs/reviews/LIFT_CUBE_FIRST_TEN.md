@@ -1,6 +1,6 @@
 # First ten single-cube lift demonstrations
 
-Generated October 14, 2026. All ten are successful and independently verified by executing their recorded actions through MuJoCo, starting from one saved initial state. Awaiting user review; no training or upload has been started.
+Generated October 14, 2026. All ten are successful and independently verified by executing their recorded actions through MuJoCo, starting from one saved initial state. These ten were reviewed and approved, then preserved in the [50-trajectory expansion](LIFT_CUBE_50.md). The measurements below describe the original ten; no training or upload has been started.
 
 ![Final states of the ten verified trajectories](assets/lift_first_ten.png)
 
@@ -55,4 +55,4 @@ Actual action replay through the current controller and physics:
 
 For action replay, press Space to start. Close the window or press Escape to finish. Change the episode folder to select another trajectory. Both commands show the instruction in the viewer, without adding it to recorded training images.
 
-Code: `simulation/lift_scene.py`, `data_tools/lift_demonstrations.py`, and `data_tools/collect_panda_lift.py`. The collector can resume without replacing accepted trajectories; it saves checks under `outputs/collection_checks/lift_collection_checks/`. Expansion waits for user review.
+Code: `simulation/lift_scene.py`, `data_tools/lift_demonstrations.py`, and `data_tools/collect_panda_lift.py`. The collector resumes without replacing accepted trajectories and saves checks under `outputs/collection_checks/lift_collection_checks/`. The approved expansion is documented [here](LIFT_CUBE_50.md).
