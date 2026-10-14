@@ -65,6 +65,20 @@ Expand toward 300 only after the pilot establishes that the model can execute
 this grasp/lift skill, or after addressing a diagnosed failure. Additional
 examples are not an automatic remedy for controller or phase-transition issues.
 
-No RLDS bundle, HF upload, training launch or new trained model has been created
-by this expansion. The update/checkpoint schedule above is a recommendation,
-not a claim that training has begun.
+The portable RLDS bundle was subsequently prepared as
+`datasets/panda_lift_cube/training_lift_v1/`. All 50 trajectories, observations,
+instructions and action labels passed source matching, checksum verification
+and official OpenVLA processor checks. HF upload and training are not yet
+confirmed. The update/checkpoint schedule above remains a recommendation.
+
+Upload from the local repository terminal:
+
+```bash
+caffeinate -i .venv-training/bin/hf upload-large-folder \
+  Maxalderone/robot-openvla-panda-lift \
+  datasets/panda_lift_cube/training_lift_v1 \
+  --repo-type dataset --private --num-workers 4
+```
+
+The uploader creates a private dataset repository if needed and displays
+progress. Keep its `.cache/huggingface/` state for resumable upload.
