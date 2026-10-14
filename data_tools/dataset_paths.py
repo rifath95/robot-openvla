@@ -3,6 +3,7 @@
 from common.paths import PROJECT_ROOT
 from pathlib import Path
 import re
+from common.replay_links import replay_url
 
 DATASETS_ROOT = PROJECT_ROOT / 'datasets'
 PANDA_DATASET_ROOT = DATASETS_ROOT / 'panda_pick_place'
@@ -11,9 +12,9 @@ PANDA_DATASET_ROOT = DATASETS_ROOT / 'panda_pick_place'
 def write_trajectory_index(folder, results):
     folder = Path(folder).resolve()
     lines = ['# Watch collected trajectories', '',
-             'Open replay.py for recorded pose playback, or replay_actions.py to execute saved actions through physics. '
-             'Use the repository .venv/bin/python interpreter. '
-             'Space starts/pauses/resumes; Esc or closing the window exits. '
+             'Click ▶ Replay for recorded motion, or ▶ Action Replay to execute saved actions through physics. '
+             'Keep the local launcher running: `.venv/bin/python -m analysis.replay_launcher`. '
+             'Playback starts automatically. Space pauses/resumes; Esc or closing the window exits. '
              'Endpoint-only recordings use approximate interpolated motion.', '',
              'All accepted trajectories are listed below. This index is refreshed as more are collected.']
     accepted = [row for row in results if row.get('passed')]
@@ -25,9 +26,9 @@ def write_trajectory_index(folder, results):
                       '| Episode | Pose replay | Action replay |', '| --- | --- | --- |'])
         for row in rows:
             episode = Path(row['episode']).resolve()
-            relative = (episode / 'replay.py').relative_to(folder)
-            actions=episode/'replay_actions.py'
-            action_link=(f'[replay_actions.py]({actions.relative_to(folder).as_posix()})'
-                         if actions.is_file() else '—')
-            lines.append(f"| {row['id']} | [replay.py]({relative.as_posix()}) | {action_link} |")
+            episode.relative_to(folder)
+            pose=replay_url(episode);action=replay_url(episode,'actions')
+            pose_link=f'[▶ Replay]({pose})' if pose else '—'
+            action_link=(f'[▶ Action Replay]({action})' if action and (episode/'transitions.jsonl').is_file() else '—')
+            lines.append(f"| {row['id']} | {pose_link} | {action_link} |")
     (folder / 'WATCH_TRAJECTORIES.md').write_text('\n'.join(lines) + '\n')

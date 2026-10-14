@@ -53,6 +53,8 @@ def fetch(ssh,remote,destination):
         archive=Path(tmp)/'results.tar.gz'
         with archive.open('wb') as out:subprocess.run(ssh+[command],stdout=out,check=True,timeout=1800)
         extract_results(archive,destination)
+    from analysis.replay_launcher import refresh
+    refresh(destination)
     subprocess.run(ssh+['touch '+shlex.quote(remote+'/sync_ack')],check=True,timeout=20)
     print(f'Results saved locally: {destination}',flush=True)
 

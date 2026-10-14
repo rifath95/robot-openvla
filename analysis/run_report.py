@@ -5,6 +5,7 @@ import json
 import math
 from pathlib import Path
 from statistics import mean
+from common.replay_links import replay_buttons
 
 MISSING = 'Not recorded'
 
@@ -151,11 +152,13 @@ def write_run_report(folder):
                  ('Quarter-size actions', scales.get(.25, 0)), ('One-eighth-size actions', scales.get(.125, 0)),
                  ('Maximum position tracking error', f'{max(tracking)*1000:.3f} mm' if tracking else MISSING),
                  ('Recorded motion files', len(list(folder.glob('step_*/motion_frames.npz')))),
-                 ('Playback', 'Run replay.py with the repository simulation environment' if (folder/'replay.py').exists() else 'Use replay_run.py with this run folder'),
+                 ('Playback', 'Use the direct replay link at the top of this report; keep the local replay launcher running.'),
              ]),
              'Completed movements demonstrate pipeline execution, not successful pickup/placement. Recorded frames support offline playback; older endpoint-only runs use approximate interpolated motion.',
              'Source files: `startup_info.json`, `status.json`, `summary.json`, and `step_*/execution.json`. Missing startup measurements are reported as Not recorded.']
     path = folder / 'RUN_REPORT.md'
+    buttons=replay_buttons(folder)
+    if buttons:lines.insert(1,buttons)
     path.write_text('\n\n'.join(lines) + '\n')
     return path
 

@@ -1,6 +1,7 @@
 """Separate unattended touch trials; use the existing inference loop unchanged."""
 
 from common.output_layout import output_path, resolve_output_path
+from common.replay_links import add_trial_replays
 import argparse
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -60,7 +61,7 @@ def write_reports(folder, plan, rows, error=None):
             lines.append(f'| {row["checkpoint"]} | {row["seed"]} | {row["target_color"]} | '
                 f'{row["outcome"]} | {row["phase"]} | [Run]({row["directory"]}/RUN_REPORT.md) |')
         if error:lines+=['',f'Launcher ended early: {error}']
-        (folder/'REPORT.md').write_text('\n'.join(lines)+'\n')
+        (folder/'REPORT.md').write_text(add_trial_replays(folder,rows,'\n'.join(lines)+'\n'))
         return
     lines = ['# Scripted touch evaluation', '',
              'Instruction: `touch the red cube.` Sampling off. Same predeclared unseen positions for every checkpoint.', '',
@@ -78,7 +79,7 @@ def write_reports(folder, plan, rows, error=None):
                      f'{row["completed_steps"]} | [Run]({row["directory"]}/RUN_REPORT.md) |')
     if error:
         lines += ['', f'Launcher ended early: {error}']
-    (folder / 'REPORT.md').write_text('\n'.join(lines) + '\n')
+    (folder / 'REPORT.md').write_text(add_trial_replays(folder,rows,'\n'.join(lines)+'\n'))
 
 
 def resume_rows(folder, plan):

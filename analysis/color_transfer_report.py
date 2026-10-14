@@ -73,5 +73,6 @@ def write_report(folder,plan,rows,error=None):
     if training_colors:
         from analysis.multi_color_report import checkpoint_summary
         lines[2:2]=checkpoint_summary(plan,rows)
-    (folder/'REPORT.md').write_text('\n'.join(lines)+'\n')
+    from common.replay_links import add_trial_replays
+    (folder/'REPORT.md').write_text(add_trial_replays(folder,rows,'\n'.join(lines)+'\n'))
     (folder/'statistics.json').write_text(json.dumps(measures,indent=2)+'\n')

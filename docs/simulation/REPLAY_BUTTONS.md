@@ -1,4 +1,40 @@
-# Replay simulator trials from REPORT.md
+# Direct replay buttons in datasets and reports
+
+Start one local service from the repository folder:
+
+```bash
+.venv/bin/python -m analysis.replay_launcher
+```
+
+Keep it running, open `WATCH_TRAJECTORIES.md`, `REPORT.md`, or `RUN_REPORT.md`
+in Markdown Preview, and click **▶ Replay** or **▶ Action Replay**.
+Both open MuJoCo and begin immediately; no Python file or Space-key start is
+needed. Close the current window before opening another. Space pauses/resumes;
+Escape closes the viewer.
+
+Replay displays saved motion. Action Replay executes the demonstration's saved
+actions through the current controller and physics; it requires initial state,
+metadata and action records. It saves its own results under
+`outputs/simulator_runs/action_replays/`. Simulator inference trials that lack an
+expert action sequence offer only recorded-motion replay. No cloud pod is needed.
+
+The dataset index, sweep report and individual-run report generators create
+direct links automatically. Archive restoration and sweep fetching rebind links
+to the Mac's local launcher. Starting the service refreshes existing dataset
+indexes, sweep reports and individual simulator reports; recordings and dataset
+manifests are preserved. You can refresh just one set with `--dataset PATH` or
+`--sweep PATH`.
+
+Links use a private workspace token stored in
+`outputs/diagnostics/replay/launcher.json`, so ordinary service restarts do not
+expire them. The service listens only on loopback, validates the token, restricts
+paths to recordings under `datasets/` and `outputs/`, and launches fixed replay
+modules rather than executing linked Python files. If the service is stopped,
+restart it with the command above. If port 8765 is busy, use `--port 0`, then
+reload Markdown Preview for refreshed links. Links target this Mac's service;
+they do not operate another computer's viewer.
+
+## Restore downloaded sweep recordings
 
 After downloading a complete Hugging Face sweep archive, restore it locally:
 
@@ -11,26 +47,4 @@ This verifies downloaded checksums and restores the images and recorded simulato
 states under `outputs/sweeps/scripted_multi_color_models_20261013_164548_eeda379b`.
 Completed archive parts are remembered if restoration is interrupted.
 
-Start the local replay launcher from the repository folder:
-
-```bash
-.venv/bin/python -m analysis.replay_launcher \
-  --sweep outputs/sweeps/scripted_multi_color_models_20261013_164548_eeda379b
-```
-
-Keep that terminal running. Open the restored `REPORT.md` in VS Code Markdown
-Preview (`Cmd+Shift+V`). Every trial row has a **▶ Replay** link, which opens
-MuJoCo on your Mac and starts playback. Your browser may open a confirmation
-page. Close the MuJoCo window before selecting another trial. Space pauses or
-resumes playback; Escape closes it. No model weights or cloud pod are required.
-
-The viewer plays recorded simulator poses, omitting cloud prediction waits.
-It does not rerun model inference or recompute actions.
-
-Ctrl+C stops the launcher. Restarting it refreshes the links in `REPORT.md`;
-reload Markdown Preview to use the new links. The launcher listens only on your
-Mac's loopback address and accepts only recorded trial names with its current
-session token. If port 8765 is busy, add `--port 0` to select a free port.
-
-Replay links are local to this launcher session and do not work from GitHub's
-preview or another computer. Other sweep report formats are not yet supported.
+Then use the service above. Reload the local report preview after restoration.

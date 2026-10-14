@@ -37,7 +37,7 @@ Replays restore only the initial simulator state, then execute the saved actions
 
 ## Review locally
 
-The dataset is `datasets/panda_lift_cube/`, with numbered `train/`, `validation/`, and `test/` folders. Its [WATCH_TRAJECTORIES.md](../../datasets/panda_lift_cube/WATCH_TRAJECTORIES.md) lists every episode, training first, then validation, then test.
+The dataset is `datasets/panda_lift_cube/`, with numbered `train/`, `validation/`, and `test/` folders. Its [WATCH_TRAJECTORIES.md](../../datasets/panda_lift_cube/WATCH_TRAJECTORIES.md) lists every episode, training first, then validation, then test. Its **▶ Replay** and **▶ Action Replay** buttons launch playback directly; keep `.venv/bin/python -m analysis.replay_launcher` running. See [direct replay buttons](../simulation/REPLAY_BUTTONS.md).
 
 Recorded-motion playback:
 

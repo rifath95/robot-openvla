@@ -59,6 +59,8 @@ def restore(source,destination=None):
             if target.is_symlink() or not target.resolve().is_relative_to(destination):raise ValueError('Unsafe report destination')
             shutil.copyfile(path,target)
     if any(not (destination/r['directory']/'summary.json').is_file() for r in records['trials']):raise ValueError('Restored trial missing')
+    from analysis.replay_launcher import refresh
+    refresh(destination)
     print(f"Restored {manifest['trials']} trials to {destination}",flush=True)
     return destination
 

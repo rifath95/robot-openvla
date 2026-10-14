@@ -39,6 +39,10 @@ def checkpoint_summary(plan,rows):
 
 
 def write_report(folder,plan,rows,error=None,*,replay_urls=None):
+    if replay_urls is None and rows:
+        from common.replay_links import replay_url
+        candidate={r['directory']:replay_url(folder/r['directory']) for r in rows}
+        if all(candidate.values()):replay_urls=candidate
     groups=defaultdict(list);seen=set(plan['training_colors'])
     for r in rows:
         cp,n,palette=r['checkpoint'],r['cube_count'],r['color_set']

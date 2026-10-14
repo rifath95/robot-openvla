@@ -13,6 +13,7 @@ from analysis.multi_color_report import checkpoint_summary
 from cloud.sweep_plan import trial_specs
 from data_tools.restore_sweep_archive import restore
 from simulation.multi_color_scene import positions
+from common.replay_links import context,replay_url
 
 
 class ReplayButtonTests(unittest.TestCase):
@@ -88,3 +89,47 @@ class ReplayButtonTests(unittest.TestCase):
         self.assertIn('| 50 | 33.3% (2/6) | 100.0% (1/1) | 20.0% (1/5) | 50.0% (1/2) |',text)
         self.assertIn('| Pretrained base | — | — | — | — |',text)
         self.assertIn('| 100 | — | — | — | — |',text)
+
+    def test_direct_links_validate_path_and_select_autoplay_mode(self):
+        folder=self.root/'recorded';(folder/'step_0001').mkdir(parents=True)
+        (folder/'step_0001/before_state.npz').write_bytes(b'fixture')
+        for name in ('episode.json','transitions.jsonl','initial_state.npz'):(folder/name).write_bytes(b'fixture')
+        relative=folder.relative_to(PROJECT_ROOT).as_posix()
+        launcher=Launcher(PROJECT_ROOT,set(),'secret')
+        with patch('analysis.replay_launcher.subprocess.Popen') as popen:
+            self.assertEqual(launcher.launch_run('../outside','secret')[0],400)
+            self.assertEqual(launcher.launch_run('README.md','secret')[0],403)
+            self.assertEqual(launcher.launch_run(relative,'bad')[0],403)
+            popen.assert_not_called()
+            self.assertEqual(launcher.launch_run(relative,'secret','actions')[0],200)
+            self.assertIn('simulation.action_replay',popen.call_args.args[0])
+            self.assertIn('--start-immediately',popen.call_args.args[0])
+            popen.return_value.poll.return_value=0
+            self.assertEqual(launcher.launch_run(relative,'secret','poses')[0],200)
+            self.assertIn('simulation.replay_run',popen.call_args.args[0])
+            self.assertEqual(launcher.launch_run(relative,'secret','invalid')[0],400)
+
+    def test_stable_context_and_generated_dataset_buttons(self):
+        from data_tools.dataset_paths import write_trajectory_index
+        with patch('common.replay_links.CONFIG',self.root/'settings.json'):
+            self.assertEqual(context(),context())
+            episode=self.root/'train/train_001';episode.mkdir(parents=True)
+            (episode/'transitions.jsonl').touch()
+            write_trajectory_index(self.root,[dict(id='train_001',split='train',episode=str(episode),passed=True)])
+            text=(self.root/'WATCH_TRAJECTORIES.md').read_text()
+            self.assertIn('[▶ Replay](http://127.0.0.1:',text)
+            self.assertIn('[▶ Action Replay](http://127.0.0.1:',text)
+            self.assertIn('mode=actions',text)
+            self.assertNotIn('[replay.py]',text)
+
+    def test_older_report_without_task_refreshes_idempotently(self):
+        from analysis.replay_launcher import refresh
+        self.dest.mkdir()
+        payload=json.loads((self.source/'reports/results.json').read_text())
+        del payload['plan']['task']
+        (self.dest/'results.json').write_text(json.dumps(payload))
+        text='| Episode | Details |\n|---|---|\n'+''.join(f'| {r["directory"]} | [Run]({r["directory"]}/RUN_REPORT.md) |\n' for r in self.rows)
+        (self.dest/'REPORT.md').write_text(text)
+        refresh(self.dest);first=(self.dest/'REPORT.md').read_text()
+        refresh(self.dest);second=(self.dest/'REPORT.md').read_text()
+        self.assertEqual(first,second);self.assertEqual(second.count('[▶ Replay]'),4)

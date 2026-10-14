@@ -21,7 +21,7 @@ from simulation.replay_run import replay_model, write_launcher
 from simulation.viewer_text import show_instruction
 
 
-def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None,controller_mode='current'):
+def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None,controller_mode='current',start_immediately=False):
     folder=Path(folder).resolve()
     if not math.isfinite(speed) or speed<=0:raise ValueError('Speed must be finite and positive')
     if max_steps is not None and max_steps<1:raise ValueError('max_steps must be positive')
@@ -68,7 +68,7 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
     print(f'Action replay results: {output}',flush=True)
     print('Executing saved action labels with current IK/controller/physics; no model and no per-step pose resets.',flush=True)
     print(f'Controller target-setting behavior: {controller_mode}',flush=True)
-    paused=not no_view
+    paused=not no_view and not start_immediately
     stopped=False
     results=[]
     reason=None
@@ -192,6 +192,7 @@ def main(argv=None):
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument('episode',type=Path)
     parser.add_argument('--no-view',action='store_true')
+    parser.add_argument('--start-immediately',action='store_true',help='Begin action playback when the window opens')
     parser.add_argument('--speed',type=float,default=1)
     parser.add_argument('--output-dir',type=Path)
     parser.add_argument('--max-steps',type=int)
@@ -203,7 +204,8 @@ def main(argv=None):
         from simulation.viewer import _restart_with_mjpython
         _restart_with_mjpython()
     replay_actions(args.episode,no_view=args.no_view,speed=args.speed,
-                   output_dir=args.output_dir,max_steps=args.max_steps,controller_mode=args.controller)
+                   output_dir=args.output_dir,max_steps=args.max_steps,controller_mode=args.controller,
+                   start_immediately=args.start_immediately)
 
 
 if __name__=='__main__':main()

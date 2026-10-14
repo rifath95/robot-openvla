@@ -21,3 +21,8 @@ For user-authorized routine volume cleanup, rely on the established record of
 completed downloads and reviews. Do not repeat expensive file-by-file inventory
 or checksum checks without a specific unresolved concern. Retain current work
 whose download is still incomplete.
+
+All replay and action-replay buttons in generated WATCH_TRAJECTORIES.md and run
+reports must directly launch local playback via common.replay_links and the
+analysis.replay_launcher service. Do not link those buttons to Python source
+files. Both playback modes start automatically; preserve manual CLI defaults.
