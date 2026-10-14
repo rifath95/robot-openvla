@@ -12,6 +12,9 @@ def timeout_budget(estimated_seconds):
 
 def trial_specs(plan):
     task=plan['task']
+    if task=='multi_place_bowl':
+        from cloud.bowl_chain_plan import trial_specs as specs
+        yield from specs(plan);return
     if task not in ('touch','lift','place_bowl','color_touch','color_transfer','color_lift','multi_color_touch'):raise ValueError('Unsupported scripted task')
     if task=='multi_color_touch':
         for checkpoint in plan['checkpoints']:
@@ -45,6 +48,9 @@ def trial_specs(plan):
 
 
 def validate_saved(payload):
+    if payload.get('plan',{}).get('task')=='multi_place_bowl':
+        from cloud.bowl_chain_plan import validate_saved as validate
+        return validate(payload)
     plan=payload['plan'];rows=payload['trials']
     if (plan.get('sampling') is not False or type(plan['steps']) is not int or not 1<=plan['steps']<=1000
         or not plan['training_session'].startswith('panda-train-')):raise ValueError('Invalid sweep plan')

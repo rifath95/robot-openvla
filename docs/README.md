@@ -1,6 +1,6 @@
 # Documentation index
 
-**Phases 1–3 are complete; Phase 4 has 50 verified lift demonstrations, with training not yet started.** Start with the
+**Phases 1–3 are complete; Phase 4 has trained lift/bowl pilots, expanded datasets, and a prepared overnight training/evaluation chain.** Start with the
 [Phase 3 completion summary](reviews/PHASE3_COMPLETION.md) for achieved results
 and limitations, and [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 
@@ -15,6 +15,8 @@ For result folders and replay locations, see the [local outputs layout](OUTPUT_L
 - [Click ▶ Replay in a local sweep REPORT.md](simulation/REPLAY_BUTTONS.md)
 
 ## Cloud sessions and inference
+
+- [Prepared single-pod bowl training, 1,000-trial sweep, verified HF backup and global recovery](cloud/BOWL_TRAIN_SWEEP_CHAIN.md)
 
 - [Default two-stage workflow: simulator pod, then cheaper HF transfer pod](cloud/TWO_STAGE_SWEEP_WORKFLOW.md)
 - [Archive completed sweep results to Hugging Face, then stop the pod](cloud/HF_SWEEP_ARCHIVE.md)
@@ -33,6 +35,8 @@ For result folders and replay locations, see the [local outputs layout](OUTPUT_L
 - [RunPod connection guide: Mac camera → cloud OpenVLA → Mac action](cloud/RUNPOD_CONNECTION_GUIDE.md)
 
 ## Demonstrations and datasets
+
+- [300 all-training bowl-placement demonstrations](reviews/PLACE_BOWL_300.md)
 
 - [First ten single-cube grasp/lift demonstrations](reviews/LIFT_CUBE_FIRST_TEN.md)
 - [Expanded 50-demonstration lift dataset and recommended pilot](reviews/LIFT_CUBE_50.md)

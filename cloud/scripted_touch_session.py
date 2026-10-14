@@ -20,6 +20,9 @@ from cloud.cloud_session import (ROOT, REPOSITORY, bootstrap_script, parse_ssh,
 def write_reports(folder, plan, rows, error=None):
     payload = dict(plan=plan, trials=rows, launcher_error=error)
     (folder / 'results.json').write_text(json.dumps(payload, indent=2) + '\n')
+    if plan.get('task')=='multi_place_bowl':
+        from analysis.color_place_bowl_report import write_report
+        write_report(folder,plan,rows,error);return
     if plan.get('task')=='color_lift':
         from analysis.color_lift_report import write_report
         write_report(folder,plan,rows,error)

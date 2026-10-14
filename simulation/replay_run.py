@@ -18,6 +18,14 @@ def replay_model(folder):
     import mujoco
     metadata_path = Path(folder)/'episode.json'
     metadata = json.loads(metadata_path.read_text()) if metadata_path.is_file() else {}
+    if metadata.get('scene_profile') == 'panda_color_place_bowl_v1':
+        from simulation.color_place_bowl_scene import scene_path,CAMERA_NAME,configure_colors
+        from simulation.bowl_scene import configure_grip
+        model=mujoco.MjModel.from_xml_path(str(scene_path(len(metadata['cube_colors']))))
+        configure_grip(model);configure_colors(model,metadata['cube_colors'])
+        bowl=mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_BODY,'bowl')
+        model.body_pos[bowl]=metadata['scenario']['scene']['bowl_position']
+        return model,CAMERA_NAME
     if metadata.get('scene_profile') == 'panda_lift_v1':
         from simulation.lift_scene import SCENE_PATH,CAMERA_NAME
         from simulation.bowl_scene import configure_grip

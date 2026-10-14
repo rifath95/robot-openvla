@@ -50,7 +50,7 @@ def restore(source,destination=None):
                         or not target.resolve().is_relative_to(destination)):
                         raise ValueError('Unsafe archive entry: '+member.name)
                     total_files+=1;total_bytes+=member.size
-                    if total_files>600000 or total_bytes>20*1024**3:raise ValueError('Archive exceeds restore limits')
+                    if total_files>1500000 or total_bytes>100*1024**3:raise ValueError('Archive exceeds restore limits')
                     archive.extract(member,path=destination,filter='data')
             done[str(relative)]=entry['sha256'];progress.write_text(json.dumps(done,indent=2)+'\n')
         else:

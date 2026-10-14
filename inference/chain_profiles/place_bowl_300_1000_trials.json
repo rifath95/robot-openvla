@@ -1,0 +1,8 @@
+{
+  "dataset_repo": "Maxalderone/robot-openvla-panda-place-bowl-300",
+  "dataset_revision": "dd69138a8afb9b0484cf90f5ceab037629811807",
+  "checksums_sha256": "077e0eb6cb5216ca23c3a91958315b2792c934e4d8cabe778e3ba59741877402",
+  "checkpoint_repo": "Maxalderone/robot-openvla-checkpoints",
+  "sweep_repo": "Maxalderone/robot-openvla-simulator-results",
+  "estimated_seconds": 90000
+}

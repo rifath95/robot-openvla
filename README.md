@@ -42,10 +42,11 @@ recommends checkpoint 300 for that harder color-selection task. Phase 4 has star
 with single-cube grasp/lift demonstrations. The 50-trajectory pilot achieved
 **7/10 successful lifts on unseen positions at checkpoint 300**; the pretrained
 base achieved 0/10. The dataset is now [expanded to 300](docs/reviews/LIFT_CUBE_300.md)
-for a 1,000-update run. This small evaluation demonstrates progress, not broad
-reliability; the expanded dataset has not yet been trained.
+and trained for 1,000 updates. Its checkpoint 1,000 achieved **16/20 successful
+lifts on tested unseen positions**. These simulator results demonstrate progress,
+not broad reliability.
 
-A parallel bowl-placement direction now has [50 verified demonstrations](docs/reviews/PLACE_BOWL_50.md), preserving the reviewed first ten and using a blue bowl interior and the same controller. The portable upload bundle is prepared.
+The parallel bowl-placement dataset is now [expanded to 300 demonstrations](docs/reviews/PLACE_BOWL_300.md), retaining the reviewed original 50. All 300 are assigned to training. A [detached training/sweep/HF-backup chain](docs/cloud/BOWL_TRAIN_SWEEP_CHAIN.md) is prepared for 3,000 updates and 1,000 color-selection placement trials; it has not yet been launched. Checkpoints stay on the network volume; global storage provides recovery for recordings if HF backup fails.
 
 ## Goal
 
@@ -70,7 +71,7 @@ The seven values are `[dx, dy, dz, droll, dpitch, dyaw, gripper]`: three positio
 | 1 | Establish local simulation, seven-value control, and OpenVLA inference. | **Completed** |
 | 2 | Connect local simulation to cloud OpenVLA and demonstrate a live repeated control loop. | **Completed** |
 | 3 | Adapt OpenVLA to our Panda setup and evaluate instruction-guided touching on new scenes, including unseen colors. | **Completed — fine-tuning and 480-trial baseline/checkpoint comparison** |
-| 4 | Expand to other tasks and measure transfer to tasks excluded from fine-tuning. | **Planned** |
+| 4 | Expand to other tasks and measure transfer to tasks excluded from fine-tuning. | **In progress — lift/bowl pilots and expanded bowl evaluation** |
 
 ### Phase 1 — completed: local foundation
 

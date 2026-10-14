@@ -13,6 +13,7 @@ from training.panda_rlds import PandaRLDSDataset
 class Metrics:
     def init(self, *, name, **kwargs):
         self.started=time.monotonic()
+        self.update_started=self.started
         self.directory=Path(os.environ['PANDA_RUN_DIR'])
         self.directory.mkdir(parents=True,exist_ok=True)
         if (self.directory/'experiment.json').exists():
@@ -25,6 +26,8 @@ class Metrics:
         self.writer=SummaryWriter(str(self.directory/'tensorboard'))
         (self.directory/'experiment.json').write_text(json.dumps(dict(name=name,
             upstream_revision=os.environ['PANDA_UPSTREAM_REVISION'],
+            validation_enabled=os.environ.get('PANDA_VALIDATION_ENABLED','1')!='0',
+            dataset_provenance=json.loads(os.environ['PANDA_PROVENANCE']) if os.environ.get('PANDA_PROVENANCE') else None,
             validation_every=int(os.environ['PANDA_VALIDATE_EVERY']),
             validation_updates=json.loads(os.environ['PANDA_VALIDATION_UPDATES']) if os.environ.get('PANDA_VALIDATION_UPDATES') else None,
             validation_max_batches=int(os.environ['PANDA_VALIDATION_MAX_BATCHES']),
@@ -49,6 +52,9 @@ class Metrics:
             row['gpu_free_gib']=free/2**30
             row['gpu_total_gib']=total/2**30
             row['elapsed_seconds']=time.monotonic()-self.started
+        if 'train_loss' in values:
+            row['training_update_wall_seconds']=time.monotonic()-self.update_started
+            self.update_started=time.monotonic()
         self.rows.append(row)
         for key,value in values.items():
             if isinstance(value,(int,float)):
@@ -77,6 +83,7 @@ def record_model(model, cfg):
 
 
 def validate(model, cfg, batch_transform, collator, device_id, update):
+    if os.environ.get('PANDA_VALIDATION_ENABLED','1')=='0':return
     dataset=PandaRLDSDataset(cfg.data_root_dir,cfg.dataset_name,batch_transform,
                             train=False,split='validation')
     loader=DataLoader(dataset,batch_size=cfg.batch_size,collate_fn=collator,num_workers=0)
@@ -101,12 +108,14 @@ def validate(model, cfg, batch_transform, collator, device_id, update):
         model.train(was_training)
     metrics.log(dict(validation_loss=sum(losses)/sum(weights),validation_examples=examples,
                      validation_complete=examples==len(dataset)),step=update)
+    metrics.update_started=time.monotonic()
 
 
 def save_adapter(model, processor, cfg, dataset, update):
     if os.environ.get('PANDA_SAVE_CHECKPOINTS','1')=='0':
         print(f'Benchmark: adapter checkpoint saving disabled at update {update}',flush=True)
         return
+    save_started=time.monotonic()
     folder=metrics.directory/f'checkpoint_{update:06d}'
     folder.mkdir(parents=True,exist_ok=False)
     model.module.save_pretrained(folder)
@@ -117,8 +126,18 @@ def save_adapter(model, processor, cfg, dataset, update):
         saved_config.update(source_model_path=os.environ['PANDA_SOURCE_MODEL'],
             source_dataset_path=os.environ['PANDA_SOURCE_DATASET'],
             input_staging=json.loads(os.environ['PANDA_INPUT_STAGING']))
+    saved_config.update(checkpoint_update=update,training_elapsed_seconds_at_save=time.monotonic()-metrics.started if hasattr(metrics,'started') else None)
+    saved_config['validation_enabled']=os.environ.get('PANDA_VALIDATION_ENABLED','1')!='0'
+    if os.environ.get('PANDA_PROVENANCE'):
+        provenance=json.loads(os.environ['PANDA_PROVENANCE'])
+        saved_config.update(dataset_provenance=provenance,source_model_path=provenance['base_model_volume_path'])
+        (folder/'provenance.json').write_text(json.dumps(provenance,indent=2)+'\n')
     (folder/'training_config.json').write_text(json.dumps(saved_config,default=str,indent=2)+'\n')
     (metrics.directory/'model_info.json').write_text(json.dumps(metrics.model_details,default=str,indent=2)+'\n')
+    with (metrics.directory/'checkpoint_timings.jsonl').open('a') as stream:
+        stream.write(json.dumps(dict(update=update,seconds=time.monotonic()-save_started))+'\n')
+    metrics.plot()
+    metrics.update_started=time.monotonic()
     print(f'Saved adapter checkpoint: {folder}',flush=True)
 
 

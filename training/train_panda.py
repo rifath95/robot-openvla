@@ -17,6 +17,7 @@ def main():
     p.add_argument('--output-root',type=Path,default=Path('/workspace/panda-training/runs'))
     p.add_argument('--config',type=Path,default=Path('training/smoke.json'))
     p.add_argument('--upstream',type=Path,default=Path('/opt/openvla-source'))
+    p.add_argument('--provenance',type=Path,help='Chain dataset/model provenance copied into checkpoints')
     p.add_argument('--adapter',type=Path,help='Continue from LoRA weights in a new run with a fresh optimizer')
     p.add_argument('--no-checkpoints',action='store_true',help='Benchmark only: skip adapter saves while retaining metrics and reports')
     p.add_argument('--prepare-only',action='store_true',help='Print launch command without running training')
@@ -32,6 +33,8 @@ def main():
     try:validate_dataset(config,args.dataset)
     except (ValueError,OSError) as exc:p.error(str(exc))
     for key in PROFILE_KEYS:config.pop(key,None)
+    validation_enabled=config.pop('validation_enabled',True)
+    if type(validation_enabled) is not bool:p.error('validation_enabled must be boolean')
     config.pop('minimum_free_disk_gib',None)
     config.pop('hard_limit_seconds',None)  # Supervisor option, not an upstream trainer flag.
     stage_local=config.pop('stage_inputs_on_container',False)
@@ -99,7 +102,8 @@ def main():
     elif stage_local:
         print('Container staging will copy model and dataset before training; outputs remain:',run,flush=True)
     env=os.environ.copy()
-    env.update(PANDA_SOURCE_MODEL=str(source_model),PANDA_SOURCE_DATASET=str(source_dataset),
+    env.update(PANDA_VALIDATION_ENABLED='1' if validation_enabled else '0',
+        PANDA_PROVENANCE=args.provenance.read_text() if args.provenance else '',PANDA_SOURCE_MODEL=str(source_model),PANDA_SOURCE_DATASET=str(source_dataset),
         PANDA_INPUT_STAGING=json.dumps(staging_receipt) if staging_receipt else '',
         PANDA_RUN_DIR=str(run),PANDA_UPSTREAM_REVISION=pin['revision'],
         PANDA_CHECKPOINT_UPDATES=json.dumps(checkpoint_updates) if checkpoint_updates is not None else '',

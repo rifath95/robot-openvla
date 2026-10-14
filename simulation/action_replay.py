@@ -33,9 +33,12 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
     if [r['index'] for r in rows]!=list(range(1,len(rows)+1)):
         raise ValueError('Demonstration action sequence is not contiguous')
     model,camera=replay_model(folder)
-    if metadata.get('scene_profile') in ('panda_place_bowl_v1','panda_bowl_v1','panda_touch_v1','panda_color_touch_v1','panda_lift_v1'):
+    if metadata.get('scene_profile') in ('panda_place_bowl_v1','panda_bowl_v1','panda_touch_v1','panda_color_touch_v1','panda_lift_v1','panda_color_place_bowl_v1'):
         from data_tools.bowl_demonstrations import controller_fingerprint
-        if metadata['scene_profile']=='panda_place_bowl_v1':
+        if metadata['scene_profile']=='panda_color_place_bowl_v1':
+            from simulation.color_place_bowl_scene import scene_fingerprint as color_fingerprint
+            scene_fingerprint=lambda:color_fingerprint(len(metadata['cube_colors']))
+        elif metadata['scene_profile']=='panda_place_bowl_v1':
             from simulation.place_bowl_scene import scene_fingerprint
         elif metadata['scene_profile']=='panda_lift_v1':
             from simulation.lift_scene import scene_fingerprint
@@ -57,6 +60,10 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
     restore_state(folder/'initial_state.npz',env)
     # Restore once only. Subsequent states must result from executing the actions.
     initial=cube_position(env);positions=[initial.copy()]
+    placement_tracker=None
+    if metadata.get('scene_profile')=='panda_color_place_bowl_v1':
+        from simulation.color_place_bowl_scene import PlacementOutcome
+        placement_tracker=PlacementOutcome(env,metadata['target_color'],metadata['cube_colors'])
     color_lift_tracker=None
     if metadata.get('scene_profile')=='panda_color_lift_v1':
         from simulation.color_lift_scene import ColorLiftOutcome
@@ -135,6 +142,7 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
                         env.controller.step(count)
                         if lift_tracker is not None:lift_tracker.observe(env)
                         if color_lift_tracker is not None:color_lift_tracker.observe(env)
+                        if placement_tracker is not None:placement_tracker.observe(env)
                         poses.append(data.qpos.copy());times.append(float(data.time))
                     executed+=count
                     if viewer is not None:
@@ -143,7 +151,10 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
                 save_state(directory/'after_state.npz',env)
                 np.savez_compressed(directory/'motion_frames.npz',qpos=poses,time=times)
                 positions.append(cube_position(env))
-                with np.load(folder/f"step_{row['index']:04d}"/'after_state.npz') as saved:
+                recorded_step=row.get('source_step_directory',f"step_{row['index']:04d}")
+                import re
+                if not re.fullmatch(r'step_[0-9]{3,6}',recorded_step):raise ValueError('Invalid recorded step directory')
+                with np.load(folder/recorded_step/'after_state.npz') as saved:
                     difference=float(np.max(np.abs(data.qpos-saved['qpos'])))
                 result=dict(index=row['index'],stage=row.get('stage'),action=row['action'],
                             executed_physics_steps=executed,
@@ -174,6 +185,7 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
                     maximum_cube_lift_metres=float(max(p[2] for p in positions)-initial[2]),
                     maximum_recorded_qpos_difference=max((r['recorded_qpos_max_difference'] for r in results),default=0),
                     note='Recorded-pose differences are measured, not corrected. Collection mode reproduces the pre-holding-fix actuator target assignment, not an arbitrary historical code version.')
+        if placement_tracker is not None:report['task_result']=placement_tracker.result(env)
         if lift_tracker is not None:report['task_result']=lift_tracker.last
         if color_lift_tracker is not None:report['task_result']=color_lift_tracker.result(env)
         if metadata.get('scene_profile') in ('panda_bowl_v1','panda_place_bowl_v1'):

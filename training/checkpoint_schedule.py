@@ -21,6 +21,7 @@ def checkpoint_due(update, interval):
 
 
 def validation_due(update, interval):
+    if os.environ.get('PANDA_VALIDATION_ENABLED','1')=='0':return False
     schedule = os.environ.get('PANDA_VALIDATION_UPDATES', '')
     if schedule:
         return update in json.loads(schedule)

@@ -25,6 +25,12 @@ def run_name(folder):
     folder=Path(folder).resolve()
     for root in (PROJECT_ROOT/'outputs',PROJECT_ROOT/'datasets'):
         if folder.is_relative_to(root):return folder.relative_to(PROJECT_ROOT).as_posix()
+    container=Path('/root/panda-chain-work')
+    if folder.is_relative_to(container):
+        relative=folder.relative_to(container)
+        if 'scripted-evaluations' in relative.parts:
+            index=relative.parts.index('scripted-evaluations')
+            return 'outputs/sweeps/'+Path(*relative.parts[index+1:]).as_posix()
     # Cloud sweep reports use the eventual local path, then are rebound on download.
     volume=Path('/workspace/panda-training/scripted-evaluations')
     if folder.is_relative_to(volume):return 'outputs/sweeps/'+folder.relative_to(volume).as_posix()

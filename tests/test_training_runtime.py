@@ -21,7 +21,7 @@ class TrainingRuntimeTests(unittest.TestCase):
             cfg=SimpleNamespace(lora_rank=32)
             dataset=SimpleNamespace(dataset_statistics={'train':{}})
             model.module.save_pretrained.side_effect=lambda folder:(folder/'adapter_model.safetensors').write_bytes(b'adapter')
-            with patch('training.runtime.metrics',SimpleNamespace(directory=root,model_details={'gpu':'test'})):
+            with patch('training.runtime.metrics',SimpleNamespace(directory=root,model_details={'gpu':'test'},plot=Mock())):
                 with patch.dict(os.environ,{'PANDA_SAVE_CHECKPOINTS':'0'}):
                     save_adapter(model,processor,cfg,dataset,25)
                     self.assertFalse((root/'checkpoint_000025').exists())
@@ -38,6 +38,13 @@ class TrainingRuntimeTests(unittest.TestCase):
                     self.assertEqual(saved['source_model_path'],'/workspace/openvla-7b')
                     self.assertEqual(saved['source_dataset_path'],'/workspace/panda-training/bundle')
                     self.assertTrue((root/'model_info.json').is_file())
+
+    def test_training_only_never_opens_a_validation_dataset(self):
+        from training.runtime import validate
+        from training.checkpoint_schedule import validation_due
+        with patch.dict(os.environ,{'PANDA_VALIDATION_ENABLED':'0'}),patch('training.runtime.PandaRLDSDataset',side_effect=AssertionError('No validation split')):
+            self.assertIsNone(validate(None,None,None,None,None,0))
+            self.assertFalse(validation_due(1000,100))
 
     def test_lora_update_keeps_base_weights_fixed(self):
         class TinyModel(PreTrainedModel):
