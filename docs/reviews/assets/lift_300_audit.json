@@ -1,0 +1,26 @@
+{
+  "trajectories": 300,
+  "split_counts": {
+    "train": 200,
+    "validation": 50,
+    "test": 50
+  },
+  "split_transitions": {
+    "train": 6293,
+    "validation": 1535,
+    "test": 1555
+  },
+  "total_transitions": 9383,
+  "replay_verified": true,
+  "reviewed_first_50_preserved": true,
+  "controller_sha256": "06285e938bf6713a35fa9ffc27f90538c1e45b42869a840eec70b4ebf306fa5e",
+  "scene_sha256": "1e1160b44d4f3c2cea107d0b84e3fa8c1095c522bf026df5c868dad3685a23a3",
+  "no_stationary_lift_tail": true,
+  "failed_attempts": 0,
+  "stage_counts": {
+    "approach_above_cube": 3983,
+    "lower_to_grasp": 2700,
+    "close_gripper": 300,
+    "lift": 2400
+  }
+}

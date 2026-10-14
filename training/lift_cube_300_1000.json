@@ -1,0 +1,55 @@
+{
+  "dataset_bundle": "training_lift_v2_300",
+  "expected_camera": "touch_camera",
+  "expected_split_counts": {
+    "train": {
+      "episodes": 200,
+      "transitions": 6293
+    },
+    "validation": {
+      "episodes": 50,
+      "transitions": 1535
+    },
+    "test": {
+      "episodes": 50,
+      "transitions": 1555
+    }
+  },
+  "batch_size": 8,
+  "grad_accumulation_steps": 1,
+  "max_steps": 1000,
+  "save_steps": 100,
+  "learning_rate": 0.0001,
+  "lora_rank": 32,
+  "lora_dropout": 0.0,
+  "use_lora": true,
+  "use_quantization": false,
+  "image_aug": false,
+  "shuffle_buffer_size": 512,
+  "validation_every": 100,
+  "validation_max_batches": 0,
+  "max_runtime_seconds": 9000,
+  "hard_limit_seconds": 12600,
+  "require_benchmark": false,
+  "expected_gpu": "NVIDIA A40",
+  "minimum_free_disk_gib": 5,
+  "checkpoint_updates": [
+    0,
+    50,
+    100,
+    300,
+    500,
+    750,
+    1000
+  ],
+  "batch_policy": "config",
+  "validation_updates": [
+    0,
+    50,
+    100,
+    300,
+    500,
+    750,
+    1000
+  ]
+}

@@ -80,3 +80,5 @@ For result folders and replay locations, see the [local outputs layout](OUTPUT_L
 - [Phase 3: approach learning after 1,000 updates](reviews/PHASE3_LEARNING_REVIEW.md)
 - [Phase 3: training and inference consistency](reviews/PIPELINE_AUDIT.md)
 - [Local audit after Panda v2 fine-tuning](reviews/V2_LOCAL_AUDIT.md)
+
+- [Phase 4 lift dataset expanded to 300](reviews/LIFT_CUBE_300.md): preserved pilot demonstrations, split counts, verification and training setup.

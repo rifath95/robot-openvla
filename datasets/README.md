@@ -108,3 +108,18 @@ See [BROAD_PANDA_DATASET.md](../docs/datasets/BROAD_PANDA_DATASET.md) for comman
 Use the batch's `WATCH_TRAJECTORIES.md` to find accepted episodes, including
 successful retries. `COLLECTION_SUMMARY.md` reports actual measured diversity
 and task/replay checks. Each trajectory includes its own `replay.py`.
+
+## Phase 4 single-cube grasp and lift
+
+`panda_lift_cube/` contains 300 independently action-replay-verified successful
+demonstrations: 200 train / 50 validation / 50 test. The original reviewed 50
+are retained, with sequential names in the same split folders.
+`WATCH_TRAJECTORIES.md` provides direct Replay and Action Replay buttons.
+The task is `pick up the red cube.`, starting from a fixed arm pose and an open
+gripper. The cube position varies across the declared workspace.
+
+The complete portable bundle is `panda_lift_cube/training_lift_v2_300/`; it
+contains all 300 demonstrations and uses training-only action statistics.
+The earlier 50-demonstration `training_lift_v1/` remains as a pilot artifact.
+See [the expansion review](../docs/reviews/LIFT_CUBE_300.md) for measured split
+counts, checks, upload destination, and the 1,000-update training profile.

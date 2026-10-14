@@ -39,8 +39,11 @@ experiments, findings, saved artifacts and limitations, and the
 unsuccessful grasp/lift experiments; reliable model-driven pick-and-place remains
 open. The [multi-cube sweep review](docs/reviews/MULTI_CUBE_MODEL_SWEEP_REVIEW.md)
 recommends checkpoint 300 for that harder color-selection task. Phase 4 has started
-with single-cube grasp/lift demonstrations, now [expanded to 50](docs/reviews/LIFT_CUBE_50.md)
-after review of the first ten. A short fine-tuning pilot is recommended; training has not started.
+with single-cube grasp/lift demonstrations. The 50-trajectory pilot achieved
+**7/10 successful lifts on unseen positions at checkpoint 300**; the pretrained
+base achieved 0/10. The dataset is now [expanded to 300](docs/reviews/LIFT_CUBE_300.md)
+for a 1,000-update run. This small evaluation demonstrates progress, not broad
+reliability; the expanded dataset has not yet been trained.
 
 ## Goal
 

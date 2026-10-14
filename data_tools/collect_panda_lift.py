@@ -1,4 +1,4 @@
-"""Collect ten replay-verified grasp/lift demonstrations for review before expansion."""
+"""Collect numbered replay-verified grasp/lift demonstrations, preserving reviewed episodes."""
 
 from common.output_layout import output_path
 import argparse
