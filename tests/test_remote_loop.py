@@ -18,6 +18,22 @@ from simulation.panda_actions import PHYSICS_STEPS
 
 
 class LoopTests(unittest.TestCase):
+    def test_lift_start_records_open_gripper_task_and_replay_scene(self):
+        from simulation.replay_run import replay_model
+        from inference.lift_task import cube_position_for_seed
+        with tempfile.TemporaryDirectory() as tmp:
+            output=Path(tmp)/'run';stop=threading.Event();stop.set()
+            run_loop(task='lift',scene_seed=1000,steps=1,no_view=True,
+                stop_event=stop,output_dir=output)
+            metadata=json.loads((output/'episode.json').read_text())
+            summary=json.loads((output/'summary.json').read_text())
+            self.assertEqual(metadata['scene_profile'],'panda_lift_v1')
+            self.assertEqual(metadata['instruction'],'pick up the red cube.')
+            self.assertEqual(metadata['scenario']['scene']['cube_xy'],cube_position_for_seed(1000))
+            self.assertFalse(summary['task_result']['success'])
+            model,camera=replay_model(output)
+            self.assertEqual(camera,'touch_camera')
+
     def test_bowl_start_records_matching_camera_and_replay_geometry(self):
         from simulation.replay_run import replay_model
         import mujoco

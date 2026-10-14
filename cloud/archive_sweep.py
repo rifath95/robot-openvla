@@ -56,7 +56,7 @@ def package(source,staging,payload,*,part_cache=None,on_part=None):
     groups=defaultdict(list)
     for r in payload['trials']:
         model='base' if r['checkpoint']==0 and payload['plan'].get('include_base_model') else f"checkpoint_{r['checkpoint']:06d}"
-        count=r.get('cube_count') or len(r.get('cube_colors') or (['red'] if payload['plan']['task']=='touch' else ['red','blue']))
+        count=r.get('cube_count') or len(r.get('cube_colors') or (['red'] if payload['plan']['task'] in ('touch','lift') else ['red','blue']))
         palette=r.get('color_set') or (r.get('color_pair') or payload['plan']['task']).replace(':','-')
         groups[f'{model}_{count}c_{palette}'].append(r['directory'])
     manifest=[]
