@@ -62,7 +62,12 @@ def summarize(spec,folder,returncode):
         phase=summary.get('phase','Missing summary'),completed_steps=summary.get('completed_steps',0),
         contact=outcome.get('correct_cube_contact',outcome.get('success',False)),error=status.get('error'),
         returncode=returncode,execution_mode='cloud_sequential',finished_at_utc=datetime.now(timezone.utc).isoformat())
-    if 'maximum_cube_lift_metres' in outcome:
+    if 'cube_settled' in outcome:
+        row.update(placement_success=outcome.get('success',False),
+            maximum_lift_metres=outcome['maximum_cube_lift_metres'],
+            bowl_center_distance_metres=outcome['bowl_center_distance_metres'],
+            empty_hand_cube_distance_metres=outcome['empty_hand_cube_distance_metres'])
+    elif 'maximum_cube_lift_metres' in outcome:
         row.update(lift_success=outcome.get('success',False),
             maximum_lift_metres=outcome['maximum_cube_lift_metres'],
             maximum_grasp_seconds=outcome['maximum_continuous_grasp_seconds'])
@@ -119,6 +124,8 @@ def run(directory,sim_python,*,port=0):
         seed_check="from data_tools.collect_panda_color_touch import pair_spec; from cloud.sweep_plan import validate_scene_positions; validate_scene_positions([pair_spec(s)['cube_positions'] for s in "+repr(plan['scene_seeds'])+"], "+repr(plan['cube_positions'])+"); "
     else:seed_check=''
     probe=seed_check+"from simulation.panda_env import PandaEnv; from simulation.color_touch_scene import SCENE_PATH,CAMERA_NAME; e=PandaEnv(SCENE_PATH,camera=CAMERA_NAME); print(e.observe().shape); e.close()"
+    if plan['task']=='place_bowl':
+        probe="from simulation.panda_env import PandaEnv; from simulation.place_bowl_scene import SCENE_PATH,CAMERA_NAME,initialize_scene; import numpy as np; e=PandaEnv(SCENE_PATH,camera=CAMERA_NAME); e.controller,s=initialize_scene(e.model,e.data,np.random.default_rng(0),slot="+repr(plan['scene_seeds'][0])+"); print(e.observe().shape); e.close()"
     if plan['task']=='lift':
         probe="from simulation.panda_env import PandaEnv; from simulation.lift_scene import SCENE_PATH,CAMERA_NAME,initialize_scene; e=PandaEnv(SCENE_PATH,camera=CAMERA_NAME); initialize_scene(e,"+repr(plan['cube_positions'][0]['red'])+"); print(e.observe().shape); e.close()"
     if plan['task']=='multi_color_touch':
@@ -165,11 +172,11 @@ def run(directory,sim_python,*,port=0):
                         trial=local/spec['directory']
                         if trial.exists():trial.rename(trial.with_name(trial.name+f'_interrupted_{time.time_ns()}'))
                         command=[str(sim_python),'-u','-m','inference.remote_loop','--task',plan['task'],
-                            '--instruction',('pick up the red cube.' if plan['task']=='lift' else f"touch the {spec['target_color']} cube."),'--scene-seed',str(spec['seed']),
+                            '--instruction',('pick up the red cube and place it in the blue bowl.' if plan['task']=='place_bowl' else 'pick up the red cube.' if plan['task']=='lift' else f"touch the {spec['target_color']} cube."),'--scene-seed',str(spec['seed']),
                             '--steps',str(plan['steps']),'--no-view','--start-immediately','--startup-info',str(startup),
                             '--output-dir',str(trial),'--server-url',f'http://127.0.0.1:{selected_port}',
                             '--max-runtime-seconds','180']
-                        if plan['task']=='lift':
+                        if plan['task'] in ('lift','place_bowl'):
                             positions_file=local/f"lift_positions_{spec['seed']}.json"
                             positions_file.write_text(json.dumps(plan['cube_positions'][plan['scene_seeds'].index(spec['seed'])]))
                             command+=['--scene-positions',str(positions_file)]

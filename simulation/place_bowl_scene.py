@@ -16,14 +16,7 @@ def scene_fingerprint():
     return fingerprint(SCENE_PATH)
 
 
-def positions(slot):
-    rng=np.random.default_rng([20261014,slot,5])
-    for _ in range(10000):
-        cube=rng.uniform([.40,-.16],[.68,.16])
-        bowl=rng.uniform([.40,-.16],[.68,.16])
-        if .18<=np.linalg.norm(cube-bowl)<=.32:
-            return dict(cube_xy=cube.tolist(),bowl_xy=bowl.tolist())
-    raise RuntimeError('Unable to predeclare separated positions')
+from inference.place_bowl_task import positions
 
 
 def initialize_scene(model,data,rng,**kwargs):
@@ -31,6 +24,11 @@ def initialize_scene(model,data,rng,**kwargs):
     slot=kwargs.pop('slot',None)
     if slot is None:raise ValueError('Placement initializer requires its fixed slot')
     spec=positions(slot)
+    saved=kwargs.pop('scene_positions',None)
+    if saved is not None:
+        from inference.place_bowl_task import layout,validate_positions
+        validate_positions([saved],[layout(slot)])
+        spec=dict(cube_xy=saved['red'],bowl_xy=saved['bowl'])
     home=mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_KEY,'scene_home')
     mujoco.mj_resetDataKeyframe(model,data,home);configure_grip(model)
     bowl=mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_BODY,'bowl')
