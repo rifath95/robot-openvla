@@ -131,6 +131,36 @@ class ArchiveTests(unittest.TestCase):
                 self.assertNotIn('secret',status)
                 worker=json.loads(proc.stdin.write.call_args.args[0]);self.assertNotIn('pod_key',worker)
 
+    def test_batch_verifies_both_before_publishing_final_receipt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);jobs=[]
+            for name in ('scripted_lift','scripted_bowl'):
+                receipt=root/name;receipt.mkdir();jobs.append(dict(source=str(root/'volume'/name),receipt=str(receipt),staging=str(root/'container'/name)))
+            config=dict(jobs=jobs,receipt=str(root),repo='user/private',token='hidden-token')
+            called=[]
+            def upload(job):
+                called.append(Path(job['source']).name)
+                self.assertFalse((root/'receipt.json').exists())
+                Path(job['receipt'],'receipt.json').write_text('{"verified":true,"revision":"commit"}')
+                return 0
+            with patch.object(arch,'worker',side_effect=upload),patch.object(arch,'stop_pod') as stop:
+                self.assertEqual(arch.worker_batch(config),0)
+            self.assertEqual(called,['scripted_lift','scripted_bowl']);stop.assert_not_called()
+            saved=json.loads((root/'receipt.json').read_text());self.assertTrue(saved['verified']);self.assertEqual(len(saved['sweeps']),2)
+            self.assertNotIn('hidden-token',(root/'receipt.json').read_text())
+
+    def test_batch_failure_retains_first_verification_and_does_not_claim_both(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);first=root/'first';first.mkdir();second=root/'second';second.mkdir()
+            jobs=[dict(source='scripted_first',receipt=str(first)),dict(source='scripted_second',receipt=str(second))]
+            def upload(job):
+                if job['source']=='scripted_second':return 1
+                (first/'receipt.json').write_text('{"verified":true}');return 0
+            with patch.object(arch,'worker',side_effect=upload):
+                self.assertEqual(arch.worker_batch(dict(jobs=jobs,receipt=str(root),repo='user/private',token='secret')),1)
+            self.assertTrue((first/'receipt.json').exists());self.assertFalse((root/'receipt.json').exists())
+            self.assertEqual(json.loads((root/'status.json').read_text())['completed_sweeps'],['scripted_first'])
+
     def test_supervisor_timeout_kills_job_then_stops(self):
         with tempfile.TemporaryDirectory() as tmp:
             config=dict(receipt=tmp,estimated_seconds=60,pod_id='pod',pod_key='key')

@@ -181,11 +181,29 @@ def worker(config):
         return 1
 
 
+def worker_batch(config):
+    """Sequential archives under one shutdown supervisor; retain per-sweep receipts."""
+    receipt=Path(config['receipt']);verified=[]
+    for job in config['jobs']:
+        print(f"Archiving sweep: {Path(job['source']).name}",flush=True)
+        selected=dict(job,repo=config['repo'],token=config['token'])
+        if worker(selected)!=0:
+            write_status(receipt/'status.json',dict(phase='failed',completed_sweeps=[v['sweep'] for v in verified],failed_sweep=Path(job['source']).name))
+            return 1
+        result=json.loads((Path(job['receipt'])/'receipt.json').read_text())
+        if result.get('verified') is not True:raise ValueError('Sweep verification receipt missing')
+        verified.append(dict(sweep=Path(job['source']).name,receipt=result))
+    write_status(receipt/'receipt.json',dict(verified=True,sweeps=verified))
+    write_status(receipt/'status.json',dict(phase='verified',completed_sweeps=[v['sweep'] for v in verified]))
+    print('All requested sweep uploads verified.',flush=True)
+    return 0
+
+
 def supervise(config):
     receipt=Path(config['receipt']);budget=timeout_budget(config['estimated_seconds']);process=None
     started=time.monotonic();outcome='supervisor_failed'
     try:
-        worker_config={k:v for k,v in config.items() if k not in ('pod_id','pod_key','lock_fd')}
+        worker_config={k:v for k,v in config.items() if k not in ('pod_id','pod_key','lock_fd','lock_fds')}
         process=subprocess.Popen([sys.executable,'-u','-m','cloud.archive_sweep','--worker'],
             cwd=PROJECT_ROOT,stdin=subprocess.PIPE,start_new_session=True)
         process.stdin.write(json.dumps(worker_config).encode());process.stdin.close()
@@ -210,17 +228,21 @@ def supervise(config):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--sweep');p.add_argument('--repo',default='Maxalderone/robot-openvla-simulator-results')
+    selection=p.add_mutually_exclusive_group()
+    selection.add_argument('--sweep');selection.add_argument('--sweeps',nargs='+',help='Upload multiple sweeps sequentially and stop once afterward')
+    p.add_argument('--repo',default='Maxalderone/robot-openvla-simulator-results')
     p.add_argument('--estimated-seconds',type=float,default=3600)
     internal=p.add_mutually_exclusive_group();internal.add_argument('--supervise',action='store_true');internal.add_argument('--worker',action='store_true')
     a=p.parse_args()
     if a.supervise or a.worker:
         config=json.load(sys.stdin)
-        return supervise(config) if a.supervise else worker(config)
-    if not a.sweep or not re.fullmatch('scripted_[A-Za-z0-9_]+',a.sweep):p.error('Choose a saved simulator sweep name')
+        return supervise(config) if a.supervise else worker_batch(config) if 'jobs' in config else worker(config)
+    names=a.sweeps or ([a.sweep] if a.sweep else [])
+    if not names or len(set(names))!=len(names) or any(not re.fullmatch('scripted_[A-Za-z0-9_]+',name) for name in names):
+        p.error('Choose unique saved simulator sweep names')
     if not re.fullmatch('[A-Za-z0-9_-]+/[A-Za-z0-9_.-]+',a.repo):p.error('Invalid HF repository name')
     budget=timeout_budget(a.estimated_seconds)
-    source=SWEEPS/a.sweep;completed_payload(source)
+    for name in names:completed_payload(SWEEPS/name)
     pod_id,key=preflight()
     from cloud.scripted_eval_control import active_training
     if active_training():p.error('Refusing to stop a pod with active training')
@@ -230,22 +252,33 @@ def main():
     api=HfApi(token=token);api.whoami()
     api.create_repo(a.repo,repo_type='dataset',private=True,exist_ok=True)
     if not api.repo_info(a.repo,repo_type='dataset').private:raise ValueError('Choose a private repository')
-    receipt=Path('/workspace/panda-training/reports/hf-archives')/a.sweep;receipt.mkdir(parents=True,exist_ok=True)
-    lock=(receipt/'upload.lock').open('a')
-    try:fcntl.flock(lock.fileno(),fcntl.LOCK_EX|fcntl.LOCK_NB)
-    except BlockingIOError:raise RuntimeError('An archive upload is already running')
-    config=dict(lock_fd=lock.fileno(),source=str(source),receipt=str(receipt),staging=str(Path('/root/panda-hf-archives')/a.sweep),
-        repo=a.repo,token=token,pod_id=pod_id,pod_key=key,estimated_seconds=a.estimated_seconds)
+    receipts=Path('/workspace/panda-training/reports/hf-archives')
+    jobs=[];locks=[]
+    for name in names:
+        saved=receipts/name;saved.mkdir(parents=True,exist_ok=True)
+        lock=(saved/'upload.lock').open('a')
+        try:fcntl.flock(lock.fileno(),fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError:raise RuntimeError(f'An archive upload is already running for {name}')
+        locks.append(lock)
+        jobs.append(dict(source=str(SWEEPS/name),receipt=str(saved),staging=str(Path('/root/panda-hf-archives')/name)))
+    if len(jobs)==1:
+        receipt=Path(jobs[0]['receipt'])
+        config=dict(jobs[0],lock_fd=locks[0].fileno())
+    else:
+        batch='batch_'+hashlib.sha256(json.dumps(names).encode()).hexdigest()[:12]
+        receipt=receipts/batch;receipt.mkdir(parents=True,exist_ok=True)
+        config=dict(jobs=jobs,receipt=str(receipt),lock_fds=[lock.fileno() for lock in locks])
+    config.update(repo=a.repo,token=token,pod_id=pod_id,pod_key=key,estimated_seconds=a.estimated_seconds)
     env=os.environ.copy()
     for name in ('HF_TOKEN','RUNPOD_API_KEY'):env.pop(name,None)
     with (receipt/'upload.log').open('a',buffering=1) as log:
         process=subprocess.Popen([sys.executable,'-u','-m','cloud.archive_sweep','--supervise'],
-            cwd=PROJECT_ROOT,env=env,stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,pass_fds=(lock.fileno(),))
+            cwd=PROJECT_ROOT,env=env,stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,pass_fds=tuple(lock.fileno() for lock in locks))
         process.stdin.write(json.dumps(config).encode());process.stdin.close()
-    print('Detached HF archive upload started. Mac may disconnect.',flush=True)
+    print(f'Detached HF archive upload started for {len(names)} sweep(s). Mac may disconnect.',flush=True)
     print('Log:',receipt/'upload.log',flush=True)
     print(f"Inner limit: {budget['inner_seconds']/3600:g} h; outer budget: {budget['outer_seconds']/3600:g} h.",flush=True)
-    print('Pod stop requested after verified upload, failure or timeout; original results remain on the volume.',flush=True)
+    print('Pod stop requested after all selected uploads verify, or on failure/timeout; original results remain on the volume.',flush=True)
     return 0
 
 if __name__=='__main__':raise SystemExit(main())

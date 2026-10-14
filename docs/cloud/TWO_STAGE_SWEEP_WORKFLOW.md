@@ -57,3 +57,30 @@ See [HF archive instructions](HF_SWEEP_ARCHIVE.md) for exact download patterns, 
 Local tests cover the stop-without-download handoff, packing/upload overlap, cross-container archive reuse, metadata-based remote skip, upload interruption, checksum mismatch and supervisor stop paths. Actual transfer duration and cost on a cheaper pod have not been measured yet; no claim of a guaranteed speedup is made. Packing during simulation remains intentionally disabled.
 
 The old explicit direct-Mac fetch is still a legacy alternative: it streams a temporary archive, has a 30-minute timeout and discards partial data on failure. This workflow uses HF delivery instead; fixing that alternative is separate work.
+
+## Upload two completed sweeps on one transfer pod
+
+Use `--sweeps` instead of launching two independent single-sweep supervisors.
+A single detached supervisor holds both upload locks, packs/uploads/verifies
+sequentially, and requests stop only after all selected archives verify, or on
+failure/timeout. The first sweep's verified receipt survives failure of the
+second; source results remain. Each sweep retains its own receipt and cache.
+A combined log and receipt are written under a printed `hf-archives/batch_...`
+folder. No token is written to these records.
+
+For the completed lift and bowl sweeps, after cloning/pulling the repository
+on the cheaper transfer pod, run:
+
+```bash
+/opt/openvla/bin/python -u -m cloud.archive_sweep \
+  --sweeps \
+    scripted_lift_models_20261014_105736_941b29f8 \
+    scripted_place_bowl_models_20261014_111236_f42bb9bf \
+  --repo Maxalderone/robot-openvla-simulator-results
+```
+
+Enter the HF write token once at the hidden prompt. Follow the printed combined
+log with `tail -F`. After detached launch the Mac may disconnect. The default
+one-hour estimate yields a two-hour inner and three-hour outer deadline for
+the combined job. Verification checks downloaded bytes at each pinned HF commit.
+Cleanup remains separate and requires the per-sweep verified receipt.
