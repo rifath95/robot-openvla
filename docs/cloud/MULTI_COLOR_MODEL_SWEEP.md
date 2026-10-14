@@ -62,7 +62,14 @@ For slow Mac downloads, [archive the completed sweep to Hugging Face and stop th
 
 ## Saved comparisons
 
-`REPORT.md`, `statistics.json` and `results.json` are refreshed after each completed trial. Each trial retains images, actions, simulator states, motion frames, timings and replay commands. The reports separate:
+`REPORT.md`, `statistics.json` and `results.json` are refreshed after each completed trial. Each trial retains images, actions, simulator states, motion frames, timings and replay commands.
+
+`REPORT.md` begins with an automatically calculated checkpoint summary: overall
+success, trained-color success, unseen-color success, and correct color among
+unseen single-cube contacts. Cells show percentages and counts. During a sweep,
+the table reflects saved trials so far; untested categories show a dash.
+
+The existing detailed tables separate:
 
 - Models, cube counts and palettes.
 - Seen versus unseen **requested targets**, including scenes with familiar/unfamiliar distractors.

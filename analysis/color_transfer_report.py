@@ -70,5 +70,8 @@ def write_report(folder,plan,rows,error=None):
     for r in rows:lines.append(f'| {model_label(r["checkpoint"])} | {r["color_pair"]} | {r["seed"]} | {r["target_color"]} | '
         f'{r["outcome"]} | {r["phase"]} | [Run]({r["directory"]}/RUN_REPORT.md) |')
     if error:lines+=['',f'Launcher ended early: {error}']
+    if training_colors:
+        from analysis.multi_color_report import checkpoint_summary
+        lines[2:2]=checkpoint_summary(plan,rows)
     (folder/'REPORT.md').write_text('\n'.join(lines)+'\n')
     (folder/'statistics.json').write_text(json.dumps(measures,indent=2)+'\n')

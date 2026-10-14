@@ -9,6 +9,7 @@ import unittest
 from unittest.mock import patch
 from common.paths import PROJECT_ROOT
 from analysis.replay_launcher import Launcher,configure
+from analysis.multi_color_report import checkpoint_summary
 from cloud.sweep_plan import trial_specs
 from data_tools.restore_sweep_archive import restore
 from simulation.multi_color_scene import positions
@@ -77,3 +78,13 @@ class ReplayButtonTests(unittest.TestCase):
             popen.return_value.poll.return_value=None
             self.assertEqual(launcher.launch(trial,'secret')[0],409)
             self.assertEqual(popen.call_count,1)
+
+    def test_summary_denominators_and_unstarted_checkpoints(self):
+        plan=dict(checkpoints=[0,50,100],include_base_model=True,training_colors=['red'])
+        rows=[dict(checkpoint=50,target_color=color,outcome=outcome) for color,outcome in
+              [('red','correct_cube'),('blue','correct_cube'),('blue','wrong_cube'),
+               ('blue','no_contact'),('blue','multiple_cubes'),('blue','unmeasured')]]
+        text='\n'.join(checkpoint_summary(plan,rows))
+        self.assertIn('| 50 | 33.3% (2/6) | 100.0% (1/1) | 20.0% (1/5) | 50.0% (1/2) |',text)
+        self.assertIn('| Pretrained base | — | — | — | — |',text)
+        self.assertIn('| 100 | — | — | — | — |',text)

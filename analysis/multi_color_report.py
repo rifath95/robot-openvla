@@ -12,6 +12,32 @@ def metrics(rows):
         success_rate=correct/len(rows) if rows else None,choice_accuracy=correct/chosen if chosen else None)
 
 
+def checkpoint_summary(plan,rows):
+    """Aggregate saved attempts by checkpoint and requested-color familiarity."""
+    seen=set(plan['training_colors'])
+    groups=defaultdict(list)
+    for row in rows:groups[row['checkpoint']].append(row)
+    def rate(correct,total):
+        return f'{100*correct/total:.1f}% ({correct}/{total})' if total else '—'
+    def success(rs):return rate(sum(r['outcome']=='correct_cube' for r in rs),len(rs))
+    lines=['## Checkpoint summary','',
+        '| Checkpoint | Overall success | Trained-color success | Unseen-color success | Correct color among unseen contacts |',
+        '|---|---:|---:|---:|---:|']
+    for cp in plan['checkpoints']:
+        rs=groups[cp];trained=[r for r in rs if r['target_color'] in seen]
+        unseen=[r for r in rs if r['target_color'] not in seen]
+        contacts=[r for r in unseen if r['outcome'] in ('correct_cube','wrong_cube')]
+        choice=success(contacts) if contacts else 'No contacts' if unseen else '—'
+        label='Pretrained base' if cp==0 and plan.get('include_base_model') else str(cp)
+        lines.append(f'| {label} | {success(rs)} | {success(trained)} | {success(unseen)} | {choice} |')
+    lines+=['',
+        'Success is correct-cube contact divided by all saved attempts in that category, including wrong-cube and no-contact attempts. Each cell shows the percentage and numerator/denominator.',
+        'The last column includes only correct or wrong single-cube contacts for unseen requests; no-contact, multiple-contact and unmeasured outcomes are excluded.',
+        'Trained colors: '+', '.join(plan['training_colors'])+'. Unseen means absent from this fine-tuning palette.',
+        'During a running sweep these are partial results, calculated from trials saved so far; untested categories show —.','']
+    return lines
+
+
 def write_report(folder,plan,rows,error=None,*,replay_urls=None):
     groups=defaultdict(list);seen=set(plan['training_colors'])
     for r in rows:
@@ -52,4 +78,5 @@ def write_report(folder,plan,rows,error=None,*,replay_urls=None):
         lines[-1]+='---|'
     for r in rows:lines.append(f'| {label(r["checkpoint"])} | {r["cube_count"]} | {r["color_set"]} | {r["seed"]} | {r["target_color"]} | {r["outcome"]} | {r["phase"]} | [Run]({r["directory"]}/RUN_REPORT.md) |'+(f' [▶ Replay]({replay_urls[r["directory"]]}) |' if replay_urls else ''))
     if error:lines+=['',f'Launcher ended early: {error}']
+    lines[2:2]=checkpoint_summary(plan,rows)
     (folder/'REPORT.md').write_text('\n'.join(lines)+'\n');(folder/'statistics.json').write_text(json.dumps(measures,indent=2)+'\n')
