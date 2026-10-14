@@ -65,9 +65,9 @@ lifts the cube, transfers it 6 cm and holds for four simulated seconds.
 In the aligned reference grasp, measured actuator force increased from about
 1.99 to 7.98 force units (tendon force in this model). The revised grip held a
 13.84 cm lift and moved less than 0.84 mm during the four-second hold. These
-measurements are saved in `outputs/bowl_scene_preview/grip_check.json`.
+measurements are saved in `outputs/previews/bowl_scene_preview/grip_check.json`.
 This is a simulation
 setting change, not a claim about a physical Panda's gripping specifications.
 
-Preview and initialization metadata: `outputs/bowl_scene_preview/scene.png` and
+Preview and initialization metadata: `outputs/previews/bowl_scene_preview/scene.png` and
 `scene.json`. The new 250-trajectory dataset has not been generated yet.

@@ -1,5 +1,7 @@
 """One Mac command: set up a GPU host, tunnel, then run the paused local loop."""
 
+from common.output_layout import output_path
+
 from common.paths import PROJECT_ROOT
 
 import argparse
@@ -203,7 +205,7 @@ def main():
             startup_info['adapter_checkpoint'] = args.adapter
         startup_info['ready_at_utc'] = datetime.now(timezone.utc).isoformat()
         startup_info['note'] = 'Session startup measurements reused for subsequent trials; the model is not reloaded per trial.'
-        session_dir = ROOT / 'outputs' / f"cloud_session_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}"
+        session_dir = output_path(f"cloud_session_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}",root=ROOT/'outputs')
         session_dir.mkdir(parents=True, exist_ok=False)
         startup_path = session_dir / 'startup_info.json'
         startup_path.write_text(json.dumps(startup_info, indent=2, allow_nan=False) + '\n')

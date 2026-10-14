@@ -43,9 +43,9 @@ No inference, controller, model or training code was changed during the review.
 
 ## Saved artifacts
 
-- [Automatic per-trial report](../../outputs/scripted_touch_20261013_052521_7a043028/REPORT.md)
-- [Raw sweep results](../../outputs/scripted_touch_20261013_052521_7a043028/results.json)
-- [Reviewed measurements](../../outputs/scripted_touch_20261013_052521_7a043028/review_measurements.json)
-- [Selected first/middle/final images](../../outputs/scripted_touch_20261013_052521_7a043028/review_montage.jpg)
+- [Automatic per-trial report](../../outputs/sweeps/scripted_touch_20261013_052521_7a043028/REPORT.md)
+- [Raw sweep results](../../outputs/sweeps/scripted_touch_20261013_052521_7a043028/results.json)
+- [Reviewed measurements](../../outputs/sweeps/scripted_touch_20261013_052521_7a043028/review_measurements.json)
+- [Selected first/middle/final images](../../outputs/sweeps/scripted_touch_20261013_052521_7a043028/review_montage.jpg)
 
 Local detailed outputs are ignored by Git. This review and the updated GPU inference comparison are committed to GitHub.

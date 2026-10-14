@@ -30,7 +30,7 @@ After receiving the current SSH address, run locally:
 ```bash
 .venv/bin/python -m cloud.cloud_sweep_session \
   --ssh 'ssh root@HOST -p PORT -i ~/.ssh/id_ed25519_maxalderone' \
-  --resume outputs/scripted_color_transfer_20261013_100305_2a5212fb
+  --resume outputs/sweeps/scripted_color_transfer_20261013_100305_2a5212fb
 ```
 
 Wait for **`Detached cloud sweep started`**. Before that message, setup still requires your Mac connection. After it appears, you can disconnect or put your Mac to sleep. Ctrl+C then ends only the local watcher. Add `--launch-only` if you want the launcher to return immediately after starting the supervisor.
@@ -67,7 +67,7 @@ Resume a pod with the same volume and run:
 ```bash
 .venv/bin/python -m cloud.cloud_sweep_session \
   --ssh 'ssh root@HOST -p PORT -i ~/.ssh/id_ed25519_maxalderone' \
-  --resume outputs/scripted_color_transfer_20261013_100305_2a5212fb \
+  --resume outputs/sweeps/scripted_color_transfer_20261013_100305_2a5212fb \
   --fetch-only
 ```
 

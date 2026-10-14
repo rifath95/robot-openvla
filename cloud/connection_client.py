@@ -1,5 +1,7 @@
 """Send a fresh MuJoCo image to a test or OpenVLA server; never move the robot."""
 
+from common.output_layout import output_path, resolve_output_path
+
 from common.paths import PROJECT_ROOT
 
 import argparse
@@ -139,7 +141,7 @@ def main():
         parser.error("--timeout-seconds must be positive")
     request_id = uuid.uuid4().hex
     prefix = "remote_inference" if args.expected_mode == "openvla" else "connection_test"
-    output = args.output_dir or (PROJECT_ROOT / 'outputs') / f"{prefix}_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{request_id[:8]}"
+    output = args.output_dir or output_path(f"{prefix}_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{request_id[:8]}")
     output.mkdir(parents=True, exist_ok=True)
     def status(phase, **extra):
         (output / "status.json").write_text(json.dumps({"phase": phase, "request_id": request_id, **extra}, indent=2) + "\n")
@@ -148,7 +150,7 @@ def main():
     try:
         image_path = output / "input.png"
         if args.image:
-            image_path.write_bytes(args.image.read_bytes())
+            image_path.write_bytes(resolve_output_path(args.image).read_bytes())
         else:
             capture_png(image_path)
         captured = time.perf_counter()

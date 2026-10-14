@@ -35,7 +35,7 @@ Source runs under `outputs/`:
 - Seed 1: `remote_loop_20261012_115022_efd46fc5`
 - Seed 2: `remote_loop_20261012_115331_fcdda8c6`
 
-Offline measurements are saved in `outputs/bowl_checkpoint_2000_review.json`.
+Offline measurements are saved in `outputs/diagnostics/bowl_checkpoint_2000_review.json`.
 Distances use the Panda grasp control offset from the action convention; they
 are geometric diagnostics, not a contact-based grasp success classifier.
 

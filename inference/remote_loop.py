@@ -1,5 +1,7 @@
 """Repeated cloud predictions driving a local Panda, with a live viewer."""
 
+from common.output_layout import output_path
+
 from common.paths import PROJECT_ROOT
 
 import argparse
@@ -127,7 +129,7 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
     paused = threading.Event()
     if not no_view and not start_immediately:
         paused.set()
-    folder = Path(output_dir) if output_dir else ROOT / "outputs" / f"remote_loop_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}"
+    folder = Path(output_dir) if output_dir else output_path(f"remote_loop_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}")
     folder.mkdir(parents=True, exist_ok=False)
     from simulation.replay_run import write_launcher
     write_launcher(folder)

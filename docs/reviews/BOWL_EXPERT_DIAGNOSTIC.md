@@ -40,7 +40,7 @@ not simulated motion or successful task completion. Do not treat the 92.3%
 gripper agreement as a grasp success rate.
 
 The 52 evaluations took 76.56 seconds, excluding merge/loading/source checking.
-Local result directory: `outputs/matched_evaluation_20261012_131448_f2da1fde/`.
+Local result directory: `outputs/diagnostics/matched_evaluation_20261012_131448_f2da1fde/`.
 Cloud archive: `/workspace/panda-training/diagnostics/matched_evaluation_20261012_131448_f2da1fde/`.
 The local directory also contains the server log and pod-stop receipt.
 
@@ -63,7 +63,7 @@ Local preparation checked all 22,311 training source examples against bundle
 provenance. Using the actual cached OpenVLA processor, all 52 training-transform
 prompt prefixes and image tensors exactly matched deployment preprocessing.
 Saved plan and preprocessing checks:
-`outputs/matched_evaluation_20261012_125924_ffda249d/`.
+`outputs/diagnostics/matched_evaluation_20261012_125924_ffda249d/`.
 
 ## Start the cloud server
 
@@ -95,7 +95,7 @@ verifying prompt/image equivalence on the deployed processor too. Reports compar
 both actions to the expert in physical and normalized units, and record token
 accuracy, timings, checkpoint provenance, image hashes, and per-stage results.
 
-Outputs are saved directly on the Mac under `outputs/matched_evaluation_*`,
+Outputs are saved directly on the Mac under `outputs/diagnostics/matched_evaluation_*`,
 including `MATCHED_REPORT.md`, `EVALUATION_REPORT.md`, `predictions.jsonl` and
 `summary.json`. Completed samples are retained on interruption. No arm moves and
 no adapter training or modification occurs. Keep the Mac/tunnel connected for

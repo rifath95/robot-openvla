@@ -27,14 +27,14 @@ Use a separate A40 training-template pod, the same network volume and stop secre
 
 A local 480-trial plan is already prepared at:
 
-`outputs/scripted_four_color_models_20261013_132943_e69718c3`
+`outputs/sweeps/scripted_four_color_models_20261013_132943_e69718c3`
 
 After receiving the pod's current SSH address, launch locally:
 
 ```bash
 .venv/bin/python -m cloud.cloud_sweep_session \
   --ssh 'ssh root@HOST -p PORT -i ~/.ssh/id_ed25519_maxalderone' \
-  --resume outputs/scripted_four_color_models_20261013_132943_e69718c3
+  --resume outputs/sweeps/scripted_four_color_models_20261013_132943_e69718c3
 ```
 
 To create a fresh sweep in the future from the single editable profile:

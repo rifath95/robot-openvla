@@ -1,4 +1,6 @@
 """Execute demonstration actions through IK and physics from one initial state."""
+
+from common.output_layout import output_path,resolve_output_path
 import argparse
 from contextlib import nullcontext
 from datetime import datetime, timezone
@@ -51,7 +53,7 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
     restore_state(folder/'initial_state.npz',env)
     # Restore once only. Subsequent states must result from executing the actions.
     initial=cube_position(env);positions=[initial.copy()]
-    output=Path(output_dir) if output_dir else PROJECT_ROOT/'outputs'/f'action_replay_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}'
+    output=Path(output_dir) if output_dir else output_path(f'action_replay_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}')
     output.mkdir(parents=True,exist_ok=False)
     (output/'episode.json').write_text(json.dumps(dict(metadata,training_eligible=False,
         replay_source=str(folder)),indent=2)+'\n')
@@ -188,6 +190,7 @@ def main(argv=None):
     parser.add_argument('--controller',choices=['current','collection'],default='current',
                         help='Current fixed controller, or pre-holding-fix target assignment used during collection')
     args=parser.parse_args(argv)
+    args.episode=resolve_output_path(args.episode)
     if not args.no_view:
         from simulation.viewer import _restart_with_mjpython
         _restart_with_mjpython()

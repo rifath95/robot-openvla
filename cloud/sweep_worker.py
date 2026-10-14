@@ -1,4 +1,6 @@
 """Sequential headless MuJoCo trials entirely on the pod; fixed source checkout."""
+
+from common.output_layout import output_path
 import argparse
 from datetime import datetime,timezone
 import json
@@ -70,7 +72,7 @@ def run(directory,sim_python,*,port=0):
     adapter_indices={n for n in checkpoints if n!=0 or not plan.get('include_base_model')}
     if 0 in checkpoints and plan.get('include_base_model'):adapter_indices.add(plan.get('action_statistics_checkpoint',50))
     staging=stage_weights(base,{n:training/f'checkpoint_{n:06d}' for n in sorted(adapter_indices)},Path('/root/panda-sweep-cache')/directory.name)
-    local=PROJECT_ROOT/'outputs/cloud-sweeps'/directory.name;local.mkdir(parents=True,exist_ok=True)
+    local=output_path('cloud-sweeps',root=PROJECT_ROOT/'outputs')/directory.name;local.mkdir(parents=True,exist_ok=True)
     env=os.environ.copy();env.pop('RUNPOD_API_KEY',None);env['MUJOCO_GL']='egl';env['PYOPENGL_PLATFORM']='egl'
     # Render once before expensive model loading; a dependency/graphics failure is explicit.
     if plan['task'] in ('color_touch','color_transfer'):

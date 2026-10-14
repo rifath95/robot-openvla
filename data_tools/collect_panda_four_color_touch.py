@@ -1,4 +1,6 @@
 """Preserve the reviewed 50 and add 250 paired four-color touch demonstrations."""
+
+from common.output_layout import output_path
 import json
 import shutil
 import tempfile
@@ -63,7 +65,7 @@ def collect():
                 if any(metadata['scenario'][k]!=plan[k] for k in ('pair_id','split','cube_positions','cube_colors')):
                     raise ValueError('Plan changed')
             else:
-                staging=PROJECT_ROOT/'outputs/four_color_collection_checks';staging.mkdir(parents=True,exist_ok=True)
+                staging=output_path('four_color_collection_checks');staging.mkdir(parents=True,exist_ok=True)
                 temporary=Path(tempfile.mkdtemp(prefix=identifier+'-',dir=staging))/'episode'
                 print(f"Collecting {identifier}: touch the {plan['cube_colors'][slot]} cube.",flush=True)
                 try:

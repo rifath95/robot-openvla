@@ -11,7 +11,7 @@ this investigation. Saved model predictions and MuJoCo states were replayed.
 
 ## What the latest cloud trial showed
 
-Run: `outputs/remote_loop_20261010_024804_3098555d`. It completed 96 movements,
+Run: `outputs/simulator_runs/cloud/remote_loop_20261010_024804_3098555d`. It completed 96 movements,
 including a half-size retry on cycle 96, then rejected cycle 97 at full, half,
 and quarter size. The earlier trial stopped at cycle 96 after 95 movements.
 
@@ -43,7 +43,7 @@ resolve that task-level problem.
 
 ## Latest short cloud trial review (2026-10-10)
 
-Run: `outputs/remote_loop_20261010_032744_4fbbc1ff`. The instruction remained
+Run: `outputs/simulator_runs/cloud/remote_loop_20261010_032744_4fbbc1ff`. The instruction remained
 `pick up the red cube`; the model was not instructed to move away.
 
 - 26 executed movements, 27 request attempts. Closing the viewer stopped cycle
@@ -140,7 +140,7 @@ control loop; it is not a physical-robot safety controller.
 
 ```bash
 .venv/bin/python -m unittest tests.test_ik_retries tests.test_remote_loop tests.test_cloud_session -v
-.venv/bin/python -m analysis.analyze_remote_run outputs/remote_loop_20261010_024804_3098555d
+.venv/bin/python -m analysis.analyze_remote_run outputs/simulator_runs/cloud/remote_loop_20261010_024804_3098555d
 ```
 
 The analysis command saves `trajectory_analysis.json` inside that run directory.

@@ -7,7 +7,7 @@ The 20-update test completed and saved its final adapter at:
 ```
 
 The run is stored on `robot-openvla-network-volume-A40`, mounted at `/workspace`.
-The downloaded plot is `outputs/phase3_smoke_loss.png`. The full JSON metrics,
+The downloaded plot is `outputs/training/phase3_smoke_loss.png`. The full JSON metrics,
 model information and checkpoints remain on the network volume; they have not
 been downloaded or independently inspected locally. This review uses the plot
 and the final terminal metrics supplied by the user.

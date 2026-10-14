@@ -65,7 +65,7 @@ For the sampling trial, use the same command with:
 Greedy/sampled trials of the same checkpoint share one updated resident model;
 changing checkpoints reloads the model. Each trial saves its own images, raw and
 executed actions, motion frames, scene seed, checkpoint provenance, sampling
-settings, timings, report and replay under `outputs/remote_loop_*`. The Mac must
+settings, timings, report and replay under `outputs/simulator_runs/cloud/remote_loop_*`. The Mac must
 remain connected and awake for live simulator trials; the detached training job
 continues independently if the Mac disconnects.
 

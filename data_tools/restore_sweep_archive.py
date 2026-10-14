@@ -1,4 +1,6 @@
 """Restore verified HF archive parts into the ordinary local sweep/replay layout."""
+
+from common.output_layout import output_path,resolve_output_path
 import argparse
 import hashlib
 import json
@@ -17,12 +19,12 @@ def sha256(path):
 
 
 def restore(source,destination=None):
-    source=Path(source).resolve();manifest=json.loads((source/'manifest.json').read_text())
+    source=resolve_output_path(source).resolve();manifest=json.loads((source/'manifest.json').read_text())
     records=json.loads((source/'reports/results.json').read_text());specs=validate_saved(records)
     if len(records['trials'])!=manifest['trials'] or len(specs)!=manifest['trials']:raise ValueError('Incomplete archive trial inventory')
     name=manifest['sweep']
     if not name.startswith('scripted_') or Path(name).name!=name:raise ValueError('Invalid sweep name')
-    destination=Path(destination).resolve() if destination else PROJECT_ROOT/'outputs'/name
+    destination=Path(destination).resolve() if destination else output_path(name)
     if not destination.is_relative_to((PROJECT_ROOT/'outputs').resolve()):raise ValueError('Restore under the project outputs directory')
     destination.mkdir(parents=True,exist_ok=True)
     progress=destination/'restore_progress.json'

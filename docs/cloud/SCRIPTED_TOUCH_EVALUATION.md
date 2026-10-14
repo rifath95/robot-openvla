@@ -28,7 +28,7 @@ Optional `--checkpoints 40 50 100 300 500` includes checkpoint 40. `--scene-seed
 
 ## Saved results and shutdown
 
-Each launch creates `outputs/scripted_touch_<timestamp>_<id>/` with a `REPORT.md`, `results.json`, `console.log`, checkpoint startup metadata, and one directory per checkpoint/seed. Each trial retains the standard images, predictions, executed actions, simulator states and replay launcher. The report distinguishes positive-force finger–cube contact from clean completion: contact can coincide with a tracking error.
+Each launch creates `outputs/sweeps/scripted_touch_<timestamp>_<id>/` with a `REPORT.md`, `results.json`, `console.log`, checkpoint startup metadata, and one directory per checkpoint/seed. Each trial retains the standard images, predictions, executed actions, simulator states and replay launcher. The report distinguishes positive-force finger–cube contact from clean completion: contact can coincide with a tracking error.
 
 The summary JSON and Markdown are also copied to `/workspace/panda-training/scripted-evaluations/<session>/` before stopping. Detailed trial images and actions stay on the Mac.
 
@@ -39,5 +39,5 @@ This is a connected Mac workflow, not a detached cloud supervisor. Keep it runni
 To watch a recorded trial later:
 
 ```bash
-.venv/bin/python outputs/scripted_touch_<timestamp>_<id>/checkpoint_000100_seed_1000/replay.py
+.venv/bin/python outputs/sweeps/scripted_touch_<timestamp>_<id>/checkpoint_000100_seed_1000/replay.py
 ```

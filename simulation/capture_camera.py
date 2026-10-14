@@ -1,5 +1,7 @@
 """Render one RGB observation from the fixed MuJoCo workspace camera."""
 
+from common.output_layout import output_path
+
 from common.paths import PROJECT_ROOT
 
 from pathlib import Path
@@ -10,7 +12,7 @@ import mujoco
 
 
 SCENE_PATH = (PROJECT_ROOT / 'scene.xml')
-OUTPUT_PATH = (PROJECT_ROOT / 'outputs/camera_image.png')
+OUTPUT_PATH = (output_path('camera_image.png'))
 WIDTH = 640
 HEIGHT = 480
 

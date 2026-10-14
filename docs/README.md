@@ -4,6 +4,8 @@
 [Phase 3 completion summary](reviews/PHASE3_COMPLETION.md) for achieved results
 and limitations, and [repository layout](REPOSITORY_LAYOUT.md) for code locations.
 
+For result folders and replay locations, see the [local outputs layout](OUTPUT_LAYOUT.md).
+
 ## Simulation and controls
 
 - [Manual cube-to-bowl scene](simulation/BOWL_SCENE.md)

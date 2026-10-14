@@ -4,18 +4,18 @@ After downloading a complete Hugging Face sweep archive, restore it locally:
 
 ```bash
 .venv/bin/python -m data_tools.restore_sweep_archive \
-  outputs/hf-sweep-archives/scripted_multi_color_models_20261013_164548_eeda379b
+  outputs/archives/hf-sweeps/hf-sweep-archives/scripted_multi_color_models_20261013_164548_eeda379b
 ```
 
 This verifies downloaded checksums and restores the images and recorded simulator
-states under `outputs/scripted_multi_color_models_20261013_164548_eeda379b`.
+states under `outputs/sweeps/scripted_multi_color_models_20261013_164548_eeda379b`.
 Completed archive parts are remembered if restoration is interrupted.
 
 Start the local replay launcher from the repository folder:
 
 ```bash
 .venv/bin/python -m analysis.replay_launcher \
-  --sweep outputs/scripted_multi_color_models_20261013_164548_eeda379b
+  --sweep outputs/sweeps/scripted_multi_color_models_20261013_164548_eeda379b
 ```
 
 Keep that terminal running. Open the restored `REPORT.md` in VS Code Markdown

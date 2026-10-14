@@ -1,4 +1,6 @@
 """Create a fresh cloud sweep from one reviewable profile, without connecting."""
+
+from common.output_layout import output_path
 import json
 from pathlib import Path
 from datetime import datetime,timezone
@@ -27,7 +29,7 @@ def create(profile):
     payload=dict(plan=plan,trials=[],launcher_error=None);validate_saved(payload)
     prefix='scripted_multi_color_models' if plan['task']=='multi_color_touch' else 'scripted_four_color_models'
     name=f'{prefix}_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}'
-    folder=PROJECT_ROOT/'outputs'/name;folder.mkdir(parents=True)
+    folder=output_path(name,root=PROJECT_ROOT/'outputs');folder.mkdir(parents=True)
     from cloud.scripted_touch_session import write_reports
     write_reports(folder,plan,[])
     print(f'Prepared {len(list(trial_specs(plan)))} trials in {folder}',flush=True)

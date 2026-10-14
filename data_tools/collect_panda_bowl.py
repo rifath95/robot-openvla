@@ -1,4 +1,6 @@
 """Collect numbered bowl trajectories; the first ten belong to the final dataset."""
+
+from common.output_layout import output_path
 import argparse
 from datetime import datetime, timezone
 import json
@@ -57,7 +59,7 @@ def coverage(results):
 def collect_slot(folder,slot,first_attempt,max_attempts,target,startup_policy='legacy'):
     from data_tools.bowl_demonstrations import record_episode, replay_episode
     folder=Path(folder)
-    checks=PROJECT_ROOT/'outputs/bowl_collection_checks'
+    checks=output_path('bowl_collection_checks')
     rejected=[]
     for attempt in range(first_attempt,max_attempts):
         spec=scenario(slot,attempt,target,startup_policy)
@@ -147,7 +149,7 @@ def collect(folder=DATASET_ROOT, limit=10, max_attempts=30, workers=1,startup_po
                    split_counts={split:sum(row['split']==split for row in results) for split in set(SPLITS)},
                    instruction=INSTRUCTION, ready_for_finetuning=False))
         write_trajectory_index(folder,results)
-    checks = PROJECT_ROOT/'outputs/bowl_collection_checks'
+    checks = output_path('bowl_collection_checks')
     checks.mkdir(parents=True,exist_ok=True)
     save('collecting')
     jobs=[]

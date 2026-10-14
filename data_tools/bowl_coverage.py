@@ -163,6 +163,6 @@ def write_summary(folder,results,plan):
                   '', '## Replay','',
                   'Use [WATCH_TRAJECTORIES.md](WATCH_TRAJECTORIES.md) to open any trajectory from Training, Validation, or Test. '
                   'The index is ordered by episode number. Each replay uses the saved bowl position and motion frames.',
-                  'Rejected attempts are outside this corpus under `outputs/bowl_collection_checks/`.'])
+                  'Rejected attempts are outside this corpus under `outputs/collection_checks/bowl_collection_checks/`.'])
     (folder/'COLLECTION_SUMMARY.md').write_text('\n'.join(lines)+'\n')
     return checked

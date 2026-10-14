@@ -35,14 +35,14 @@ path below is the existing local cache; no weights are loaded or downloaded.
 ```bash
 .venv-training/bin/python -m analysis.audit_panda_v2 \
   --processor .cache-openvla/hub/models--openvla--openvla-7b/snapshots/47a0ec7fc4ec123775a391911046cf33cf9ed83f \
-  --rollout outputs/remote_loop_20261011_130030_90592976 \
-  --rollout outputs/remote_loop_20261011_130522_3943abad \
+  --rollout outputs/simulator_runs/cloud/remote_loop_20261011_130030_90592976 \
+  --rollout outputs/simulator_runs/cloud/remote_loop_20261011_130522_3943abad \
   --output outputs/local_v2_audit_new
 ```
 
 Outputs: `audit.json`, `AUDIT_REPORT.md` and `scene_comparison.png`. The actual
 review is also saved beside the downloaded training results under
-`outputs/phase3_training/panda-train-20261011-090041-1584/local_audit_v2/`.
+`outputs/training/phase3_training/panda-train-20261011-090041-1584/local_audit_v2/`.
 
 ## Next diagnostic
 

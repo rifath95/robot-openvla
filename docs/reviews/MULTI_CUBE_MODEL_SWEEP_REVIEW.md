@@ -149,7 +149,7 @@ selection and successful execution as distinct measurements. More fine-tuning
 updates are not supported as the immediate answer by these results.
 
 Raw results and replay links:
-`outputs/scripted_multi_color_models_20261013_164548_eeda379b/REPORT.md`.
+`outputs/sweeps/scripted_multi_color_models_20261013_164548_eeda379b/REPORT.md`.
 The local folder also contains `REVIEW_AUDIT.json`. A portable aggregate audit is
 saved [here](assets/multi_cube_review_audit.json).
 See the [earlier two-cube review](FOUR_COLOR_MODEL_SWEEP_REVIEW.md) and

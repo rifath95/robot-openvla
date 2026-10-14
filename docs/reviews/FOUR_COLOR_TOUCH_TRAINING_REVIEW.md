@@ -64,10 +64,10 @@ Measure requested-color contact, wrong-cube contact, no contact, clean control c
 
 ## Local plots and reports
 
-- [Original loss curve](../../outputs/phase3_training/panda-train-20261013-110217-1084/runs/training/loss.png)
-- [Smoothed loss curve](../../outputs/phase3_training/panda-train-20261013-110217-1084/runs/training/loss_smoothed.png)
-- [All training and validation metrics](../../outputs/phase3_training/panda-train-20261013-110217-1084/runs/training/metrics.jsonl)
-- [Review measurements](../../outputs/phase3_training/panda-train-20261013-110217-1084/TRAINING_REVIEW_MEASUREMENTS.json)
-- [Completion snapshot](../../outputs/phase3_training/panda-train-20261013-110217-1084/status.json)
+- [Original loss curve](../../outputs/training/phase3_training/panda-train-20261013-110217-1084/runs/training/loss.png)
+- [Smoothed loss curve](../../outputs/training/phase3_training/panda-train-20261013-110217-1084/runs/training/loss_smoothed.png)
+- [All training and validation metrics](../../outputs/training/phase3_training/panda-train-20261013-110217-1084/runs/training/metrics.jsonl)
+- [Review measurements](../../outputs/training/phase3_training/panda-train-20261013-110217-1084/TRAINING_REVIEW_MEASUREMENTS.json)
+- [Completion snapshot](../../outputs/training/phase3_training/panda-train-20261013-110217-1084/status.json)
 
 Local checkpoint folders contain metadata and processor files; adapter weights remain on the network volume. The final adapter path is `/workspace/panda-training/sessions/panda-train-20261013-110217-1084/runs/training/checkpoint_001000`.

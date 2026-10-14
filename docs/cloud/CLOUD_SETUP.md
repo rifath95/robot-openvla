@@ -68,7 +68,7 @@ This downloads weights into the local `.cache-openvla/` directory and writes a m
 
 The launcher checks CUDA, sets `MUJOCO_GL=egl` unless already configured, and runs three successive predictions with one model load. Simulation pauses during inference. It preserves the existing 1 cm translation and 0.05 radian rotation bounds and provisional Bridge-to-Panda mapping. No desktop viewer is required.
 
-Inspect `outputs/openvla_loop_<timestamp>/status.json`, `summary.json`, and the images in `step_01/` through `step_03/`. Successful completion means all three predictions and bounded movements finished; it does not mean the cube was picked up.
+Inspect `outputs/simulator_runs/local/openvla_loop_<timestamp>/status.json`, `summary.json`, and the images in `step_01/` through `step_03/`. Successful completion means all three predictions and bounded movements finished; it does not mean the cube was picked up.
 
 The Mac baseline recorded approximately **462, 601, and 554 seconds per prediction**, approximately **27.5 minutes total**. Compare individual CUDA prediction times and total elapsed time, including model loading and simulation. The first prediction may have startup overhead. Device and precision are recorded in each `prediction.json`; CUDA bfloat16 results need not exactly match Mac float16 results.
 

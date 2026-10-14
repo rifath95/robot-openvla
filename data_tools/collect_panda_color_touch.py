@@ -1,4 +1,6 @@
 """Expand paired red/blue touch demonstrations without replacing reviewed data."""
+
+from common.output_layout import output_path
 import argparse
 import json
 from pathlib import Path
@@ -80,7 +82,7 @@ def collect(limit=10):
             else:
                 if folder.exists():
                     raise ValueError('Destination exists; reviewed episodes are never overwritten')
-                staging_root = PROJECT_ROOT/'outputs/color_touch_collection_checks'
+                staging_root = output_path('color_touch_collection_checks')
                 staging_root.mkdir(parents=True, exist_ok=True)
                 temporary = Path(tempfile.mkdtemp(prefix=identifier+'-', dir=staging_root))/'episode'
                 try:

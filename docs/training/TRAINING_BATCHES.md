@@ -63,8 +63,8 @@ child process, so a benchmark's setting cannot carry into a normal training run.
 This repository change does not modify a training process already running on a
 pod. No Docker rebuild is needed for future benchmarks using updated code.
 
-Local results go into `outputs/gpu-benchmarks/<cloud-run-timestamp>/` along with
-`outputs/gpu-benchmarks/GPU_TRAINING_COMPARISON.md`. The top-level workspace
+Local results go into `outputs/benchmarks/training/gpu-benchmarks/<cloud-run-timestamp>/` along with
+`outputs/benchmarks/training/gpu-benchmarks/GPU_TRAINING_COMPARISON.md`. The top-level workspace
 `docs/benchmarks/GPU_TRAINING_COMPARISON.md` is automatically rebuilt too, retaining all downloaded
 GPU runs. Per-GPU copies such as `A40_COMPARISON.md` are refreshed in that output
 folder too; A100 filenames include the actual variant name reported by CUDA.
@@ -291,7 +291,7 @@ Every benchmark refreshes `/workspace/panda-training/batch-benchmarks/GPU_TRAINI
 from all saved benchmark runs on that volume. The workspace copy is
 [GPU_TRAINING_COMPARISON.md](../benchmarks/GPU_TRAINING_COMPARISON.md). Its refresh command and
 throughput definition are included in the file. Download benchmark directories
-to `outputs/gpu-benchmarks` to regenerate the workspace comparison across GPUs.
+to `outputs/benchmarks/training/gpu-benchmarks` to regenerate the workspace comparison across GPUs.
 
 ## Compare training costs
 

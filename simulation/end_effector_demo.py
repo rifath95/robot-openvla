@@ -1,5 +1,7 @@
 """Interactively test the Panda's complete 7D Cartesian action interface."""
 
+from common.output_layout import output_path
+
 from common.paths import PROJECT_ROOT
 
 from pathlib import Path
@@ -30,7 +32,7 @@ def main() -> None:
     parser.add_argument('--instruction', default='pick up the red cube and drop it in the blue bowl.',
                         help='Task text displayed in the viewer')
     parser.add_argument('--headless', action='store_true', help='Save a scene preview without opening a window')
-    parser.add_argument('--output-dir', type=Path, default=Path('outputs/bowl_scene_preview'))
+    parser.add_argument('--output-dir', type=Path, default=output_path('bowl_scene_preview'))
     args = parser.parse_args()
     if not args.headless:
         _restart_with_mjpython()

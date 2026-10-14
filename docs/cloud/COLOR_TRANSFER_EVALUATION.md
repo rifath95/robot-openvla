@@ -55,7 +55,7 @@ Using the previous sweep's measured trial durations, the full 240-trial test may
 
 ## Saved output and shutdown
 
-Results live under `outputs/scripted_color_transfer_<timestamp>_<id>/`. They include images, actual instruction payloads, actions, scene states/colors, contact classification, replay launchers, `REPORT.md`, `results.json` and `statistics.json`. Correct contact and tracking failures remain separate; wrong/both-cube contact is never counted as task success.
+Results live under `outputs/sweeps/scripted_color_transfer_<timestamp>_<id>/`. They include images, actual instruction payloads, actions, scene states/colors, contact classification, replay launchers, `REPORT.md`, `results.json` and `statistics.json`. Correct contact and tracking failures remain separate; wrong/both-cube contact is never counted as task success.
 
 The compact Markdown/JSON reports are copied to `/workspace/panda-training/scripted-evaluations/<session>/` before requesting an inference-pod stop. Detailed images/actions remain on the Mac. Keep the Mac awake and connected. The active-training guard rejects a training pod without stopping it. Ordinary error/Ctrl+C cleanup requests a stop; network/API failure or forced termination can prevent it, so confirm Stopped in RunPod.
 
@@ -71,7 +71,7 @@ Use the same checkpoint/seed/color-pair settings and add `--resume outputs/<save
 caffeinate -i .venv/bin/python -m cloud.scripted_color_transfer_session \
   --ssh 'ssh root@HOST -p PORT -i ~/.ssh/id_ed25519_maxalderone' \
   --training-session panda-train-20261013-074359-896 \
-  --resume outputs/scripted_color_transfer_20261013_100305_2a5212fb
+  --resume outputs/sweeps/scripted_color_transfer_20261013_100305_2a5212fb
 ```
 
 A between-trial health failure waits 30 seconds and reports server unavailability separately from initial model loading. On failure, the launcher attempts to capture the last 256 KiB of the cloud server log before shutdown, storing it locally and including it in the compact volume report copy. Collection is best effort if SSH has failed.

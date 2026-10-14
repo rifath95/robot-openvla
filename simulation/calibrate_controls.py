@@ -4,6 +4,8 @@ Each case resets the scene so errors do not accumulate. Saves JSON and RGB
 before/after images. This verifies Panda conventions, not cross-robot calibration.
 """
 
+from common.output_layout import output_path
+
 from common.paths import PROJECT_ROOT
 
 import argparse
@@ -150,8 +152,7 @@ def run_calibration(output_dir):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('--output-dir', type=Path, default=ROOT / 'outputs' /
-                        datetime.now().strftime('control_calibration_%Y%m%d_%H%M%S_%f'))
+    parser.add_argument('--output-dir', type=Path, default=output_path(datetime.now().strftime('control_calibration_%Y%m%d_%H%M%S_%f')))
     args = parser.parse_args()
     report = run_calibration(args.output_dir)
     if not report['passed']:

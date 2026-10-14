@@ -98,7 +98,7 @@ the request ID matched, and seven finite test numbers came back. Invalid image
 and instruction requests were rejected; an unreachable server left a failed
 status. Automatic server exit also passed. The measured local request round trip
 was approximately 18 ms. Saved successful-test artifacts are in
-`outputs/connection_test_verified/` (excluded from Git). Cloud connectivity has
+`outputs/diagnostics/connection_test_verified/` (excluded from Git). Cloud connectivity has
 not been tested with these scripts yet.
 
 The communication test subsequently passed on a pod, with approximately 1.58

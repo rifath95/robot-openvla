@@ -70,4 +70,4 @@ Source runs under `outputs/`:
 - `remote_loop_20261012_122746_afdcf70c`
 - `remote_loop_20261012_122831_de4972a4`
 
-Offline measurements: `outputs/bowl_checkpoint_2000_corrected_controller_review.json`.
+Offline measurements: `outputs/diagnostics/bowl_checkpoint_2000_corrected_controller_review.json`.

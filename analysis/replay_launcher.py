@@ -1,4 +1,6 @@
 """Loopback-only launcher for clickable Replay links in a local sweep REPORT.md."""
+
+from common.output_layout import output_path, resolve_output_path
 import argparse
 from http.server import BaseHTTPRequestHandler,ThreadingHTTPServer
 import html
@@ -61,7 +63,7 @@ def handler(launcher):
 
 
 def serve(folder,port=8765):
-    folder=Path(folder).resolve()
+    folder=resolve_output_path(folder).resolve()
     if not folder.is_relative_to((PROJECT_ROOT/'outputs').resolve()):raise ValueError('Select a sweep folder under outputs/')
     token=secrets.token_urlsafe(32);launcher=Launcher(folder,set(),token)
     with ThreadingHTTPServer(('127.0.0.1',port),handler(launcher)) as server:

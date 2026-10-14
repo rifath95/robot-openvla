@@ -9,7 +9,7 @@ No pod, SSH tunnel, weights, inference, IK solve, or physics execution is needed
 From the repository terminal, for example:
 
 ```bash
-.venv/bin/python outputs/remote_loop_20261010_051422_5c23417b/replay.py
+.venv/bin/python outputs/simulator_runs/cloud/remote_loop_20261010_051422_5c23417b/replay.py
 ```
 
 For any saved loop folder, including one without a launcher:

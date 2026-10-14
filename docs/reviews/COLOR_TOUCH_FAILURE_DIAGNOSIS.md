@@ -69,8 +69,8 @@ The training set contains only **17 distinct two-cube scenes**, each demonstrate
 
 ## Evidence files
 
-- [Per-action diagnosis, reconstructed contact geometry and tracking measurements](../../outputs/scripted_color_touch_20261013_080412_95b3a48c/failure_diagnosis/diagnosis.json)
-- [Six expert checks](../../outputs/scripted_color_touch_20261013_080412_95b3a48c/failure_diagnosis/expert_checks.json)
+- [Per-action diagnosis, reconstructed contact geometry and tracking measurements](../../outputs/sweeps/scripted_color_touch_20261013_080412_95b3a48c/failure_diagnosis/diagnosis.json)
+- [Six expert checks](../../outputs/sweeps/scripted_color_touch_20261013_080412_95b3a48c/failure_diagnosis/expert_checks.json)
 - [Original sweep review](COLOR_TOUCH_SCRIPTED_REVIEW.md)
 
 Each diagnostic expert folder also contains saved images, action labels, physics states and replay launchers. The tracked figure above and this report are available on GitHub; detailed diagnostic files remain local.

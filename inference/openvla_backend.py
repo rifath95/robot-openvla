@@ -57,7 +57,8 @@ class OpenVLAPredictor:
             self.model.norm_stats.update(stats)
             self.model.config.norm_stats=self.model.norm_stats
         self.load_seconds = time.perf_counter() - started
-        metrics_path = PROJECT_ROOT / 'outputs/cloud_startup.json'
+        from common.output_layout import output_path
+        metrics_path = output_path('cloud_startup.json')
         self.startup_info = json.loads(metrics_path.read_text()) if metrics_path.exists() else {}
         import transformers
         self.startup_info.update({

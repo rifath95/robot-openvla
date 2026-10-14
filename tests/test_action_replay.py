@@ -75,7 +75,7 @@ class ActionReplayTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             folder=Path(tmp);write_launcher(folder,demonstration=True)
             self.assertIn('simulation.action_replay',(folder/'replay_actions.py').read_text())
-            self.assertIn('from replay_run import main',(folder/'replay.py').read_text())
+            self.assertIn('from simulation.replay_run import main',(folder/'replay.py').read_text())
 
     def test_new_demonstrations_reject_controller_provenance_mismatch(self):
         from data_tools.bowl_demonstrations import controller_fingerprint

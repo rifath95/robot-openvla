@@ -3,7 +3,7 @@
 Audited 2026-10-13. Uses the existing 200 training demonstrations, bundle statistics,
 actual cached OpenVLA processor, saved training configuration, and three
 checkpoint-5,000 rollouts. No new cloud inference, training or dataset replacement
-was performed. Measurements: `outputs/bowl_stall_label_audit.json`.
+was performed. Measurements: `outputs/diagnostics/bowl_stall_label_audit.json`.
 
 ## Confirmed immediate mechanism
 

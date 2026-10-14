@@ -40,14 +40,14 @@ caffeinate -i .venv/bin/python -m cloud.cloud_sweep_session \
   --profile inference/sweep_profiles/multi_color_all_models.json
 ```
 
-The command prints its new local `outputs/scripted_multi_color_models_...` folder and cloud supervisor path. Keep that folder name for resume/fetch. Reusing `--profile` creates a new sweep; it does not resume one.
+The command prints its new local `outputs/sweeps/scripted_multi_color_models_...` folder and cloud supervisor path. Keep that folder name for resume/fetch. Reusing `--profile` creates a new sweep; it does not resume one.
 
 To resume incomplete work after receiving a new SSH address:
 
 ```bash
 caffeinate -i .venv/bin/python -m cloud.cloud_sweep_session \
   --ssh 'ssh root@POD_IP -p POD_PORT -i ~/.ssh/id_ed25519_maxalderone' \
-  --resume outputs/scripted_multi_color_models_YOUR_RUN
+  --resume outputs/sweeps/scripted_multi_color_models_YOUR_RUN
 ```
 
 Fetch a completed sweep using the same command plus `--fetch-only`. In the pod's web terminal, monitor:

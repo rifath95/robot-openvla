@@ -111,5 +111,5 @@ Keep the current action convention, single-image OpenVLA model, and existing
 dataset for this diagnostic. These results do not justify immediately adding
 history, manually forcing task stages, or oversampling grasp/lift examples.
 
-Local detailed artifacts are under `outputs/approach_learning_review_20261011/`:
+Local detailed artifacts are under `outputs/diagnostics/approach_learning_review_20261011/`:
 `approach_examples.json` and `approach_comparison.png`.

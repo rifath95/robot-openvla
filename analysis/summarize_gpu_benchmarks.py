@@ -1,5 +1,7 @@
 """Build a readable GPU comparison from saved batch benchmark directories."""
 
+from common.output_layout import output_path,resolve_output_path
+
 from common.paths import PROJECT_ROOT
 import argparse
 import json
@@ -94,6 +96,7 @@ def cost_section(runs):
 
 
 def comparison(root, output, gpu_filter=None):
+    root=resolve_output_path(root)
     lines=['# GPU batch capacity and training throughput','',
         'This table collects measured OpenVLA LoRA batch benchmarks. Each row is one run; different datasets or settings remain separate.', '',
         '**Throughput** means training examples processed per second after warmup. One example is one camera image, its task instruction, and seven target action values—not one trajectory.',
@@ -209,7 +212,7 @@ def comparison(root, output, gpu_filter=None):
         'Timestamped report folders and a combined report are saved in outputs/gpu-benchmarks. This workspace file is rebuilt automatically from the downloaded JSON.',
         'For report folders already downloaded, the standalone refresh command remains available:', '',
         '```bash','.venv-training/bin/python -m analysis.summarize_gpu_benchmarks \\',
-        '  --root outputs/gpu-benchmarks \\',
+        '  --root outputs/benchmarks/training/gpu-benchmarks \\',
         '  --output docs/benchmarks/GPU_TRAINING_COMPARISON.md','```','',
         'Historical training memory usage alone does not establish maximum batch capacity.']
     output.parent.mkdir(parents=True,exist_ok=True)
@@ -219,7 +222,7 @@ def comparison(root, output, gpu_filter=None):
 
 def main():
     p=argparse.ArgumentParser(description=__doc__)
-    p.add_argument('--root',type=Path,default=Path('outputs/gpu-benchmarks'))
+    p.add_argument('--root',type=Path,default=output_path('gpu-benchmarks'))
     p.add_argument('--output',type=Path,default=PROJECT_ROOT / 'docs/benchmarks/GPU_TRAINING_COMPARISON.md')
     args=p.parse_args()
     count=comparison(args.root,args.output)

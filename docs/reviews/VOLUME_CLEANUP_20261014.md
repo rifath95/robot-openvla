@@ -30,7 +30,7 @@ The old red/blue dataset is redundant because the current 300-demonstration four
 - All images, states, actions and reports for the latest 1,080-trial sweep `scripted_multi_color_models_20261013_164548_eeda379b`. Its Mac download was still in progress and was excluded from cleanup.
 - Training curves, metrics, TensorBoard events, benchmark reports, diagnostics and checkpoint metadata.
 
-Cloud receipt: `/workspace/panda-training/reports/cleanup_20261014.json`. Local receipt: `outputs/volume-cleanups/cleanup_20261014.json`.
+Cloud receipt: `/workspace/panda-training/reports/cleanup_20261014.json`. Local receipt: `outputs/volume_cleanup/volume-cleanups/cleanup_20261014.json`.
 
 ## Future workflow preferences
 

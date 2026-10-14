@@ -24,7 +24,7 @@ requires the correct sign, translation error below 0.5 mm, and rotation error
 below 0.003 rad, including unwanted movement of other axes.
 
 Results and before/after images are written to a new
-`outputs/control_calibration_<timestamp>/` directory. `calibration.json` contains
+`outputs/diagnostics/control_calibration_<timestamp>/` directory. `calibration.json` contains
 all measurements. The command exits unsuccessfully if a movement or gripper
 check fails. It does not open a viewer or contact a server.
 
@@ -42,7 +42,7 @@ source image. It uses local files only and does not download weights.
 
 ## Measured results
 
-Recorded run: `outputs/control_calibration_20261010_084356_786085`.
+Recorded run: `outputs/diagnostics/control_calibration_20261010_084356_786085`.
 
 - All **14** checks passed: 12 movement directions plus closed/open gripper.
 - Position discrepancy across all cases: at most **0.100 mm** (rounded).

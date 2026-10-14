@@ -18,11 +18,12 @@
 | `docker/` | Build recipes. Docker build context stays at the repository root. |
 | `scripts/` | Shell cloud startup/stop and detached-training entry points. |
 | `datasets/` | Existing generated demonstrations and portable training datasets. |
-| `outputs/` | Existing run results, plots, benchmark measurements and saved replays. |
+| `outputs/` | Results grouped by purpose; see the [output layout](OUTPUT_LAYOUT.md). |
 | `mujoco_menagerie/` | The unchanged upstream Git submodule and Panda mesh assets. |
 
 Paths in this table are relative to the repository root. Generated data,
-outputs, virtual environments and caches have not been relocated.
+virtual environments and caches retain their locations. Results inside outputs
+are grouped according to the [output layout](OUTPUT_LAYOUT.md).
 
 ## Familiar commands
 
@@ -52,7 +53,7 @@ Use them from the repository root as before. Secondary tools use module commands
 
 The GPU comparison is now [docs/benchmarks/GPU_TRAINING_COMPARISON.md](benchmarks/GPU_TRAINING_COMPARISON.md).
 The cloud benchmark synchronizer and report generator update this new location
-automatically. Recorded per-run reports remain under `outputs/gpu-benchmarks/`.
+automatically. Recorded per-run reports remain under `outputs/benchmarks/training/gpu-benchmarks/`.
 
 ## Compatibility and verification
 

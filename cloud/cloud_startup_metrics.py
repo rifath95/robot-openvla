@@ -32,7 +32,10 @@ def prepare():
         'preparation_note': 'Includes export validation; when missing, download and export. Separate from model loading.',
         'volume_mount': json.loads(mount.stdout),
     }
-    (ROOT / 'outputs/cloud_startup.json').write_text(json.dumps(info, indent=2) + '\n')
+    from common.output_layout import output_path
+    metrics_path=output_path('cloud_startup.json',root=ROOT/'outputs')
+    metrics_path.parent.mkdir(parents=True,exist_ok=True)
+    metrics_path.write_text(json.dumps(info, indent=2) + '\n')
 
 
 if __name__ == '__main__':

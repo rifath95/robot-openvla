@@ -38,7 +38,7 @@ From the repository root, using the existing local training environment:
 
 ```bash
 .venv-training/bin/python -m analysis.audit_openvla_pipeline \
-  --rollout outputs/remote_loop_20261011_021037_83d8c4a3 \
+  --rollout outputs/simulator_runs/cloud/remote_loop_20261011_021037_83d8c4a3 \
   --processor .cache-openvla/hub/models--openvla--openvla-7b/snapshots/47a0ec7fc4ec123775a391911046cf33cf9ed83f \
   --output outputs/alignment_audit_repeat
 ```
@@ -47,7 +47,7 @@ The processor path is the locally cached snapshot recorded in
 `.cache-openvla/model_revision.json`. Choose a new output directory each time.
 The script writes `AUDIT_REPORT.md` and `audit.json`; it makes no cloud requests,
 loads no model weights, and executes no robot movement. The completed initial
-audit is under `outputs/alignment_audit_20261011_checkpoint1000_verified/`.
+audit is under `outputs/diagnostics/alignment_audit_20261011_checkpoint1000_verified/`.
 
 ## Next cloud check
 

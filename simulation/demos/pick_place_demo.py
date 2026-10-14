@@ -4,6 +4,8 @@ Run from VS Code for a viewer, or use --headless for a physics-only test.
 No cube teleportation, welds, or external grasp forces are used.
 """
 
+from common.output_layout import output_path
+
 from common.paths import PROJECT_ROOT
 
 import argparse
@@ -103,7 +105,7 @@ def main():
     capture = not args.headless or args.capture
     renderer_context = mujoco.Renderer(model, height=480, width=640) if capture else nullcontext(None)
     with context as viewer, renderer_context as renderer:
-        output = PROJECT_ROOT / "outputs" / ("pick_place_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f"))
+        output = output_path("pick_place_" + datetime.now().strftime("%Y%m%d_%H%M%S_%f"))
         if renderer:
             output.mkdir(parents=True)
             print(f"Camera snapshots: {output}", flush=True)

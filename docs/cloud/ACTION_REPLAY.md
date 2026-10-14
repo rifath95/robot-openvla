@@ -32,7 +32,7 @@ general historical-version loader. Different scene assets are rejected for bowl
 episodes. Other changes in MuJoCo, control code, or assets can affect repeatability.
 
 Each execution saves new states, motion frames and `action_replay_report.json`
-under a separate `outputs/action_replay_*` folder. Reports include the executed
+under a separate `outputs/simulator_runs/action_replays/action_replay_*` folder. Reports include the executed
 action count, task outcome, tracking errors and divergence from recorded poses.
 The generated output `replay.py` can subsequently show this new executed motion.
 The source dataset, labels, eligibility and existing replay verification remain

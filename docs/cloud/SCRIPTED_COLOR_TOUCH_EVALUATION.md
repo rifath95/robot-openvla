@@ -40,7 +40,7 @@ For an early comparison while later checkpoints are still being trained, explici
 
 ## Reports and shutdown
 
-Results are saved under `outputs/scripted_color_touch_<timestamp>_<id>/`, including `REPORT.md`, `results.json`, elapsed evaluation time, logs, images, prediction settings, executed actions, states and replay launchers. Compact reports are copied to `/workspace/panda-training/scripted-evaluations/<session>/` before requesting the supplied inference pod's stop. Detailed images/actions remain on the Mac.
+Results are saved under `outputs/sweeps/scripted_color_touch_<timestamp>_<id>/`, including `REPORT.md`, `results.json`, elapsed evaluation time, logs, images, prediction settings, executed actions, states and replay launchers. Compact reports are copied to `/workspace/panda-training/scripted-evaluations/<session>/` before requesting the supplied inference pod's stop. Detailed images/actions remain on the Mac.
 
 Cleanup also runs after ordinary errors or Ctrl+C. This connected workflow cannot guarantee shutdown after lost connectivity, forced termination or API failure; confirm Stopped in RunPod. The active-training guard is a launch-time check, so do not start a new training job on the inference pod during the sweep.
 
@@ -57,4 +57,4 @@ That interactive command starts paused, displays the instruction top-right, and 
 
 ## Local verification
 
-Both red- and blue-target expert sequences were fed through the new inference loop without a cloud model. Every captured input PNG matched the demonstration; maximum qpos difference was 3.109e-15. The evaluator correctly measured the respective targets. This checks the simulator pipeline, not the trained model's success rate. The verification artifacts are under `outputs/color_touch_inference_pipeline_check/`.
+Both red- and blue-target expert sequences were fed through the new inference loop without a cloud model. Every captured input PNG matched the demonstration; maximum qpos difference was 3.109e-15. The evaluator correctly measured the respective targets. This checks the simulator pipeline, not the trained model's success rate. The verification artifacts are under `outputs/diagnostics/color_touch_inference_pipeline_check/`.

@@ -5,6 +5,7 @@ project's isolated .venv-openvla interpreter and never moves the robot.
 """
 
 from common.paths import PROJECT_ROOT
+from common.output_layout import output_path
 
 import json
 import os
@@ -14,7 +15,7 @@ import sys
 
 
 ROOT = PROJECT_ROOT
-OUTPUT = ROOT / "outputs"
+OUTPUT = output_path('openvla_mac_action.json').parent
 STATUS = OUTPUT / "openvla_mac_status.json"
 LOG = OUTPUT / "openvla_mac_test.log"
 
@@ -25,7 +26,7 @@ def status(phase, **details):
 
 
 def main():
-    OUTPUT.mkdir(exist_ok=True)
+    OUTPUT.mkdir(parents=True,exist_ok=True)
     interpreter = ROOT / ".venv-openvla" / "bin" / "python"
     script = ROOT / "openvla_mac.py"
     environment = os.environ.copy()

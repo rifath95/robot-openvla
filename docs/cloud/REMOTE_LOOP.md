@@ -84,7 +84,7 @@ picking up the cube. Task completion and fine-tuning are later milestones.
 
 ## Results and timings
 
-The terminal prints `outputs/remote_loop_<timestamp>_<id>/`:
+The terminal prints `outputs/simulator_runs/cloud/remote_loop_<timestamp>_<id>/`:
 
 - `status.json`: current phase, step counts, elapsed time, and any failure.
 - `summary.json`: successful movements, rejected cycles, prediction count, and final stop reason/status.
@@ -143,7 +143,7 @@ See [REPLAY.md](../simulation/REPLAY.md) for speed controls and playback limitat
 ## Saved startup measurements
 
 The one-command `cloud_session.py` launcher saves `startup_info.json` in an
-`outputs/cloud_session_<timestamp>_<id>/` folder when the server is ready and
+`outputs/simulator_runs/sessions/cloud_session_<timestamp>_<id>/` folder when the server is ready and
 copies it into each `remote_loop_*` trial folder it launches. Subsequent trials
 reuse the session measurements; they do not reload the model.
 

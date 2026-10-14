@@ -47,22 +47,22 @@ The policy emits meaningful movement, but has not learned reliable direction, st
 
 Test checkpoint 500 on the same seeds if a final comparison is wanted. Before choosing a larger dataset or longer run, a focused comparison of generated actions against expert actions around the orientation-to-approach boundary would be more informative than assuming the loss curve measures closed-loop success. No new collection, training, or cloud diagnostic has been started.
 
-Local measurement artifact: `outputs/bowl_v2_checkpoint_review/review.json`.
-Plot: `outputs/bowl_v2_checkpoint_review/orientation_overshoot.png`.
+Local measurement artifact: `outputs/diagnostics/bowl_v2_checkpoint_review/review.json`.
+Plot: `outputs/diagnostics/bowl_v2_checkpoint_review/orientation_overshoot.png`.
 
 ## Source runs
 
-- Checkpoint 0, seed 0: `outputs/remote_loop_20261013_021421_598d0987`.
-- Checkpoint 0, seed 1: `outputs/remote_loop_20261013_021707_d8a114c5`.
-- Checkpoint 50, seed 0: `outputs/remote_loop_20261013_022040_8ed20480`.
-- Checkpoint 50, seed 1: `outputs/remote_loop_20261013_022319_a6d8b143`.
-- Checkpoint 50, seed 2: `outputs/remote_loop_20261013_022403_5dc12f75`.
-- Checkpoint 100, seed 0: `outputs/remote_loop_20261013_022854_75e43126`.
-- Checkpoint 100, seed 1: `outputs/remote_loop_20261013_023013_9609f73d`.
-- Checkpoint 100, seed 2: `outputs/remote_loop_20261013_023115_96815de3`.
-- Checkpoint 200, seed 0: `outputs/remote_loop_20261013_024046_7faaeb28`.
-- Checkpoint 200, seed 1: `outputs/remote_loop_20261013_024249_f3af7673`.
-- Checkpoint 200, seed 2: `outputs/remote_loop_20261013_024522_2e573d8d`.
-- Checkpoint 400, seed 0: `outputs/remote_loop_20261013_020816_48c2152f`.
-- Checkpoint 400, seed 1: `outputs/remote_loop_20261013_020901_f64b721f`.
-- Checkpoint 400, seed 2: `outputs/remote_loop_20261013_021001_2a2f89e2`.
+- Checkpoint 0, seed 0: `outputs/simulator_runs/cloud/remote_loop_20261013_021421_598d0987`.
+- Checkpoint 0, seed 1: `outputs/simulator_runs/cloud/remote_loop_20261013_021707_d8a114c5`.
+- Checkpoint 50, seed 0: `outputs/simulator_runs/cloud/remote_loop_20261013_022040_8ed20480`.
+- Checkpoint 50, seed 1: `outputs/simulator_runs/cloud/remote_loop_20261013_022319_a6d8b143`.
+- Checkpoint 50, seed 2: `outputs/simulator_runs/cloud/remote_loop_20261013_022403_5dc12f75`.
+- Checkpoint 100, seed 0: `outputs/simulator_runs/cloud/remote_loop_20261013_022854_75e43126`.
+- Checkpoint 100, seed 1: `outputs/simulator_runs/cloud/remote_loop_20261013_023013_9609f73d`.
+- Checkpoint 100, seed 2: `outputs/simulator_runs/cloud/remote_loop_20261013_023115_96815de3`.
+- Checkpoint 200, seed 0: `outputs/simulator_runs/cloud/remote_loop_20261013_024046_7faaeb28`.
+- Checkpoint 200, seed 1: `outputs/simulator_runs/cloud/remote_loop_20261013_024249_f3af7673`.
+- Checkpoint 200, seed 2: `outputs/simulator_runs/cloud/remote_loop_20261013_024522_2e573d8d`.
+- Checkpoint 400, seed 0: `outputs/simulator_runs/cloud/remote_loop_20261013_020816_48c2152f`.
+- Checkpoint 400, seed 1: `outputs/simulator_runs/cloud/remote_loop_20261013_020901_f64b721f`.
+- Checkpoint 400, seed 2: `outputs/simulator_runs/cloud/remote_loop_20261013_021001_2a2f89e2`.

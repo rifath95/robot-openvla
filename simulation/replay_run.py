@@ -1,5 +1,7 @@
 """Play saved simulator poses offline; never call inference, IK, or physics."""
 
+from common.output_layout import resolve_output_path
+
 from common.paths import PROJECT_ROOT
 import argparse
 from pathlib import Path
@@ -53,19 +55,19 @@ def write_launcher(folder, *, demonstration=False):
 from pathlib import Path
 import sys
 root = next((p for p in Path(__file__).resolve().parents
-             if (p / 'replay_run.py').is_file() and (p / 'scene.xml').is_file()),
+             if (p / 'simulation/replay_run.py').is_file() and (p / 'scene.xml').is_file()),
             Path(__file__).resolve().parent)
 sys.path.insert(0, str(root))
-from replay_run import main
+from simulation.replay_run import main
 if __name__ == '__main__':
     main([str(Path(__file__).resolve().parent), *sys.argv[1:]])
 '''
     launcher = launcher.replace('sys.path.insert(0, str(root))',
-                                f'if not (root / "replay_run.py").exists():\n    root = Path({str(ROOT)!r})\nsys.path.insert(0, str(root))')
+                                f'if not (root / "simulation/replay_run.py").exists():\n    root = Path({str(ROOT)!r})\nsys.path.insert(0, str(root))')
     (Path(folder) / 'replay.py').write_text(launcher)
     if demonstration:
         action_launcher=launcher.replace('Offline playback.', 'Action replay through IK and physics.')
-        action_launcher=action_launcher.replace('from replay_run import main',
+        action_launcher=action_launcher.replace('from simulation.replay_run import main',
                                                 'from simulation.action_replay import main')
         (Path(folder)/'replay_actions.py').write_text(action_launcher)
 
@@ -124,6 +126,7 @@ def main(argv=None):
     parser.add_argument('--check', action='store_true', help='Validate saved states without opening a viewer')
     parser.add_argument('--start-immediately',action='store_true',help='Begin offline playback when the window opens')
     args = parser.parse_args(argv)
+    args.run_dir = resolve_output_path(args.run_dir)
     import math
     if not math.isfinite(args.speed) or args.speed <= 0:
         parser.error('--speed must be finite and positive')

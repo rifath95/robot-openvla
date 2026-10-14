@@ -1,6 +1,6 @@
 # Red/blue-trained model: unseen-color sweep review
 
-Reviewed completed `outputs/scripted_color_transfer_20261013_100305_2a5212fb` locally on October 13, 2026. This evaluates the **older red/blue-trained 500-update model**, not the new four-color training run.
+Reviewed completed `outputs/sweeps/scripted_color_transfer_20261013_100305_2a5212fb` locally on October 13, 2026. This evaluates the **older red/blue-trained 500-update model**, not the new four-color training run.
 
 ## Completion and audit
 
@@ -75,10 +75,10 @@ The downloaded supervisor status is an `awaiting_sync` completion snapshot. The 
 
 ## Files and next step
 
-- [Full per-trial report](../../outputs/scripted_color_transfer_20261013_100305_2a5212fb/REPORT.md)
-- [Raw results](../../outputs/scripted_color_transfer_20261013_100305_2a5212fb/results.json)
-- [Statistics](../../outputs/scripted_color_transfer_20261013_100305_2a5212fb/statistics.json)
-- [Input/outcome audit](../../outputs/scripted_color_transfer_20261013_100305_2a5212fb/REVIEW_INPUT_AUDIT.json)
-- [Representative checkpoint 500 montage](../../outputs/scripted_color_transfer_20261013_100305_2a5212fb/REVIEW_CP500_MONTAGE.jpg)
+- [Full per-trial report](../../outputs/sweeps/scripted_color_transfer_20261013_100305_2a5212fb/REPORT.md)
+- [Raw results](../../outputs/sweeps/scripted_color_transfer_20261013_100305_2a5212fb/results.json)
+- [Statistics](../../outputs/sweeps/scripted_color_transfer_20261013_100305_2a5212fb/statistics.json)
+- [Input/outcome audit](../../outputs/sweeps/scripted_color_transfer_20261013_100305_2a5212fb/REVIEW_INPUT_AUDIT.json)
+- [Representative checkpoint 500 montage](../../outputs/sweeps/scripted_color_transfer_20261013_100305_2a5212fb/REVIEW_CP500_MONTAGE.jpg)
 
 Checkpoint 500 is the strongest overall result in this unseen-color sweep; checkpoint 100 remains useful for its lower wrong-cube rate. Let the separate four-color model/base sweep finish before drawing conclusions about the benefit of adding training colors. Keep seen-color and unseen-color results separate in that comparison.

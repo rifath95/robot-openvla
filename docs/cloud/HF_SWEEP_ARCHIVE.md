@@ -53,7 +53,7 @@ caffeinate -i .venv-training/bin/hf download \
   Maxalderone/robot-openvla-simulator-results \
   --repo-type dataset \
   --include 'scripted_multi_color_models_20261013_164548_eeda379b/*' \
-  --local-dir outputs/hf-sweep-archives
+  --local-dir outputs/archives/hf-sweeps/hf-sweep-archives
 ```
 
 Use `--revision VERIFIED_COMMIT` from the receipt to pin the exact verified archive. No pod needs to run during this download. For the small reports only, change the include pattern to `SWEEP_NAME/reports/*`; for a particular model/count/palette, select the corresponding `archives/*.tar.gz` file. The manifest lists checksums and trial counts for every part. Extract chosen parts into one sweep folder and copy the `reports/` contents into its root to restore the ordinary results/replay layout.

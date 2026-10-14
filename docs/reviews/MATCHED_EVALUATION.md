@@ -39,7 +39,7 @@ server. Tests use fake model outputs:
 The real cached processor and full diagnostic input path also passed on all
 80 selected images with synthetic oracle logits. This verifies preparation and
 token alignment, not model performance. Record:
-`outputs/matched_diagnostic_local_check/checks.json`.
+`outputs/diagnostics/matched_diagnostic_local_check/checks.json`.
 
 ## Start the cloud model once
 
@@ -75,7 +75,7 @@ later request failure or interruption.
 
 ## Saved results
 
-Results are under `outputs/matched_evaluation_*`:
+Results are under `outputs/diagnostics/matched_evaluation_*`:
 
 | File | Contents |
 |---|---|

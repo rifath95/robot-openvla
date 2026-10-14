@@ -26,7 +26,7 @@ sleeping the Mac, or disconnecting does not cancel the cloud training job.
 `caffeinate -i` prevents automatic idle sleep while the local launcher runs.
 
 - **Mac stays connected:** when training finishes, reports download automatically
-  to `outputs/phase3_training/<session-name>/`. The Mac acknowledges successful
+  to `outputs/training/phase3_training/<session-name>/`. The Mac acknowledges successful
   synchronization, and the cloud supervisor requests a pod stop immediately.
 - **Mac disconnects:** the cloud saves results and waits up to **120 seconds**
   after finishing for a download acknowledgment, then requests a pod stop.

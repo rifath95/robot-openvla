@@ -2,13 +2,16 @@
 
 A robotics workspace for connecting a simulated Franka Panda arm to OpenVLA. Development currently runs on a MacBook using Python and MuJoCo 3.14.0, without ROS.
 
-Last updated: 2026-10-13. Update this document as milestones, run instructions, and model locations change.
+Last updated: 2026-10-14. Update this document as milestones, run instructions, and model locations change.
 
 Code is organized by purpose: `simulation/`, `inference/`, `cloud/`,
 `data_tools/`, `training/`, and `analysis/`. Tests live in `tests/`, dependency
 lists in `requirements/`, and Dockerfiles in `docker/`.
 See the [repository layout](docs/REPOSITORY_LAYOUT.md) and
 [documentation index](docs/README.md) to find files and guides.
+Results under `outputs/` are grouped into sweeps, training, simulator runs,
+benchmarks, archives and supporting checks. See the [output layout](docs/OUTPUT_LAYOUT.md)
+or open the local `outputs/README.md` index.
 The small root launchers preserve familiar commands such as
 `.venv/bin/python end_effector_demo.py` and `.venv/bin/python cloud_session.py`.
 
@@ -282,7 +285,7 @@ Run `inference/openvla_single_action.py` in VS Code, or use:
 
 It launches the simulation and inference stages in their respective environments. After fresh inference finishes, it restores the scene state that produced the input image, executes one bounded command, and opens the final scene in the standard viewer. No simulation advances during inference. Use `--no-view` to save results without opening the final viewer. You do not need to launch another simulator first.
 
-Each run creates `outputs/single_action_<timestamp>/` containing `before.png`, `after.png`, `scene_state.npz`, `prediction.json`, `execution.json`, `status.json`, and `run.log`. Check `status.json` for progress or failures. `execution.json` records the raw action, converted command, measured movement, and tracking error.
+Each run creates `outputs/simulator_runs/local/single_action_<timestamp>/` containing `before.png`, `after.png`, `scene_state.npz`, `prediction.json`, `execution.json`, `status.json`, and `run.log`. Check `status.json` for progress or failures. `execution.json` records the raw action, converted command, measured movement, and tracking error.
 
 This is a provisional plumbing test using `bridge_orig` statistics and an identity mapping of world XYZ/Euler axes, not a calibrated WidowX-to-Panda transfer. It limits the translation vector to 1 cm and the rotation vector to 0.05 radians, preserving their directions. The gripper changes from model 0 closed / 1 open to controller -1 closed / +1 open. New execution uses the shared Panda grasp point and 0.4 s interval; historical runs used hand origin and 2 s. A successful movement does not demonstrate model-driven grasping or task success.
 
@@ -296,7 +299,7 @@ Run `inference/openvla_loop.py` in VS Code, or:
 
 It loads OpenVLA once, predicts an action from the first image, advances the simulation, and feeds the resulting image into the next prediction. It stops after three actions. No final viewer is opened; inspect the saved images. Physics stays frozen during inference, and the same provisional mapping and per-action bounds apply. The simulated state is carried forward rather than reset between actions.
 
-Results are saved in `outputs/openvla_loop_<timestamp>/`:
+Results are saved in `outputs/simulator_runs/local/openvla_loop_<timestamp>/`:
 
 - `status.json`: phase, current step, completed steps, UTC update time, most recent inference time when available, and total elapsed time when finished.
 - `summary.json`: completed movement reports and per-step/total inference times; updated after each completed action.
@@ -389,10 +392,10 @@ The actual files are stored under `.cache-openvla/hub/models--openvla--openvla-7
 ## Inference results and logs
 
 - `camera_image.png`: saved simulator image used by the local test.
-- `outputs/openvla_mac_action.json`: seven predicted values, instruction, image path, device, normalization key, and inference time.
-- `outputs/openvla_mac_status.json`: status of the managed test and paths to its log/result.
-- `outputs/openvla_mac_test.log`: original test history, including the initial failed inference.
-- `outputs/openvla_mac_retry.log`: successful inference after fixing the input mismatch.
+- `outputs/diagnostics/openvla_mac_action.json`: seven predicted values, instruction, image path, device, normalization key, and inference time.
+- `outputs/diagnostics/openvla_mac_status.json`: status of the managed test and paths to its log/result.
+- `outputs/diagnostics/openvla_mac_test.log`: original test history, including the initial failed inference.
+- `outputs/diagnostics/openvla_mac_retry.log`: successful inference after fixing the input mismatch.
 - `outputs/pick_place_*/`: camera snapshots from captured scripted demonstrations.
 
 The successful test used `bridge_orig` action statistics. These statistics are from an existing training domain and have not been validated for our Panda scene. Producing seven numbers does not establish that the pretrained model can successfully complete our task.

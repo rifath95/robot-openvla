@@ -3,6 +3,8 @@
 The pod must already be running with the training image, dataset, base weights,
 network volume, and RunPod stop secret. Sleeping the Mac leaves training running.
 """
+
+from common.output_layout import output_path
 import argparse
 import json
 from pathlib import Path, PurePosixPath
@@ -17,7 +19,7 @@ from cloud.cloud_session import ROOT, REPOSITORY, parse_ssh, ssh_arguments
 
 SESSION_PATTERN = r'panda-train-[A-Za-z0-9_-]+'
 SESSION_ROOT = '/workspace/panda-training/sessions'
-LOCAL_ROOT = ROOT / 'outputs/phase3_training'
+LOCAL_ROOT = output_path('phase3_training')
 
 ARCHIVE_SCRIPT = r'''
 from pathlib import Path

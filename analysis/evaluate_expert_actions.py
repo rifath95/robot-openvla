@@ -4,6 +4,8 @@ Runs on the Mac using PNGs and original instructions from verified demonstration
 No model, simulator, TensorFlow, or training dependencies are loaded locally.
 """
 
+from common.output_layout import output_path
+
 from common.paths import PROJECT_ROOT
 
 import argparse
@@ -245,7 +247,7 @@ def main():
         parser.error('Specify a valid localhost port')
     samples, stats, counts = prepare_samples(args.source_manifest, args.dataset, args.split, args.selection, args.per_group)
     prefix = 'matched_evaluation' if args.matched else 'expert_evaluation'
-    output = args.output_dir or ROOT / 'outputs' / f'{prefix}_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}'
+    output = args.output_dir or output_path(f'{prefix}_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}')
     output.mkdir(parents=True, exist_ok=False)
     plan = dict(split=args.split, selection=args.selection, expected_adapter=args.expected_adapter,
                 source_manifest=str(args.source_manifest.resolve()), dataset=str(args.dataset.resolve()),

@@ -50,6 +50,6 @@ caffeinate -i .venv/bin/python -m cloud.training_cloud_session \
   --config training/four_color_touch_300_1000.json
 ```
 
-The launcher installs tmux if needed, checks the API, storage, dataset, and configured GPU, then starts the detached supervisor. The Mac can disconnect after the supervisor has started. Training, checkpoints, metrics, validation, curves, and logs remain on the network volume. If the Mac remains connected, reports are downloaded to `outputs/phase3_training/<session>/` before the stop acknowledgment. If disconnected, the supervisor still requests stopping, and reports can be fetched after resuming the pod. Confirm Stopped in RunPod; API/network failure can prevent stopping.
+The launcher installs tmux if needed, checks the API, storage, dataset, and configured GPU, then starts the detached supervisor. The Mac can disconnect after the supervisor has started. Training, checkpoints, metrics, validation, curves, and logs remain on the network volume. If the Mac remains connected, reports are downloaded to `outputs/training/phase3_training/<session>/` before the stop acknowledgment. If disconnected, the supervisor still requests stopping, and reports can be fetched after resuming the pod. Confirm Stopped in RunPod; API/network failure can prevent stopping.
 
 The exact start/finish times, updates, validation timings, and selected batch are recorded in the run reports. No training run is launched by creating this profile.

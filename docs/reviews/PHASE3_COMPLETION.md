@@ -101,10 +101,10 @@ Checkpoint 1,000 is the best observed rollout model in this sweep, despite check
 | Final demonstrations and replay commands | `datasets/panda_four_color_touch/`; `WATCH_TRAJECTORIES.md` |
 | Portable local dataset | `datasets/panda_four_color_touch/training_four_color_touch_v1/` |
 | Training configuration | `training/four_color_touch_300_1000.json` |
-| Downloaded training reports/curves | `outputs/phase3_training/panda-train-20261013-110217-1084/` |
+| Downloaded training reports/curves | `outputs/training/phase3_training/panda-train-20261013-110217-1084/` |
 | Final checkpoint on the network volume | `/workspace/panda-training/sessions/panda-train-20261013-110217-1084/runs/training/checkpoint_001000` |
 | Sweep profile | `inference/sweep_profiles/four_color_all_models.json` |
-| Downloaded 480-trial evidence | `outputs/scripted_four_color_models_20261013_132943_e69718c3/` |
+| Downloaded 480-trial evidence | `outputs/sweeps/scripted_four_color_models_20261013_132943_e69718c3/` |
 | Tracked final review and plot | `docs/reviews/FOUR_COLOR_MODEL_SWEEP_REVIEW.md`; `docs/reviews/assets/four_color_model_sweep_results.png` |
 
 Generated demonstrations, raw outputs and model weights are excluded from Git. Reports and selected plots are committed. Local report downloads do not include adapter weights; those remain on the volume unless separately archived. Storage paths describe the completion snapshot and may change after future cleanup.

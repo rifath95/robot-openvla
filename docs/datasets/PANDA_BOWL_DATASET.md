@@ -116,7 +116,7 @@ caffeinate -i .venv/bin/python -m data_tools.collect_panda_bowl \
 ```
 
 Failed attempts retain compact metadata, transitions, and first/last diagnostic
-frames in `outputs/bowl_collection_checks/`; successful episodes retain all their
+frames in `outputs/collection_checks/bowl_collection_checks/`; successful episodes retain all their
 images and states. This limits storage consumed by rejected render sequences.
 
 These episodes belong to the final dataset; there are no separate pilot or
@@ -140,7 +140,7 @@ datasets/panda_pick_bowl/
 ```
 
 Only successful episodes enter these folders. Failed attempts, if any, remain
-under `outputs/bowl_collection_checks/`, outside the accepted dataset. A fresh
+under `outputs/collection_checks/bowl_collection_checks/`, outside the accepted dataset. A fresh
 clone does not contain generated images/states: they are excluded from GitHub.
 
 ## Variations and checks

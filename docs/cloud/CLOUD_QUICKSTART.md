@@ -62,7 +62,7 @@ without another merge/load. A different checkpoint replaces the server.
 Use `cloud_session.py --ssh 'YOUR_SSH_COMMAND' --stop-server` to unload explicitly.
 Neither disconnecting nor stopping the server stops the rented pod. Finish
 by stopping/terminating it in RunPod. Model weights on the independent Global
-volume remain. Local artifacts are under `outputs/remote_loop_*`; the cloud
+volume remain. Local artifacts are under `outputs/simulator_runs/cloud/remote_loop_*`; the cloud
 server log is `/root/robot-openvla/outputs/cloud_server.log`.
 
 Defaults: 100 prediction cycles (including rejected ones), three consecutive
@@ -163,7 +163,7 @@ as task success. No Docker rebuild is needed for this controller change.
 ## Saved startup measurements
 
 The one-command `cloud_session.py` launcher saves `startup_info.json` in an
-`outputs/cloud_session_<timestamp>_<id>/` folder when the server is ready and
+`outputs/simulator_runs/sessions/cloud_session_<timestamp>_<id>/` folder when the server is ready and
 copies it into each `remote_loop_*` trial folder it launches. Subsequent trials
 reuse the session measurements; they do not reload the model.
 

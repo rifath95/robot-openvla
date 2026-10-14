@@ -3,6 +3,8 @@
 Requires an already-running training-image pod with its network volume attached.
 A detached cloud supervisor stops the pod on completion, failure, or timeout.
 """
+
+from common.output_layout import output_path
 import argparse
 import json
 from pathlib import Path, PurePosixPath
@@ -246,16 +248,16 @@ def main():
             if code:
                 print('Cloud command ended with an error; attempting to collect saved diagnostics.',flush=True)
         if args.global_volume:
-            fetch_reports(ssh,ROOT/'outputs/gpu-benchmarks',ROOT/'docs/benchmarks/GPU_TRAINING_COMPARISON.md',args.global_volume)
-        else:fetch_reports(ssh,ROOT/'outputs/gpu-benchmarks',ROOT/'docs/benchmarks/GPU_TRAINING_COMPARISON.md')
+            fetch_reports(ssh,output_path('gpu-benchmarks'),ROOT/'docs/benchmarks/GPU_TRAINING_COMPARISON.md',args.global_volume)
+        else:fetch_reports(ssh,output_path('gpu-benchmarks'),ROOT/'docs/benchmarks/GPU_TRAINING_COMPARISON.md')
         if not args.fetch_only and auto_stop:
-            session=measure_mac_inference(ssh,ROOT/'outputs/gpu-benchmarks',args.global_volume)
+            session=measure_mac_inference(ssh,output_path('gpu-benchmarks'),args.global_volume)
             if session:
                 watch='/opt/openvla/bin/python -u -m training.benchmark_supervisor --watch-session '+shlex.quote(session)
                 if args.global_volume:watch+=' --global-volume '+shlex.quote(args.global_volume)
                 result=subprocess.run(ssh+['cd /root/robot-openvla && '+watch])
                 code=result.returncode
-                fetch_reports(ssh,ROOT/'outputs/gpu-benchmarks',ROOT/'docs/benchmarks/GPU_TRAINING_COMPARISON.md',args.global_volume or '/workspace')
+                fetch_reports(ssh,output_path('gpu-benchmarks'),ROOT/'docs/benchmarks/GPU_TRAINING_COMPARISON.md',args.global_volume or '/workspace')
     except (OSError,ValueError,RuntimeError,subprocess.CalledProcessError,tarfile.TarError) as exc:
         error=f'Results were not fully synchronized: {exc}. Saved results remain on the volume.'
     except KeyboardInterrupt:

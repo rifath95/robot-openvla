@@ -1,4 +1,6 @@
 """Separate unattended touch trials; use the existing inference loop unchanged."""
+
+from common.output_layout import output_path, resolve_output_path
 import argparse
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -304,9 +306,9 @@ def main(default_task='touch'):
     ssh = ssh_arguments(host, port, key)
     prefix='scripted_color_transfer' if args.task=='color_transfer' else 'scripted_color_touch' if args.task=='color_touch' else 'scripted_touch'
     name = f'{prefix}_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{uuid.uuid4().hex[:8]}'
-    folder = ROOT / 'outputs' / name
+    folder = output_path(name,root=ROOT/'outputs')
     if args.resume:
-        folder=args.resume.resolve()
+        folder=resolve_output_path(args.resume).resolve()
         if not folder.is_relative_to((ROOT/'outputs').resolve()) or not (folder/'results.json').is_file():
             parser.error('--resume must select a saved sweep inside outputs/')
         name=folder.name

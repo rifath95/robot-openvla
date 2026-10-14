@@ -57,7 +57,7 @@ are commanded but this experiment's final tracking threshold checks position.
 
 ## Results on the Mac
 
-Each run saves `outputs/remote_single_action_<timestamp>_<id>/`:
+Each run saves `outputs/simulator_runs/cloud/remote_single_action_<timestamp>_<id>/`:
 
 | File | Contents |
 | --- | --- |

@@ -43,8 +43,8 @@ controller mismatch remains a separate issue established by action replay.
 
 Source runs:
 
-- `outputs/remote_loop_20261013_004429_0ac8a961`
-- `outputs/remote_loop_20261013_004457_d1ae30e2`
-- `outputs/remote_loop_20261013_004516_7b5da887`
+- `outputs/simulator_runs/cloud/remote_loop_20261013_004429_0ac8a961`
+- `outputs/simulator_runs/cloud/remote_loop_20261013_004457_d1ae30e2`
+- `outputs/simulator_runs/cloud/remote_loop_20261013_004516_7b5da887`
 
-Offline measurements: `outputs/bowl_checkpoint_5000_review.json`.
+Offline measurements: `outputs/diagnostics/bowl_checkpoint_5000_review.json`.

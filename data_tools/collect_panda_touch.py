@@ -1,4 +1,6 @@
 """Collect a numbered touch-only dataset, keeping reviewed episodes on expansion."""
+
+from common.output_layout import output_path
 import argparse
 import json
 from pathlib import Path
@@ -61,7 +63,7 @@ def collect(folder=DATASET_ROOT,limit=10):
                    ready_for_finetuning=False))
         write_trajectory_index(folder,results)
     save('collecting')
-    checks=PROJECT_ROOT/'outputs/touch_collection_checks';checks.mkdir(parents=True,exist_ok=True)
+    checks=output_path('touch_collection_checks');checks.mkdir(parents=True,exist_ok=True)
     for slot in range(limit):
         if any(r['slot']==slot for r in results):continue
         spec=scenario(slot);destination=folder/spec['split']/spec['id']

@@ -8,7 +8,7 @@ Session: `panda-train-20261013-034928-1786`. Completed 500 updates, batch 8, acc
 
 Final training loss: 0.001122. Lowest validation loss: 2.511286 at update 40; final validation loss: 4.052724. This divergence indicates overfitting on the teacher-forced action-token objective. It does not, by itself, establish which checkpoint has the best closed-loop task performance.
 
-[Original curve](../../outputs/phase3_training/panda-train-20261013-034928-1786/runs/training/loss.png) · [Smoothed curve](../../outputs/phase3_training/panda-train-20261013-034928-1786/runs/training/loss_smoothed.png)
+[Original curve](../../outputs/training/phase3_training/panda-train-20261013-034928-1786/runs/training/loss.png) · [Smoothed curve](../../outputs/training/phase3_training/panda-train-20261013-034928-1786/runs/training/loss_smoothed.png)
 
 ## Same-scene comparison
 
@@ -64,35 +64,35 @@ Before another evaluation, distinguish verified task contact from a coincident t
 
 | Run | Checkpoint | Seed | Sampling | Instruction | Phase | Contact | Completed actions |
 |---|---:|---:|---|---|---|---|---:|
-| [remote_loop_20261013_040917_acebfb07](../../outputs/remote_loop_20261013_040917_acebfb07/RUN_REPORT.md) | 0 | 0 | Off | touch the red cube. | Failed | No | 20 |
-| [remote_loop_20261013_040954_239e0172](../../outputs/remote_loop_20261013_040954_239e0172/RUN_REPORT.md) | 0 | 1 | Off | touch the red cube. | Failed | No | 20 |
-| [remote_loop_20261013_041030_f12b9235](../../outputs/remote_loop_20261013_041030_f12b9235/RUN_REPORT.md) | 0 | 2 | Off | touch the red cube. | Failed | No | 21 |
-| [remote_loop_20261013_041321_8805e94b](../../outputs/remote_loop_20261013_041321_8805e94b/RUN_REPORT.md) | 10 | 0 | Off | touch the red cube. | Failed | No | 21 |
-| [remote_loop_20261013_041412_8a739ca4](../../outputs/remote_loop_20261013_041412_8a739ca4/RUN_REPORT.md) | 10 | 1 | Off | touch the red cube. | Failed | No | 22 |
-| [remote_loop_20261013_041455_1cbdf9b8](../../outputs/remote_loop_20261013_041455_1cbdf9b8/RUN_REPORT.md) | 10 | 2 | Off | touch the red cube. | Failed | No | 21 |
-| [remote_loop_20261013_041734_b4164a41](../../outputs/remote_loop_20261013_041734_b4164a41/RUN_REPORT.md) | 50 | 0 | Off | touch the red cube. | Failed | No | 21 |
-| [remote_loop_20261013_041813_f370b0c6](../../outputs/remote_loop_20261013_041813_f370b0c6/RUN_REPORT.md) | 50 | 1 | Off | touch the red cube. | Failed | Yes | 21 |
-| [remote_loop_20261013_041850_e86626e6](../../outputs/remote_loop_20261013_041850_e86626e6/RUN_REPORT.md) | 50 | 2 | Off | touch the red cube. | Failed | Yes | 21 |
-| [remote_loop_20261013_042244_e5d85e46](../../outputs/remote_loop_20261013_042244_e5d85e46/RUN_REPORT.md) | 50 | 0 | On | touch the red cube. | Failed | No | 21 |
-| [remote_loop_20261013_042322_289a8f5f](../../outputs/remote_loop_20261013_042322_289a8f5f/RUN_REPORT.md) | 50 | 1 | On | touch the red cube. | Failed | No | 20 |
-| [remote_loop_20261013_042402_f71b51e0](../../outputs/remote_loop_20261013_042402_f71b51e0/RUN_REPORT.md) | 50 | 2 | On | touch the red cube. | Completed | Yes | 18 |
-| [remote_loop_20261013_042546_0a547490](../../outputs/remote_loop_20261013_042546_0a547490/RUN_REPORT.md) | 50 | 3535680 | Off | touch the red cube. | Completed | Yes | 16 |
-| [remote_loop_20261013_042618_7f5c0bb6](../../outputs/remote_loop_20261013_042618_7f5c0bb6/RUN_REPORT.md) | 50 | 34519768 | Off | touch the red cube. | Completed | Yes | 18 |
-| [remote_loop_20261013_042935_ac686ee3](../../outputs/remote_loop_20261013_042935_ac686ee3/RUN_REPORT.md) | 100 | 0 | Off | touch the red cube. | Completed | Yes | 18 |
-| [remote_loop_20261013_043008_c17a4b95](../../outputs/remote_loop_20261013_043008_c17a4b95/RUN_REPORT.md) | 100 | 1 | Off | touch the red cube. | Completed | Yes | 19 |
-| [remote_loop_20261013_043040_fa0cd102](../../outputs/remote_loop_20261013_043040_fa0cd102/RUN_REPORT.md) | 100 | 2 | Off | touch the red cube. | Completed | Yes | 17 |
-| [remote_loop_20261013_043307_12ea3445](../../outputs/remote_loop_20261013_043307_12ea3445/RUN_REPORT.md) | 300 | 0 | Off | touch the red cube. | Completed | Yes | 19 |
-| [remote_loop_20261013_043343_b2368bf0](../../outputs/remote_loop_20261013_043343_b2368bf0/RUN_REPORT.md) | 300 | 1 | Off | touch the red cube. | Completed | Yes | 17 |
-| [remote_loop_20261013_043412_4c8ece6c](../../outputs/remote_loop_20261013_043412_4c8ece6c/RUN_REPORT.md) | 300 | 2 | Off | touch the red cube. | Completed | Yes | 17 |
-| [remote_loop_20261013_043611_4395c010](../../outputs/remote_loop_20261013_043611_4395c010/RUN_REPORT.md) | 300 | 64322 | Off | touch the red cube. | Completed | Yes | 19 |
-| [remote_loop_20261013_043651_1d69c320](../../outputs/remote_loop_20261013_043651_1d69c320/RUN_REPORT.md) | 300 | 999 | Off | touch the red cube. | Stopped | No | 4 |
-| [remote_loop_20261013_043712_3ca44d08](../../outputs/remote_loop_20261013_043712_3ca44d08/RUN_REPORT.md) | 300 | 999 | Off | touch the red cube. | Completed | Yes | 21 |
-| [remote_loop_20261013_043816_dfd3e0a0](../../outputs/remote_loop_20261013_043816_dfd3e0a0/RUN_REPORT.md) | 300 | 9847 | Off | touch the red cube. | Completed | Yes | 15 |
-| [remote_loop_20261013_044101_933eca37](../../outputs/remote_loop_20261013_044101_933eca37/RUN_REPORT.md) | 500 | 0 | Off | touch the red cube. | Completed | Yes | 19 |
-| [remote_loop_20261013_044141_7fb563b3](../../outputs/remote_loop_20261013_044141_7fb563b3/RUN_REPORT.md) | 500 | 1 | Off | touch the red cube. | Completed | Yes | 17 |
-| [remote_loop_20261013_044211_e719a9ca](../../outputs/remote_loop_20261013_044211_e719a9ca/RUN_REPORT.md) | 500 | 2 | Off | touch the red cube. | Completed | Yes | 17 |
-| [remote_loop_20261013_044250_c01c5d9f](../../outputs/remote_loop_20261013_044250_c01c5d9f/RUN_REPORT.md) | 500 | 999 | Off | touch the red cube. | Completed | Yes | 21 |
-| [remote_loop_20261013_044525_7990fd2e](../../outputs/remote_loop_20261013_044525_7990fd2e/RUN_REPORT.md) | 300 | 0 | Off | grip the red cube. | Completed | Yes | 19 |
-| [remote_loop_20261013_044641_06df011b](../../outputs/remote_loop_20261013_044641_06df011b/RUN_REPORT.md) | 300 | 0 | Off | move up | Failed | No | 21 |
+| [remote_loop_20261013_040917_acebfb07](../../outputs/simulator_runs/cloud/remote_loop_20261013_040917_acebfb07/RUN_REPORT.md) | 0 | 0 | Off | touch the red cube. | Failed | No | 20 |
+| [remote_loop_20261013_040954_239e0172](../../outputs/simulator_runs/cloud/remote_loop_20261013_040954_239e0172/RUN_REPORT.md) | 0 | 1 | Off | touch the red cube. | Failed | No | 20 |
+| [remote_loop_20261013_041030_f12b9235](../../outputs/simulator_runs/cloud/remote_loop_20261013_041030_f12b9235/RUN_REPORT.md) | 0 | 2 | Off | touch the red cube. | Failed | No | 21 |
+| [remote_loop_20261013_041321_8805e94b](../../outputs/simulator_runs/cloud/remote_loop_20261013_041321_8805e94b/RUN_REPORT.md) | 10 | 0 | Off | touch the red cube. | Failed | No | 21 |
+| [remote_loop_20261013_041412_8a739ca4](../../outputs/simulator_runs/cloud/remote_loop_20261013_041412_8a739ca4/RUN_REPORT.md) | 10 | 1 | Off | touch the red cube. | Failed | No | 22 |
+| [remote_loop_20261013_041455_1cbdf9b8](../../outputs/simulator_runs/cloud/remote_loop_20261013_041455_1cbdf9b8/RUN_REPORT.md) | 10 | 2 | Off | touch the red cube. | Failed | No | 21 |
+| [remote_loop_20261013_041734_b4164a41](../../outputs/simulator_runs/cloud/remote_loop_20261013_041734_b4164a41/RUN_REPORT.md) | 50 | 0 | Off | touch the red cube. | Failed | No | 21 |
+| [remote_loop_20261013_041813_f370b0c6](../../outputs/simulator_runs/cloud/remote_loop_20261013_041813_f370b0c6/RUN_REPORT.md) | 50 | 1 | Off | touch the red cube. | Failed | Yes | 21 |
+| [remote_loop_20261013_041850_e86626e6](../../outputs/simulator_runs/cloud/remote_loop_20261013_041850_e86626e6/RUN_REPORT.md) | 50 | 2 | Off | touch the red cube. | Failed | Yes | 21 |
+| [remote_loop_20261013_042244_e5d85e46](../../outputs/simulator_runs/cloud/remote_loop_20261013_042244_e5d85e46/RUN_REPORT.md) | 50 | 0 | On | touch the red cube. | Failed | No | 21 |
+| [remote_loop_20261013_042322_289a8f5f](../../outputs/simulator_runs/cloud/remote_loop_20261013_042322_289a8f5f/RUN_REPORT.md) | 50 | 1 | On | touch the red cube. | Failed | No | 20 |
+| [remote_loop_20261013_042402_f71b51e0](../../outputs/simulator_runs/cloud/remote_loop_20261013_042402_f71b51e0/RUN_REPORT.md) | 50 | 2 | On | touch the red cube. | Completed | Yes | 18 |
+| [remote_loop_20261013_042546_0a547490](../../outputs/simulator_runs/cloud/remote_loop_20261013_042546_0a547490/RUN_REPORT.md) | 50 | 3535680 | Off | touch the red cube. | Completed | Yes | 16 |
+| [remote_loop_20261013_042618_7f5c0bb6](../../outputs/simulator_runs/cloud/remote_loop_20261013_042618_7f5c0bb6/RUN_REPORT.md) | 50 | 34519768 | Off | touch the red cube. | Completed | Yes | 18 |
+| [remote_loop_20261013_042935_ac686ee3](../../outputs/simulator_runs/cloud/remote_loop_20261013_042935_ac686ee3/RUN_REPORT.md) | 100 | 0 | Off | touch the red cube. | Completed | Yes | 18 |
+| [remote_loop_20261013_043008_c17a4b95](../../outputs/simulator_runs/cloud/remote_loop_20261013_043008_c17a4b95/RUN_REPORT.md) | 100 | 1 | Off | touch the red cube. | Completed | Yes | 19 |
+| [remote_loop_20261013_043040_fa0cd102](../../outputs/simulator_runs/cloud/remote_loop_20261013_043040_fa0cd102/RUN_REPORT.md) | 100 | 2 | Off | touch the red cube. | Completed | Yes | 17 |
+| [remote_loop_20261013_043307_12ea3445](../../outputs/simulator_runs/cloud/remote_loop_20261013_043307_12ea3445/RUN_REPORT.md) | 300 | 0 | Off | touch the red cube. | Completed | Yes | 19 |
+| [remote_loop_20261013_043343_b2368bf0](../../outputs/simulator_runs/cloud/remote_loop_20261013_043343_b2368bf0/RUN_REPORT.md) | 300 | 1 | Off | touch the red cube. | Completed | Yes | 17 |
+| [remote_loop_20261013_043412_4c8ece6c](../../outputs/simulator_runs/cloud/remote_loop_20261013_043412_4c8ece6c/RUN_REPORT.md) | 300 | 2 | Off | touch the red cube. | Completed | Yes | 17 |
+| [remote_loop_20261013_043611_4395c010](../../outputs/simulator_runs/cloud/remote_loop_20261013_043611_4395c010/RUN_REPORT.md) | 300 | 64322 | Off | touch the red cube. | Completed | Yes | 19 |
+| [remote_loop_20261013_043651_1d69c320](../../outputs/simulator_runs/cloud/remote_loop_20261013_043651_1d69c320/RUN_REPORT.md) | 300 | 999 | Off | touch the red cube. | Stopped | No | 4 |
+| [remote_loop_20261013_043712_3ca44d08](../../outputs/simulator_runs/cloud/remote_loop_20261013_043712_3ca44d08/RUN_REPORT.md) | 300 | 999 | Off | touch the red cube. | Completed | Yes | 21 |
+| [remote_loop_20261013_043816_dfd3e0a0](../../outputs/simulator_runs/cloud/remote_loop_20261013_043816_dfd3e0a0/RUN_REPORT.md) | 300 | 9847 | Off | touch the red cube. | Completed | Yes | 15 |
+| [remote_loop_20261013_044101_933eca37](../../outputs/simulator_runs/cloud/remote_loop_20261013_044101_933eca37/RUN_REPORT.md) | 500 | 0 | Off | touch the red cube. | Completed | Yes | 19 |
+| [remote_loop_20261013_044141_7fb563b3](../../outputs/simulator_runs/cloud/remote_loop_20261013_044141_7fb563b3/RUN_REPORT.md) | 500 | 1 | Off | touch the red cube. | Completed | Yes | 17 |
+| [remote_loop_20261013_044211_e719a9ca](../../outputs/simulator_runs/cloud/remote_loop_20261013_044211_e719a9ca/RUN_REPORT.md) | 500 | 2 | Off | touch the red cube. | Completed | Yes | 17 |
+| [remote_loop_20261013_044250_c01c5d9f](../../outputs/simulator_runs/cloud/remote_loop_20261013_044250_c01c5d9f/RUN_REPORT.md) | 500 | 999 | Off | touch the red cube. | Completed | Yes | 21 |
+| [remote_loop_20261013_044525_7990fd2e](../../outputs/simulator_runs/cloud/remote_loop_20261013_044525_7990fd2e/RUN_REPORT.md) | 300 | 0 | Off | grip the red cube. | Completed | Yes | 19 |
+| [remote_loop_20261013_044641_06df011b](../../outputs/simulator_runs/cloud/remote_loop_20261013_044641_06df011b/RUN_REPORT.md) | 300 | 0 | Off | move up | Failed | No | 21 |
 
-[Image montage](../../outputs/touch_checkpoint_review/trial_montage.jpg) · [Machine-readable measurements](../../outputs/touch_checkpoint_review/review.json)
+[Image montage](../../outputs/diagnostics/touch_checkpoint_review/trial_montage.jpg) · [Machine-readable measurements](../../outputs/diagnostics/touch_checkpoint_review/review.json)

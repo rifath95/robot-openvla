@@ -1,8 +1,10 @@
 """Run three camera → OpenVLA → bounded robot movement cycles.
 
 Run in VS Code. Keeps the model loaded; saves all images and timings under
-outputs/openvla_loop_*. No viewer is opened. Supports Mac MPS and Linux CUDA.
+outputs/simulator_runs/local/openvla_loop_*. No viewer is opened. Supports Mac MPS and Linux CUDA.
 """
+
+from common.output_layout import output_path
 
 from common.paths import PROJECT_ROOT
 
@@ -87,7 +89,7 @@ def main():
             raise RuntimeError(f"Missing {name}; see README.md")
     if not (ROOT / ".cache-openvla/model_revision.json").exists():
         raise RuntimeError("Download the checkpoint first; see README.md")
-    folder = ROOT / "outputs" / datetime.now().strftime("openvla_loop_%Y%m%d_%H%M%S_%f")
+    folder = output_path(datetime.now().strftime("openvla_loop_%Y%m%d_%H%M%S_%f"))
     (folder / "step_01").mkdir(parents=True)
     started = time.monotonic()
     update_status(folder, "Capturing initial scene", requested_steps=args.steps,

@@ -4,6 +4,7 @@ Run with .venv-openvla/bin/python; the simulator's .venv is separate.
 """
 
 from common.paths import PROJECT_ROOT
+from common.output_layout import output_path,resolve_output_path
 
 import argparse
 import json
@@ -22,13 +23,14 @@ def main():
     parser.add_argument("--preflight", action="store_true")
     parser.add_argument("--download", action="store_true")
     parser.add_argument("--device", choices=("mps", "cuda", "cpu"), default="mps")
-    parser.add_argument("--image", type=Path, default=ROOT / "camera_image.png")
+    parser.add_argument("--image", type=Path, default=output_path('camera_image.png'))
     parser.add_argument("--instruction", default="pick up the red cube")
     parser.add_argument("--unnorm-key", default="bridge_orig")
-    parser.add_argument("--output", type=Path, default=ROOT / "outputs" / "openvla_mac_action.json")
+    parser.add_argument("--output", type=Path, default=output_path('openvla_mac_action.json'))
     parser.add_argument("--loop-dir", type=Path, help=argparse.SUPPRESS)
     parser.add_argument("--loop-steps", type=int, default=3, help=argparse.SUPPRESS)
     args = parser.parse_args()
+    args.image = resolve_output_path(args.image)
 
     import torch
     import transformers

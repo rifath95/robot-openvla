@@ -68,10 +68,10 @@ Before expanding training or claiming color transfer, inspect the repeated seed-
 
 ## Saved artifacts
 
-- [Automatic checkpoint/color and per-trial report](../../outputs/scripted_color_touch_20261013_080412_95b3a48c/REPORT.md)
-- [Raw sweep results](../../outputs/scripted_color_touch_20261013_080412_95b3a48c/results.json)
-- [Reviewed measurements](../../outputs/scripted_color_touch_20261013_080412_95b3a48c/review_measurements.json)
-- [Selected paired-scene images](../../outputs/scripted_color_touch_20261013_080412_95b3a48c/review_montage.jpg)
+- [Automatic checkpoint/color and per-trial report](../../outputs/sweeps/scripted_color_touch_20261013_080412_95b3a48c/REPORT.md)
+- [Raw sweep results](../../outputs/sweeps/scripted_color_touch_20261013_080412_95b3a48c/results.json)
+- [Reviewed measurements](../../outputs/sweeps/scripted_color_touch_20261013_080412_95b3a48c/review_measurements.json)
+- [Selected paired-scene images](../../outputs/sweeps/scripted_color_touch_20261013_080412_95b3a48c/review_montage.jpg)
 - [Training-loss review](COLOR_TOUCH_TRAINING_REVIEW.md)
 
 Detailed trial artifacts stay local under the output folder. This review and the automatically updated GPU inference comparison are pushed to GitHub.

@@ -54,6 +54,6 @@ Logical space removed: **6.455 GiB**. The volume subsequently reported **14 GiB 
 
 Archive receipt: `/workspace/panda-training/reports/touch_checkpoint_300_hf_archive.json`.
 Cleanup receipt: `/workspace/panda-training/reports/touch_cleanup_after_hf_archive.json`.
-Both receipts are also saved locally under `outputs/hf-archives/`.
+Both receipts are also saved locally under `outputs/archives/hf-models/hf-archives/`.
 
 The newer red/blue dataset was verified separately at `Maxalderone/robot-openvla-panda-color-touch`, revision `48d4da5e692b3f13c774e8cf547a8668115fae09`. It has not yet been downloaded to this volume as part of this archive/cleanup operation.

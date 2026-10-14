@@ -1,6 +1,7 @@
 """Mac camera → cloud OpenVLA → one bounded Panda movement → new camera image."""
 
 from common.paths import PROJECT_ROOT
+from common.output_layout import output_path
 
 import argparse
 from datetime import datetime, timezone
@@ -25,7 +26,7 @@ def run_single_action(*, server_url="http://127.0.0.1:8000",
     from simulation.panda_env import PandaEnv
 
     request_id = uuid.uuid4().hex
-    folder = Path(output_dir) if output_dir else ROOT / "outputs" / f"remote_single_action_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{request_id[:8]}"
+    folder = Path(output_dir) if output_dir else output_path(f"remote_single_action_{datetime.now(timezone.utc):%Y%m%d_%H%M%S}_{request_id[:8]}")
     folder.mkdir(parents=True, exist_ok=False)
     started = time.perf_counter()
     phase = "Initializing simulation"

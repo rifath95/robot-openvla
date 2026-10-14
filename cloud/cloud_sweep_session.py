@@ -1,4 +1,6 @@
 """Resume scripted trials on a detached cloud MuJoCo worker, then fetch results."""
+
+from common.output_layout import resolve_output_path
 import argparse
 import json
 from pathlib import Path,PurePosixPath
@@ -117,7 +119,7 @@ def main():
         if args.fetch_only:p.error('--fetch-only requires --resume')
         from cloud.create_sweep_plan import create
         folder=create(args.profile)
-    else:folder=args.resume.resolve()
+    else:folder=resolve_output_path(args.resume).resolve()
     if not folder.is_relative_to((PROJECT_ROOT/'outputs').resolve()) or not (folder/'results.json').is_file():p.error('Select saved sweep under outputs/')
     name=folder.name
     if not re.fullmatch(r'scripted_[A-Za-z0-9_]+',name):p.error('Invalid sweep folder name')

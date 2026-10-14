@@ -51,9 +51,9 @@ The downloaded `status.json` is an `awaiting_sync` snapshot with stop not yet re
 
 ## Plots and source reports
 
-- [Original loss curve](../../outputs/phase3_training/panda-train-20261013-074359-896/runs/training/loss.png)
-- [Smoothed loss curve](../../outputs/phase3_training/panda-train-20261013-074359-896/runs/training/loss_smoothed.png)
-- [Per-update and validation measurements](../../outputs/phase3_training/panda-train-20261013-074359-896/runs/training/metrics.jsonl)
-- [Completion snapshot](../../outputs/phase3_training/panda-train-20261013-074359-896/status.json)
+- [Original loss curve](../../outputs/training/phase3_training/panda-train-20261013-074359-896/runs/training/loss.png)
+- [Smoothed loss curve](../../outputs/training/phase3_training/panda-train-20261013-074359-896/runs/training/loss_smoothed.png)
+- [Per-update and validation measurements](../../outputs/training/phase3_training/panda-train-20261013-074359-896/runs/training/metrics.jsonl)
+- [Completion snapshot](../../outputs/training/phase3_training/panda-train-20261013-074359-896/status.json)
 
 All four trained checkpoints are included in the separately running scripted evaluation. Assess correct target selection, wrong-cube contact, clean control completion and paired-scene performance before selecting one for further work.

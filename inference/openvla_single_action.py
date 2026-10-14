@@ -1,8 +1,10 @@
 """Capture → predict → execute one bounded action → capture again.
 
 Run this file in VS Code. Each run writes its own status, log, and images under
-outputs/single_action_*. Close the final simulator window to exit.
+outputs/simulator_runs/local/single_action_*. Close the final simulator window to exit.
 """
+
+from common.output_layout import output_path
 
 from common.paths import PROJECT_ROOT
 
@@ -121,7 +123,7 @@ def main():
     for interpreter in (sim_python, model_python):
         if not interpreter.exists():
             raise RuntimeError(f"Missing environment: {interpreter}. See README.md setup instructions.")
-    folder = ROOT / "outputs" / datetime.now().strftime("single_action_%Y%m%d_%H%M%S_%f")
+    folder = output_path(datetime.now().strftime("single_action_%Y%m%d_%H%M%S_%f"))
     folder.mkdir(parents=True)
     print(f"Results and status: {folder}", flush=True)
     environment = os.environ.copy()

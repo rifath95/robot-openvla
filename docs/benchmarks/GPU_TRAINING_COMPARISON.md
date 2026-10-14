@@ -11,15 +11,15 @@ A fitting batch completed 25 real updates. The short-run capacity applies to tes
 
 | GPU | ECC current | VRAM GiB | Dataset | Mode | Fitting capacity | First OOM | Suggested microbatch / accumulation | Seconds/update | Examples/s | Peak allocated / reserved GiB | Run / details |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| NVIDIA A40 | Unknown | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 8 / 1 | 2.140 | 3.74 | 40.25 / 42.71 | [20261011_054257_777818](../../outputs/gpu-benchmarks/20261011_054257_777818/BATCH_BENCHMARK.md) |
-| NVIDIA H100 80GB HBM3 | Unknown | 79.2 | training_v2 | capacity | 18 (boundary found) | 19 | 16 / 1 | 1.606 | 9.96 | 65.55 / 71.64 | [20261011_071323_382964](../../outputs/gpu-benchmarks/20261011_071323_382964/BATCH_BENCHMARK.md) |
-| NVIDIA RTX A6000 | Unknown | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 4 / 1 | 5.295 | 0.76 | 27.59 / 28.42 | [20261011_095911_435567](../../outputs/gpu-benchmarks/20261011_095911_435567/BATCH_BENCHMARK.md) |
-| NVIDIA H200 | Enabled | 139.8 | training_v1 | capacity | 34 (boundary found) | 35 | 16 / 1 | 1.105 | 14.47 | 65.38 / 71.14 | [20261011_113403_097508](../../outputs/gpu-benchmarks/20261011_113403_097508/BATCH_BENCHMARK.md) |
-| NVIDIA A100-SXM4-80GB | Enabled | 79.3 | training_v1 | capacity | 18 (boundary found) | 19 | 8 / 1 | 0.960 | 8.33 | 40.25 / 42.68 | [20261011_115921_878754](../../outputs/gpu-benchmarks/20261011_115921_878754/BATCH_BENCHMARK.md) |
-| NVIDIA A40 | Enabled | 44.4 | training_v1 | capacity | 8 (boundary found) | 9 | 4 / 1 | 1.040 | 3.85 | 27.57 / 28.26 | [20261012_003826_853142](../../outputs/gpu-benchmarks/20261012_003826_853142/BATCH_BENCHMARK.md) |
-| NVIDIA RTX A5000 | Disabled | 23.5 | training_v1 | capacity | 2 (boundary found) | 3 | None with headroom | — | — | — | [20261012_025737_894348](../../outputs/gpu-benchmarks/20261012_025737_894348/BATCH_BENCHMARK.md) |
-| NVIDIA A40 | Disabled | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 5 / 1 | 1.421 | 3.52 | 30.70 / 31.90 | [20261012_040855_542920](../../outputs/gpu-benchmarks/20261012_040855_542920/BATCH_BENCHMARK.md) |
-| NVIDIA RTX A5000 | Disabled | 23.5 | training_bowl_v1 | capacity | 2 (boundary found) | 3 | None with headroom | — | — | — | [20261012_044013_885081](../../outputs/gpu-benchmarks/20261012_044013_885081/BATCH_BENCHMARK.md) |
+| NVIDIA A40 | Unknown | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 8 / 1 | 2.140 | 3.74 | 40.25 / 42.71 | [20261011_054257_777818](../../outputs/benchmarks/training/gpu-benchmarks/20261011_054257_777818/BATCH_BENCHMARK.md) |
+| NVIDIA H100 80GB HBM3 | Unknown | 79.2 | training_v2 | capacity | 18 (boundary found) | 19 | 16 / 1 | 1.606 | 9.96 | 65.55 / 71.64 | [20261011_071323_382964](../../outputs/benchmarks/training/gpu-benchmarks/20261011_071323_382964/BATCH_BENCHMARK.md) |
+| NVIDIA RTX A6000 | Unknown | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 4 / 1 | 5.295 | 0.76 | 27.59 / 28.42 | [20261011_095911_435567](../../outputs/benchmarks/training/gpu-benchmarks/20261011_095911_435567/BATCH_BENCHMARK.md) |
+| NVIDIA H200 | Enabled | 139.8 | training_v1 | capacity | 34 (boundary found) | 35 | 16 / 1 | 1.105 | 14.47 | 65.38 / 71.14 | [20261011_113403_097508](../../outputs/benchmarks/training/gpu-benchmarks/20261011_113403_097508/BATCH_BENCHMARK.md) |
+| NVIDIA A100-SXM4-80GB | Enabled | 79.3 | training_v1 | capacity | 18 (boundary found) | 19 | 8 / 1 | 0.960 | 8.33 | 40.25 / 42.68 | [20261011_115921_878754](../../outputs/benchmarks/training/gpu-benchmarks/20261011_115921_878754/BATCH_BENCHMARK.md) |
+| NVIDIA A40 | Enabled | 44.4 | training_v1 | capacity | 8 (boundary found) | 9 | 4 / 1 | 1.040 | 3.85 | 27.57 / 28.26 | [20261012_003826_853142](../../outputs/benchmarks/training/gpu-benchmarks/20261012_003826_853142/BATCH_BENCHMARK.md) |
+| NVIDIA RTX A5000 | Disabled | 23.5 | training_v1 | capacity | 2 (boundary found) | 3 | None with headroom | — | — | — | [20261012_025737_894348](../../outputs/benchmarks/training/gpu-benchmarks/20261012_025737_894348/BATCH_BENCHMARK.md) |
+| NVIDIA A40 | Disabled | 47.4 | training_v1 | capacity | 9 (boundary found) | 10 | 5 / 1 | 1.421 | 3.52 | 30.70 / 31.90 | [20261012_040855_542920](../../outputs/benchmarks/training/gpu-benchmarks/20261012_040855_542920/BATCH_BENCHMARK.md) |
+| NVIDIA RTX A5000 | Disabled | 23.5 | training_bowl_v1 | capacity | 2 (boundary found) | 3 | None with headroom | — | — | — | [20261012_044013_885081](../../outputs/benchmarks/training/gpu-benchmarks/20261012_044013_885081/BATCH_BENCHMARK.md) |
 
 ## Cost for the same amount of training
 
@@ -526,7 +526,7 @@ For report folders already downloaded, the standalone refresh command remains av
 
 ```bash
 .venv-training/bin/python -m analysis.summarize_gpu_benchmarks \
-  --root outputs/gpu-benchmarks \
+  --root outputs/benchmarks/training/gpu-benchmarks \
   --output docs/benchmarks/GPU_TRAINING_COMPARISON.md
 ```
 

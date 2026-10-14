@@ -71,7 +71,7 @@ The printed output folder contains:
 - `timing.json`: completed evaluation wall time.
 
 Completed predictions and a partial report survive an interrupted/failed request.
-These output files are saved on the Mac under `outputs/expert_evaluation_*`.
+These output files are saved on the Mac under `outputs/diagnostics/expert_evaluation_*`.
 
 ## Optional: complete split or another checkpoint
 
