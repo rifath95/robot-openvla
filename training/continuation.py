@@ -15,7 +15,7 @@ def validate_adapter(path,config,model):
         raise ValueError('Checkpoint LoRA type/rank does not match the training configuration')
     if adapter.get('lora_dropout')!=config['lora_dropout']:
         raise ValueError('Checkpoint LoRA dropout does not match the training configuration')
-    if saved.get('vla_path')!=str(Path(model).resolve()):
+    if saved.get('source_model_path',saved.get('vla_path'))!=str(Path(model).resolve()):
         raise ValueError('Checkpoint must use the same original unmerged base-model path')
     return path
 

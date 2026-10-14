@@ -112,7 +112,12 @@ def save_adapter(model, processor, cfg, dataset, update):
     model.module.save_pretrained(folder)
     processor.save_pretrained(folder)
     (folder/'dataset_statistics.json').write_text(json.dumps(dataset.dataset_statistics,indent=2)+'\n')
-    (folder/'training_config.json').write_text(json.dumps(vars(cfg),default=str,indent=2)+'\n')
+    saved_config=dict(vars(cfg))
+    if os.environ.get('PANDA_INPUT_STAGING'):
+        saved_config.update(source_model_path=os.environ['PANDA_SOURCE_MODEL'],
+            source_dataset_path=os.environ['PANDA_SOURCE_DATASET'],
+            input_staging=json.loads(os.environ['PANDA_INPUT_STAGING']))
+    (folder/'training_config.json').write_text(json.dumps(saved_config,default=str,indent=2)+'\n')
     (metrics.directory/'model_info.json').write_text(json.dumps(metrics.model_details,default=str,indent=2)+'\n')
     print(f'Saved adapter checkpoint: {folder}',flush=True)
 

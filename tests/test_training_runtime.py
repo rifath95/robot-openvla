@@ -27,12 +27,16 @@ class TrainingRuntimeTests(unittest.TestCase):
                     self.assertFalse((root/'checkpoint_000025').exists())
                     model.module.save_pretrained.assert_not_called()
                     processor.save_pretrained.assert_not_called()
-                with patch.dict(os.environ,{'PANDA_SAVE_CHECKPOINTS':'1'}):
+                with patch.dict(os.environ,{'PANDA_SAVE_CHECKPOINTS':'1','PANDA_INPUT_STAGING':'{\"sources\":{}}',
+                    'PANDA_SOURCE_MODEL':'/workspace/openvla-7b','PANDA_SOURCE_DATASET':'/workspace/panda-training/bundle'}):
                     save_adapter(model,processor,cfg,dataset,1000)
                     folder=root/'checkpoint_001000'
                     self.assertTrue((folder/'adapter_model.safetensors').is_file())
                     self.assertTrue((folder/'dataset_statistics.json').is_file())
                     self.assertTrue((folder/'training_config.json').is_file())
+                    saved=json.loads((folder/'training_config.json').read_text())
+                    self.assertEqual(saved['source_model_path'],'/workspace/openvla-7b')
+                    self.assertEqual(saved['source_dataset_path'],'/workspace/panda-training/bundle')
                     self.assertTrue((root/'model_info.json').is_file())
 
     def test_lora_update_keeps_base_weights_fixed(self):

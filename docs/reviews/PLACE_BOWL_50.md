@@ -53,3 +53,28 @@ A proposed fresh-pretrained A40 pilot is prepared in
 learning rate 0.0001, LoRA rank 32, checkpoints and full validation at
 0, 50, 100, 300 and 500. The inner limit is 90 minutes and outer 150 minutes.
 Select checkpoints with actual bowl-placement trials alongside validation loss.
+
+## Container staging for parallel training
+
+The bowl profile enables `stage_inputs_on_container`. Download and verify the
+dataset on the network volume first. The detached trainer then copies the base
+model and complete dataset to `/root/panda-training-cache/SESSION/training/`,
+verifies copied bytes and dataset checksums, and reads those copies for model
+loading and examples. The dataset basename is preserved for profile matching.
+The initial copy still reads the shared volume; subsequent input reads are local.
+
+Checkpoints, plots, metrics, TensorBoard events, logs and `input_staging.json`
+remain under `/workspace/panda-training/sessions/SESSION/runs/training/`.
+Original model and dataset paths and any dataset HF source record are recorded
+in staging provenance. Staged checkpoints retain the original base-model path
+for later continuation, despite the temporary loading path.
+
+Staging runs inside the supervised child, covered by the outer wall limit and
+automatic stop on failure. A disconnected Mac does not cancel copying. The inner
+trainer budget retains its existing start point; staging consumes outer time.
+Container space must cover all input bytes plus 2 GiB reserve; 60 GB is sufficient
+for this base model and dataset. Existing network-volume free-space checks remain.
+
+This setting is enabled for the next bowl run only. The running lift job is not
+modified or restarted. Other profiles retain their current input locations until
+the setting is explicitly enabled. No Docker dependency changes are required.

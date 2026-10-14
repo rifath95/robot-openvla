@@ -66,6 +66,8 @@ class ContinuationTests(unittest.TestCase):
             (root/'adapter_config.json').write_text(json.dumps(dict(peft_type='LORA',r=32,lora_dropout=0.)))
             (root/'training_config.json').write_text(json.dumps(dict(vla_path='/workspace/openvla-7b')))
             self.assertEqual(validate_adapter(root,config,Path('/workspace/openvla-7b')),root.resolve())
+            (root/'training_config.json').write_text(json.dumps(dict(vla_path='/root/temporary-cache/base',source_model_path='/workspace/openvla-7b')))
+            self.assertEqual(validate_adapter(root,config,Path('/workspace/openvla-7b')),root.resolve())
             for changed,model in [(dict(config,lora_rank=16),'/workspace/openvla-7b'),(config,'/different-base')]:
                 with self.assertRaises(ValueError):validate_adapter(root,changed,Path(model))
 

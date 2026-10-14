@@ -47,5 +47,6 @@
     100,
     300,
     500
-  ]
+  ],
+  "stage_inputs_on_container": true
 }

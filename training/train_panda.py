@@ -34,6 +34,8 @@ def main():
     for key in PROFILE_KEYS:config.pop(key,None)
     config.pop('minimum_free_disk_gib',None)
     config.pop('hard_limit_seconds',None)  # Supervisor option, not an upstream trainer flag.
+    stage_local=config.pop('stage_inputs_on_container',False)
+    if type(stage_local) is not bool:p.error('stage_inputs_on_container must be boolean')
     profile_requires_benchmark=config.pop('require_benchmark',False)
     require_benchmark=args.require_benchmark or profile_requires_benchmark
     expected_gpu=config.pop('expected_gpu',None)
@@ -86,8 +88,20 @@ def main():
         p.error('Run name must be a single directory name')
     run=args.output_root.resolve()/(args.run_name or datetime.now(timezone.utc).strftime('lora_%Y%m%d_%H%M%S_%f'))
     if run.exists():p.error('Run already exists; choose a new run name')
+    source_model,source_dataset=args.model.resolve(),args.dataset.resolve()
+    staging_receipt=None
+    if stage_local and not args.prepare_only:
+        from training.input_staging import stage_inputs
+        cache=Path('/root/panda-training-cache')/args.output_root.resolve().parent.name/run.name
+        args.model,args.dataset,staging_receipt=stage_inputs(source_model,source_dataset,cache)
+        run.mkdir(parents=True,exist_ok=False)
+        (run/'input_staging.json').write_text(json.dumps(staging_receipt,indent=2)+'\n')
+    elif stage_local:
+        print('Container staging will copy model and dataset before training; outputs remain:',run,flush=True)
     env=os.environ.copy()
-    env.update(PANDA_RUN_DIR=str(run),PANDA_UPSTREAM_REVISION=pin['revision'],
+    env.update(PANDA_SOURCE_MODEL=str(source_model),PANDA_SOURCE_DATASET=str(source_dataset),
+        PANDA_INPUT_STAGING=json.dumps(staging_receipt) if staging_receipt else '',
+        PANDA_RUN_DIR=str(run),PANDA_UPSTREAM_REVISION=pin['revision'],
         PANDA_CHECKPOINT_UPDATES=json.dumps(checkpoint_updates) if checkpoint_updates is not None else '',
         PANDA_VALIDATION_UPDATES=json.dumps(validation_updates) if validation_updates is not None else '',
         PANDA_VALIDATE_EVERY=str(config.pop('validation_every')),
