@@ -82,3 +82,5 @@ For result folders and replay locations, see the [local outputs layout](OUTPUT_L
 - [Local audit after Panda v2 fine-tuning](reviews/V2_LOCAL_AUDIT.md)
 
 - [Phase 4 lift dataset expanded to 300](reviews/LIFT_CUBE_300.md): preserved pilot demonstrations, split counts, verification and training setup.
+
+- [Phase 4 bowl placement: first ten](reviews/PLACE_BOWL_FIRST_TEN.md): blue bowl interior, fixed lift start, physical placement and replay checks.

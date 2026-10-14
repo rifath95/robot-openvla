@@ -33,9 +33,11 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
     if [r['index'] for r in rows]!=list(range(1,len(rows)+1)):
         raise ValueError('Demonstration action sequence is not contiguous')
     model,camera=replay_model(folder)
-    if metadata.get('scene_profile') in ('panda_bowl_v1','panda_touch_v1','panda_color_touch_v1','panda_lift_v1'):
+    if metadata.get('scene_profile') in ('panda_place_bowl_v1','panda_bowl_v1','panda_touch_v1','panda_color_touch_v1','panda_lift_v1'):
         from data_tools.bowl_demonstrations import controller_fingerprint
-        if metadata['scene_profile']=='panda_lift_v1':
+        if metadata['scene_profile']=='panda_place_bowl_v1':
+            from simulation.place_bowl_scene import scene_fingerprint
+        elif metadata['scene_profile']=='panda_lift_v1':
             from simulation.lift_scene import scene_fingerprint
         elif metadata['scene_profile']=='panda_color_touch_v1':
             from simulation.color_touch_scene import scene_fingerprint
@@ -167,7 +169,7 @@ def replay_actions(folder,*,no_view=False,speed=1,output_dir=None,max_steps=None
                     maximum_recorded_qpos_difference=max((r['recorded_qpos_max_difference'] for r in results),default=0),
                     note='Recorded-pose differences are measured, not corrected. Collection mode reproduces the pre-holding-fix actuator target assignment, not an arbitrary historical code version.')
         if lift_tracker is not None:report['task_result']=lift_tracker.last
-        if metadata.get('scene_profile')=='panda_bowl_v1':
+        if metadata.get('scene_profile') in ('panda_bowl_v1','panda_place_bowl_v1'):
             from data_tools.bowl_demonstrations import task_result
             report['task_result']=task_result(initial,np.asarray(metadata['scenario']['scene']['bowl_position']),positions,env)
         elif metadata.get('scene_profile')=='panda_touch_v1':

@@ -19,9 +19,9 @@ from simulation.panda_start_poses import unsafe_motion_contacts
 from simulation.replay_run import write_launcher
 
 
-def scene_fingerprint():
+def scene_fingerprint(scene_path=SCENE_PATH):
     return hashlib.sha256(b''.join(path.read_bytes() for path in (
-        SCENE_PATH, PROJECT_ROOT/'scene.xml',
+        scene_path, PROJECT_ROOT/'scene.xml',
         PROJECT_ROOT/'mujoco_menagerie/franka_emika_panda/panda.xml'))).hexdigest()
 
 
@@ -69,15 +69,20 @@ def task_result(initial, bowl, positions, env):
                 destination_cube=[*bowl[:2].tolist(), .279])
 
 
-def record_episode(folder, scenario):
+def record_episode(folder, scenario, *, scene_profile='panda_bowl_v1'):
+    scene_path, instruction, initializer = SCENE_PATH, INSTRUCTION, randomize_scene
+    if scene_profile=='panda_place_bowl_v1':
+        from simulation.place_bowl_scene import SCENE_PATH as scene_path, INSTRUCTION as instruction, initialize_scene as initializer
+    elif scene_profile!='panda_bowl_v1':
+        raise ValueError('Unknown bowl scene profile')
     folder = Path(folder)
     folder.mkdir(parents=True, exist_ok=False)
     write_launcher(folder,demonstration=True)
     rows = []
-    metadata = dict(schema_version=1, scene_profile='panda_bowl_v1',
-                    scene_xml_sha256=scene_fingerprint(), mujoco_version=mujoco.__version__,
+    metadata = dict(schema_version=1, scene_profile=scene_profile,
+                    scene_xml_sha256=scene_fingerprint(scene_path), mujoco_version=mujoco.__version__,
                     action_contract=action_contract(camera=CAMERA_NAME), camera=CAMERA_NAME,
-                    instruction=INSTRUCTION, image_size=[640, 480],
+                    instruction=instruction, image_size=[640, 480],
                     source='scripted expert with privileged object coordinates; physical contact grasp',
                     scenario=scenario, success=False, training_eligible=False,
                     physics_seconds_per_action=.4)
@@ -89,13 +94,14 @@ def record_episode(folder, scenario):
     metadata['controller_sha256']=controller_fingerprint()
     write_json(folder/'episode.json', metadata)
     try:
-        with PandaEnv(SCENE_PATH, camera=CAMERA_NAME) as env:
+        with PandaEnv(scene_path, camera=CAMERA_NAME) as env:
             rng = np.random.default_rng(scenario['random_seed'])
-            env.controller, scene = randomize_scene(env.model, env.data, rng, full_pose=True,
+            env.controller, scene = initializer(env.model, env.data, rng, full_pose=True,
                                                     initial_gripper=scenario['initial_gripper'],
                                                     random_cube_yaw=scenario.get('random_cube_yaw',False),
                                                     coverage_target=scenario.get('coverage_target'),
-                                                    max_attempts=1000 if scenario.get('coverage_target') else 100)
+                                                    max_attempts=1000 if scenario.get('coverage_target') else 100,
+                                                    **({'slot':scenario['slot']} if scene_profile=='panda_place_bowl_v1' else {}))
             metadata['scenario'] = dict(scenario, scene=scene)
             metadata['starting_pose'] = scene['starting_pose']
             metadata['physics_seconds_per_action'] = PHYSICS_STEPS * float(env.model.opt.timestep)
@@ -132,7 +138,7 @@ def record_episode(folder, scenario):
                 save_state(directory/'after_state.npz', env)
                 cube = cube_position(env)
                 positions.append(cube)
-                row = dict(index=len(rows)+1, stage=stage, instruction=INSTRUCTION,
+                row = dict(index=len(rows)+1, stage=stage, instruction=instruction,
                            observation=f'{directory.name}/before.png', next_observation=f'{directory.name}/after.png',
                            proposed_action=np.asarray(proposal).tolist(),
                            bounded_action=from_controller_action(bounded).tolist(),
@@ -165,8 +171,9 @@ def record_episode(folder, scenario):
             if policy=='legacy':
                 act([0, 0, 0, 0, 0, 0, 1], 'open_for_pickup')
             position, orientation = env.controller.end_effector_pose()
-            move([*position[:2], max(position[2], .50)], 1, 'clear_start', orientation)
-            move([*position[:2], max(position[2], .50)], 1, 'orient_for_grasp')
+            if scene_profile=='panda_bowl_v1':
+                move([*position[:2], max(position[2], .50)], 1, 'clear_start', orientation)
+                move([*position[:2], max(position[2], .50)], 1, 'orient_for_grasp')
             move(initial+[0, 0, .14], 1, 'approach')
             move(initial+[0, 0, .003], 1, 'lower_to_grasp')
             act([0, 0, 0, 0, 0, 0, 0], 'close')
@@ -178,7 +185,8 @@ def record_episode(folder, scenario):
             move([*bowl[:2], .354], 0, 'lower_above_bowl')
             act([0, 0, 0, 0, 0, 0, 1], 'drop')
             move([*bowl[:2], .424], 1, 'retreat')
-            act([0, 0, 0, 0, 0, 0, 1], 'settle_in_bowl')
+            if scene_profile=='panda_bowl_v1':
+                act([0, 0, 0, 0, 0, 0, 1], 'settle_in_bowl')
             result = task_result(initial, bowl, positions, env)
             metadata.update(result, transition_count=len(rows))
             write_json(folder/'episode.json', metadata)
@@ -194,14 +202,17 @@ def record_episode(folder, scenario):
 def replay_episode(folder):
     folder = Path(folder)
     metadata = json.loads((folder/'episode.json').read_text())
+    scene_path=SCENE_PATH
+    if metadata.get('scene_profile')=='panda_place_bowl_v1':
+        from simulation.place_bowl_scene import SCENE_PATH as scene_path
     if metadata.get('controller_sha256') not in (None,controller_fingerprint()):
         raise ValueError('Episode controller differs from collection; do not certify it with different control code')
-    if (metadata['scene_xml_sha256'] != scene_fingerprint() or metadata['mujoco_version'] != mujoco.__version__
+    if (metadata['scene_xml_sha256'] != scene_fingerprint(scene_path) or metadata['mujoco_version'] != mujoco.__version__
         or metadata['action_contract'] != action_contract(camera=CAMERA_NAME) or not metadata['success']):
         raise ValueError('Episode scene, action convention, version, or success mismatch')
     rows = [json.loads(line) for line in (folder/'transitions.jsonl').read_text().splitlines()]
     errors = []
-    with PandaEnv(SCENE_PATH, camera=CAMERA_NAME) as env:
+    with PandaEnv(scene_path, camera=CAMERA_NAME) as env:
         configure_recorded_scene(env.model, metadata)
         restore_state(folder/'initial_state.npz', env)
         initial = cube_position(env)

@@ -1,0 +1,112 @@
+{
+  "trajectories": 10,
+  "split_transitions": {
+    "train": 595,
+    "validation": 73,
+    "test": 73
+  },
+  "stage_counts": {
+    "approach": 125,
+    "lower_to_grasp": 125,
+    "close": 10,
+    "lift": 135,
+    "transfer_to_bowl": 216,
+    "lower_above_bowl": 60,
+    "drop": 10,
+    "retreat": 60
+  },
+  "results": [
+    {
+      "id": "train_001",
+      "split": "train",
+      "transitions": 79,
+      "maximum_lift_metres": 0.14539380889541276,
+      "bowl_center_distance_metres": 0.0012248607091257398,
+      "empty_hand_cube_distance_metres": 0.1450758859727612,
+      "replay_error": 1.838085239569409e-12
+    },
+    {
+      "id": "train_002",
+      "split": "train",
+      "transitions": 77,
+      "maximum_lift_metres": 0.15051351242221023,
+      "bowl_center_distance_metres": 0.0010815623905926516,
+      "empty_hand_cube_distance_metres": 0.14514456243613086,
+      "replay_error": 1.37293995616794e-12
+    },
+    {
+      "id": "train_003",
+      "split": "train",
+      "transitions": 71,
+      "maximum_lift_metres": 0.14990085797538705,
+      "bowl_center_distance_metres": 0.0007404075690768646,
+      "empty_hand_cube_distance_metres": 0.14508578512180972,
+      "replay_error": 1.5249607132616916e-13
+    },
+    {
+      "id": "train_004",
+      "split": "train",
+      "transitions": 69,
+      "maximum_lift_metres": 0.1467782158962389,
+      "bowl_center_distance_metres": 0.00041745626971251363,
+      "empty_hand_cube_distance_metres": 0.14519170703783418,
+      "replay_error": 0.0
+    },
+    {
+      "id": "validation_001",
+      "split": "validation",
+      "transitions": 73,
+      "maximum_lift_metres": 0.14673189454573704,
+      "bowl_center_distance_metres": 0.0018877763843703833,
+      "empty_hand_cube_distance_metres": 0.14525684840153014,
+      "replay_error": 0.0
+    },
+    {
+      "id": "test_001",
+      "split": "test",
+      "transitions": 73,
+      "maximum_lift_metres": 0.14676851218319953,
+      "bowl_center_distance_metres": 0.0009963901303263886,
+      "empty_hand_cube_distance_metres": 0.1450568213462089,
+      "replay_error": 7.5664391333158e-14
+    },
+    {
+      "id": "train_005",
+      "split": "train",
+      "transitions": 68,
+      "maximum_lift_metres": 0.14686527161185386,
+      "bowl_center_distance_metres": 0.0014476398676158536,
+      "empty_hand_cube_distance_metres": 0.14503332602037922,
+      "replay_error": 6.303818897774779e-12
+    },
+    {
+      "id": "train_006",
+      "split": "train",
+      "transitions": 74,
+      "maximum_lift_metres": 0.1453108681115532,
+      "bowl_center_distance_metres": 0.0008825707668033863,
+      "empty_hand_cube_distance_metres": 0.1450877863430147,
+      "replay_error": 2.5122126601218042e-12
+    },
+    {
+      "id": "train_007",
+      "split": "train",
+      "transitions": 75,
+      "maximum_lift_metres": 0.14691473890251266,
+      "bowl_center_distance_metres": 0.0005284178283507368,
+      "empty_hand_cube_distance_metres": 0.14511657713874923,
+      "replay_error": 1.0820233597996776e-12
+    },
+    {
+      "id": "train_008",
+      "split": "train",
+      "transitions": 82,
+      "maximum_lift_metres": 0.1508217519439225,
+      "bowl_center_distance_metres": 0.0016911174575443776,
+      "empty_hand_cube_distance_metres": 0.14509219281349003,
+      "replay_error": 0.0
+    }
+  ],
+  "controller_unchanged": true,
+  "all_replays_passed": true
+}

@@ -46,6 +46,12 @@ def replay_model(folder):
     if metadata.get('scene_profile') == 'panda_touch_v1':
         from simulation.touch_scene import SCENE_PATH, CAMERA_NAME
         return mujoco.MjModel.from_xml_path(str(SCENE_PATH)), CAMERA_NAME
+    if metadata.get('scene_profile') == 'panda_place_bowl_v1':
+        from simulation.place_bowl_scene import SCENE_PATH,CAMERA_NAME
+        from data_tools.bowl_demonstrations import configure_recorded_scene
+        model=mujoco.MjModel.from_xml_path(str(SCENE_PATH))
+        configure_recorded_scene(model,metadata)
+        return model,CAMERA_NAME
     if metadata.get('scene_profile') == 'panda_bowl_v1':
         from simulation.bowl_scene import SCENE_PATH, CAMERA_NAME
         from data_tools.bowl_demonstrations import configure_recorded_scene
