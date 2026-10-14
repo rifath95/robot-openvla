@@ -8,7 +8,10 @@ and credentials before deployment; do not assume the sweep launcher automaticall
 uploads to HF. See `docs/cloud/HF_SWEEP_ARCHIVE.md` for the separate archive helper.
 
 For the 1,080-trial sweep `scripted_multi_color_models_20261013_164548_eeda379b`,
-the user chose to finish the existing direct Mac download and skip HF upload.
+the user switched to HF upload followed by pod stop after the direct download
+hit its 30-minute timeout on October 14. The old temporary partial archive was
+deleted by the failed downloader. Use the prepared HF archive helper for this
+sweep; do not retry the old direct-fetch command.
 
 For user-authorized routine volume cleanup, rely on the established record of
 completed downloads and reviews. Do not repeat expensive file-by-file inventory

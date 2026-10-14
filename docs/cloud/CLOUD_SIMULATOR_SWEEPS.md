@@ -11,8 +11,10 @@ while preparing the sweep, before deployment. With a slow Mac connection, upload
 from the pod to HF allows GPU stopping before the later Mac download. Prepare that
 flow and the HF write credential in advance. The current sweep launcher does not
 automatically invoke the separate [HF archive helper](HF_SWEEP_ARCHIVE.md).
-For the completed 1,080-trial multi-cube sweep, the user chose to finish the direct
-download already in progress and skip HF upload.
+For the completed 1,080-trial multi-cube sweep, the user switched to HF archiving
+after the direct fetch hit a 30-minute timeout on October 14. The old streamed
+fetch discards its temporary partial archive on failure and is not resumable;
+use the HF archive helper for this large sweep.
 
 ## Resume the interrupted color-transfer sweep
 
