@@ -23,8 +23,16 @@ class LiftSweepTests(unittest.TestCase):
             self.assertEqual(plan['cube_positions'],[{'red':cube_position_for_seed(seed)} for seed in plan['scene_seeds']])
             self.assertEqual(len(list(trial_specs(plan))),50)
             self.assertEqual(len({s['directory'] for s in trial_specs(plan)}),50)
+            plan['cube_positions'][0]['red'][0]+=1e-16
+            self.assertEqual(len(validate_saved(payload)),50)
             plan['cube_positions'][0]['red'][0]+=.001
             with self.assertRaisesRegex(ValueError,'lift positions'):validate_saved(payload)
+
+    def test_invalid_lift_coordinates_are_rejected(self):
+        from inference.lift_task import validate_positions
+        expected=[{'red':[.5,.1]}]
+        for invalid in (None,[],[{'blue':[.5,.1]}],[{'red':[float('nan'),.1]}],[{'red':[.5]}]):
+            with self.assertRaises(ValueError):validate_positions(invalid,expected)
 
     def test_touch_does_not_count_as_lift_and_reports_show_metrics(self):
         with tempfile.TemporaryDirectory() as tmp:

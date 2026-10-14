@@ -54,9 +54,9 @@ def validate_saved(payload):
         values=plan[field]
         if not values or len(set(values))!=len(values) or any(type(x)is not int or x<0 for x in values):raise ValueError('Invalid plan indices')
     if plan['task']=='lift':
-        from inference.lift_task import cube_position_for_seed
+        from inference.lift_task import cube_position_for_seed,validate_positions
         expected=[{'red':cube_position_for_seed(seed)} for seed in plan['scene_seeds']]
-        if plan.get('cube_positions')!=expected:raise ValueError('Saved lift positions differ from seeds')
+        validate_positions(plan.get('cube_positions'),expected)
     if plan['task']=='color_transfer':
         colors={'red','blue','black','purple','green','yellow','orange','white','pink','brown','cyan'}
         pairs=plan['color_pairs']

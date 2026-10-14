@@ -229,11 +229,12 @@ def run_loop(*, server_url="http://127.0.0.1:8000", instruction=None,
                     scene_seed=scene_seed,instruction=instruction,scenario=dict(scene=spec),
                     training_eligible=False))
             elif task=='lift':
-                from inference.lift_task import cube_position_for_seed
+                from inference.lift_task import cube_position_for_seed,validate_positions
                 xy=cube_position_for_seed(scene_seed)
                 if scene_positions is not None:
                     saved=json.loads(Path(scene_positions).read_text())
-                    if saved!={'red':xy}:raise ValueError('Saved lift scene differs from seed')
+                    validate_positions([saved],[{'red':xy}])
+                    xy=saved['red']  # Execute the frozen plan's coordinates on every model.
                 scene=initialize_scene(env,xy)
                 initial_cube=cube_position(env)
                 lift_tracker=LiftSuccess(initial_cube)
