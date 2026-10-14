@@ -1,6 +1,7 @@
 """Archive a completed multi-cube sweep to HF; detached, verified, bounded stop."""
 import argparse
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime,timezone
 import getpass
 import fcntl
@@ -31,8 +32,8 @@ def digest(path):
 
 def completed_payload(source):
     p=json.loads((source/'results.json').read_text());specs=validate_saved(p)
-    if p['plan']['task']!='multi_color_touch' or p.get('launcher_error') or len(p['trials'])!=len(specs):
-        raise ValueError('Archive requires a completed multi-cube sweep')
+    if p.get('launcher_error') or len(p['trials'])!=len(specs):
+        raise ValueError('Archive requires a completed simulator sweep')
     if any(r.get('outcome')=='unmeasured' or r.get('phase')=='Missing summary' for r in p['trials']):
         raise ValueError('Sweep contains unmeasured trials')
     status=json.loads((source/'supervisor_status.json').read_text())
@@ -51,37 +52,58 @@ def add_checked(archive,path,relative):
     else:raise ValueError('Unsupported archive entry')
 
 
-def package(source,staging,payload):
+def package(source,staging,payload,*,part_cache=None,on_part=None):
     groups=defaultdict(list)
     for r in payload['trials']:
-        model='base' if r['checkpoint']==0 else f"checkpoint_{r['checkpoint']:06d}"
-        groups[f"{model}_{r['cube_count']}c_{r['color_set']}"].append(r['directory'])
+        model='base' if r['checkpoint']==0 and payload['plan'].get('include_base_model') else f"checkpoint_{r['checkpoint']:06d}"
+        count=r.get('cube_count') or len(r.get('cube_colors') or (['red'] if payload['plan']['task']=='touch' else ['red','blue']))
+        palette=r.get('color_set') or (r.get('color_pair') or payload['plan']['task']).replace(':','-')
+        groups[f'{model}_{count}c_{palette}'].append(r['directory'])
     manifest=[]
+    source_revision=digest(source/'results.json')
+    if part_cache is not None:part_cache.mkdir(parents=True,exist_ok=True)
     for label,folders in sorted(groups.items()):
         target=staging/'archives'/f'{label}.tar.gz';target.parent.mkdir(parents=True,exist_ok=True)
-        print(f'Packing {label}: {len(folders)} trials',flush=True)
-        temporary=target.with_suffix('.partial')
-        with tarfile.open(temporary,'w:gz',compresslevel=1) as archive:
-            for folder in folders:add_checked(archive,source/folder,Path(folder))
-        temporary.replace(target)
-        manifest.append(dict(path=str(target.relative_to(staging)),bytes=target.stat().st_size,sha256=digest(target),trials=len(folders)))
+        cached=part_cache/(label+'.tar.gz') if part_cache is not None else None
+        marker=part_cache/(label+'.json') if part_cache is not None else None
+        saved=json.loads(marker.read_text()) if marker is not None and marker.exists() else {}
+        if (cached is not None and cached.is_file() and saved.get('source_revision')==source_revision
+            and saved.get('trial_directories')==folders and saved.get('bytes')==cached.stat().st_size):
+            print(f'Reusing packed part {label}',flush=True)
+            shutil.copyfile(cached,target)
+            entry={k:saved[k] for k in ('path','bytes','sha256','trials')}
+        else:
+            print(f'Packing {label}: {len(folders)} trials',flush=True)
+            temporary=target.with_suffix('.partial')
+            with tarfile.open(temporary,'w:gz',compresslevel=1) as archive:
+                for folder in folders:add_checked(archive,source/folder,Path(folder))
+            temporary.replace(target)
+            entry=dict(path=str(target.relative_to(staging)),bytes=target.stat().st_size,sha256=digest(target),trials=len(folders))
+            if cached is not None:
+                temporary_cache=cached.with_suffix('.partial')
+                shutil.copyfile(target,temporary_cache)
+                temporary_cache.replace(cached)
+                write_status(marker,dict(entry,source_revision=source_revision,trial_directories=folders))
+        manifest.append(entry)
+        if on_part is not None:on_part(target,entry)
     reports=staging/'reports';reports.mkdir(exist_ok=True)
     for path in sorted(source.iterdir()):
         if path.is_file() and not path.is_symlink() and path.suffix in ('.json','.jsonl','.md','.log','.txt'):
             shutil.copyfile(path,reports/path.name)
     for path in sorted(reports.iterdir()):manifest.append(dict(path=str(path.relative_to(staging)),bytes=path.stat().st_size,sha256=digest(path)))
-    (staging/'manifest.json').write_text(json.dumps(dict(sweep=source.name,trials=len(payload['trials']),files=manifest),indent=2)+'\n')
+    (staging/'manifest.json').write_text(json.dumps(dict(sweep=source.name,source_revision=source_revision,trials=len(payload['trials']),files=manifest),indent=2)+'\n')
     return manifest
 
 
-def upload_verify(staging,repo,prefix,token,cache):
+def upload_verify(staging,repo,prefix,token,cache,*,archives_uploaded=False):
     from huggingface_hub import HfApi,hf_hub_download
     api=HfApi(token=token)
     info=api.repo_info(repo,repo_type='dataset')
     if not info.private:raise ValueError('Archive repository must be private')
-    print('Uploading archive parts and reports to Hugging Face...',flush=True)
+    print('Uploading final manifest and reports...' if archives_uploaded else 'Uploading archive parts and reports to Hugging Face...',flush=True)
+    selection=dict(allow_patterns=['reports/*','manifest.json']) if archives_uploaded else {}
     commit=api.upload_folder(repo_id=repo,repo_type='dataset',folder_path=str(staging),path_in_repo=prefix,
-        commit_message=f'Archive completed simulator sweep {prefix}')
+        commit_message=f'Archive completed simulator sweep {prefix}',**selection)
     revision=commit.oid
     manifest=json.loads((staging/'manifest.json').read_text())
     files=manifest['files']+[dict(path='manifest.json',bytes=(staging/'manifest.json').stat().st_size,sha256=digest(staging/'manifest.json'))]
@@ -92,8 +114,45 @@ def upload_verify(staging,repo,prefix,token,cache):
         if downloaded.stat().st_size!=f['bytes'] or digest(downloaded)!=f['sha256']:
             raise ValueError('Uploaded archive checksum mismatch: '+f['path'])
     return dict(repo_id=repo,repo_type='dataset',revision=revision,path_in_repo=prefix,
-        verified_files=len(files),verified_bytes=sum(f['bytes'] for f in files),trials=manifest['trials'],verified=True)
+        verified_files=len(files),verified_bytes=sum(f['bytes'] for f in files),trials=manifest['trials'],
+        source_revision=manifest.get('source_revision'),verified=True)
 
+
+
+def remote_part_matches(api,repo,remote,entry):
+    """One remote metadata lookup, rather than retransferring a committed part."""
+    records=api.get_paths_info(repo_id=repo,repo_type='dataset',paths=[remote])
+    if not records:return False
+    lfs=getattr(records[0],'lfs',None)
+    sha=lfs.get('sha256') if isinstance(lfs,dict) else getattr(lfs,'sha256',None)
+    return getattr(records[0],'size',None)==entry['bytes'] and sha==entry['sha256']
+
+
+def pipeline_archive(source,staging,payload,repo,token,receipt):
+    from huggingface_hub import HfApi
+    api=HfApi(token=token)
+    if not api.repo_info(repo,repo_type='dataset').private:raise ValueError('Archive repository must be private')
+    source_revision=digest(source/'results.json')
+    part_cache=receipt/'packed-parts'
+    uploaded=receipt/'uploaded-parts';uploaded.mkdir(parents=True,exist_ok=True)
+    futures=[]
+    def upload_part(path,entry):
+        remote=source.name+'/'+entry['path']
+        if remote_part_matches(api,repo,remote,entry):
+            print('Already uploaded:',entry['path'],flush=True)
+        else:
+            print('Uploading ready part:',entry['path'],flush=True)
+            api.upload_file(repo_id=repo,repo_type='dataset',path_or_fileobj=str(path),path_in_repo=remote,
+                commit_message=f'Archive part {path.name}')
+        write_status(uploaded/(path.stem+'.json'),dict(entry,source_revision=source_revision,repo_id=repo,path_in_repo=remote))
+    with ThreadPoolExecutor(max_workers=1) as uploader:
+        def ready(path,entry):
+            for f in futures:
+                if f.done():f.result()  # Stop preparing new parts after an upload failure.
+            futures.append(uploader.submit(upload_part,path,entry))
+        package(source,staging,payload,part_cache=part_cache,on_part=ready)
+        for f in futures:f.result()
+    return upload_verify(staging,repo,source.name,token,staging.parent/(source.name+'-verification'),archives_uploaded=True)
 
 def worker(config):
     source=Path(config['source']);receipt=Path(config['receipt']);status=receipt/'status.json'
@@ -103,10 +162,13 @@ def worker(config):
         # Avoid an extra full NFS metadata traversal before packing.
         minimum_gib=max(16,16*len(payload['trials'])/1080)
         if shutil.disk_usage(staging).free<minimum_gib*1024**3:raise ValueError('Insufficient container-disk space for packing and verification')
-        write_status(status,dict(phase='packing',source=str(source),minimum_container_free_gib=minimum_gib))
-        package(source,staging,payload)
-        write_status(status,dict(phase='uploading_and_verifying',source=str(source)))
-        verified=upload_verify(staging,config['repo'],source.name,config['token'],staging.parent/(source.name+'-verification'))
+        cached_bytes=sum(p.stat().st_size for p in (receipt/'packed-parts').glob('*.tar.gz'))
+        minimum_volume_gib=max(.5,6*len(payload['trials'])/1080-cached_bytes/1024**3)
+        if shutil.disk_usage(receipt).free<minimum_volume_gib*1024**3:
+            raise ValueError('Insufficient volume space for reusable archive parts')
+        write_status(status,dict(phase='packing_and_uploading',source=str(source),minimum_container_free_gib=minimum_gib,
+            minimum_volume_free_gib=minimum_volume_gib))
+        verified=pipeline_archive(source,staging,payload,config['repo'],config['token'],receipt)
         verified['verified_at_utc']=datetime.now(timezone.utc).isoformat()
         write_status(receipt/'receipt.json',verified)
         write_status(status,dict(phase='verified',**verified))
@@ -155,7 +217,7 @@ def main():
     if a.supervise or a.worker:
         config=json.load(sys.stdin)
         return supervise(config) if a.supervise else worker(config)
-    if not a.sweep or not re.fullmatch('scripted_multi_color_models_[A-Za-z0-9_]+',a.sweep):p.error('Choose a saved multi-cube sweep name')
+    if not a.sweep or not re.fullmatch('scripted_[A-Za-z0-9_]+',a.sweep):p.error('Choose a saved simulator sweep name')
     if not re.fullmatch('[A-Za-z0-9_-]+/[A-Za-z0-9_.-]+',a.repo):p.error('Invalid HF repository name')
     budget=timeout_budget(a.estimated_seconds)
     source=SWEEPS/a.sweep;completed_payload(source)

@@ -25,6 +25,30 @@ def payload():
 
 
 class CloudSweepTests(unittest.TestCase):
+    def test_transfer_stage_acknowledges_without_downloading(self):
+        from cloud.cloud_sweep_session import finish_transfer_stage
+        with patch('cloud.cloud_sweep_session.subprocess.run') as run,patch('cloud.cloud_sweep_session.fetch') as fetch:
+            self.assertEqual(finish_transfer_stage(['ssh'],'/volume/sweep',{'phase':'awaiting_sync','outcome':'completed'}),0)
+            self.assertIn('sync_ack',run.call_args.args[0][-1]);fetch.assert_not_called()
+            run.reset_mock()
+            self.assertEqual(finish_transfer_stage(['ssh'],'/volume/sweep',{'phase':'finished','outcome':'failed'}),1)
+            run.assert_not_called();fetch.assert_not_called()
+
+    def test_launcher_default_finishes_without_large_mac_fetch(self):
+        from cloud import cloud_sweep_session as session
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);folder=root/'outputs/scripted_test';folder.mkdir(parents=True)
+            (folder/'results.json').write_text(json.dumps(payload()))
+            def run(command,**kwargs):
+                if kwargs.get('capture_output'):
+                    return SimpleNamespace(stdout=json.dumps(dict(status=dict(phase='awaiting_sync',outcome='completed'),log='',offset=0)))
+                return SimpleNamespace(returncode=0)
+            with patch('sys.argv',['script','--ssh','ssh root@host','--resume',str(folder)]), \
+                 patch.object(session,'PROJECT_ROOT',root),patch.object(session,'parse_ssh',return_value=('host',22,Path('key'))), \
+                 patch.object(session,'ssh_arguments',return_value=['ssh']),patch.object(session.subprocess,'run',side_effect=run), \
+                 patch.object(session,'fetch') as fetch:
+                self.assertEqual(session.main(),0);fetch.assert_not_called()
+
     def test_timeout_rule_and_invalid_estimates(self):
         self.assertEqual(timeout_budget(1200),dict(estimated_seconds=1200,inner_seconds=4800,outer_seconds=8400))
         for value in (0,-1,float('nan'),float('inf')):

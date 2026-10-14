@@ -4,17 +4,20 @@ The new `cloud.cloud_sweep_session` mode runs MuJoCo, rendering, inference, and 
 
 The ordinary interactive simulator workflow stays available. This mode runs sequential trials (inference batch one). OpenVLA's upstream generation wrapper explicitly rejects larger batches; batching was deferred rather than replacing its decoder. Physics runs on CPU; headless EGL rendering and model inference use the pod GPU.
 
-## Choose result delivery before renting the next pod
+## Default: separate simulation and transfer pods
 
-Remind the user to choose direct Mac download or cloud-to-Hugging-Face archiving
-while preparing the sweep, before deployment. With a slow Mac connection, uploading
-from the pod to HF allows GPU stopping before the later Mac download. Prepare that
-flow and the HF write credential in advance. The current sweep launcher does not
-automatically invoke the separate [HF archive helper](HF_SWEEP_ARCHIVE.md).
-For the completed 1,080-trial multi-cube sweep, the user switched to HF archiving
-after the direct fetch hit a 30-minute timeout on October 14. The old streamed
-fetch discards its temporary partial archive on failure and is not resumable;
-use the HF archive helper for this large sweep.
+The [two-stage workflow](TWO_STAGE_SWEEP_WORKFLOW.md) is the agreed default.
+Finish the sweep and auto-stop its GPU pod, then use a cheaper compatible pod on
+that same network volume for packing/upload to HF and automatic stopping.
+Remind the user of the workflow and prepare transfer credentials before deployment.
+The launcher defaults to `--delivery transfer-pod`: a connected watcher acknowledges
+completion without downloading large artifacts. Results remain on the volume.
+Packing and uploading do not run on the simulator pod.
+
+`--delivery direct` explicitly opts into the older automatic Mac fetch. That legacy
+streamed fetch still has a 30-minute limit and discards partial archives on failure;
+use the agreed HF transfer stage for large sweeps. `--fetch-only` remains an explicit
+manual download option and is not changed by the delivery default.
 
 ## Resume the interrupted color-transfer sweep
 
@@ -32,7 +35,7 @@ After receiving the current SSH address, run locally:
 
 Wait for **`Detached cloud sweep started`**. Before that message, setup still requires your Mac connection. After it appears, you can disconnect or put your Mac to sleep. Ctrl+C then ends only the local watcher. Add `--launch-only` if you want the launcher to return immediately after starting the supervisor.
 
-If you stay connected, the watcher downloads images, actions, physics states, trial replay launchers, startup metadata, reports, and logs into the same local folder. Old trial images are retained. The supervisor gives an active download watcher up to 30 minutes to finish before requesting stopping; an acknowledgment ends this window immediately. If the Mac is disconnected, there is no required download window: results stay on the volume and the pod is stopped without waiting for a Mac.
+With default delivery, the watcher shows progress and acknowledges completion immediately; no large Mac download delays stopping. With explicit `--delivery direct`, the watcher downloads artifacts and the supervisor allows up to 30 minutes for that transfer. If the Mac is disconnected, results remain on the volume and the supervisor stops without requiring a Mac download.
 
 ## Storage and model switching
 

@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 import tarfile
 import tempfile
+import threading
 from types import SimpleNamespace
 import unittest
 from unittest.mock import patch,MagicMock
@@ -45,6 +46,54 @@ class ArchiveTests(unittest.TestCase):
                 for r in p['trials']:self.assertIn(r['directory']+'/step_001/before.png',archive.getnames())
             self.assertEqual((source/'results.json').read_bytes(),before)
             for f in files:self.assertEqual(arch.digest(staging/f['path']),f['sha256'])
+
+    def test_packed_parts_reused_across_container_restart(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);source,staging,p=fixture(root);cache=root/'volume-cache'
+            first=arch.package(source,staging,p,part_cache=cache)
+            shutil=__import__('shutil');shutil.rmtree(staging);staging.mkdir()
+            with patch.object(arch,'add_checked',side_effect=AssertionError('Should reuse existing archive')):
+                second=arch.package(source,staging,p,part_cache=cache)
+            self.assertEqual(first,second)
+            changed=json.loads((source/'results.json').read_text());changed['plan']['elapsed_seconds']=1
+            (source/'results.json').write_text(json.dumps(changed))
+            with patch.object(arch,'add_checked',side_effect=ValueError('Repack changed source')):
+                with self.assertRaisesRegex(ValueError,'Repack'):arch.package(source,staging,changed,part_cache=cache)
+
+    def test_pipeline_uploads_before_packing_finishes_and_skips_existing_parts(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);source,staging,p=fixture(root);receipt=root/'receipt';receipt.mkdir()
+            api=MagicMock();api.repo_info.return_value=SimpleNamespace(private=True);api.get_paths_info.return_value=[]
+            uploaded=threading.Event()
+            api.upload_file.side_effect=lambda **kwargs:uploaded.set()
+            original=arch.package
+            def packing(*args,**kwargs):
+                on_part=kwargs['on_part']
+                def ready(path,entry):
+                    on_part(path,entry)
+                    self.assertTrue(uploaded.wait(2),'Upload must start before final reports/manifest')
+                    self.assertFalse((staging/'manifest.json').exists())
+                kwargs['on_part']=ready
+                return original(*args,**kwargs)
+            with patch('huggingface_hub.HfApi',return_value=api),patch.object(arch,'package',side_effect=packing), \
+                 patch.object(arch,'upload_verify',return_value={'verified':True}) as verify:
+                arch.pipeline_archive(source,staging,p,'user/private','secret',receipt)
+            api.upload_file.assert_called_once();self.assertTrue(verify.call_args.kwargs['archives_uploaded'])
+            manifest=json.loads((staging/'manifest.json').read_text());entry=manifest['files'][0]
+            api.get_paths_info.return_value=[SimpleNamespace(size=entry['bytes'],lfs={'sha256':entry['sha256']})]
+            api.upload_file.reset_mock()
+            with patch('huggingface_hub.HfApi',return_value=api),patch.object(arch,'upload_verify',return_value={'verified':True}):
+                arch.pipeline_archive(source,staging,p,'user/private','secret',receipt)
+            api.upload_file.assert_not_called()
+
+    def test_failed_background_upload_retains_reusable_part(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);source,staging,p=fixture(root);receipt=root/'receipt';receipt.mkdir()
+            api=MagicMock();api.repo_info.return_value=SimpleNamespace(private=True);api.get_paths_info.return_value=[]
+            api.upload_file.side_effect=RuntimeError('Upload interrupted')
+            with patch('huggingface_hub.HfApi',return_value=api),patch.object(arch,'upload_verify') as verify:
+                with self.assertRaises(RuntimeError):arch.pipeline_archive(source,staging,p,'user/private','secret',receipt)
+            verify.assert_not_called();self.assertEqual(len(list((receipt/'packed-parts').glob('*.tar.gz'))),1)
 
     def test_symlink_refused(self):
         with tempfile.TemporaryDirectory() as tmp:

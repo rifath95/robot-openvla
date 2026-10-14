@@ -409,6 +409,8 @@ the next experiment.
 Use [CLOUD_QUICKSTART.md](docs/cloud/CLOUD_QUICKSTART.md) for remote sessions,
 [FOUR_COLOR_TOUCH_TRAINING.md](docs/training/FOUR_COLOR_TOUCH_TRAINING.md) for the
 final training profile, and [CLOUD_SIMULATOR_SWEEPS.md](docs/cloud/CLOUD_SIMULATOR_SWEEPS.md)
-for cloud-only trials, saved results and resume behavior.
+for cloud-only trials, saved results and resume behavior. The agreed default is
+[two separate pods](docs/cloud/TWO_STAGE_SWEEP_WORKFLOW.md): simulation first,
+then a cheaper pod for HF transfer, with automatic stopping after each stage.
 
 Upstream references: [OpenVLA](https://github.com/openvla/openvla), [checkpoint](https://huggingface.co/openvla/openvla-7b), [LoRA fine-tuning](https://github.com/openvla/openvla#fine-tuning-openvla-via-lora), [MuJoCo Menagerie](https://github.com/google-deepmind/mujoco_menagerie).

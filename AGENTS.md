@@ -1,11 +1,15 @@
 # Simulator sweep result delivery
 
-Before the user deploys a paid pod for a future simulator sweep, remind them to
-choose the result-delivery method during preparation: direct download to the Mac,
-or cloud-to-Hugging-Face archiving so the GPU can stop before a slow Mac download.
-Honor an already stated choice without asking again. Prepare the selected flow
-and credentials before deployment; do not assume the sweep launcher automatically
-uploads to HF. See `docs/cloud/HF_SWEEP_ARCHIVE.md` for the separate archive helper.
+The agreed default is a two-stage workflow: run simulation on its GPU pod, save
+results to the network volume and auto-stop; then launch a cheaper transfer pod
+on the same volume to pack/upload to HF, verify and auto-stop. A CPU pod is
+sufficient when compatible with the volume. Keep packing/upload work off the
+simulator pod. Remind the user of this plan before deployment, and prepare the
+transfer command and credential in advance. Honor explicit alternatives without
+re-asking an already established choice.
+
+Use `cloud.cloud_sweep_session` with its default `--delivery transfer-pod`, then
+`cloud.archive_sweep` on the transfer pod. See `docs/cloud/TWO_STAGE_SWEEP_WORKFLOW.md`.
 
 For the 1,080-trial sweep `scripted_multi_color_models_20261013_164548_eeda379b`,
 the user switched to HF upload followed by pod stop after the direct download

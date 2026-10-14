@@ -55,6 +55,16 @@ def fetch(ssh,remote,destination):
     print(f'Results saved locally: {destination}',flush=True)
 
 
+
+def finish_transfer_stage(ssh,remote,status):
+    """End GPU work without a large Mac transfer; a second pod owns delivery."""
+    if status.get('phase')=='awaiting_sync':
+        subprocess.run(ssh+['touch '+shlex.quote(remote+'/sync_ack')],check=True,timeout=20)
+    failed=status.get('outcome')!='completed'
+    print('Sweep ended; results remain on the network volume. Simulator supervisor requests pod stop.',flush=True)
+    print('Next: launch a cheaper transfer pod on the same volume and run cloud.archive_sweep.',flush=True)
+    return 1 if failed else 0
+
 def setup_script(name):
     # Pull once. A detached private checkout and exact submodule commit freeze the
     # execution source even if another local client later updates the main checkout.
@@ -99,6 +109,8 @@ def main():
     selection.add_argument('--resume',type=Path,help='Local saved sweep folder, also used for downloads')
     selection.add_argument('--profile',type=Path,help='Create a fresh sweep from a local JSON profile')
     p.add_argument('--fetch-only',action='store_true');p.add_argument('--launch-only',action='store_true')
+    p.add_argument('--delivery',choices=['transfer-pod','direct'],default='transfer-pod',
+        help='Default: stop simulator pod, transfer later on a cheaper pod; direct fetch is opt-in')
     p.add_argument('--estimated-seconds',type=float,help='Override conservative unbatched estimate; buffers remain one hour each')
     args=p.parse_args()
     if args.profile:
@@ -153,6 +165,8 @@ def main():
             result=subprocess.run(ssh+['/opt/openvla/bin/python -c '+shlex.quote(script)],capture_output=True,check=True,timeout=30)
             item=json.loads(result.stdout);offset=item['offset'];print(item['log'],end='',flush=True)
             if item['status'].get('phase') in ('awaiting_sync','stopping','finished'):
+                if args.delivery=='transfer-pod':
+                    return finish_transfer_stage(ssh,remote,item['status'])
                 # Keep heartbeat fresh during a potentially large download.
                 from cloud.sweep_heartbeat import Heartbeat
                 with Heartbeat(ssh,remote):fetch(ssh,remote,folder)

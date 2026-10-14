@@ -28,7 +28,7 @@ Use a dedicated pod with the training template, the existing network volume, Run
 
 The source checkout is frozen once. Base weights and adapters are staged once onto container disk and merged in VRAM for each checkpoint. MuJoCo and the model run entirely on the pod, sequentially with prediction batch size one. The Mac can disconnect after `Detached cloud sweep started`. The cloud supervisor requests pod stop after completion, failure or deadline; check the portal because API/network failure can prevent stopping.
 
-If the Mac remains connected, it watches progress, downloads completed results and acknowledges synchronization. The existing connected download window is up to 30 minutes, bounded by the outer deadline. If a large download does not finish in that window, resume a pod and fetch from the persistent volume later; cloud results are retained.
+With the default two-stage workflow, a connected Mac watches progress and acknowledges completion without downloading the large results. The simulator pod stops; a cheaper compatible transfer pod then handles HF archiving. Large automatic Mac downloads are only enabled by explicit `--delivery direct`, which retains the legacy 30-minute download window.
 
 ## Launch from the local Mac terminal
 
