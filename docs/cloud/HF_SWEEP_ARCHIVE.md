@@ -58,4 +58,6 @@ caffeinate -i .venv-training/bin/hf download \
 
 Use `--revision VERIFIED_COMMIT` from the receipt to pin the exact verified archive. No pod needs to run during this download. For the small reports only, change the include pattern to `SWEEP_NAME/reports/*`; for a particular model/count/palette, select the corresponding `archives/*.tar.gz` file. The manifest lists checksums and trial counts for every part. Extract chosen parts into one sweep folder and copy the `reports/` contents into its root to restore the ordinary results/replay layout.
 
+To restore a complete download and enable clickable **▶ Replay** links in the local `REPORT.md`, follow [Replay buttons](../simulation/REPLAY_BUTTONS.md). Restoration and playback need no cloud pod.
+
 This path uses the HF [upload](https://huggingface.co/docs/huggingface_hub/guides/upload) and [download](https://huggingface.co/docs/huggingface_hub/guides/download) APIs. Local tests verify packing/upload overlap, reuse after a container restart, skipping uploaded parts, interrupted uploads, remote checksum mismatches and stop paths. No claim of measured pipeline speedup is made until a future transfer pod runs it. Existing archives and the current Mac HF download are unaffected by these code changes.

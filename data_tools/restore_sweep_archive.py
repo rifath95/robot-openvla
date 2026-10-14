@@ -1,0 +1,68 @@
+"""Restore verified HF archive parts into the ordinary local sweep/replay layout."""
+import argparse
+import hashlib
+import json
+from pathlib import Path,PurePosixPath
+import shutil
+import tarfile
+from common.paths import PROJECT_ROOT
+from cloud.sweep_plan import validate_saved
+
+
+def sha256(path):
+    h=hashlib.sha256()
+    with path.open('rb') as f:
+        while block:=f.read(4*1024**2):h.update(block)
+    return h.hexdigest()
+
+
+def restore(source,destination=None):
+    source=Path(source).resolve();manifest=json.loads((source/'manifest.json').read_text())
+    records=json.loads((source/'reports/results.json').read_text());specs=validate_saved(records)
+    if len(records['trials'])!=manifest['trials'] or len(specs)!=manifest['trials']:raise ValueError('Incomplete archive trial inventory')
+    name=manifest['sweep']
+    if not name.startswith('scripted_') or Path(name).name!=name:raise ValueError('Invalid sweep name')
+    destination=Path(destination).resolve() if destination else PROJECT_ROOT/'outputs'/name
+    if not destination.is_relative_to((PROJECT_ROOT/'outputs').resolve()):raise ValueError('Restore under the project outputs directory')
+    destination.mkdir(parents=True,exist_ok=True)
+    progress=destination/'restore_progress.json'
+    done=json.loads(progress.read_text()) if progress.exists() else {}
+    total_files=0;total_bytes=0
+    for entry in manifest['files']:
+        relative=PurePosixPath(entry['path'])
+        if not relative.parts or relative.is_absolute() or '..' in relative.parts or relative.parts[0] not in ('archives','reports'):raise ValueError('Unsafe manifest path')
+        path=source/str(relative)
+        if path.is_symlink() or not path.resolve().is_relative_to(source):raise ValueError('Unsafe source file')
+        if path.stat().st_size!=entry['bytes']:raise ValueError('Incomplete download: '+str(relative))
+        if relative.parts[0]=='archives' and done.get(str(relative))==entry['sha256']:
+            print('Already restored:',relative,flush=True);continue
+        print('Verifying and restoring:',relative,flush=True)
+        if sha256(path)!=entry['sha256']:raise ValueError('Checksum mismatch: '+str(relative))
+        if relative.parts[0]=='archives':
+            with tarfile.open(path,'r|gz') as archive:
+                for member in archive:
+                    member_path=PurePosixPath(member.name)
+                    target=destination/str(member_path)
+                    if (not member_path.parts or member_path.is_absolute() or '..' in member_path.parts
+                        or member_path.parts[0] not in specs or not (member.isfile() or member.isdir())
+                        or not target.resolve().is_relative_to(destination)):
+                        raise ValueError('Unsafe archive entry: '+member.name)
+                    total_files+=1;total_bytes+=member.size
+                    if total_files>600000 or total_bytes>20*1024**3:raise ValueError('Archive exceeds restore limits')
+                    archive.extract(member,path=destination,filter='data')
+            done[str(relative)]=entry['sha256'];progress.write_text(json.dumps(done,indent=2)+'\n')
+        else:
+            if len(relative.parts)!=2 or path.suffix not in ('.json','.jsonl','.md','.log','.txt'):raise ValueError('Unexpected report file')
+            target=destination/relative.name
+            if target.is_symlink() or not target.resolve().is_relative_to(destination):raise ValueError('Unsafe report destination')
+            shutil.copyfile(path,target)
+    if any(not (destination/r['directory']/'summary.json').is_file() for r in records['trials']):raise ValueError('Restored trial missing')
+    print(f"Restored {manifest['trials']} trials to {destination}",flush=True)
+    return destination
+
+
+def main():
+    p=argparse.ArgumentParser(description=__doc__);p.add_argument('archive_folder',type=Path)
+    p.add_argument('--destination',type=Path);a=p.parse_args();restore(a.archive_folder,a.destination)
+
+if __name__=='__main__':main()

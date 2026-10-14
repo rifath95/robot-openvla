@@ -122,6 +122,7 @@ def main(argv=None):
     parser.add_argument('run_dir', type=Path)
     parser.add_argument('--speed', type=float, default=1, help='Movement playback multiplier; e.g. 0.5 or 2')
     parser.add_argument('--check', action='store_true', help='Validate saved states without opening a viewer')
+    parser.add_argument('--start-immediately',action='store_true',help='Begin offline playback when the window opens')
     args = parser.parse_args(argv)
     import math
     if not math.isfinite(args.speed) or args.speed <= 0:
@@ -145,7 +146,7 @@ def main(argv=None):
     import mujoco.viewer
     import glfw
     data = mujoco.MjData(model)
-    paused, stopped = True, False
+    paused, stopped = not args.start_immediately, False
     def key_callback(key):
         nonlocal paused, stopped
         if key == glfw.KEY_SPACE:

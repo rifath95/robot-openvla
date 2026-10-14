@@ -12,7 +12,7 @@ def metrics(rows):
         success_rate=correct/len(rows) if rows else None,choice_accuracy=correct/chosen if chosen else None)
 
 
-def write_report(folder,plan,rows,error=None):
+def write_report(folder,plan,rows,error=None,*,replay_urls=None):
     groups=defaultdict(list);seen=set(plan['training_colors'])
     for r in rows:
         cp,n,palette=r['checkpoint'],r['cube_count'],r['color_set']
@@ -46,6 +46,10 @@ def write_report(folder,plan,rows,error=None):
     for (cp,n,target,touched),number in sorted(confusion.items()):lines.append(f'| {label(cp)} | {n} | {target} | {touched} | {number} |')
     lines+=['',f'Preparation and trial wall time: {plan.get("elapsed_seconds",0):.1f} seconds.','',
         '| Model | Cubes | Palette | Seed | Request | Outcome | Phase | Details |','|---|---:|---|---:|---|---|---|---|']
-    for r in rows:lines.append(f'| {label(r["checkpoint"])} | {r["cube_count"]} | {r["color_set"]} | {r["seed"]} | {r["target_color"]} | {r["outcome"]} | {r["phase"]} | [Run]({r["directory"]}/RUN_REPORT.md) |')
+    if replay_urls:
+        lines[2:2]=['Open this file in Markdown Preview and click **▶ Replay** in the trial table below. Keep the local replay launcher running; close the current MuJoCo window before opening another. No cloud pod is needed.','']
+        lines[-2]+=' Replay |'
+        lines[-1]+='---|'
+    for r in rows:lines.append(f'| {label(r["checkpoint"])} | {r["cube_count"]} | {r["color_set"]} | {r["seed"]} | {r["target_color"]} | {r["outcome"]} | {r["phase"]} | [Run]({r["directory"]}/RUN_REPORT.md) |'+(f' [▶ Replay]({replay_urls[r["directory"]]}) |' if replay_urls else ''))
     if error:lines+=['',f'Launcher ended early: {error}']
     (folder/'REPORT.md').write_text('\n'.join(lines)+'\n');(folder/'statistics.json').write_text(json.dumps(measures,indent=2)+'\n')

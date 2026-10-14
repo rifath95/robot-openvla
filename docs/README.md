@@ -10,6 +10,7 @@ and limitations, and [repository layout](REPOSITORY_LAYOUT.md) for code location
 - [Local control and camera checks](simulation/CONTROL_CALIBRATION.md)
 - [Local investigation and bounded recovery](simulation/CONTROL_FINDINGS.md)
 - [Offline run playback](simulation/REPLAY.md)
+- [Click ▶ Replay in a local sweep REPORT.md](simulation/REPLAY_BUTTONS.md)
 
 ## Cloud sessions and inference
 
