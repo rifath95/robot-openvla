@@ -34,7 +34,9 @@ class Launcher:
         with self.lock:
             if self.process is not None and self.process.poll() is None:
                 return 409,'A replay window is already open. Close it before choosing another run.'
-            self.process=subprocess.Popen([str(PROJECT_ROOT/'.venv/bin/mjpython'),'-m','simulation.replay_run',
+            # The mjpython shebang cannot handle spaces in the repository path.
+            # Invoke its script through Python, as the normal simulator viewer does.
+            self.process=subprocess.Popen([str(PROJECT_ROOT/'.venv/bin/python'),str(PROJECT_ROOT/'.venv/bin/mjpython'),'-m','simulation.replay_run',
                 str(self.folder/trial),'--start-immediately'],cwd=PROJECT_ROOT)
         return 200,'Replay opened on your Mac. You can return to the report and close this browser tab.'
 
@@ -47,7 +49,9 @@ def handler(launcher):
             else:
                 trial=query.get('trial',[''])[0];token=query.get('token',[''])[0]
                 try:code,message=launcher.launch(trial,token)
-                except OSError:code,message=500,'Could not open MuJoCo. Check the launcher terminal.'
+                except OSError as error:
+                    print(f'Could not start replay: {error}',file=sys.stderr,flush=True)
+                    code,message=500,'Could not open MuJoCo. Check the launcher terminal.'
             body=('<!doctype html><html><body><p>'+html.escape(message)+'</p></body></html>').encode()
             self.send_response(code);self.send_header('Content-Type','text/html; charset=utf-8')
             self.send_header('Cache-Control','no-store');self.send_header('Referrer-Policy','no-referrer')

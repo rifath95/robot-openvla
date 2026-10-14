@@ -72,6 +72,7 @@ class ReplayButtonTests(unittest.TestCase):
             self.assertEqual(launcher.launch('../escape','secret')[0],404)
             popen.assert_not_called()
             self.assertEqual(launcher.launch(trial,'secret')[0],200)
+            self.assertEqual(popen.call_args.args[0][:2],[str(PROJECT_ROOT/'.venv/bin/python'),str(PROJECT_ROOT/'.venv/bin/mjpython')])
             self.assertIn('--start-immediately',popen.call_args.args[0])
             popen.return_value.poll.return_value=None
             self.assertEqual(launcher.launch(trial,'secret')[0],409)
