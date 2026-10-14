@@ -37,6 +37,16 @@ class DatasetVersionTests(unittest.TestCase):
                                      verify_images=False)
             self.assertEqual(episodes[0]['action_contract'], action_contract(camera='bowl_camera'))
 
+    def test_training_only_is_explicit_and_keeps_source_splits(self):
+        with tempfile.TemporaryDirectory() as folder, patch(
+                'data_tools.prepare_training_dataset.fingerprint', return_value='verified'):
+            manifest=self.camera_manifest(Path(folder), ['bowl_camera']*3)
+            original=manifest.read_bytes()
+            episodes=load_episodes(manifest,verify_images=False,training_only=True)
+            self.assertEqual([e['split'] for e in episodes],['train']*3)
+            self.assertEqual([e['source_split'] for e in episodes],['train','validation','test'])
+            self.assertEqual(manifest.read_bytes(),original)
+
     def test_export_rejects_mixed_camera_contracts(self):
         with tempfile.TemporaryDirectory() as folder, patch(
                 'data_tools.prepare_training_dataset.fingerprint', return_value='verified'):

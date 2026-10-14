@@ -11,7 +11,7 @@ from simulation.panda_actions import CONVENTION_ID, action_contract
 from data_tools.prepare_panda_dataset import fingerprint
 
 
-def load_episodes(manifest, *, verify_images=True):
+def load_episodes(manifest, *, verify_images=True, training_only=False):
     if verify_images:
         from PIL import Image
     entries = json.loads(Path(manifest).read_text())['episodes']
@@ -53,7 +53,7 @@ def load_episodes(manifest, *, verify_images=True):
                              combination=(metadata.get('scenario') or {}).get('combination')))
     if len({ep['id'] for ep in episodes}) != len(episodes):
         raise ValueError('Episode IDs must be unique')
-    if any(not any(ep['split'] == split for ep in episodes) for split in ('train','validation','test')):
+    if not training_only and any(not any(ep['split'] == split for ep in episodes) for split in ('train','validation','test')):
         raise ValueError('All three splits are required')
     combinations = {}
     for episode in episodes:
@@ -62,6 +62,9 @@ def load_episodes(manifest, *, verify_images=True):
             previous = combinations.setdefault(combination, episode['split'])
             if previous != episode['split']:
                 raise ValueError('Broad starting-pose combination crosses dataset splits')
+    if training_only:
+        for episode in episodes:
+            episode['source_split']=episode['split'];episode['split']='train'
     return episodes
 
 
@@ -90,11 +93,11 @@ def normalize(action, statistics):
     return np.where(mask,np.clip(scaled,-1,1),x).astype(np.float32)
 
 
-def build(manifest, output):
+def build(manifest, output, *, training_only=False):
     os.environ.setdefault('TFDS_DISABLE_GCS','1')
     import tensorflow as tf
     import tensorflow_datasets as tfds
-    episodes=load_episodes(manifest)
+    episodes=load_episodes(manifest,training_only=training_only)
     output=Path(output).resolve()
     if output.exists():
         raise ValueError('Choose a new output directory; do not overwrite a prepared dataset')
@@ -116,7 +119,7 @@ def build(manifest, output):
                 })}))
 
         def _split_generators(self, dl_manager):
-            return {split:self._generate_examples(split) for split in ('train','validation','test')}
+            return {split:self._generate_examples(split) for split in (('train',) if training_only else ('train','validation','test'))}
 
         def _generate_examples(self, split):
             for episode in episodes:
@@ -144,10 +147,10 @@ def build(manifest, output):
         normalization='Training-only q01/q99, clipped to [-1,1]; gripper stays [0,1].',
         source_manifest_sha256=hashlib.sha256(Path(manifest).read_bytes()).hexdigest(),
         episodes=[dict(id=e['id'],split=e['split'],transitions=len(e['rows']),sha256=e['fingerprint'],
-                       cohort=e['cohort'], combination=e['combination']) for e in episodes],
+                       cohort=e['cohort'], combination=e['combination'],source_split=e.get('source_split',e['split'])) for e in episodes],
         split_counts={s:dict(episodes=sum(e['split']==s for e in episodes),
             transitions=sum(len(e['rows']) for e in episodes if e['split']==s)) for s in ('train','validation','test')},
-        training_executed=False)
+        training_executed=False,training_only=training_only)
     (output/'manifest.json').write_text(json.dumps(report,indent=2)+'\n')
     verify(output)
     return report
@@ -195,6 +198,8 @@ def verify(output):
     seen=set(); counts={}
     for split in ('train','validation','test'):
         n=0;steps=0
+        if split not in builder.info.splits:
+            counts[split]=dict(episodes=0,transitions=0);continue
         for ep in tfds.as_numpy(builder.as_dataset(split=split,shuffle_files=False)):
             key=ep['episode_id'].decode()
             if key in seen: raise ValueError('Cross-split episode leakage')
@@ -224,7 +229,8 @@ if __name__=='__main__':
     p.add_argument('--manifest',type=Path,default=Path('datasets/panda_pick_place/panda_expansion_20261010_104720/combined_manifest.json'))
     p.add_argument('--output-dir',type=Path,default=Path('datasets/panda_pick_place/training_v1'))
     p.add_argument('--verify-only',action='store_true')
+    p.add_argument('--training-only',action='store_true',help='Explicitly place every source episode into training, with no held-out splits')
     args=p.parse_args()
-    report=verify(args.output_dir) if args.verify_only else build(args.manifest,args.output_dir)
+    report=verify(args.output_dir) if args.verify_only else build(args.manifest,args.output_dir,training_only=args.training_only)
     print(json.dumps(dict(output_dir=str(args.output_dir),split_counts=report['split_counts'],
                          training_executed=False),indent=2))

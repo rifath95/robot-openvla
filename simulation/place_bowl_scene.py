@@ -33,11 +33,13 @@ def initialize_scene(model,data,rng,**kwargs):
     mujoco.mj_resetDataKeyframe(model,data,home);configure_grip(model)
     bowl=mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_BODY,'bowl')
     model.body_pos[bowl]=[*spec['bowl_xy'],.254]
-    env=SimpleNamespace(model=model,data=data,controller=make_controller(model,data))
-    reference=env.controller.end_effector_pose()[1].copy()
-    start=initialize_start_pose(env,START_POSITION,0,reference,gripper=1)
+    # Set both objects before the robot settling simulation: the home cube may
+    # otherwise intersect the newly positioned bowl and be launched by contacts.
     joint=mujoco.mj_name2id(model,mujoco.mjtObj.mjOBJ_JOINT,'cube_joint');q=int(model.jnt_qposadr[joint]);v=int(model.jnt_dofadr[joint])
     data.qpos[q:q+3]=[*spec['cube_xy'],.271];data.qpos[q+3:q+7]=[1,0,0,0];data.qvel[v:v+6]=0
     mujoco.mj_forward(model,data)
+    env=SimpleNamespace(model=model,data=data,controller=make_controller(model,data))
+    reference=env.controller.end_effector_pose()[1].copy()
+    start=initialize_start_pose(env,START_POSITION,0,reference,gripper=1)
     return env.controller,dict(starting_pose=start,bowl_position=model.body_pos[bowl].tolist(),
         requested_cube_yaw_radians=0,grasp_quaternion_wxyz=reference.tolist(),**spec)

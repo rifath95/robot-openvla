@@ -123,3 +123,12 @@ contains all 300 demonstrations and uses training-only action statistics.
 The earlier 50-demonstration `training_lift_v1/` remains as a pilot artifact.
 See [the expansion review](../docs/reviews/LIFT_CUBE_300.md) for measured split
 counts, checks, upload destination, and the 1,000-update training profile.
+
+## Phase 4 single-cube bowl placement
+
+`panda_place_bowl/` retains the original 50 reviewed recordings and adds 250.
+The expanded portable bundle is `training_place_bowl_v2_300/`: **300 train,
+0 validation, 0 test**, explicitly chosen for this harder task. Original source
+split labels are preserved as provenance, while all episodes are exported to
+training. `WATCH_TRAJECTORIES.md` has direct Replay and Action Replay buttons.
+See [the expansion review](../docs/reviews/PLACE_BOWL_300.md) for checks and upload.

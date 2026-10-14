@@ -40,14 +40,14 @@ def official_batch_transform(processor):
 def check(dataset, source, processor_path=None):
     import tensorflow_datasets as tfds
     result=verify(dataset)
-    episodes=load_episodes(source)
-    expected={e['id']:e for e in episodes}
     manifest=json.loads((dataset/'manifest.json').read_text())
+    episodes=load_episodes(source,training_only=manifest.get('training_only',False))
+    expected={e['id']:e for e in episodes}
     stats=json.loads((dataset/'dataset_statistics.json').read_text())
     if stats!=training_statistics(episodes):raise ValueError('Statistics do not match training-only sources')
     builder=tfds.builder_from_directory(str(dataset/manifest['builder_directory']))
     samples={}
-    for split in ('train','validation','test'):
+    for split in builder.info.splits:
         for ep in tfds.as_numpy(builder.as_dataset(split=split,shuffle_files=False)):
             source_episode=expected[ep['episode_id'].decode()]
             if source_episode['split']!=split:raise ValueError('Changed split')

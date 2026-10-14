@@ -1,0 +1,4849 @@
+{
+  "trajectories": 300,
+  "retained_original": 50,
+  "added": 250,
+  "all_training": true,
+  "transitions": 21906,
+  "original_hashes_unchanged": true,
+  "all_physics_replays_passed": true,
+  "rejected_layouts": [
+    {
+      "slot": 71,
+      "error": "Unsafe robot contact during lower_to_grasp"
+    }
+  ],
+  "episodes": [
+    {
+      "id": "train_001",
+      "slot": 0,
+      "transitions": 79,
+      "source_split": "train",
+      "episode_sha256": "82aa0bd9be6e46709efcb7698c767acfa566836ae0c2a65b6d20f52a8ce8be36",
+      "replay_error": 1.838085239569409e-12,
+      "cube_position": [
+        0.4984153371378673,
+        0.15108312114190273
+      ],
+      "bowl_position": [
+        0.5176277869878642,
+        -0.1298465859407581
+      ]
+    },
+    {
+      "id": "train_002",
+      "slot": 1,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "1a78b32b20aca058ea9ab40938d2ed62c8163770ad6807809c97b6d1af0314b7",
+      "replay_error": 1.37293995616794e-12,
+      "cube_position": [
+        0.6679660243862577,
+        0.12693687802525352
+      ],
+      "bowl_position": [
+        0.48994925536493644,
+        0.017418966168474555
+      ]
+    },
+    {
+      "id": "train_003",
+      "slot": 2,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "2923ee2d9358d6459ecc2307ff0df764f274ce496d6d3c8fc60f3926b41b1ba6",
+      "replay_error": 1.5249607132616916e-13,
+      "cube_position": [
+        0.6208088052072189,
+        0.0657876789109849
+      ],
+      "bowl_position": [
+        0.4143491922614784,
+        0.03373322498943715
+      ]
+    },
+    {
+      "id": "train_004",
+      "slot": 3,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "a62e60e236efbf1a0d87c7534f1874cf9868178c18f3ed8e1348907f631990be",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4602903402877642,
+        -0.04810146008982475
+      ],
+      "bowl_position": [
+        0.6672537746321595,
+        0.09100391584175042
+      ]
+    },
+    {
+      "id": "validation_001",
+      "slot": 4,
+      "transitions": 73,
+      "source_split": "validation",
+      "episode_sha256": "0ba5062060b5f9f7d2a7894afb76d87bbd1b973f79461fa38a1d27bb2e0d0bfe",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.43251078268559234,
+        0.016496310528125058
+      ],
+      "bowl_position": [
+        0.6786402299360992,
+        -0.15662784673631644
+      ]
+    },
+    {
+      "id": "test_001",
+      "slot": 5,
+      "transitions": 73,
+      "source_split": "test",
+      "episode_sha256": "3aaa1922e96a76c6fbbbbabd8e188fd8a572657435151c4abeac3241a8452914",
+      "replay_error": 7.5664391333158e-14,
+      "cube_position": [
+        0.5872436594137899,
+        0.13995301535261617
+      ],
+      "bowl_position": [
+        0.5863410439689817,
+        -0.06762179072957683
+      ]
+    },
+    {
+      "id": "train_005",
+      "slot": 6,
+      "transitions": 68,
+      "source_split": "train",
+      "episode_sha256": "095aeccd6c5e931a1d0e61a0470dc1a493e3060cd5bcdefe6d1d84ba6389326e",
+      "replay_error": 6.303818897774779e-12,
+      "cube_position": [
+        0.4150798508491409,
+        -0.035068250615338456
+      ],
+      "bowl_position": [
+        0.5955605114758615,
+        -0.15926736630107682
+      ]
+    },
+    {
+      "id": "train_006",
+      "slot": 7,
+      "transitions": 74,
+      "source_split": "train",
+      "episode_sha256": "34f11b15ad26c7b94be7584dcc648fa671153e2069f411ca4fef6d6f82981f92",
+      "replay_error": 2.5122126601218042e-12,
+      "cube_position": [
+        0.5406717295591916,
+        -0.11612007564041499
+      ],
+      "bowl_position": [
+        0.5167406975718454,
+        0.1311893213418229
+      ]
+    },
+    {
+      "id": "train_007",
+      "slot": 8,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "e89db75d2b0a702971d060842097e90b7b01f4a92e07f19d4d4ff2e7fe6c2f27",
+      "replay_error": 1.0820233597996776e-12,
+      "cube_position": [
+        0.40378648153737584,
+        -0.03621443429790791
+      ],
+      "bowl_position": [
+        0.6640176515785966,
+        0.0890701597783783
+      ]
+    },
+    {
+      "id": "train_008",
+      "slot": 9,
+      "transitions": 82,
+      "source_split": "train",
+      "episode_sha256": "cffb6b36f1f83d416a5e480496c7bd6d14f09796c231e0c9198494c7678a5e75",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6799400990775851,
+        -0.10704338005715965
+      ],
+      "bowl_position": [
+        0.4146528109076306,
+        -0.10546762451487013
+      ]
+    },
+    {
+      "id": "validation_002",
+      "slot": 10,
+      "transitions": 64,
+      "source_split": "validation",
+      "episode_sha256": "9175735698daf54a3462fe828a1e051623132422f64e162ad7510ddcd8275221",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.43894048495408267,
+        0.009599734323747847
+      ],
+      "bowl_position": [
+        0.6052734224259932,
+        0.10438356386915373
+      ]
+    },
+    {
+      "id": "test_002",
+      "slot": 11,
+      "transitions": 69,
+      "source_split": "test",
+      "episode_sha256": "ad63cd1d96ead2d70a21327efc91191cdee873334830e194b4157161ec865f7c",
+      "replay_error": 7.389644451905042e-13,
+      "cube_position": [
+        0.5363941201365385,
+        -0.08200151167102401
+      ],
+      "bowl_position": [
+        0.6053197788598397,
+        0.1329005613026803
+      ]
+    },
+    {
+      "id": "train_009",
+      "slot": 12,
+      "transitions": 63,
+      "source_split": "train",
+      "episode_sha256": "ba2d8aec96fa0a16b8a4046e6190553378647e0a14262b8b58bd06e1105e097e",
+      "replay_error": 8.957279362675763e-13,
+      "cube_position": [
+        0.49289292378628435,
+        -0.06042363607382644
+      ],
+      "bowl_position": [
+        0.4542855851570453,
+        0.11963683961061747
+      ]
+    },
+    {
+      "id": "train_010",
+      "slot": 13,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "40efe5938cbae3dc6548de9ffdaf5a43cadcb6647efa1b8a4615ea87f65eebd4",
+      "replay_error": 3.95516952522712e-14,
+      "cube_position": [
+        0.48780684940805014,
+        -0.0787778128097208
+      ],
+      "bowl_position": [
+        0.6259400954211439,
+        0.15463252805308628
+      ]
+    },
+    {
+      "id": "train_011",
+      "slot": 14,
+      "transitions": 68,
+      "source_split": "train",
+      "episode_sha256": "ff4bebf3c774de063616a7921b6bfdc8df8fdb233723c80577216ccc17f6dfa7",
+      "replay_error": 2.6856294965682537e-13,
+      "cube_position": [
+        0.5451466824955392,
+        -0.08302424618834582
+      ],
+      "bowl_position": [
+        0.4027585432831555,
+        0.06837285701727598
+      ]
+    },
+    {
+      "id": "train_012",
+      "slot": 15,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "bdea4437b508ea5581d2073714db02187ef00c9165b36fb85beac39d9bc510e2",
+      "replay_error": 4.712341628021477e-13,
+      "cube_position": [
+        0.5540958055462152,
+        -0.1222647523791856
+      ],
+      "bowl_position": [
+        0.4257266719207981,
+        0.041919768514891945
+      ]
+    },
+    {
+      "id": "validation_003",
+      "slot": 16,
+      "transitions": 75,
+      "source_split": "validation",
+      "episode_sha256": "a4579a37f2d66e1d70e7882cd82e3330b6a94f5500cd313aedbcd4e8b465032a",
+      "replay_error": 1.1897660816367603e-12,
+      "cube_position": [
+        0.4930872100387472,
+        -0.11266832788480169
+      ],
+      "bowl_position": [
+        0.6680118908861679,
+        0.09680747262611998
+      ]
+    },
+    {
+      "id": "test_003",
+      "slot": 17,
+      "transitions": 81,
+      "source_split": "test",
+      "episode_sha256": "fe2a7cb9e35a1092bb7d34dcb0ed889b4860d3a7741da002dde9b3bca9d26ea4",
+      "replay_error": 3.6964875604894587e-13,
+      "cube_position": [
+        0.6677888960191105,
+        -0.1395326940331396
+      ],
+      "bowl_position": [
+        0.42855084080911166,
+        -0.11271603263136189
+      ]
+    },
+    {
+      "id": "train_013",
+      "slot": 18,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "8220f31114a2473351f11c0fa78e715fbd03ec0d7a86b2557bdea20dde4fa06c",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5854151745017806,
+        -0.1449816598349346
+      ],
+      "bowl_position": [
+        0.4259548797480226,
+        -0.03592367270484978
+      ]
+    },
+    {
+      "id": "train_014",
+      "slot": 19,
+      "transitions": 65,
+      "source_split": "train",
+      "episode_sha256": "e14d14b344238ef4a5c3832de02ff6fc4c6f72240d9db4ae3d33b877c6740216",
+      "replay_error": 1.8745005547771143e-12,
+      "cube_position": [
+        0.43691779174379075,
+        -0.03402756604986486
+      ],
+      "bowl_position": [
+        0.6152684776736159,
+        0.08937871191430763
+      ]
+    },
+    {
+      "id": "train_015",
+      "slot": 20,
+      "transitions": 68,
+      "source_split": "train",
+      "episode_sha256": "abc9cbd3b979ff27644a9e4b822b94255f77806fd24af1ae2f89b36faea7c1b3",
+      "replay_error": 7.309569616253953e-13,
+      "cube_position": [
+        0.5231583096802355,
+        0.10766499498025273
+      ],
+      "bowl_position": [
+        0.614608085159366,
+        -0.09146934144598681
+      ]
+    },
+    {
+      "id": "train_016",
+      "slot": 21,
+      "transitions": 78,
+      "source_split": "train",
+      "episode_sha256": "1106e5b9e9c3a04bf50d17fb4881736346aaa88fc887ae756e891e20d272547c",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6570858999063877,
+        0.09758533724839928
+      ],
+      "bowl_position": [
+        0.5673068324411902,
+        -0.12429500472787393
+      ]
+    },
+    {
+      "id": "validation_004",
+      "slot": 22,
+      "transitions": 82,
+      "source_split": "validation",
+      "episode_sha256": "8fde8236595c53f11a79204fe59df7333db3d1f0ee55ccee4ef99e59abb89b05",
+      "replay_error": 8.069933610244107e-13,
+      "cube_position": [
+        0.4177343088291284,
+        0.14782217943014
+      ],
+      "bowl_position": [
+        0.6408892296137437,
+        -0.06937101286827702
+      ]
+    },
+    {
+      "id": "test_004",
+      "slot": 23,
+      "transitions": 61,
+      "source_split": "test",
+      "episode_sha256": "358e33507447b74578b157496d4df0e0e5cc93adaff766707a00e46877ec47fe",
+      "replay_error": 2.5540680681501726e-12,
+      "cube_position": [
+        0.5270868365843485,
+        0.02700475875267923
+      ],
+      "bowl_position": [
+        0.5574736655962009,
+        -0.1583182372634634
+      ]
+    },
+    {
+      "id": "train_017",
+      "slot": 24,
+      "transitions": 74,
+      "source_split": "train",
+      "episode_sha256": "6464db556b1bb4ea854cbcdd5ae8a3520cb58b1d61593b7fbbca5786f8dcdd27",
+      "replay_error": 1.4462042674523445e-13,
+      "cube_position": [
+        0.6632934463921231,
+        0.03825597358759268
+      ],
+      "bowl_position": [
+        0.48331697919231437,
+        -0.07194785893859156
+      ]
+    },
+    {
+      "id": "train_018",
+      "slot": 25,
+      "transitions": 70,
+      "source_split": "train",
+      "episode_sha256": "eb7d4b020d5dd24038a41c0c1d5ef8729453827cdf861695a6894138f01e2f5a",
+      "replay_error": 2.86420887007921e-12,
+      "cube_position": [
+        0.5112068959795183,
+        -0.08266778658913669
+      ],
+      "bowl_position": [
+        0.44160180223460255,
+        0.15863259767192162
+      ]
+    },
+    {
+      "id": "train_019",
+      "slot": 26,
+      "transitions": 66,
+      "source_split": "train",
+      "episode_sha256": "9df9f998b0c535bb46ff6c5be70b3d87755c058ef9a265dcf36c0c4f1f62c749",
+      "replay_error": 1.7388313011679202e-12,
+      "cube_position": [
+        0.40627384204703226,
+        -0.010460705156795208
+      ],
+      "bowl_position": [
+        0.5696218854793035,
+        0.08822513928494864
+      ]
+    },
+    {
+      "id": "train_020",
+      "slot": 27,
+      "transitions": 79,
+      "source_split": "train",
+      "episode_sha256": "32427f68031654dba2f84eca057153b11515142db20bfe357b2feac01d21a792",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.43971785999436847,
+        0.09632559776210804
+      ],
+      "bowl_position": [
+        0.6778294905336504,
+        -0.11034654730573645
+      ]
+    },
+    {
+      "id": "validation_005",
+      "slot": 28,
+      "transitions": 79,
+      "source_split": "validation",
+      "episode_sha256": "ec03f9f4d2b2a5bf55840b7b4e75cd42a19e073c8789065fd75f4bcac2e255ef",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5158547216794376,
+        0.15571206103621482
+      ],
+      "bowl_position": [
+        0.488593635492891,
+        -0.125368664473919
+      ]
+    },
+    {
+      "id": "test_005",
+      "slot": 29,
+      "transitions": 73,
+      "source_split": "test",
+      "episode_sha256": "b0e172b23750957c5da90d5105fd990d1ac727e5662974475a2f8ae9f899a337",
+      "replay_error": 2.4397275978624405e-12,
+      "cube_position": [
+        0.6156218987056575,
+        0.05366637686226039
+      ],
+      "bowl_position": [
+        0.4406925323867926,
+        -0.10583127124238381
+      ]
+    },
+    {
+      "id": "train_021",
+      "slot": 30,
+      "transitions": 64,
+      "source_split": "train",
+      "episode_sha256": "79a954b1110dcad98384b36e4e9184508c085b335e5c5f2a4f12559106dfbf57",
+      "replay_error": 4.9709962560896503e-14,
+      "cube_position": [
+        0.5350054989001137,
+        -0.056493442121921936
+      ],
+      "bowl_position": [
+        0.5828831999688084,
+        0.1260497262918269
+      ]
+    },
+    {
+      "id": "train_022",
+      "slot": 31,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "1ba817be76fee507237213304d1d6df4245ca1eeb7dc497b652b622c970b7747",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.42527877447752843,
+        -0.06126400442726066
+      ],
+      "bowl_position": [
+        0.4024441072621462,
+        0.14397013030133302
+      ]
+    },
+    {
+      "id": "train_023",
+      "slot": 32,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "b6895fd4cf12c08a7d1f586932ae72f5f08a0720b79bcb758b894d437da68512",
+      "replay_error": 7.19979631469414e-13,
+      "cube_position": [
+        0.658013549582344,
+        -0.00025259215798598687
+      ],
+      "bowl_position": [
+        0.40747328447835224,
+        0.04776807978547616
+      ]
+    },
+    {
+      "id": "train_024",
+      "slot": 33,
+      "transitions": 81,
+      "source_split": "train",
+      "episode_sha256": "9659bf400881dbdad0ce1902d3f51535c105cdad14f7d3027b37897065e53c42",
+      "replay_error": 6.216138714876251e-13,
+      "cube_position": [
+        0.5840702785884061,
+        0.12955425361178263
+      ],
+      "bowl_position": [
+        0.4455969203045196,
+        -0.1411879290152985
+      ]
+    },
+    {
+      "id": "validation_006",
+      "slot": 34,
+      "transitions": 79,
+      "source_split": "validation",
+      "episode_sha256": "86da3e1dff7d7eeba4169b03d612c4f156374741e0b13ded79b05d09eeb86790",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5236870156787171,
+        -0.12664103198359816
+      ],
+      "bowl_position": [
+        0.6699469555576726,
+        0.1427944583533374
+      ]
+    },
+    {
+      "id": "test_006",
+      "slot": 35,
+      "transitions": 79,
+      "source_split": "test",
+      "episode_sha256": "d9d95f4dc029fd1d25395011f8de0bc3b7a9f2350e23d1e6b69dbb09c9170bc3",
+      "replay_error": 4.780049377938102e-12,
+      "cube_position": [
+        0.6658968625720779,
+        -0.08319831920317974
+      ],
+      "bowl_position": [
+        0.5634667857771343,
+        0.1427537440911033
+      ]
+    },
+    {
+      "id": "train_025",
+      "slot": 36,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "4144787fb511bf1cb4c03537d48c21b630852135458f5eed44f3b61e6bd338b7",
+      "replay_error": 2.2382096176443156e-13,
+      "cube_position": [
+        0.5304218134501786,
+        0.10143463132650578
+      ],
+      "bowl_position": [
+        0.6226572103035666,
+        -0.1189489294469854
+      ]
+    },
+    {
+      "id": "train_026",
+      "slot": 37,
+      "transitions": 68,
+      "source_split": "train",
+      "episode_sha256": "85f44f65c020303f330cda42afe69b56ae7872afaabb98e97b6b78c105ca466e",
+      "replay_error": 1.1440848268762238e-13,
+      "cube_position": [
+        0.40858547027326564,
+        0.035656540270772155
+      ],
+      "bowl_position": [
+        0.5565986962824379,
+        -0.10375749752859587
+      ]
+    },
+    {
+      "id": "train_027",
+      "slot": 38,
+      "transitions": 68,
+      "source_split": "train",
+      "episode_sha256": "c1b42903996d241b33bfaea935f4c52ab9a3acc4ed003ed29dbcaeb281f742ec",
+      "replay_error": 1.1347589534693725e-12,
+      "cube_position": [
+        0.4324557273435888,
+        -0.07399724610555002
+      ],
+      "bowl_position": [
+        0.6282314846084823,
+        -0.10779681018346274
+      ]
+    },
+    {
+      "id": "train_028",
+      "slot": 39,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "5271aab1a8782ec29bcbbb8a6d6678d90706facf1f71d91a1f9dda175731bd09",
+      "replay_error": 2.052691350229452e-12,
+      "cube_position": [
+        0.5914467537238923,
+        0.09746647636058473
+      ],
+      "bowl_position": [
+        0.6137373157493956,
+        -0.15855449243527164
+      ]
+    },
+    {
+      "id": "validation_007",
+      "slot": 40,
+      "transitions": 74,
+      "source_split": "validation",
+      "episode_sha256": "eeab2ecabf75d6978a42d0872da9aac96ca08ee18f6d42332c2f9e8f09013378",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5474979653622367,
+        -0.12395715861772018
+      ],
+      "bowl_position": [
+        0.40878073697969963,
+        0.07861513360897636
+      ]
+    },
+    {
+      "id": "test_007",
+      "slot": 41,
+      "transitions": 71,
+      "source_split": "test",
+      "episode_sha256": "b04d314d62345049d63f00d54d6f5969ca0f25cd9b6e49d68fabff3926085649",
+      "replay_error": 1.177147268549561e-11,
+      "cube_position": [
+        0.64653941650538,
+        -0.05546404133014086
+      ],
+      "bowl_position": [
+        0.5081823648986598,
+        0.07521691247626386
+      ]
+    },
+    {
+      "id": "train_029",
+      "slot": 42,
+      "transitions": 70,
+      "source_split": "train",
+      "episode_sha256": "288fc968a6322b5dcaf031a4d9e9a71124441296bd34f23a75f90b8e111cc6ad",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5493819375798374,
+        -0.11123243533608519
+      ],
+      "bowl_position": [
+        0.5612889169243253,
+        0.1145162914088025
+      ]
+    },
+    {
+      "id": "train_030",
+      "slot": 43,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "a6c4aee2b5ad7db085f0d3fb924304ab0dfac9c39d18a9999f47217641d19396",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5239930637530135,
+        0.12794831468295143
+      ],
+      "bowl_position": [
+        0.4341188206144277,
+        -0.08959626579709312
+      ]
+    },
+    {
+      "id": "train_031",
+      "slot": 44,
+      "transitions": 79,
+      "source_split": "train",
+      "episode_sha256": "eb05022f1c44be1edb7938aca54d4d3c9a270c180c32cb6431ecb962da2fd21f",
+      "replay_error": 1.9038659537784497e-12,
+      "cube_position": [
+        0.4271282249766471,
+        0.12833664061659217
+      ],
+      "bowl_position": [
+        0.4188943821170769,
+        -0.15378498769911994
+      ]
+    },
+    {
+      "id": "train_032",
+      "slot": 45,
+      "transitions": 78,
+      "source_split": "train",
+      "episode_sha256": "8795ad796ca78aec6771f18a18d0dd30ff9ac93202a055e75a887751910a66dc",
+      "replay_error": 5.589417817475351e-13,
+      "cube_position": [
+        0.6085415614022005,
+        -0.12179792379620359
+      ],
+      "bowl_position": [
+        0.6227150578347956,
+        0.14036869211876388
+      ]
+    },
+    {
+      "id": "validation_008",
+      "slot": 46,
+      "transitions": 70,
+      "source_split": "validation",
+      "episode_sha256": "5125e23e415d3fb30103d2de63715fb7bbe95d65c58476128b00d06a85275304",
+      "replay_error": 3.270016834700836e-12,
+      "cube_position": [
+        0.6246558995228884,
+        -0.034540961449979084
+      ],
+      "bowl_position": [
+        0.4197056735658967,
+        -0.01806803014353079
+      ]
+    },
+    {
+      "id": "test_008",
+      "slot": 47,
+      "transitions": 79,
+      "source_split": "test",
+      "episode_sha256": "0a68845c03d48961827ccc692ea5a7af8b593fe4ecd239fabed3528cb5093629",
+      "replay_error": 1.6686652060116103e-13,
+      "cube_position": [
+        0.606047748956974,
+        -0.10560281359196755
+      ],
+      "bowl_position": [
+        0.45580185139350976,
+        0.13094725993766446
+      ]
+    },
+    {
+      "id": "train_033",
+      "slot": 48,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "c4785ed51a864145449df16c94b5f61b555f690f6a67b6ef6d8a77464b7a023d",
+      "replay_error": 7.018136072289849e-13,
+      "cube_position": [
+        0.4512431376145351,
+        -0.10113957054296091
+      ],
+      "bowl_position": [
+        0.40993735430370554,
+        0.0929867174944383
+      ]
+    },
+    {
+      "id": "train_034",
+      "slot": 49,
+      "transitions": 68,
+      "source_split": "train",
+      "episode_sha256": "6e59b422d3f4a30384795b19ea707858819b3b53603e34379476f3c569f0dd05",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.486601548099343,
+        0.06700827264422433
+      ],
+      "bowl_position": [
+        0.5870540117567205,
+        -0.1452520501065171
+      ]
+    },
+    {
+      "id": "train_035",
+      "slot": 50,
+      "transitions": 79,
+      "source_split": "train",
+      "episode_sha256": "55d14d68334d4f00e206711cf91f4d2771a5d6a7567e418002c156b06d64988a",
+      "replay_error": 1.1251000131551336e-12,
+      "cube_position": [
+        0.4034200966417026,
+        0.13614027127427872
+      ],
+      "bowl_position": [
+        0.5808730937223302,
+        -0.05069848343145878
+      ]
+    },
+    {
+      "id": "train_036",
+      "slot": 51,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "da2d7ae487555709a0742e20602d1d89d39731b5762dba48fcba0c4a04f3100d",
+      "replay_error": 3.170796958329447e-13,
+      "cube_position": [
+        0.47763567374610966,
+        0.10870477997655449
+      ],
+      "bowl_position": [
+        0.5044269516373469,
+        -0.06951243909109273
+      ]
+    },
+    {
+      "id": "train_037",
+      "slot": 52,
+      "transitions": 66,
+      "source_split": "train",
+      "episode_sha256": "03274d867347e9bd256890952f6d068f8bf69923860879e12cdaaeac2c097d0e",
+      "replay_error": 1.102647932722866e-11,
+      "cube_position": [
+        0.44624687870349744,
+        0.03932944156526471
+      ],
+      "bowl_position": [
+        0.6534837505550265,
+        0.07194422132405613
+      ]
+    },
+    {
+      "id": "train_038",
+      "slot": 53,
+      "transitions": 74,
+      "source_split": "train",
+      "episode_sha256": "8a1dde4c0d5c437cd3e824e3712f1dad444e80ef4e805e5d5dcfa7252ba8f142",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6153213802838227,
+        0.13096135544595708
+      ],
+      "bowl_position": [
+        0.6072122591034401,
+        -0.0724235092843545
+      ]
+    },
+    {
+      "id": "train_039",
+      "slot": 54,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "9744fe5e4cfbe5d3a1e48962e92ed0ca8d1f3b3c38cded837c4cdb7ed1efa490",
+      "replay_error": 4.1590808488173314e-14,
+      "cube_position": [
+        0.5900279771913891,
+        0.13404127934254448
+      ],
+      "bowl_position": [
+        0.44029515522823465,
+        -0.0008327667411167639
+      ]
+    },
+    {
+      "id": "train_040",
+      "slot": 55,
+      "transitions": 81,
+      "source_split": "train",
+      "episode_sha256": "dbffb0c4530ec6ff8e32965a9850ef42074bb3b62c33ebd32e4d91c58dfedb35",
+      "replay_error": 2.286643097093588e-13,
+      "cube_position": [
+        0.4037581902021534,
+        -0.14723574010647816
+      ],
+      "bowl_position": [
+        0.6343476152792518,
+        0.018555468709545834
+      ]
+    },
+    {
+      "id": "train_041",
+      "slot": 56,
+      "transitions": 78,
+      "source_split": "train",
+      "episode_sha256": "11cd3ac7b9340ef4f51d523cbe8066be0d0fdfccb97cb60f846efed208d2f523",
+      "replay_error": 4.9248699607074743e-14,
+      "cube_position": [
+        0.5368943989426489,
+        0.1264829128866368
+      ],
+      "bowl_position": [
+        0.4347803857831351,
+        -0.15335253323278272
+      ]
+    },
+    {
+      "id": "train_042",
+      "slot": 57,
+      "transitions": 82,
+      "source_split": "train",
+      "episode_sha256": "7a9fb7bc7a787acf7a1fcbed42e1d0a122fd467b7c6384637bba49480dcaf149",
+      "replay_error": 3.421960537459666e-12,
+      "cube_position": [
+        0.4032836978101364,
+        -0.12821555810368002
+      ],
+      "bowl_position": [
+        0.5804259363594303,
+        0.11731891803380559
+      ]
+    },
+    {
+      "id": "train_043",
+      "slot": 58,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "f55031b78bfd34a94f8dce5264ebcd42acc6f4f2c0da4a4e358b4c61d25ea7b7",
+      "replay_error": 6.666776620363838e-12,
+      "cube_position": [
+        0.47080164683439735,
+        0.12733399258964048
+      ],
+      "bowl_position": [
+        0.6731409553379497,
+        0.045682977511536084
+      ]
+    },
+    {
+      "id": "train_044",
+      "slot": 59,
+      "transitions": 74,
+      "source_split": "train",
+      "episode_sha256": "5a1aa01b9c617645ef46e604e5b0d7258617116b60e49568e84ab86f5ee1b5ee",
+      "replay_error": 9.239831122442865e-14,
+      "cube_position": [
+        0.5748105137531981,
+        0.09647797356536181
+      ],
+      "bowl_position": [
+        0.42397724509131407,
+        -0.13357230095912415
+      ]
+    },
+    {
+      "id": "train_045",
+      "slot": 60,
+      "transitions": 64,
+      "source_split": "train",
+      "episode_sha256": "861df949d36ad8f85ee39513780ec46b679c605dc5bcb7eeaf093c2a2d5ab07f",
+      "replay_error": 9.41613453875334e-12,
+      "cube_position": [
+        0.5311097009249156,
+        0.05668653159121213
+      ],
+      "bowl_position": [
+        0.5658779662115095,
+        -0.1372344155530642
+      ]
+    },
+    {
+      "id": "train_046",
+      "slot": 61,
+      "transitions": 85,
+      "source_split": "train",
+      "episode_sha256": "065c8c9e8dcd2b1fa6ccf5814dc5144e1eded31fc85d395daa5e08681597e377",
+      "replay_error": 3.1186164761720647e-13,
+      "cube_position": [
+        0.6118955030079704,
+        -0.15595096132793815
+      ],
+      "bowl_position": [
+        0.633184508428365,
+        0.15780606109305695
+      ]
+    },
+    {
+      "id": "train_047",
+      "slot": 62,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "a5250214b2f3e6360e4add1ee3f03b319a7f6ca5817c3f9c1a06126a4d6b8d2a",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4230723757275873,
+        -0.09532392053240972
+      ],
+      "bowl_position": [
+        0.6333259782571526,
+        0.10231450126653173
+      ]
+    },
+    {
+      "id": "train_048",
+      "slot": 63,
+      "transitions": 65,
+      "source_split": "train",
+      "episode_sha256": "30852899166e2ee1116cf1bc38355e0f870ac8b358e20edebacde973d1910285",
+      "replay_error": 5.708822303773786e-12,
+      "cube_position": [
+        0.521354533584054,
+        -0.07429822566765701
+      ],
+      "bowl_position": [
+        0.48599320823465253,
+        0.11882833012155708
+      ]
+    },
+    {
+      "id": "train_049",
+      "slot": 64,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "8420de6d7ea4ceca1e7d11e70ad3005fdc7a67d6faaadc5cac91dbac5dfdf165",
+      "replay_error": 1.322164600026099e-12,
+      "cube_position": [
+        0.5424380414522676,
+        -0.1461910120980457
+      ],
+      "bowl_position": [
+        0.6155359300845945,
+        0.08061532817569564
+      ]
+    },
+    {
+      "id": "train_050",
+      "slot": 65,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "29fa3e26f81ff9690ba9fc21fea2ddb5fde1cd229b34fad31d8522b92ce3b6fd",
+      "replay_error": 1.4516166046973922e-12,
+      "cube_position": [
+        0.45789736746750276,
+        0.08802596369232286
+      ],
+      "bowl_position": [
+        0.544307444568172,
+        -0.136672013620972
+      ]
+    },
+    {
+      "id": "train_051",
+      "slot": 66,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "a5a2ffaa8deb078a7697dfea72ef019ac2c4e9d277f637bdd8707d0ff9ff39e0",
+      "replay_error": 4.633071704063241e-12,
+      "cube_position": [
+        0.4175670144972222,
+        0.06830466982549763
+      ],
+      "bowl_position": [
+        0.6668561546944461,
+        0.08551624174193069
+      ]
+    },
+    {
+      "id": "train_052",
+      "slot": 67,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "8ae9721ef1b11e3426f09084593c4b84b114d9c8ecb25647d56b48e82efb6d40",
+      "replay_error": 8.664180484174722e-13,
+      "cube_position": [
+        0.503665292484915,
+        0.15814934832724822
+      ],
+      "bowl_position": [
+        0.6556843965208955,
+        -0.030838844614453687
+      ]
+    },
+    {
+      "id": "train_053",
+      "slot": 68,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "984a4019952c9714fdfaba297eaf858a82475d5ec085146da9511fea0c042cf0",
+      "replay_error": 1.3334878866289847e-12,
+      "cube_position": [
+        0.6076990550144472,
+        0.03959021626760738
+      ],
+      "bowl_position": [
+        0.44146495035329864,
+        -0.12833130876264423
+      ]
+    },
+    {
+      "id": "train_054",
+      "slot": 69,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "8943b56d2a410fe39524e8be1447cbe746fc71d0999373420ba8703b6c4c97f7",
+      "replay_error": 2.3314683517128287e-14,
+      "cube_position": [
+        0.6115646948725868,
+        -0.1518452137519386
+      ],
+      "bowl_position": [
+        0.43277661940765744,
+        -0.018590311195675006
+      ]
+    },
+    {
+      "id": "train_055",
+      "slot": 70,
+      "transitions": 68,
+      "source_split": "train",
+      "episode_sha256": "4a90ee824b2da6880303aa32fac5f4c02cf0cc24335f115e1a2f35c139179f44",
+      "replay_error": 9.708900350346994e-13,
+      "cube_position": [
+        0.5223509232962797,
+        -0.10185677242162147
+      ],
+      "bowl_position": [
+        0.42814848470645667,
+        0.07693306826802619
+      ]
+    },
+    {
+      "id": "train_056",
+      "slot": 72,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "7fb6230864886766bbf4837c42d06deee2dfaf0aea5f5bba9be4d47be9edafe4",
+      "replay_error": 3.4439118223872356e-13,
+      "cube_position": [
+        0.6293344472633686,
+        0.09386191635304499
+      ],
+      "bowl_position": [
+        0.5139292687747687,
+        -0.05180350257183523
+      ]
+    },
+    {
+      "id": "train_057",
+      "slot": 73,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "e093b90d8e6aad5bf64bca302154718a086c2fa91866379204bc1a8a41177f9e",
+      "replay_error": 6.954853359886215e-13,
+      "cube_position": [
+        0.575168761331226,
+        0.14086036368836333
+      ],
+      "bowl_position": [
+        0.477693681211039,
+        -0.0819182190759467
+      ]
+    },
+    {
+      "id": "train_058",
+      "slot": 74,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "aae839ecefd8d230e0c39f4c2ee863a416deca87c459e8b503fdeb2fb9caf388",
+      "replay_error": 1.4710455076283324e-13,
+      "cube_position": [
+        0.436180109689911,
+        0.053125777941678755
+      ],
+      "bowl_position": [
+        0.6488060629537279,
+        -0.08928383245557353
+      ]
+    },
+    {
+      "id": "train_059",
+      "slot": 75,
+      "transitions": 66,
+      "source_split": "train",
+      "episode_sha256": "d42c8cbd5acf792ed948bc985f5cb4d11f508772d9211f9e1d4a5b327663f52a",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5391813852396844,
+        -0.08204517216611705
+      ],
+      "bowl_position": [
+        0.48335777195451146,
+        0.10634627409312969
+      ]
+    },
+    {
+      "id": "train_060",
+      "slot": 76,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "b04591d6dd38579cc26cb488976b84dd7c73a4bbb7b3316c74c4b53503b7dc29",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6763293065136802,
+        -0.051141258843469935
+      ],
+      "bowl_position": [
+        0.47425447026543166,
+        0.04928018007964944
+      ]
+    },
+    {
+      "id": "train_061",
+      "slot": 77,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "694bcd174632b9d01bbd8ba768ad416a71d767ba208ceef4324af18f43dcf62c",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4492893543367172,
+        0.12528985177500185
+      ],
+      "bowl_position": [
+        0.48762810826655256,
+        -0.13481446978567718
+      ]
+    },
+    {
+      "id": "train_062",
+      "slot": 78,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "b90b69a2d83c812395361a50f289aea4be5dcd6e4ea49ba8d7b1c92f23318990",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6203766659740331,
+        0.13890423349933825
+      ],
+      "bowl_position": [
+        0.4755951486836671,
+        -0.027825403882455007
+      ]
+    },
+    {
+      "id": "train_063",
+      "slot": 79,
+      "transitions": 61,
+      "source_split": "train",
+      "episode_sha256": "f58c4abad941c035d0018751fe2ad3abb1c23146483f365975475e0892f58d5e",
+      "replay_error": 1.238009694759512e-12,
+      "cube_position": [
+        0.5043202783891183,
+        0.0027314505757748365
+      ],
+      "bowl_position": [
+        0.6725863673183549,
+        0.12180588523521974
+      ]
+    },
+    {
+      "id": "train_064",
+      "slot": 80,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "cfcc703bc5a613b90753b277b48416f8fd3fa1dfec8a8870ab393ea66189ae92",
+      "replay_error": 1.9848012122736236e-13,
+      "cube_position": [
+        0.49229228058035046,
+        0.0830336574669764
+      ],
+      "bowl_position": [
+        0.677149399936378,
+        -0.1265075382714757
+      ]
+    },
+    {
+      "id": "train_065",
+      "slot": 81,
+      "transitions": 66,
+      "source_split": "train",
+      "episode_sha256": "b045c2b711a0b6ff089c3c54ce061cf088b53011b9c7d550be04e964bb791f69",
+      "replay_error": 2.4798055246214655e-14,
+      "cube_position": [
+        0.5050900475035863,
+        0.06854481087012605
+      ],
+      "bowl_position": [
+        0.6720641959321335,
+        -0.07504862940300931
+      ]
+    },
+    {
+      "id": "train_066",
+      "slot": 82,
+      "transitions": 78,
+      "source_split": "train",
+      "episode_sha256": "d04f3f48cd7bb7fa6e09abb3d95687c2b2ef753fb75ed40ef8c3b34b376eff13",
+      "replay_error": 1.993095498717603e-12,
+      "cube_position": [
+        0.495850051663317,
+        0.15323713190584756
+      ],
+      "bowl_position": [
+        0.6262009509894895,
+        -0.08417734649701586
+      ]
+    },
+    {
+      "id": "train_067",
+      "slot": 83,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "fd670e56af9e565afd6f4ac8880d5413ca4307b0d9af96478291f9bed5f75d13",
+      "replay_error": 3.062433844836979e-12,
+      "cube_position": [
+        0.4278465657828813,
+        -0.07522385235628981
+      ],
+      "bowl_position": [
+        0.5231791137259955,
+        0.12363090943064499
+      ]
+    },
+    {
+      "id": "train_068",
+      "slot": 84,
+      "transitions": 68,
+      "source_split": "train",
+      "episode_sha256": "baae36ec999ce20d6315ab39018d939c6abdbf1b50ad0d9c0c301e7fef8ca3b1",
+      "replay_error": 2.993161274389422e-13,
+      "cube_position": [
+        0.5030080496996098,
+        0.09364291277941689
+      ],
+      "bowl_position": [
+        0.5349269641456151,
+        -0.12376719056000653
+      ]
+    },
+    {
+      "id": "train_069",
+      "slot": 85,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "bf70652a6d401aec4e6b67c9ff09eff06da4a4a73357765b59cd6fb3c764b610",
+      "replay_error": 1.2586043318663087e-12,
+      "cube_position": [
+        0.4222884390332625,
+        -0.1004923975640368
+      ],
+      "bowl_position": [
+        0.4870262337275674,
+        0.11687702793606004
+      ]
+    },
+    {
+      "id": "train_070",
+      "slot": 86,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "6a0ba7e515b95e6e8e178576bd99fa6f06f0b0972890bd2d6c7fb51edf8e6b03",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5705530666378603,
+        -0.12086470069142571
+      ],
+      "bowl_position": [
+        0.40965790919882167,
+        0.017116105566243364
+      ]
+    },
+    {
+      "id": "train_071",
+      "slot": 87,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "cbdc8cb28bc28902df3860fc2ed7090526a643b79da52c0383d5e9f4bd46cc6f",
+      "replay_error": 4.64628335805628e-13,
+      "cube_position": [
+        0.6175750715393862,
+        -0.10296077021084368
+      ],
+      "bowl_position": [
+        0.44552901439961456,
+        0.09760280714891778
+      ]
+    },
+    {
+      "id": "train_072",
+      "slot": 88,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "d973bcfe7be2012d72789c2127b400fc3351935907742a5384b34fc35c29a661",
+      "replay_error": 2.559341627517142e-13,
+      "cube_position": [
+        0.6385502817841797,
+        0.04775035410504469
+      ],
+      "bowl_position": [
+        0.42268503870003843,
+        -0.0783156229522562
+      ]
+    },
+    {
+      "id": "train_073",
+      "slot": 89,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "2d06e2a3c104ae6d567e2409af95fa88bcd253ead8f9deae48ebcb1f4c884d28",
+      "replay_error": 1.6311951789305112e-13,
+      "cube_position": [
+        0.5932422179922103,
+        -0.11574990649211152
+      ],
+      "bowl_position": [
+        0.4970316707513456,
+        0.05505320423154984
+      ]
+    },
+    {
+      "id": "train_074",
+      "slot": 90,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "cce0e8c1f4924e3d013ee21e27c25242aedbe287b7c2c356b404449a133a253e",
+      "replay_error": 9.467981954003335e-13,
+      "cube_position": [
+        0.46434010459803415,
+        -0.09821991526215942
+      ],
+      "bowl_position": [
+        0.5965425019003002,
+        0.12689773982022146
+      ]
+    },
+    {
+      "id": "train_075",
+      "slot": 91,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "14ec139a17aa94c52673f55c7b0c4e2e1d7a6cab226a6bb66600f0b0c7a7db24",
+      "replay_error": 2.4495142041570177e-10,
+      "cube_position": [
+        0.6457638194327125,
+        -0.009068870094552147
+      ],
+      "bowl_position": [
+        0.4578338997378319,
+        -0.11885120948685593
+      ]
+    },
+    {
+      "id": "train_076",
+      "slot": 92,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "f396f4db415f1e289c08f2af44c858ff02067d8a81935f99b7591f19943a7ae7",
+      "replay_error": 4.8446802125567956e-12,
+      "cube_position": [
+        0.4276560288490025,
+        -0.000231088230761074
+      ],
+      "bowl_position": [
+        0.6687894885216881,
+        -0.03933929914571991
+      ]
+    },
+    {
+      "id": "train_077",
+      "slot": 93,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "a11edd0a9c02574eb34c12c4592c982f13e9f0ef63f80f6fbb9140fca6a11fdd",
+      "replay_error": 2.1725676813133532e-14,
+      "cube_position": [
+        0.6583507569582835,
+        0.13982988945830052
+      ],
+      "bowl_position": [
+        0.590651586907785,
+        -0.03355458970206069
+      ]
+    },
+    {
+      "id": "train_078",
+      "slot": 94,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "85bfb8e1b2a5d180a1de2ba56df9a07ab0ee55f8dcfbf27114c50483a9f9d376",
+      "replay_error": 8.294198661218388e-13,
+      "cube_position": [
+        0.5923317811119169,
+        -0.09820516133156329
+      ],
+      "bowl_position": [
+        0.4811830148951133,
+        0.12029673368548899
+      ]
+    },
+    {
+      "id": "train_079",
+      "slot": 95,
+      "transitions": 68,
+      "source_split": "train",
+      "episode_sha256": "040e3bc755c3ef9f22e049c3f158ef5907a264a96169cae0b0b2a399dae7dbde",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.45325413317225866,
+        0.040653776327841167
+      ],
+      "bowl_position": [
+        0.6768040170290901,
+        -0.04718528178053653
+      ]
+    },
+    {
+      "id": "train_080",
+      "slot": 96,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "e948d59e7164c5ecd533308dd625f35037ddfa386db7788dbc22f61c18b073aa",
+      "replay_error": 1.1648682018972067e-11,
+      "cube_position": [
+        0.46430343492178094,
+        0.10443891674158241
+      ],
+      "bowl_position": [
+        0.660805286613653,
+        0.04298640818763605
+      ]
+    },
+    {
+      "id": "train_081",
+      "slot": 97,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "ccd770ace30155d5321b94e749f6fe42ee2426fce663c82840c8a30da83cba57",
+      "replay_error": 2.4555912858659212e-12,
+      "cube_position": [
+        0.53947396387256,
+        -0.14501145498389814
+      ],
+      "bowl_position": [
+        0.6785090118863334,
+        0.047943476794178465
+      ]
+    },
+    {
+      "id": "train_082",
+      "slot": 98,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "15278cb1793dddfb6ec5ba24aa4d77f925f6824ca2bd6f69f28f705b77889b42",
+      "replay_error": 4.91631384453908e-12,
+      "cube_position": [
+        0.5646863187666101,
+        -0.09843531285178507
+      ],
+      "bowl_position": [
+        0.6075067162928635,
+        0.1267690755677471
+      ]
+    },
+    {
+      "id": "train_083",
+      "slot": 99,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "e9a08bbd924726e4b777b7fd3fc44807e8c01a526ee6b18f8947fb213e5635f2",
+      "replay_error": 4.418687638008123e-13,
+      "cube_position": [
+        0.5915471926890561,
+        -0.10328029172069311
+      ],
+      "bowl_position": [
+        0.4635534471593911,
+        0.08043987917770547
+      ]
+    },
+    {
+      "id": "train_084",
+      "slot": 100,
+      "transitions": 79,
+      "source_split": "train",
+      "episode_sha256": "5146c2a220c6157fac23767c29b5f5de082b241a41ec36e460aaf9bf627defb8",
+      "replay_error": 5.657696533489798e-13,
+      "cube_position": [
+        0.6782051568819235,
+        -0.012993509389134489
+      ],
+      "bowl_position": [
+        0.5013438763368786,
+        0.15909924254727792
+      ]
+    },
+    {
+      "id": "train_085",
+      "slot": 101,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "5996e5d52d3ab62b9fd6ecf21cde2545149ce5711e57314f6bfd409ff076511f",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.40019476094886164,
+        -0.10301784232844423
+      ],
+      "bowl_position": [
+        0.4740419818708004,
+        0.14995868271246024
+      ]
+    },
+    {
+      "id": "train_086",
+      "slot": 102,
+      "transitions": 80,
+      "source_split": "train",
+      "episode_sha256": "14e76b0c636c291cc229c12a0f896700a03216f87b075e8f918d28ba476f5a66",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6673609845872291,
+        -0.14636487911491075
+      ],
+      "bowl_position": [
+        0.44315800031651753,
+        -0.10087970315109353
+      ]
+    },
+    {
+      "id": "train_087",
+      "slot": 103,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "6058ce6e822d12c78ae4bf459f0ffc999f56541bc1bdb26fbb790af23341e294",
+      "replay_error": 7.141894409195995e-12,
+      "cube_position": [
+        0.6207199636861735,
+        -0.08724792174960484
+      ],
+      "bowl_position": [
+        0.4514670908088419,
+        0.10045698004335815
+      ]
+    },
+    {
+      "id": "train_088",
+      "slot": 104,
+      "transitions": 80,
+      "source_split": "train",
+      "episode_sha256": "3aa9150563ef39e61fd5acc1b2753a6fe870ebcc3e1883573f51430555fe76a1",
+      "replay_error": 2.06810263359003e-13,
+      "cube_position": [
+        0.6725154539514941,
+        0.13692083093859267
+      ],
+      "bowl_position": [
+        0.4780986439684414,
+        0.020743739589007895
+      ]
+    },
+    {
+      "id": "train_089",
+      "slot": 105,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "1c800f4657ce8af6920be0edd942303ffa73c49e1f0b92e1e5125151ca9354cf",
+      "replay_error": 2.064333320587028e-14,
+      "cube_position": [
+        0.583596592806984,
+        0.15323646213610573
+      ],
+      "bowl_position": [
+        0.6095798124945079,
+        -0.06849309396617305
+      ]
+    },
+    {
+      "id": "train_090",
+      "slot": 106,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "dcb27ce665ae81184188368f093dde2a6f11d7ac1c745603b2f9d70d752d4da0",
+      "replay_error": 3.108558817976093e-12,
+      "cube_position": [
+        0.506635792626156,
+        -0.13453146403068
+      ],
+      "bowl_position": [
+        0.5870489628932549,
+        0.10910269645065913
+      ]
+    },
+    {
+      "id": "train_091",
+      "slot": 107,
+      "transitions": 78,
+      "source_split": "train",
+      "episode_sha256": "d022451c35fcfa250f07f19e513ae659434edd6a504f8c4311df757dc8439629",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6199468522360312,
+        0.12496009036215198
+      ],
+      "bowl_position": [
+        0.5398539721753588,
+        -0.10744707080605735
+      ]
+    },
+    {
+      "id": "train_092",
+      "slot": 108,
+      "transitions": 74,
+      "source_split": "train",
+      "episode_sha256": "e35bd38a48f2ca5ff000fcaa97ba26f8e49b4d18c96f159768f5fcdfe26687fe",
+      "replay_error": 2.522981823460668e-13,
+      "cube_position": [
+        0.40668453146423633,
+        -0.009145616688141765
+      ],
+      "bowl_position": [
+        0.659506388176184,
+        -0.13742334036285786
+      ]
+    },
+    {
+      "id": "train_093",
+      "slot": 109,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "1e7a6d8f90d4ce05fae3e8a36df43e00d60d0265df3a2e8adf2933d87ce1401b",
+      "replay_error": 7.673306434696769e-13,
+      "cube_position": [
+        0.5181740378797155,
+        0.09808523941672516
+      ],
+      "bowl_position": [
+        0.4383271325139273,
+        -0.10127482597904326
+      ]
+    },
+    {
+      "id": "train_094",
+      "slot": 110,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "d3a6752871c23adc974df503d308af9f366fef65c773e348ef297cbd9bfca94d",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.42553279547648903,
+        0.07784346239743027
+      ],
+      "bowl_position": [
+        0.6173184322492841,
+        0.11804372394624409
+      ]
+    },
+    {
+      "id": "train_095",
+      "slot": 111,
+      "transitions": 65,
+      "source_split": "train",
+      "episode_sha256": "d682dbc1f4dcbcb77a844665faa615361def6537995935f2db36537008d0d58e",
+      "replay_error": 2.5703050798853155e-13,
+      "cube_position": [
+        0.5298474530495169,
+        0.06802940447761817
+      ],
+      "bowl_position": [
+        0.6450146538403475,
+        -0.09243236178368754
+      ]
+    },
+    {
+      "id": "train_096",
+      "slot": 112,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "b4670bb9cb4ff5fd70c0880894c2e53ef4407112b565801e8dce314014147e7f",
+      "replay_error": 9.98456872736142e-12,
+      "cube_position": [
+        0.6277550885826587,
+        -0.08420160648238803
+      ],
+      "bowl_position": [
+        0.6130394969224428,
+        0.10408565183715705
+      ]
+    },
+    {
+      "id": "train_097",
+      "slot": 113,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "44b40d7b96bdd258b3e81e7a839b0bcbb331e7eeaf78f6c1c444f4491d962bd6",
+      "replay_error": 5.300219488389678e-12,
+      "cube_position": [
+        0.4364126918392457,
+        -0.04082811692881915
+      ],
+      "bowl_position": [
+        0.6344497411133889,
+        0.03441554466717275
+      ]
+    },
+    {
+      "id": "train_098",
+      "slot": 114,
+      "transitions": 80,
+      "source_split": "train",
+      "episode_sha256": "28eca6da0ca8eb0d319ba7c3ce0cd22ceeb3fa8e8242325ea9029372786bd3b1",
+      "replay_error": 1.0973583153273125e-12,
+      "cube_position": [
+        0.6653216471456442,
+        0.1481251954311302
+      ],
+      "bowl_position": [
+        0.44790228878110183,
+        0.09921299668618008
+      ]
+    },
+    {
+      "id": "train_099",
+      "slot": 115,
+      "transitions": 65,
+      "source_split": "train",
+      "episode_sha256": "ff487b476ad5eea75d00ab43bcc1d7c04e7bcc11afd3b5f5e19efbfc6458ce46",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4049872340855496,
+        -0.003193858229115207
+      ],
+      "bowl_position": [
+        0.5557970035384965,
+        0.0988464492948389
+      ]
+    },
+    {
+      "id": "train_100",
+      "slot": 116,
+      "transitions": 70,
+      "source_split": "train",
+      "episode_sha256": "5567f5d55d4cfcc66d00b2a9a84c02dc4b9e18c59384e49228c445379600140a",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5890146120402499,
+        -0.0008890998293691155
+      ],
+      "bowl_position": [
+        0.4082325159055231,
+        -0.154810807331053
+      ]
+    },
+    {
+      "id": "train_101",
+      "slot": 117,
+      "transitions": 66,
+      "source_split": "train",
+      "episode_sha256": "57052409c7806c74509ec7630c855dd7ec0402046a8c8ed058211bd604555943",
+      "replay_error": 3.881561738694472e-12,
+      "cube_position": [
+        0.4145162002763952,
+        0.009595464672466499
+      ],
+      "bowl_position": [
+        0.5962865410249365,
+        -0.052644997028667255
+      ]
+    },
+    {
+      "id": "train_102",
+      "slot": 118,
+      "transitions": 61,
+      "source_split": "train",
+      "episode_sha256": "1e653f6189d5a65f040f7f3c222885eff874522b93606a9b6bd0c75ad4c24c71",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5125063079465842,
+        0.02201094567936522
+      ],
+      "bowl_position": [
+        0.6519605982901964,
+        -0.12931094869705403
+      ]
+    },
+    {
+      "id": "train_103",
+      "slot": 119,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "adcde9e67a605f6808f0a343d996eb176375471ca3b6c940dd410df8e5ebc094",
+      "replay_error": 1.9415025143132425e-13,
+      "cube_position": [
+        0.5215150710920711,
+        -0.10734933968184746
+      ],
+      "bowl_position": [
+        0.6799649747981339,
+        0.1509298554101463
+      ]
+    },
+    {
+      "id": "train_104",
+      "slot": 120,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "7f75d474a1507672a4def36de27ec20b3857d52064638f9b019277b8d1a4e80a",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.44099090977913097,
+        0.08585561675748295
+      ],
+      "bowl_position": [
+        0.6349974119950864,
+        -0.04699025531395066
+      ]
+    },
+    {
+      "id": "train_105",
+      "slot": 121,
+      "transitions": 70,
+      "source_split": "train",
+      "episode_sha256": "12fb6f972173dcb50acaa2fa2b80d8050321494229a663a793d7ead8fcbbcd6c",
+      "replay_error": 7.771561172376096e-16,
+      "cube_position": [
+        0.4367037284019478,
+        -0.05650767603816014
+      ],
+      "bowl_position": [
+        0.6573341725524257,
+        0.03813885894609882
+      ]
+    },
+    {
+      "id": "train_106",
+      "slot": 122,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "3b6e36b71d11423b598baf71c3485b6d5a7e6046e0b616568ccb2aad98331b10",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4067485760307547,
+        -0.08413802574317718
+      ],
+      "bowl_position": [
+        0.6097487659856498,
+        -0.1398236945413147
+      ]
+    },
+    {
+      "id": "train_107",
+      "slot": 123,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "6329a462b5f20220c55828f6b4fdc30e3c8f93a47546ee3b93a46f21f413fa14",
+      "replay_error": 1.0931811011971604e-12,
+      "cube_position": [
+        0.4044359443112718,
+        0.00038108046848289945
+      ],
+      "bowl_position": [
+        0.6270597281998816,
+        -0.12806114684801398
+      ]
+    },
+    {
+      "id": "train_108",
+      "slot": 124,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "831e92ef5babd862a43987bad79a82be4a0e2013dec271ba6b37b215ca39898a",
+      "replay_error": 6.5635942842775955e-12,
+      "cube_position": [
+        0.44419002880125247,
+        0.08630678248751185
+      ],
+      "bowl_position": [
+        0.6401980139641857,
+        -0.13482954017819596
+      ]
+    },
+    {
+      "id": "train_109",
+      "slot": 125,
+      "transitions": 70,
+      "source_split": "train",
+      "episode_sha256": "df814aaf5a9062cae90b004c0e665df30d2801c2051cc16a7f806ae05ce36b9f",
+      "replay_error": 1.979534591800558e-12,
+      "cube_position": [
+        0.6317490612622922,
+        -0.0028086723500692656
+      ],
+      "bowl_position": [
+        0.43220331609414214,
+        0.05110354268478677
+      ]
+    },
+    {
+      "id": "train_110",
+      "slot": 126,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "4a0e34b0007e9a404f33230904e164307eb1a2c130963d28c1cac3328d6e0675",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5004987495363904,
+        -0.0645080661008668
+      ],
+      "bowl_position": [
+        0.592731016117979,
+        0.148605679585726
+      ]
+    },
+    {
+      "id": "train_111",
+      "slot": 127,
+      "transitions": 80,
+      "source_split": "train",
+      "episode_sha256": "3825f45daa4e93b13bad2d29d050a616625f79d85fed25bf0c15fc543875a7ab",
+      "replay_error": 4.313216450668733e-13,
+      "cube_position": [
+        0.528765113775198,
+        0.1555358089182041
+      ],
+      "bowl_position": [
+        0.602001823057068,
+        -0.14764760914373315
+      ]
+    },
+    {
+      "id": "train_112",
+      "slot": 128,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "2ef6bcb88523e625c32bf445f8cb61c058da22d43b4c45c1ed1b27a1091222d8",
+      "replay_error": 8.928136008279353e-13,
+      "cube_position": [
+        0.45680841417922163,
+        0.13282479260692728
+      ],
+      "bowl_position": [
+        0.4289107708849568,
+        -0.13207193080604474
+      ]
+    },
+    {
+      "id": "train_113",
+      "slot": 129,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "52da1608d7363a30cdf2cb99c45418e33da1f914ef03cbfc990223da13abc356",
+      "replay_error": 8.744116541947733e-13,
+      "cube_position": [
+        0.5161383094458145,
+        0.10456038368688905
+      ],
+      "bowl_position": [
+        0.6660814135987295,
+        -0.11467271046214247
+      ]
+    },
+    {
+      "id": "train_114",
+      "slot": 130,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "2b07c563dd703cc702ba26a7b46ff91078a3aabac6b3c1e5ccc8466fbb6622e2",
+      "replay_error": 2.922939668081881e-13,
+      "cube_position": [
+        0.49481259997236776,
+        0.1457823801442097
+      ],
+      "bowl_position": [
+        0.5650855325426094,
+        -0.06770811985992417
+      ]
+    },
+    {
+      "id": "train_115",
+      "slot": 131,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "a4216517be02095f7a560a52af1d3320baf17e628dadc064052d71b1d03b15e6",
+      "replay_error": 1.5276668818842154e-13,
+      "cube_position": [
+        0.5527879310134675,
+        -0.06507250629072019
+      ],
+      "bowl_position": [
+        0.6638736954112271,
+        0.13919217769480433
+      ]
+    },
+    {
+      "id": "train_116",
+      "slot": 132,
+      "transitions": 78,
+      "source_split": "train",
+      "episode_sha256": "2eeb766696f4535192b127848c82b0cd622e59474b0f4c01beb45521894b9e48",
+      "replay_error": 2.3454571618231057e-12,
+      "cube_position": [
+        0.5078249527160283,
+        0.12839046244224142
+      ],
+      "bowl_position": [
+        0.5496237707680863,
+        -0.15931093442065378
+      ]
+    },
+    {
+      "id": "train_117",
+      "slot": 133,
+      "transitions": 68,
+      "source_split": "train",
+      "episode_sha256": "77045bd5bf8d8d1c60a97344aac62876404470203569715e8fb3751baa22a5d8",
+      "replay_error": 2.8608782010053346e-12,
+      "cube_position": [
+        0.5868563042911044,
+        0.0321197730038195
+      ],
+      "bowl_position": [
+        0.40478369698463446,
+        0.1549200592875412
+      ]
+    },
+    {
+      "id": "train_118",
+      "slot": 134,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "91aa27d520d3223fbe8b0b0b2215b82b3e6977b13b5da4594b491389cb95544a",
+      "replay_error": 1.8121838462486735e-11,
+      "cube_position": [
+        0.5780367988248456,
+        -0.11648712463735883
+      ],
+      "bowl_position": [
+        0.5558645451045962,
+        0.11039466773019573
+      ]
+    },
+    {
+      "id": "train_119",
+      "slot": 135,
+      "transitions": 74,
+      "source_split": "train",
+      "episode_sha256": "b50b06044ee233237a44c9ec6ef38afc0bf24d1cf3aab59cad9ecd33a7e1ae3d",
+      "replay_error": 2.768341111902828e-13,
+      "cube_position": [
+        0.6098738826332951,
+        -0.1360507277291988
+      ],
+      "bowl_position": [
+        0.46488025844363606,
+        0.012460158467011056
+      ]
+    },
+    {
+      "id": "train_120",
+      "slot": 136,
+      "transitions": 84,
+      "source_split": "train",
+      "episode_sha256": "9219f5fb9f53d17f72f12dc789ff36296dfd72c6ab81a1e3ad5e06ff9bb04c56",
+      "replay_error": 2.330774462322438e-13,
+      "cube_position": [
+        0.6255432137921549,
+        0.14527586356449274
+      ],
+      "bowl_position": [
+        0.4393663529194676,
+        -0.09781254625022336
+      ]
+    },
+    {
+      "id": "train_121",
+      "slot": 137,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "5b82621e954fb8d9231655141130d1071e0b235b323420bfc9a7526c55fc8869",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4390936192259576,
+        -0.033665603118044556
+      ],
+      "bowl_position": [
+        0.6701659517915718,
+        0.14256384584661894
+      ]
+    },
+    {
+      "id": "train_122",
+      "slot": 138,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "a55f8406c695b8da263168a7eb4cc410249b8f180ca81e52e3b25f41fd73a007",
+      "replay_error": 2.8815571979094057e-12,
+      "cube_position": [
+        0.6717281135923905,
+        -0.008894085433900046
+      ],
+      "bowl_position": [
+        0.4381798635676138,
+        -0.02721905182144191
+      ]
+    },
+    {
+      "id": "train_123",
+      "slot": 139,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "4da85cbaca1d3d3165baa9f7195102546ee9bb31106680c29d23fb1444e38d78",
+      "replay_error": 5.937355311034915e-12,
+      "cube_position": [
+        0.5933684800724401,
+        -0.1088823535088746
+      ],
+      "bowl_position": [
+        0.46764312666924857,
+        0.054486574975957755
+      ]
+    },
+    {
+      "id": "train_124",
+      "slot": 140,
+      "transitions": 66,
+      "source_split": "train",
+      "episode_sha256": "92c082ca42817905a1228e57ebeb395d4a332b7919dca331b38e95117096f221",
+      "replay_error": 3.074096532884596e-12,
+      "cube_position": [
+        0.5317642022411738,
+        0.05666080093521465
+      ],
+      "bowl_position": [
+        0.6298143208375965,
+        -0.13841301907729636
+      ]
+    },
+    {
+      "id": "train_125",
+      "slot": 141,
+      "transitions": 70,
+      "source_split": "train",
+      "episode_sha256": "03acc040f62b0098f0790e9af74a67398aafd7029d95feb748d7acc0c7ccbedb",
+      "replay_error": 1.7229551119157804e-12,
+      "cube_position": [
+        0.5274311085734364,
+        -0.1215995931203096
+      ],
+      "bowl_position": [
+        0.5421195329198567,
+        0.08358734749286423
+      ]
+    },
+    {
+      "id": "train_126",
+      "slot": 142,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "9654ed13b0c0f7ed6a4b2507ff34c5c81e618c9e6bb512c5feadb5906e255ec1",
+      "replay_error": 1.1642046358148748e-11,
+      "cube_position": [
+        0.44106550893590774,
+        0.07262755100293138
+      ],
+      "bowl_position": [
+        0.6407143741647441,
+        0.15952124212142862
+      ]
+    },
+    {
+      "id": "train_127",
+      "slot": 143,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "d2237400b587279a553782d64abdcc2bb93c0dc42db4eec7a6b2f8592ddf1d31",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.42429064006857686,
+        -0.1521905584174776
+      ],
+      "bowl_position": [
+        0.46646642238254077,
+        0.06124416448946878
+      ]
+    },
+    {
+      "id": "train_128",
+      "slot": 144,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "0ef1c59605db5bec195f92b04236d0f898a31d64ed21982f2011119845a3b0f9",
+      "replay_error": 4.567244852594188e-14,
+      "cube_position": [
+        0.6210181844321021,
+        -0.04889705170348602
+      ],
+      "bowl_position": [
+        0.44440041367813393,
+        0.03677110664021693
+      ]
+    },
+    {
+      "id": "train_129",
+      "slot": 145,
+      "transitions": 65,
+      "source_split": "train",
+      "episode_sha256": "80cf12f7331f1a074b5b21cdc30e1c00e682d9205d497ed165444f6047c3bd7d",
+      "replay_error": 3.000932835561798e-13,
+      "cube_position": [
+        0.5295125220031243,
+        0.06271478541986766
+      ],
+      "bowl_position": [
+        0.6042820552677274,
+        -0.12746743010815956
+      ]
+    },
+    {
+      "id": "train_130",
+      "slot": 146,
+      "transitions": 63,
+      "source_split": "train",
+      "episode_sha256": "dff1da1f1d02d2a897d7183e60de5a82ee444cdfebdf9ca1df1461f0ee6d9678",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.46298834863972016,
+        0.0039740054417517715
+      ],
+      "bowl_position": [
+        0.6167173112026546,
+        0.13912524458700085
+      ]
+    },
+    {
+      "id": "train_131",
+      "slot": 147,
+      "transitions": 79,
+      "source_split": "train",
+      "episode_sha256": "efe905c5fb177f413a138d11849d490eacad3de4b009982e057fc66b106854ea",
+      "replay_error": 1.5757395388504847e-12,
+      "cube_position": [
+        0.6300904459951845,
+        0.1355100455674862
+      ],
+      "bowl_position": [
+        0.5892284127285856,
+        -0.10964271270729985
+      ]
+    },
+    {
+      "id": "train_132",
+      "slot": 148,
+      "transitions": 88,
+      "source_split": "train",
+      "episode_sha256": "0f01c15d80f160dcff2c68dd1be7b68e77667aa1f7ae610bcff732a0aad0309a",
+      "replay_error": 2.7372548672133235e-13,
+      "cube_position": [
+        0.6741513526877575,
+        0.14926580471053918
+      ],
+      "bowl_position": [
+        0.49827476091744954,
+        -0.09807084578798403
+      ]
+    },
+    {
+      "id": "train_133",
+      "slot": 149,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "810b7653742fffab86c61f42c5ddd98e685f2f9d46c0aa40fc1f61a6be2e86ca",
+      "replay_error": 1.094826239658186e-12,
+      "cube_position": [
+        0.6081706583115211,
+        -0.10423115871577383
+      ],
+      "bowl_position": [
+        0.5969027247381256,
+        0.09262939969953049
+      ]
+    },
+    {
+      "id": "train_134",
+      "slot": 150,
+      "transitions": 70,
+      "source_split": "train",
+      "episode_sha256": "f866842059d9a9ef66bc601ae2e1d63786af65972b83abf233820b1f35f2168c",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.403717521530473,
+        -0.025628880971421745
+      ],
+      "bowl_position": [
+        0.603035494010962,
+        -0.14089627448733413
+      ]
+    },
+    {
+      "id": "train_135",
+      "slot": 151,
+      "transitions": 79,
+      "source_split": "train",
+      "episode_sha256": "8f7f62ce7f6fa485e59d5a37d852b86ac721a9dc44a173dc68fb22c32b71f260",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6277501464368782,
+        -0.14576181649880435
+      ],
+      "bowl_position": [
+        0.4697501730053462,
+        0.03376607422033384
+      ]
+    },
+    {
+      "id": "train_136",
+      "slot": 152,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "3f984a0f05c79898e4dbc5dc9955669f456ce2b9d89c51b7ec6a50ee6f2748f0",
+      "replay_error": 8.721517151024788e-12,
+      "cube_position": [
+        0.4736510921502065,
+        -0.09855135053967942
+      ],
+      "bowl_position": [
+        0.6168565265078888,
+        0.087788542336137
+      ]
+    },
+    {
+      "id": "train_137",
+      "slot": 153,
+      "transitions": 66,
+      "source_split": "train",
+      "episode_sha256": "5cf2a91a779099e572b8c09504a19b2b10a4f07974fcaa2d81db44cb90169e34",
+      "replay_error": 5.843589501175472e-13,
+      "cube_position": [
+        0.41081595275330657,
+        0.015296783855378138
+      ],
+      "bowl_position": [
+        0.5830025728593942,
+        -0.06017137611612846
+      ]
+    },
+    {
+      "id": "train_138",
+      "slot": 154,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "def9daa04e10465808d0bfd1e733f4168ccbe4c12aa672f65fa52abdbf26ab8d",
+      "replay_error": 2.8149883455858995e-12,
+      "cube_position": [
+        0.6538645991888917,
+        -0.08970236192230126
+      ],
+      "bowl_position": [
+        0.5254305370849232,
+        0.04002554930644276
+      ]
+    },
+    {
+      "id": "train_139",
+      "slot": 155,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "925b872210f5d29c93bd528fd7d149448a40f9fe5e540acad31e0ebf51c93c17",
+      "replay_error": 2.5426327709965335e-12,
+      "cube_position": [
+        0.5744130246732462,
+        -0.1332873238458689
+      ],
+      "bowl_position": [
+        0.5519435751313729,
+        0.07368875861963392
+      ]
+    },
+    {
+      "id": "train_140",
+      "slot": 156,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "bd9def0c4c273a834bc909d01ddc19c7b439d0c8afda60c03039665a8a51bd93",
+      "replay_error": 1.2077977507019e-12,
+      "cube_position": [
+        0.6205830974608063,
+        0.05817846651077151
+      ],
+      "bowl_position": [
+        0.43495015358676575,
+        0.07419980510980306
+      ]
+    },
+    {
+      "id": "train_141",
+      "slot": 157,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "38919e941df763340427693428b8e7307cb76910c0fa084390d345c30e2ddc14",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4307806951993144,
+        0.045561105699102065
+      ],
+      "bowl_position": [
+        0.5664812191512594,
+        -0.10961580201740226
+      ]
+    },
+    {
+      "id": "train_142",
+      "slot": 158,
+      "transitions": 80,
+      "source_split": "train",
+      "episode_sha256": "b0d0eecbc7bcf503e4cb45a9b42781b5fd44a41ff7c88521e7a2b24ecb7f5af9",
+      "replay_error": 1.2232992396832287e-12,
+      "cube_position": [
+        0.4167707267693274,
+        0.12757435401795728
+      ],
+      "bowl_position": [
+        0.48432599145490507,
+        -0.15748151211707598
+      ]
+    },
+    {
+      "id": "train_143",
+      "slot": 159,
+      "transitions": 79,
+      "source_split": "train",
+      "episode_sha256": "5a12f41d767dd55cd68f61e38b865274fd6d25b9d0f5535877a0d64f32506896",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6615369096761039,
+        -0.02975106573445892
+      ],
+      "bowl_position": [
+        0.40872513691334533,
+        0.06076298941600513
+      ]
+    },
+    {
+      "id": "train_144",
+      "slot": 160,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "40a3024b6e85593f1d4824cfa41bcc56a7c3d3b4ecf92f88b8621a84cfa388ea",
+      "replay_error": 2.885747196756938e-13,
+      "cube_position": [
+        0.5249979402309404,
+        0.11389222327152566
+      ],
+      "bowl_position": [
+        0.5444329008395776,
+        -0.12613560599391666
+      ]
+    },
+    {
+      "id": "train_145",
+      "slot": 161,
+      "transitions": 78,
+      "source_split": "train",
+      "episode_sha256": "c711536db12993fbc5d0fe21a1014f15e3df0a203661fa66cdff08c94bfb27d6",
+      "replay_error": 5.120209811693144e-14,
+      "cube_position": [
+        0.6119341733456045,
+        -0.15903399549332028
+      ],
+      "bowl_position": [
+        0.42488385288731845,
+        -0.037990029085600306
+      ]
+    },
+    {
+      "id": "train_146",
+      "slot": 162,
+      "transitions": 64,
+      "source_split": "train",
+      "episode_sha256": "9ee09003c36857fbb06381af99917ef1becce584c363e84c4c1b50e54c9c37de",
+      "replay_error": 2.7102453614702426e-10,
+      "cube_position": [
+        0.4340530184478285,
+        -0.039278703193078995
+      ],
+      "bowl_position": [
+        0.5549228202160954,
+        0.09464900673710094
+      ]
+    },
+    {
+      "id": "train_147",
+      "slot": 163,
+      "transitions": 74,
+      "source_split": "train",
+      "episode_sha256": "d8eeb3b8409640503d722f0d46807519fa40c9c5504f3619d99dcfd53b52dc93",
+      "replay_error": 9.976464099281657e-13,
+      "cube_position": [
+        0.42736250507405255,
+        0.05004827314705608
+      ],
+      "bowl_position": [
+        0.6742198291837711,
+        -0.08775452634578834
+      ]
+    },
+    {
+      "id": "train_148",
+      "slot": 164,
+      "transitions": 79,
+      "source_split": "train",
+      "episode_sha256": "34941daba7011dd1bf7c57efc5fe53cdc5caa8bc89b34fd45fecbce008b2d860",
+      "replay_error": 3.1864094696132383e-13,
+      "cube_position": [
+        0.44523352574117514,
+        -0.1556744945403682
+      ],
+      "bowl_position": [
+        0.6381062431354687,
+        0.031061808473330964
+      ]
+    },
+    {
+      "id": "train_149",
+      "slot": 165,
+      "transitions": 63,
+      "source_split": "train",
+      "episode_sha256": "76a2f249f6d4321155e06dbee1a9687966a033680a8855a1c65ae7a4c6dfce0c",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4759828104339407,
+        -0.011669186980712993
+      ],
+      "bowl_position": [
+        0.6741886641655293,
+        -0.033964746098840023
+      ]
+    },
+    {
+      "id": "train_150",
+      "slot": 166,
+      "transitions": 81,
+      "source_split": "train",
+      "episode_sha256": "1c9f1713e53d1f7b6666cd73e28af34cc544d34cfa1a8e18da93eb02a5b3e41a",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6788672836064755,
+        0.10787129038295987
+      ],
+      "bowl_position": [
+        0.42569129671417877,
+        0.14042713481585423
+      ]
+    },
+    {
+      "id": "train_151",
+      "slot": 167,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "c61fb798be8e0113ec7aef6775228e7e015cb2e1ce1a90bc47a21020962b76a5",
+      "replay_error": 5.285549775635445e-12,
+      "cube_position": [
+        0.4264706007437266,
+        -0.03721308681426379
+      ],
+      "bowl_position": [
+        0.6340643837605991,
+        0.020571798626953176
+      ]
+    },
+    {
+      "id": "train_152",
+      "slot": 168,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "1be14b81e76bed68422aa1f0a9cded3cf8087d6ae5a912b1a7160bba153c52fe",
+      "replay_error": 7.891465259035613e-13,
+      "cube_position": [
+        0.621966886850323,
+        0.09786162299459918
+      ],
+      "bowl_position": [
+        0.5604814120740453,
+        -0.1349337925065836
+      ]
+    },
+    {
+      "id": "train_153",
+      "slot": 169,
+      "transitions": 81,
+      "source_split": "train",
+      "episode_sha256": "06e73bdc9376b28a03aa4a8fdf743b1491c7f3c2e7a9068563ca721c899045ae",
+      "replay_error": 1.9436674492112616e-12,
+      "cube_position": [
+        0.677832728439734,
+        -0.06387166915450368
+      ],
+      "bowl_position": [
+        0.4932244659914379,
+        0.1298008136586315
+      ]
+    },
+    {
+      "id": "train_154",
+      "slot": 170,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "339676e89d4247f4984b5921caa342e479caf1d782a463ef4dd84a24b5498779",
+      "replay_error": 3.0607461010134784e-13,
+      "cube_position": [
+        0.6447418473561111,
+        -0.1039687853847802
+      ],
+      "bowl_position": [
+        0.5478369323636612,
+        0.06467025047355389
+      ]
+    },
+    {
+      "id": "train_155",
+      "slot": 171,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "3bb8f0cdcde9d38c711583b4b2964167850c140c465c92faa43821367b630411",
+      "replay_error": 1.939365334990839e-12,
+      "cube_position": [
+        0.5372869762725461,
+        -0.12798880285184147
+      ],
+      "bowl_position": [
+        0.4701883914026775,
+        0.06881379050714809
+      ]
+    },
+    {
+      "id": "train_156",
+      "slot": 172,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "b6967cf9cc170efae9a3c0000736a899e695cbcb69c2b0b4b23706041abf0bb8",
+      "replay_error": 7.009504088273388e-12,
+      "cube_position": [
+        0.4393747996897413,
+        0.06807002614376578
+      ],
+      "bowl_position": [
+        0.6382141484391688,
+        0.10186809223366662
+      ]
+    },
+    {
+      "id": "train_157",
+      "slot": 173,
+      "transitions": 80,
+      "source_split": "train",
+      "episode_sha256": "cb00cd0e39588f0e61ec64e9b042369b14bb2b3028bfcf791bbf94433aa52878",
+      "replay_error": 6.9487079482111426e-12,
+      "cube_position": [
+        0.6604919642616542,
+        0.1424029390887743
+      ],
+      "bowl_position": [
+        0.5056091027125333,
+        -0.043576692122477535
+      ]
+    },
+    {
+      "id": "train_158",
+      "slot": 174,
+      "transitions": 65,
+      "source_split": "train",
+      "episode_sha256": "798ad215b03895119ea0ad9432d6d9628160d10c1b21e62ced6b0d1538aeef7e",
+      "replay_error": 6.0665478651384075e-12,
+      "cube_position": [
+        0.45558672593408295,
+        -0.04646250068279691
+      ],
+      "bowl_position": [
+        0.6620137097786994,
+        -0.0182080784337483
+      ]
+    },
+    {
+      "id": "train_159",
+      "slot": 175,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "1341878ed446141ee4f2edede199572f957d6855e3b7bb798e145ad01a33eb22",
+      "replay_error": 1.77174458246015e-11,
+      "cube_position": [
+        0.6619088448904445,
+        -0.02011882694514803
+      ],
+      "bowl_position": [
+        0.4582499938203924,
+        -0.01570560704132344
+      ]
+    },
+    {
+      "id": "train_160",
+      "slot": 176,
+      "transitions": 83,
+      "source_split": "train",
+      "episode_sha256": "234bb1062790ec25b94f37b6bd55bb4a5b235cc4c902e8a51cd958c38d2d2d7b",
+      "replay_error": 1.0091233404452282e-12,
+      "cube_position": [
+        0.6790648662146108,
+        -0.10669346680455387
+      ],
+      "bowl_position": [
+        0.47834342588870404,
+        0.08647394741153239
+      ]
+    },
+    {
+      "id": "train_161",
+      "slot": 177,
+      "transitions": 74,
+      "source_split": "train",
+      "episode_sha256": "0395401930f8cd38dbea90c36722cedfaf3559c5d6ac0651d80fe4b98a0c5c62",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5616890077952713,
+        0.14155831977512093
+      ],
+      "bowl_position": [
+        0.5921343869467083,
+        -0.08112362691863415
+      ]
+    },
+    {
+      "id": "train_162",
+      "slot": 178,
+      "transitions": 83,
+      "source_split": "train",
+      "episode_sha256": "39e3b3923d14ff62c133022dbb9caba582d9a7e18b007e916e54fb6320ca4442",
+      "replay_error": 3.5798739717197487e-12,
+      "cube_position": [
+        0.6436511069937922,
+        -0.11001766967384981
+      ],
+      "bowl_position": [
+        0.4221125460171908,
+        0.0979870144892595
+      ]
+    },
+    {
+      "id": "train_163",
+      "slot": 179,
+      "transitions": 82,
+      "source_split": "train",
+      "episode_sha256": "b5a56811a7fff8f12a2e015f574ba9ea1007acc1ec2a56facd8faf7d23d591c9",
+      "replay_error": 1.1525826339172387e-11,
+      "cube_position": [
+        0.673952706622028,
+        -0.12481991093129928
+      ],
+      "bowl_position": [
+        0.6679976060498596,
+        0.12429001985686455
+      ]
+    },
+    {
+      "id": "train_164",
+      "slot": 180,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "06a494944b3b62e774aab24a788d609792add85a9b52c79acb829f7f5de6ab3a",
+      "replay_error": 1.5765166949677223e-14,
+      "cube_position": [
+        0.4379034709809511,
+        -0.12476331476661055
+      ],
+      "bowl_position": [
+        0.5324284275406436,
+        0.13253784320275191
+      ]
+    },
+    {
+      "id": "train_165",
+      "slot": 181,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "9d489dfa192d902ec0164a7ae561eb60af7fff243f4bc848551ef3f4a889680a",
+      "replay_error": 9.391654121060355e-13,
+      "cube_position": [
+        0.5656357247922549,
+        -0.06567978702614717
+      ],
+      "bowl_position": [
+        0.6754553195383581,
+        0.15340254126755967
+      ]
+    },
+    {
+      "id": "train_166",
+      "slot": 182,
+      "transitions": 68,
+      "source_split": "train",
+      "episode_sha256": "dc4fc87bceab364bf242a8857967d4ddbe7ee8a439b816e8550f7eed00fedea3",
+      "replay_error": 8.053799465339232e-12,
+      "cube_position": [
+        0.425730694374626,
+        0.05505762343436917
+      ],
+      "bowl_position": [
+        0.5804304661677577,
+        -0.09641633404899114
+      ]
+    },
+    {
+      "id": "train_167",
+      "slot": 183,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "4dc6e0ac78f2c85b79db210f345f5c353fa3da52dcc9a2df3a2dd63540d368f2",
+      "replay_error": 1.545430450278218e-13,
+      "cube_position": [
+        0.5506284976207582,
+        0.10152633665884149
+      ],
+      "bowl_position": [
+        0.4652398739459107,
+        -0.12155942555867508
+      ]
+    },
+    {
+      "id": "train_168",
+      "slot": 184,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "8d283d920aeebedd738394706e86af06449d299cfe4a6ee9420d414ef42cd3b5",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5906061675666312,
+        0.14958591619750802
+      ],
+      "bowl_position": [
+        0.4051348599157286,
+        0.02790261231734007
+      ]
+    },
+    {
+      "id": "train_169",
+      "slot": 185,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "d8097dc25106cdb178c3cff5ec1e433b19466c3e1f634a4e762519629f52c300",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.43650350682514166,
+        0.10622931991723299
+      ],
+      "bowl_position": [
+        0.6264751009571791,
+        0.007535523917061937
+      ]
+    },
+    {
+      "id": "train_170",
+      "slot": 186,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "9e6fb4735742c224f5b7c85f5a7dcbf6e62ea0e5d7eb801a1cd976b041ee5228",
+      "replay_error": 9.159339953157541e-13,
+      "cube_position": [
+        0.4641136099868742,
+        -0.14374229552779788
+      ],
+      "bowl_position": [
+        0.5525991486930075,
+        0.10325813418643456
+      ]
+    },
+    {
+      "id": "train_171",
+      "slot": 187,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "f04d3e137b45a9fee026ed3da02b22141a7e074e5ac226c1c92e4b4632de223a",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5948381723036343,
+        -0.10918275061605388
+      ],
+      "bowl_position": [
+        0.48018801029270675,
+        0.07703484784942681
+      ]
+    },
+    {
+      "id": "train_172",
+      "slot": 188,
+      "transitions": 83,
+      "source_split": "train",
+      "episode_sha256": "29b0ef2f33c4e7b04ec0817556371f310f7692afe9de0302669067200fef58ed",
+      "replay_error": 5.898614929833457e-13,
+      "cube_position": [
+        0.6278484599782453,
+        0.15449980771932809
+      ],
+      "bowl_position": [
+        0.4456519695274158,
+        -0.06911298009544481
+      ]
+    },
+    {
+      "id": "train_173",
+      "slot": 189,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "ec2919e587e511684f71796b01327ece03c600d4fd6968b1b6700b0c1914b0eb",
+      "replay_error": 1.8457457784393227e-12,
+      "cube_position": [
+        0.45262094951423726,
+        0.11798910534959696
+      ],
+      "bowl_position": [
+        0.6743257349264936,
+        0.12732257421507476
+      ]
+    },
+    {
+      "id": "train_174",
+      "slot": 190,
+      "transitions": 80,
+      "source_split": "train",
+      "episode_sha256": "85f543b40addec75acd8a153ebee743a51f05cd05c7f7bc94904b4026cde3a1e",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6022628998088022,
+        0.11807473622479414
+      ],
+      "bowl_position": [
+        0.4627372826037484,
+        -0.14363039222591664
+      ]
+    },
+    {
+      "id": "train_175",
+      "slot": 191,
+      "transitions": 70,
+      "source_split": "train",
+      "episode_sha256": "198958cc5b5b8ccebfa23316a2b6cd42b43a3a6126aa3473fa3ce1c1d451fe27",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6176327118720728,
+        -0.05228253960591708
+      ],
+      "bowl_position": [
+        0.4227317553373226,
+        -0.12389230723830451
+      ]
+    },
+    {
+      "id": "train_176",
+      "slot": 192,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "be6b92070bc5c146b2ac00ffd218ec34aa2644e44182b8e9e3da316bc0286e72",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4235138713076919,
+        0.023402571051868437
+      ],
+      "bowl_position": [
+        0.6265594243063124,
+        -0.04746591777249176
+      ]
+    },
+    {
+      "id": "train_177",
+      "slot": 193,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "c4705db825d6df95f73e7c3da13400813c2466e419bba27d3b3c43aaceb9c988",
+      "replay_error": 1.6871504193716191e-12,
+      "cube_position": [
+        0.46310766971850686,
+        -0.13117915039175823
+      ],
+      "bowl_position": [
+        0.47548234255973737,
+        0.13229650237342283
+      ]
+    },
+    {
+      "id": "train_178",
+      "slot": 194,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "c27d6f04d0f4aef0e1423ee48d694441b3a93188901905f196f7c3a25c7243c8",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6741730938904007,
+        0.07872467380830415
+      ],
+      "bowl_position": [
+        0.4532966655015862,
+        0.014022827871886285
+      ]
+    },
+    {
+      "id": "train_179",
+      "slot": 195,
+      "transitions": 79,
+      "source_split": "train",
+      "episode_sha256": "af6fe6867ac3cd5c71063d12e19d4330d917f372acdad665b7715227bc341c8c",
+      "replay_error": 9.137135492665038e-14,
+      "cube_position": [
+        0.6019178257797517,
+        0.14090835002232033
+      ],
+      "bowl_position": [
+        0.45648362853629604,
+        -0.08221534230421358
+      ]
+    },
+    {
+      "id": "train_180",
+      "slot": 196,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "6756273e961d1cee1eda3d7280646d1b339d30fd126f3ce2e85499c7c3aa6083",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4103034344684119,
+        0.12427109582436359
+      ],
+      "bowl_position": [
+        0.5997691374461573,
+        0.02427524198251625
+      ]
+    },
+    {
+      "id": "train_181",
+      "slot": 197,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "d6bafd5eb39589e0694644d622c6ae04ce6ad69be9be403e17810b91d27de8fc",
+      "replay_error": 9.914916110354e-13,
+      "cube_position": [
+        0.6101265124382831,
+        -0.12101483994399682
+      ],
+      "bowl_position": [
+        0.43835306502352467,
+        0.06140793572446395
+      ]
+    },
+    {
+      "id": "train_182",
+      "slot": 198,
+      "transitions": 82,
+      "source_split": "train",
+      "episode_sha256": "0c5f1e0245dbeaab977103dcb312915044debb39f9be5e84ef40da5f7d20704c",
+      "replay_error": 3.880229471064922e-13,
+      "cube_position": [
+        0.46035008449993847,
+        0.1419678031713966
+      ],
+      "bowl_position": [
+        0.6719881095722534,
+        -0.09331343633780687
+      ]
+    },
+    {
+      "id": "train_183",
+      "slot": 199,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "ef8d8aabc9065905bbf69d3c0be96db21519d1ef02aeb0de3194d6b4fc4f9849",
+      "replay_error": 1.885366862630633e-13,
+      "cube_position": [
+        0.5589909115332424,
+        0.1349528486838472
+      ],
+      "bowl_position": [
+        0.43250418121915496,
+        -0.041221709533880074
+      ]
+    },
+    {
+      "id": "train_184",
+      "slot": 200,
+      "transitions": 65,
+      "source_split": "train",
+      "episode_sha256": "35ca98415348b455489013342cf5c91b3d78a1db9a75a03f3f1152a8dab1f864",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.46079702185114224,
+        -0.039640539395882045
+      ],
+      "bowl_position": [
+        0.6673068984116405,
+        0.02470659565367459
+      ]
+    },
+    {
+      "id": "train_185",
+      "slot": 201,
+      "transitions": 62,
+      "source_split": "train",
+      "episode_sha256": "a81b66f7f60380920e3128341227d49870bddc47b22bf65a3293fe271f287dcb",
+      "replay_error": 1.483248983927518e-12,
+      "cube_position": [
+        0.5110676425058183,
+        0.02378793492325386
+      ],
+      "bowl_position": [
+        0.4244187147366611,
+        -0.1521017760459242
+      ]
+    },
+    {
+      "id": "train_186",
+      "slot": 202,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "ad343b910fc9b48e4113b4f0bd327ba09fd266d33a96b3c1dae3c743a8cb231c",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6180513692852235,
+        0.10284917973966114
+      ],
+      "bowl_position": [
+        0.5197888685970884,
+        -0.06076198011186545
+      ]
+    },
+    {
+      "id": "train_187",
+      "slot": 203,
+      "transitions": 74,
+      "source_split": "train",
+      "episode_sha256": "bc07d4be7c4f10c5dfbd8699df00b389e269b4f3f5217d1a2d3713262d7c5b67",
+      "replay_error": 8.069790775580206e-13,
+      "cube_position": [
+        0.5916064342910986,
+        0.1586668039423024
+      ],
+      "bowl_position": [
+        0.42497909482473745,
+        0.058658029321981574
+      ]
+    },
+    {
+      "id": "train_188",
+      "slot": 204,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "ff22d2729be4af30b92222a1a814c60f916fb6c19f4c6ecb52dcd21a3c883d3d",
+      "replay_error": 1.5254325580471573e-12,
+      "cube_position": [
+        0.5078482739451402,
+        0.09890443757711395
+      ],
+      "bowl_position": [
+        0.6666081800297446,
+        -0.09846998210973247
+      ]
+    },
+    {
+      "id": "train_189",
+      "slot": 205,
+      "transitions": 66,
+      "source_split": "train",
+      "episode_sha256": "6bf1ecb3e4fa9e37a5d6474dc609caf617c05941b2f1ced5c893a206fdf85c2e",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4331580164911816,
+        0.05589276810760865
+      ],
+      "bowl_position": [
+        0.4254245583765588,
+        -0.14143017459063933
+      ]
+    },
+    {
+      "id": "train_190",
+      "slot": 206,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "1637846b3c8a3f2e92eadcf80c844474d4c4e7be2dbdf6993f7163772ef50973",
+      "replay_error": 7.11377091556691e-12,
+      "cube_position": [
+        0.5954740594007272,
+        -0.09463787680067362
+      ],
+      "bowl_position": [
+        0.4994374886552415,
+        0.0808586706349708
+      ]
+    },
+    {
+      "id": "train_191",
+      "slot": 207,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "a154172554417d69d11d3579c48ffa7d4048adb5d0f54daad22d12874dd8b885",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.42095900056216135,
+        -0.10319754793596139
+      ],
+      "bowl_position": [
+        0.5233945711825125,
+        0.08538446515018859
+      ]
+    },
+    {
+      "id": "train_192",
+      "slot": 208,
+      "transitions": 66,
+      "source_split": "train",
+      "episode_sha256": "4f0ff4d16398454c110ccefedfe5d7b2e72277a822571bcb9aaf124c067b58d2",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4670089180008108,
+        -0.05280137908652922
+      ],
+      "bowl_position": [
+        0.5844252849439994,
+        0.12251213415016472
+      ]
+    },
+    {
+      "id": "train_193",
+      "slot": 209,
+      "transitions": 79,
+      "source_split": "train",
+      "episode_sha256": "22720d40d2e9e7822fab8c64dc6268e5e5c6129fe96b199045f5945e0f6cc5ef",
+      "replay_error": 9.937814014294002e-12,
+      "cube_position": [
+        0.6420764666241057,
+        0.07034460812196468
+      ],
+      "bowl_position": [
+        0.4187676808538779,
+        -0.0788968632153555
+      ]
+    },
+    {
+      "id": "train_194",
+      "slot": 210,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "16e0a6cdadff8bb7c6504fc9e077e6406830f9fff096d5237d3a7339d7ab4a54",
+      "replay_error": 6.308342197113018e-12,
+      "cube_position": [
+        0.5566391834994643,
+        0.04262364800405905
+      ],
+      "bowl_position": [
+        0.4171604843235573,
+        -0.15152446048715074
+      ]
+    },
+    {
+      "id": "train_195",
+      "slot": 211,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "2eebdf3fae7ef6a2a19e39240b7962e4711ffb24f28f7dd52ca623eed19c57a1",
+      "replay_error": 1.2936873794444637e-13,
+      "cube_position": [
+        0.4772320573412055,
+        -0.0881680039803532
+      ],
+      "bowl_position": [
+        0.5960395844903896,
+        0.1075546559702304
+      ]
+    },
+    {
+      "id": "train_196",
+      "slot": 212,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "0823b4428514f39ef170edd7ab7247bd2f5fba717e106d09b131b3695ee7989b",
+      "replay_error": 8.643086246706844e-14,
+      "cube_position": [
+        0.5421003443579354,
+        0.1391476768005267
+      ],
+      "bowl_position": [
+        0.48226548073252684,
+        -0.11230776558864275
+      ]
+    },
+    {
+      "id": "train_197",
+      "slot": 213,
+      "transitions": 66,
+      "source_split": "train",
+      "episode_sha256": "3484fd39e16dbfad16347b6f52db05ac1c4829d4c5b04c08cf748ae0ad89bf90",
+      "replay_error": 7.993605777301127e-14,
+      "cube_position": [
+        0.5788684740443912,
+        0.06015837106224648
+      ],
+      "bowl_position": [
+        0.5833797034056503,
+        -0.12087794696256651
+      ]
+    },
+    {
+      "id": "train_198",
+      "slot": 214,
+      "transitions": 64,
+      "source_split": "train",
+      "episode_sha256": "7aa0befb55d8bcd7e7bebd32823c5f6d75128714eab5aff90a3084ac3663b6af",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5321563676173612,
+        0.06329401978250804
+      ],
+      "bowl_position": [
+        0.6236473562523965,
+        -0.12473930643300171
+      ]
+    },
+    {
+      "id": "train_199",
+      "slot": 215,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "8d2276d116e956fbae78af2a96c8b039878ef9f1028ee171b9d1515790a4bd4b",
+      "replay_error": 2.525757381022231e-15,
+      "cube_position": [
+        0.4835340201890588,
+        -0.15830873228870762
+      ],
+      "bowl_position": [
+        0.5934275442671815,
+        0.04151005003256941
+      ]
+    },
+    {
+      "id": "train_200",
+      "slot": 216,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "f5ed757556c985b154afc6f8315685291961f6c7d1c98c8148f1cfcc6316beea",
+      "replay_error": 8.0629947163402e-14,
+      "cube_position": [
+        0.4399063296100655,
+        -0.09744956055787092
+      ],
+      "bowl_position": [
+        0.591111534035605,
+        0.15720603095851363
+      ]
+    },
+    {
+      "id": "train_201",
+      "slot": 217,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "a8f4a4b6d84ba3eee3334cc343013e55d0cd2680b836a8d8b5d2f560f15070b0",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4872681624618343,
+        0.09628151113505251
+      ],
+      "bowl_position": [
+        0.6084954561625942,
+        -0.0768172347024175
+      ]
+    },
+    {
+      "id": "train_202",
+      "slot": 218,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "b53deae633cc813fd00cde2519a4b895093a63fbc8cd1875e8ba95296b85b57e",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6093244612222944,
+        0.08655474929929945
+      ],
+      "bowl_position": [
+        0.40713651022466535,
+        0.10939844248780062
+      ]
+    },
+    {
+      "id": "train_203",
+      "slot": 219,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "cd545df8556d63dac91aa06ccebecb796f7ae737e640eae0d4964ea6bad540ea",
+      "replay_error": 1.0521677266731508e-11,
+      "cube_position": [
+        0.43575887639060495,
+        -0.03262188806351965
+      ],
+      "bowl_position": [
+        0.6778285200336834,
+        -0.06289231922175148
+      ]
+    },
+    {
+      "id": "train_204",
+      "slot": 220,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "de3367010f41d7d6d2b91886c222e49d4dbbca5915b04f3c3d900bd06ca99baa",
+      "replay_error": 2.552402733613235e-13,
+      "cube_position": [
+        0.5725876927784496,
+        -0.14017057909665692
+      ],
+      "bowl_position": [
+        0.5270769121276794,
+        0.03524752944715708
+      ]
+    },
+    {
+      "id": "train_205",
+      "slot": 221,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "c570230468a21cd1808bc2c3534155561c06fd6617bd1defa1c92ee0bd7b7d9a",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6031345946636792,
+        0.029879676415711955
+      ],
+      "bowl_position": [
+        0.42507769209338286,
+        0.14267560007525906
+      ]
+    },
+    {
+      "id": "train_206",
+      "slot": 222,
+      "transitions": 82,
+      "source_split": "train",
+      "episode_sha256": "7d56936571d1120762e1455ece90c15088eef3b271999bb63f4df485ea2d2302",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.669155690580396,
+        0.0804967212179061
+      ],
+      "bowl_position": [
+        0.4636425001300327,
+        -0.12340451391236985
+      ]
+    },
+    {
+      "id": "train_207",
+      "slot": 223,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "4e549095ad67c69014cf215af11149fd495c3e4481b479ab1088f83922b2cb18",
+      "replay_error": 1.5638601524869955e-12,
+      "cube_position": [
+        0.40048074728627875,
+        -0.013114264099651152
+      ],
+      "bowl_position": [
+        0.62222354226377,
+        -0.10911166554112559
+      ]
+    },
+    {
+      "id": "train_208",
+      "slot": 224,
+      "transitions": 66,
+      "source_split": "train",
+      "episode_sha256": "3c0342c0056313a8d7345eb48ca2066b6c6eff6e07edbf3b23bd41a05fc08290",
+      "replay_error": 1.0674190551180507e-11,
+      "cube_position": [
+        0.48241031883759655,
+        0.09352900136543259
+      ],
+      "bowl_position": [
+        0.46686936234833387,
+        -0.1007767600179253
+      ]
+    },
+    {
+      "id": "train_209",
+      "slot": 225,
+      "transitions": 81,
+      "source_split": "train",
+      "episode_sha256": "807e56a03e0f8491cccb6ba17b80a8d41c712f9417a1871bc513ff94e0990fb4",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6131297051651347,
+        -0.13709087358078964
+      ],
+      "bowl_position": [
+        0.4342363013303848,
+        0.08113689693908249
+      ]
+    },
+    {
+      "id": "train_210",
+      "slot": 226,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "f9e55db86831c8158ade31d12241581f9e03b02c7606a733f9d5e99c7b5092f9",
+      "replay_error": 1.8207657603852567e-13,
+      "cube_position": [
+        0.485027978046293,
+        -0.10915091963190349
+      ],
+      "bowl_position": [
+        0.6319247585763745,
+        0.06746779353231527
+      ]
+    },
+    {
+      "id": "train_211",
+      "slot": 227,
+      "transitions": 74,
+      "source_split": "train",
+      "episode_sha256": "8d614be0b7ebfe4a5b49e2a5d0508f88d2e7ccd2395dd9a77e208a5cde193f7a",
+      "replay_error": 7.685518887967646e-13,
+      "cube_position": [
+        0.44796819366673507,
+        -0.1547438287087075
+      ],
+      "bowl_position": [
+        0.6584246140907615,
+        -0.13772599115483508
+      ]
+    },
+    {
+      "id": "train_212",
+      "slot": 228,
+      "transitions": 70,
+      "source_split": "train",
+      "episode_sha256": "4444fb502f7bb7ca355fc62bacdb7f848b1247839c23b0a2cc6c4158ed34c7d4",
+      "replay_error": 5.020206472750033e-12,
+      "cube_position": [
+        0.44770539538021353,
+        -0.03553645726347302
+      ],
+      "bowl_position": [
+        0.6538220214992047,
+        0.11800082372685398
+      ]
+    },
+    {
+      "id": "train_213",
+      "slot": 229,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "a4146c584b4ece80dbfe0774b935428669ab47b0497a179734413665babb17a4",
+      "replay_error": 1.7575524369206619e-12,
+      "cube_position": [
+        0.652709460711212,
+        0.0036216510344250353
+      ],
+      "bowl_position": [
+        0.4356433360736296,
+        0.10894556345226128
+      ]
+    },
+    {
+      "id": "train_214",
+      "slot": 230,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "f4b5ace4855ca1de300c7f15e8569668782fe8ece55842fa9e1d2d7c60b585cf",
+      "replay_error": 1.7925105844085465e-11,
+      "cube_position": [
+        0.4142207498925531,
+        -0.15946941934698936
+      ],
+      "bowl_position": [
+        0.6560432049340268,
+        -0.13293271056038644
+      ]
+    },
+    {
+      "id": "train_215",
+      "slot": 231,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "b81c7110bb10d88b9bc90e0d818666b88408012b354d1561d947134a658b77a9",
+      "replay_error": 1.9841905896100798e-12,
+      "cube_position": [
+        0.510074627456494,
+        0.11206968690338574
+      ],
+      "bowl_position": [
+        0.5294804274716685,
+        -0.11356250896979042
+      ]
+    },
+    {
+      "id": "train_216",
+      "slot": 232,
+      "transitions": 84,
+      "source_split": "train",
+      "episode_sha256": "5c4e9c3ebeb10dafa5bf7825435a5089ff5b5091126174b06e8b333764437535",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6605260659616139,
+        -0.12608378484727314
+      ],
+      "bowl_position": [
+        0.5023072568429284,
+        0.11766932021916077
+      ]
+    },
+    {
+      "id": "train_217",
+      "slot": 233,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "f58e26425f26d3e4371535012aa72c496fb56c0923546fbf780c751f82f62e16",
+      "replay_error": 1.0130727473731049e-11,
+      "cube_position": [
+        0.5939401974987051,
+        -0.09994309229910041
+      ],
+      "bowl_position": [
+        0.5989176000548134,
+        0.15702433805209218
+      ]
+    },
+    {
+      "id": "train_218",
+      "slot": 234,
+      "transitions": 83,
+      "source_split": "train",
+      "episode_sha256": "b9808a1ff390963160eadb8639e0534c58ab3431eec2c61acd76e05e972e1525",
+      "replay_error": 2.23487894857044e-13,
+      "cube_position": [
+        0.6499287104439216,
+        0.10762020642537583
+      ],
+      "bowl_position": [
+        0.4311689815486184,
+        -0.09653168442839945
+      ]
+    },
+    {
+      "id": "train_219",
+      "slot": 235,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "fe8f346c65d71faa8cbf386ee29317a87c84b9f1602fdf380d4b4b4dd123eba0",
+      "replay_error": 2.4011348465080573e-13,
+      "cube_position": [
+        0.41769788398701896,
+        0.028249792812008963
+      ],
+      "bowl_position": [
+        0.6468596614493191,
+        -0.1580172982912235
+      ]
+    },
+    {
+      "id": "train_220",
+      "slot": 236,
+      "transitions": 83,
+      "source_split": "train",
+      "episode_sha256": "16a996b021e5c756ed74d92bc3d3fee3f202949057d9695954dd02a014d1d6b3",
+      "replay_error": 3.28123900236399e-14,
+      "cube_position": [
+        0.60979380147205,
+        0.13605154718298565
+      ],
+      "bowl_position": [
+        0.5027553813342253,
+        -0.15641122750718497
+      ]
+    },
+    {
+      "id": "train_221",
+      "slot": 237,
+      "transitions": 74,
+      "source_split": "train",
+      "episode_sha256": "179764179854999e5f335d5862683d6e1639b8c66234a1c5d941ad000f03d4fb",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6672643941719248,
+        0.027684499592060555
+      ],
+      "bowl_position": [
+        0.5416491447734614,
+        -0.1425750279473667
+      ]
+    },
+    {
+      "id": "train_222",
+      "slot": 238,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "3f8ff9af1d7bb6a0a4f333bad67bbed7b8fa735b5c4cfd3e80711c2ea3a48bc4",
+      "replay_error": 1.8209878049901818e-12,
+      "cube_position": [
+        0.6426565342342444,
+        0.13729180976390923
+      ],
+      "bowl_position": [
+        0.6212718648883159,
+        -0.06291697356549587
+      ]
+    },
+    {
+      "id": "train_223",
+      "slot": 239,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "6f48c4d30b04ad5ffb7a7a7165557d58ad5d0a2d2c993e97f76064c02b377dfd",
+      "replay_error": 3.2174263253637037e-13,
+      "cube_position": [
+        0.4553736928870786,
+        0.09302874229231513
+      ],
+      "bowl_position": [
+        0.5327442884253429,
+        -0.1555477048822724
+      ]
+    },
+    {
+      "id": "train_224",
+      "slot": 240,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "07070288bf06c7f8212b0957174d4d11974e4599c5d67b2cc106db5fe537c6ca",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6149491122317577,
+        0.06165377675985919
+      ],
+      "bowl_position": [
+        0.4046504178791359,
+        0.15783758906693454
+      ]
+    },
+    {
+      "id": "train_225",
+      "slot": 241,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "6ab4edb8612e04b2f3cc78142a69ce1a29369b1dd6d305ddee94d1c1fc5d406b",
+      "replay_error": 3.667899317605361e-14,
+      "cube_position": [
+        0.4163370541633517,
+        -0.15246624537955428
+      ],
+      "bowl_position": [
+        0.44759346066989447,
+        0.041427759189050804
+      ]
+    },
+    {
+      "id": "train_226",
+      "slot": 242,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "861b86604da64069fef03a1593bce0ee9f052a4d170ca5840299fc6027031c0d",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6792169147771664,
+        -0.006906095831994499
+      ],
+      "bowl_position": [
+        0.5297589141606807,
+        0.12183465933342703
+      ]
+    },
+    {
+      "id": "train_227",
+      "slot": 243,
+      "transitions": 64,
+      "source_split": "train",
+      "episode_sha256": "ff58384d83c6909989b39285b085d35ad9d7f5e2f01b1af8b38ec713eb3f2381",
+      "replay_error": 9.14823772291129e-14,
+      "cube_position": [
+        0.45144106674112894,
+        0.017463098653381692
+      ],
+      "bowl_position": [
+        0.6171159566381771,
+        0.13916271917517692
+      ]
+    },
+    {
+      "id": "train_228",
+      "slot": 244,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "1ec827313a9240fe499722aea7a8a132ceede04402166fda76e0dd4d21daba99",
+      "replay_error": 2.4176494139993565e-13,
+      "cube_position": [
+        0.41059277121274457,
+        0.14596916392468687
+      ],
+      "bowl_position": [
+        0.436198475505492,
+        -0.08833245453671687
+      ]
+    },
+    {
+      "id": "train_229",
+      "slot": 245,
+      "transitions": 83,
+      "source_split": "train",
+      "episode_sha256": "07737dd14bf92c7e28a7c6ad07926313a6a81ba8e7b78e7c840700e143e9474a",
+      "replay_error": 1.172340002852934e-12,
+      "cube_position": [
+        0.577314399484849,
+        0.14175612880920274
+      ],
+      "bowl_position": [
+        0.46453312052880075,
+        -0.15421080793145353
+      ]
+    },
+    {
+      "id": "train_230",
+      "slot": 246,
+      "transitions": 74,
+      "source_split": "train",
+      "episode_sha256": "02a654c7694ac042447a3a21a824c7bf648293bcc5154088d8e1a3b4c793312b",
+      "replay_error": 2.24910368107345e-13,
+      "cube_position": [
+        0.4027770381317832,
+        0.10203343750524291
+      ],
+      "bowl_position": [
+        0.5742797122938169,
+        -0.0567374547461672
+      ]
+    },
+    {
+      "id": "train_231",
+      "slot": 247,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "afb4c55cd50a3ff889be3044239524d0ce9082caa6f0623084c514e813894bfc",
+      "replay_error": 1.964428619771752e-12,
+      "cube_position": [
+        0.6399879704577366,
+        -0.12451878564997589
+      ],
+      "bowl_position": [
+        0.6777433092462278,
+        0.07269538339521268
+      ]
+    },
+    {
+      "id": "train_232",
+      "slot": 248,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "c3649284a2e44b652191fa37e5086098be1a7fb6e684d35551da59288f9d0360",
+      "replay_error": 5.900280264370394e-13,
+      "cube_position": [
+        0.46278777694904777,
+        -0.10190139372144248
+      ],
+      "bowl_position": [
+        0.6635436037189423,
+        0.11324803480624471
+      ]
+    },
+    {
+      "id": "train_233",
+      "slot": 249,
+      "transitions": 78,
+      "source_split": "train",
+      "episode_sha256": "51172a376da19e8dcd2f3b6083803da67872424656ca4eb1573f3ad9300ded96",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6166950142425024,
+        -0.13710108369132804
+      ],
+      "bowl_position": [
+        0.44433258530575687,
+        0.03774955159285831
+      ]
+    },
+    {
+      "id": "train_234",
+      "slot": 250,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "1f54f3ed2ea17057ed21a1cc1dd01a3bb9e03777b1ff88875f025b9ea96807bb",
+      "replay_error": 1.004486338186552e-12,
+      "cube_position": [
+        0.6132421246631743,
+        0.024550710857902232
+      ],
+      "bowl_position": [
+        0.47921091748901967,
+        -0.15643794555847368
+      ]
+    },
+    {
+      "id": "train_235",
+      "slot": 251,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "fd5251492d588008cde40d3434cba037939cb4eb9a926d90d91ccf3c1d74324d",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6374165953653611,
+        0.03297281981734258
+      ],
+      "bowl_position": [
+        0.4530653672863834,
+        -0.09508809588789106
+      ]
+    },
+    {
+      "id": "train_236",
+      "slot": 252,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "54c25dcb9cc7c71063137a8d0ef2da10482b51670a4eba82e1903de30e2603c9",
+      "replay_error": 9.940936962493652e-13,
+      "cube_position": [
+        0.6267137285451493,
+        0.0735950249824069
+      ],
+      "bowl_position": [
+        0.48615776474792566,
+        -0.0758944505766748
+      ]
+    },
+    {
+      "id": "train_237",
+      "slot": 253,
+      "transitions": 71,
+      "source_split": "train",
+      "episode_sha256": "9eeca17d3d3698fca465c4f4c2cd81c0b0fecbd9b4b9fcf98228cba60ed8bd1b",
+      "replay_error": 2.724487302430134e-13,
+      "cube_position": [
+        0.6161563828554157,
+        0.10542698161395858
+      ],
+      "bowl_position": [
+        0.5616661807424198,
+        -0.07831831904141243
+      ]
+    },
+    {
+      "id": "train_238",
+      "slot": 254,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "0e9da86f15fb683f1627b5f05dcd4b8bb0315fb1a8e40f8fde12ac647d66de8a",
+      "replay_error": 8.774935134678676e-12,
+      "cube_position": [
+        0.43092161408500396,
+        -0.09348359468395831
+      ],
+      "bowl_position": [
+        0.6461302022908335,
+        -0.0011922271000445407
+      ]
+    },
+    {
+      "id": "train_239",
+      "slot": 255,
+      "transitions": 66,
+      "source_split": "train",
+      "episode_sha256": "642f8e98fc41e8c42eec50cc56adc0d2f00fdc69399d4e931c76506f5bbac729",
+      "replay_error": 2.008171406941983e-12,
+      "cube_position": [
+        0.4538648833824561,
+        0.03048416984499223
+      ],
+      "bowl_position": [
+        0.5945360030717116,
+        -0.1458525270344664
+      ]
+    },
+    {
+      "id": "train_240",
+      "slot": 256,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "574f13252f245aac38888edf6defb556167c8f54b9021437b1b71b05549d015f",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5865759767318888,
+        0.06329500947084374
+      ],
+      "bowl_position": [
+        0.4328584575732145,
+        -0.046339936996539065
+      ]
+    },
+    {
+      "id": "train_241",
+      "slot": 257,
+      "transitions": 83,
+      "source_split": "train",
+      "episode_sha256": "353f2a6db4e8224d2da016528e2123f6ddcedfcb6b567d169df0443a69409394",
+      "replay_error": 1.5083767568313533e-13,
+      "cube_position": [
+        0.5757726138267484,
+        0.1595492968244566
+      ],
+      "bowl_position": [
+        0.4112447668838949,
+        -0.09363169579817644
+      ]
+    },
+    {
+      "id": "train_242",
+      "slot": 258,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "4299ab4d2982beaa6b5a78adaed813b66d79834514ee151c7e99fa77a9d4f173",
+      "replay_error": 8.057443601217074e-14,
+      "cube_position": [
+        0.5900053407539099,
+        0.14304370109211842
+      ],
+      "bowl_position": [
+        0.5374684079457188,
+        -0.07367346442526866
+      ]
+    },
+    {
+      "id": "train_243",
+      "slot": 259,
+      "transitions": 74,
+      "source_split": "train",
+      "episode_sha256": "963c875703f38e96aa679c8aae88dca151634a56a909abb1360acbe21343cf76",
+      "replay_error": 2.3677726446180714e-12,
+      "cube_position": [
+        0.6411651857876234,
+        0.11791626549612225
+      ],
+      "bowl_position": [
+        0.5275943753146196,
+        -0.035160912221770604
+      ]
+    },
+    {
+      "id": "train_244",
+      "slot": 260,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "6199f4413f6b7c502df804687ccaf71e287082e4b0935b2ac2e402e2bf7768b1",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6080114904821201,
+        0.15685674367754382
+      ],
+      "bowl_position": [
+        0.46142481662833723,
+        -0.007628726926047165
+      ]
+    },
+    {
+      "id": "train_245",
+      "slot": 261,
+      "transitions": 82,
+      "source_split": "train",
+      "episode_sha256": "d5c523660c08ad3412633c4432c3175b68b22833c29acbad98c4047c66c8989f",
+      "replay_error": 8.929246231303978e-13,
+      "cube_position": [
+        0.6660924433394915,
+        -0.15329035062458757
+      ],
+      "bowl_position": [
+        0.5850458105661799,
+        0.0760121977349035
+      ]
+    },
+    {
+      "id": "train_246",
+      "slot": 262,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "292d94367cc092d870bbe4e44ede885502f9f4e0635836ce7b2ffa121b5b87cc",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6589208851777827,
+        -0.05831352764630353
+      ],
+      "bowl_position": [
+        0.47383685211169685,
+        0.06372574270568912
+      ]
+    },
+    {
+      "id": "train_247",
+      "slot": 263,
+      "transitions": 64,
+      "source_split": "train",
+      "episode_sha256": "e043fe28758302d05a460511c6275323552276ea359be75de6399b13c5883598",
+      "replay_error": 8.941458684574854e-13,
+      "cube_position": [
+        0.4521663342047788,
+        -0.036013119648136395
+      ],
+      "bowl_position": [
+        0.6306401656535,
+        -0.10357219987909687
+      ]
+    },
+    {
+      "id": "train_248",
+      "slot": 264,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "de544e61d99de254f40f07c1ce7f07001fb44779bd2d124f0f10ea8aabdb32e2",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6585714256921014,
+        -0.131525315928461
+      ],
+      "bowl_position": [
+        0.6500397551542901,
+        0.06809083165844917
+      ]
+    },
+    {
+      "id": "train_249",
+      "slot": 265,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "db8e5826c5ef46efced66aee54ea020b24fdeb7501f2b604cb07a3de821196cd",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6723011808616155,
+        0.004262483844246105
+      ],
+      "bowl_position": [
+        0.46841815520698,
+        0.054164931245122644
+      ]
+    },
+    {
+      "id": "train_250",
+      "slot": 266,
+      "transitions": 64,
+      "source_split": "train",
+      "episode_sha256": "b77731d90d1452e1096565cefde8aeec282d36e3034656c483e97cef28b7d9a7",
+      "replay_error": 1.1644350145547588e-11,
+      "cube_position": [
+        0.49236405243760856,
+        -0.07301191454197938
+      ],
+      "bowl_position": [
+        0.6087260842059032,
+        0.06690978172560992
+      ]
+    },
+    {
+      "id": "train_251",
+      "slot": 267,
+      "transitions": 68,
+      "source_split": "train",
+      "episode_sha256": "c23e10fe0e3443f05d8c007a17a9a99c50a05ece23f8d8fe0ee7ed74dc9e9701",
+      "replay_error": 1.817524930145036e-12,
+      "cube_position": [
+        0.45782491267028363,
+        -0.06525244133516445
+      ],
+      "bowl_position": [
+        0.6688042053812463,
+        0.023298007055695538
+      ]
+    },
+    {
+      "id": "train_252",
+      "slot": 268,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "0f9fb769af7f07f3ae087bba8176fc3e633704d4f28962d0dd0df87417892ab9",
+      "replay_error": 6.661338147750939e-16,
+      "cube_position": [
+        0.4332238953384182,
+        0.11171663072254467
+      ],
+      "bowl_position": [
+        0.6660114744797125,
+        0.10914517985837538
+      ]
+    },
+    {
+      "id": "train_253",
+      "slot": 269,
+      "transitions": 83,
+      "source_split": "train",
+      "episode_sha256": "daf3f40ab2c50d76eab9ec0d64de608fe2d6f0df74355668a1f0c5276aa57ee0",
+      "replay_error": 7.086553566182374e-13,
+      "cube_position": [
+        0.6484374948761603,
+        0.14588476140188114
+      ],
+      "bowl_position": [
+        0.5961683596712906,
+        -0.11752963134454192
+      ]
+    },
+    {
+      "id": "train_254",
+      "slot": 270,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "8850310622147f60f244f8f086032322c9bd4ce54a7753f2f7855f779a84b7c9",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.6175699388365086,
+        0.1445141145421986
+      ],
+      "bowl_position": [
+        0.6682557013677262,
+        -0.07798812554803344
+      ]
+    },
+    {
+      "id": "train_255",
+      "slot": 271,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "7252592571fb181fdc32a006ea74e751ea689abd4431e299eea6090e61becec4",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.40154103005913483,
+        0.06121182247919414
+      ],
+      "bowl_position": [
+        0.6744445271169363,
+        0.14612117802664826
+      ]
+    },
+    {
+      "id": "train_256",
+      "slot": 272,
+      "transitions": 73,
+      "source_split": "train",
+      "episode_sha256": "19df16734477f8df3bf4f749b2e206e765b5ee4ccd9a979e5d28663ed77d36a1",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5104843435795976,
+        0.12562720776610756
+      ],
+      "bowl_position": [
+        0.6746932757086993,
+        -0.03973036788664782
+      ]
+    },
+    {
+      "id": "train_257",
+      "slot": 273,
+      "transitions": 74,
+      "source_split": "train",
+      "episode_sha256": "ba3697774a17c284ca8726b4e076cad9ace0cebf01ab85a0e90b90ceb007975e",
+      "replay_error": 8.537615059367454e-13,
+      "cube_position": [
+        0.40199630027401934,
+        -0.09844685449230593
+      ],
+      "bowl_position": [
+        0.6096564684661689,
+        0.02211354564621491
+      ]
+    },
+    {
+      "id": "train_258",
+      "slot": 274,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "ff2cc1e13883c710b8b391361b409440b4f3d103e8c04624861af5d13d851dc0",
+      "replay_error": 1.333530508240699e-12,
+      "cube_position": [
+        0.45482837792987507,
+        0.11691811295934117
+      ],
+      "bowl_position": [
+        0.562779616900378,
+        -0.08420583082579636
+      ]
+    },
+    {
+      "id": "train_259",
+      "slot": 275,
+      "transitions": 64,
+      "source_split": "train",
+      "episode_sha256": "01a84411e6e5cdd06883baf64ed2620b3d3fb15c995851736afd094659eece78",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5413132495338734,
+        0.03509202508357674
+      ],
+      "bowl_position": [
+        0.4601328404380975,
+        -0.15894291592829127
+      ]
+    },
+    {
+      "id": "train_260",
+      "slot": 276,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "2035ee9d5ba5f932a39a01022117b86b3a11e8b6d6b6c3d8d668be17f01dab83",
+      "replay_error": 1.939670646322611e-12,
+      "cube_position": [
+        0.6046889404324632,
+        -0.13795586354996686
+      ],
+      "bowl_position": [
+        0.48243958353554256,
+        0.03519202670703646
+      ]
+    },
+    {
+      "id": "train_261",
+      "slot": 277,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "820bdaff6dc84c1b7f8f7c2bce519e21b66baa137e8af2f80aa3697e74713ed0",
+      "replay_error": 1.1054490656192684e-12,
+      "cube_position": [
+        0.6790657025852855,
+        0.14648746280881433
+      ],
+      "bowl_position": [
+        0.5133512180071177,
+        0.06369715709095228
+      ]
+    },
+    {
+      "id": "train_262",
+      "slot": 278,
+      "transitions": 78,
+      "source_split": "train",
+      "episode_sha256": "1adf123b87c31fe90670aae56e3e91319dbd80364fce67dec7277ebba2651784",
+      "replay_error": 8.412888441444721e-13,
+      "cube_position": [
+        0.6568215252480956,
+        0.05470528430695254
+      ],
+      "bowl_position": [
+        0.4026021904835306,
+        -0.012656999710395632
+      ]
+    },
+    {
+      "id": "train_263",
+      "slot": 279,
+      "transitions": 80,
+      "source_split": "train",
+      "episode_sha256": "db0fca77f0788ec4be97db045f247a726703b49ecb573ab1ad8f9515e04252bf",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.538813740034579,
+        -0.14346121822382846
+      ],
+      "bowl_position": [
+        0.6766767380520973,
+        0.11238124203187479
+      ]
+    },
+    {
+      "id": "train_264",
+      "slot": 280,
+      "transitions": 77,
+      "source_split": "train",
+      "episode_sha256": "b36ea6152eab0a6f4e72f8bd1abc183e5f47ce37033965ade1e31b9943aba60e",
+      "replay_error": 1.2634546187051399e-12,
+      "cube_position": [
+        0.6263239881236315,
+        0.15303412128417385
+      ],
+      "bowl_position": [
+        0.6678270625042027,
+        -0.06138513558142471
+      ]
+    },
+    {
+      "id": "train_265",
+      "slot": 281,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "49d90052d0b7c1cbd2a07ae2252d6f7fb97165875354328201b48b094841f653",
+      "replay_error": 3.6148861681795097e-13,
+      "cube_position": [
+        0.6694824641007961,
+        0.10755350938432692
+      ],
+      "bowl_position": [
+        0.6750762763750916,
+        -0.08425068368074527
+      ]
+    },
+    {
+      "id": "train_266",
+      "slot": 282,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "2b8d3fb922b77dc590c3164f6c119fb027ec45a3183280c7a79ebff5a04866eb",
+      "replay_error": 1.0758061108617767e-13,
+      "cube_position": [
+        0.5803183419053618,
+        -0.11447387573528307
+      ],
+      "bowl_position": [
+        0.5743956100877737,
+        0.1379469919014017
+      ]
+    },
+    {
+      "id": "train_267",
+      "slot": 283,
+      "transitions": 78,
+      "source_split": "train",
+      "episode_sha256": "43448141819f2c18a3f564c5250b6b68c4b592f0f0267ccc5dfd0e0da1518255",
+      "replay_error": 1.0302869668521453e-13,
+      "cube_position": [
+        0.5769230674068626,
+        -0.14607023937869115
+      ],
+      "bowl_position": [
+        0.5468142183704597,
+        0.11374591853497204
+      ]
+    },
+    {
+      "id": "train_268",
+      "slot": 284,
+      "transitions": 70,
+      "source_split": "train",
+      "episode_sha256": "1abab88261034d57253869c27b87365869c6e505b86cdb4dba0c804ec8dd027c",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4209448532812997,
+        0.012959759794618435
+      ],
+      "bowl_position": [
+        0.6521940426588977,
+        0.1106537022299462
+      ]
+    },
+    {
+      "id": "train_269",
+      "slot": 285,
+      "transitions": 67,
+      "source_split": "train",
+      "episode_sha256": "1846dca35af0683517474d160c0e6f21c5b4e3d15544b37e54494c5318ad79bd",
+      "replay_error": 1.868449839292907e-12,
+      "cube_position": [
+        0.5474922587230998,
+        0.08156874204728005
+      ],
+      "bowl_position": [
+        0.4341555045056096,
+        -0.07683300029210458
+      ]
+    },
+    {
+      "id": "train_270",
+      "slot": 286,
+      "transitions": 68,
+      "source_split": "train",
+      "episode_sha256": "bd68a94f0dbe980d2a84cc2af31f6aaa08efdc39392e093fccc462eed7db1c47",
+      "replay_error": 1.270927807439648e-13,
+      "cube_position": [
+        0.5952350103210015,
+        -0.0017894451662013467
+      ],
+      "bowl_position": [
+        0.4283770755039507,
+        0.1409060518844427
+      ]
+    },
+    {
+      "id": "train_271",
+      "slot": 287,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "edce66e3f56918838b04240e237d1e422ac22478975d5c5e07dbfb4c62a87eca",
+      "replay_error": 1.6526450347109645e-13,
+      "cube_position": [
+        0.5481358638421765,
+        -0.13574447153825703
+      ],
+      "bowl_position": [
+        0.6706653317980866,
+        0.002533078297743785
+      ]
+    },
+    {
+      "id": "train_272",
+      "slot": 288,
+      "transitions": 80,
+      "source_split": "train",
+      "episode_sha256": "eb2f4079bb977ea2ce9cbaabbc6ce2cea6499eff532090a2fa817e3559480751",
+      "replay_error": 1.902687938829233e-13,
+      "cube_position": [
+        0.41304303885251775,
+        -0.13653005684781871
+      ],
+      "bowl_position": [
+        0.5470519038109943,
+        0.11397714584497724
+      ]
+    },
+    {
+      "id": "train_273",
+      "slot": 289,
+      "transitions": 79,
+      "source_split": "train",
+      "episode_sha256": "9025c37b526f2a398d54716871b74fd5e9e15bd0bdbce57613036c71139dab50",
+      "replay_error": 9.375113501546631e-12,
+      "cube_position": [
+        0.5535984389977897,
+        0.14349378731645254
+      ],
+      "bowl_position": [
+        0.4926592126816595,
+        -0.12483698017903862
+      ]
+    },
+    {
+      "id": "train_274",
+      "slot": 290,
+      "transitions": 65,
+      "source_split": "train",
+      "episode_sha256": "b4b5199ba96ec2d3e8d4e713cc2245b878af7da945e6f4d4c8c82a8328953610",
+      "replay_error": 1.9578204475970655e-12,
+      "cube_position": [
+        0.5294931299761938,
+        -0.04257672518422918
+      ],
+      "bowl_position": [
+        0.6777362478722718,
+        0.11241663155958172
+      ]
+    },
+    {
+      "id": "train_275",
+      "slot": 291,
+      "transitions": 72,
+      "source_split": "train",
+      "episode_sha256": "46300eec289ec1177d3e9e57d21f67e5dbbcc74815790cddcdd30495d16b106d",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4467334956416992,
+        -0.07908340978452735
+      ],
+      "bowl_position": [
+        0.6323243107502591,
+        0.09774082303746451
+      ]
+    },
+    {
+      "id": "train_276",
+      "slot": 292,
+      "transitions": 83,
+      "source_split": "train",
+      "episode_sha256": "0ff153159de77f4c20f6272aff78b1b7c595ee18a1337b90a43f1be420cc7de0",
+      "replay_error": 6.34636440621783e-13,
+      "cube_position": [
+        0.6788909963152431,
+        -0.09690374986869912
+      ],
+      "bowl_position": [
+        0.4098837983514322,
+        0.00992655713072768
+      ]
+    },
+    {
+      "id": "train_277",
+      "slot": 293,
+      "transitions": 76,
+      "source_split": "train",
+      "episode_sha256": "fb4c6d6f64e4e328d4032b7562c5d35bf6b91dc91ff3dbf0dfc8ff1d6ed49687",
+      "replay_error": 2.4356627825738997e-12,
+      "cube_position": [
+        0.6410197386224057,
+        -0.05742608517662337
+      ],
+      "bowl_position": [
+        0.48626571183795936,
+        0.13285195845544043
+      ]
+    },
+    {
+      "id": "train_278",
+      "slot": 294,
+      "transitions": 69,
+      "source_split": "train",
+      "episode_sha256": "8dfab67745ac2e67402cb679541ad4a59e3ad8585478f9670cfc15e3913a3eed",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.4082203496785063,
+        -0.07838671544059522
+      ],
+      "bowl_position": [
+        0.4532157053850606,
+        0.11456545068725206
+      ]
+    },
+    {
+      "id": "train_279",
+      "slot": 295,
+      "transitions": 81,
+      "source_split": "train",
+      "episode_sha256": "1b4641d6f8d8eb5d9f514fd91817a160d7463ac7c67c1dc5ea106fa6cb9059bf",
+      "replay_error": 1.4923617897011354e-12,
+      "cube_position": [
+        0.6301672007739453,
+        -0.11803695560634175
+      ],
+      "bowl_position": [
+        0.44146795804556355,
+        0.09778077418698572
+      ]
+    },
+    {
+      "id": "train_280",
+      "slot": 296,
+      "transitions": 79,
+      "source_split": "train",
+      "episode_sha256": "94a4d48cea02373a8aeff12fad390441735520fe404f347b871e271a6b920b86",
+      "replay_error": 1.2267895919852377e-11,
+      "cube_position": [
+        0.6653509406401789,
+        0.10335965816495747
+      ],
+      "bowl_position": [
+        0.5684448145806518,
+        -0.11392976291405241
+      ]
+    },
+    {
+      "id": "train_281",
+      "slot": 297,
+      "transitions": 65,
+      "source_split": "train",
+      "episode_sha256": "dc146cb63c9cbad40257f8348003345a539b5384565d3c2b632913ad095ea4d3",
+      "replay_error": 1.6453227669188664e-12,
+      "cube_position": [
+        0.446345308165677,
+        0.05584814767720985
+      ],
+      "bowl_position": [
+        0.6430737485883601,
+        0.06669517314609433
+      ]
+    },
+    {
+      "id": "train_282",
+      "slot": 298,
+      "transitions": 68,
+      "source_split": "train",
+      "episode_sha256": "e3f7626ecc868bf5da0ead504f35412215bb75add33019c398c7a575cced5772",
+      "replay_error": 3.439082352230116e-12,
+      "cube_position": [
+        0.5540945596625222,
+        -0.08973151930445336
+      ],
+      "bowl_position": [
+        0.4672461451632292,
+        0.09959991949392702
+      ]
+    },
+    {
+      "id": "train_283",
+      "slot": 299,
+      "transitions": 75,
+      "source_split": "train",
+      "episode_sha256": "d6c8f8660c7ea1a7f2fcb15567cab523c3c73dcda52c87ef9242cf0b5c552c63",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.40133131194822086,
+        0.11378204030626396
+      ],
+      "bowl_position": [
+        0.6453430094109568,
+        0.10818819599339591
+      ]
+    },
+    {
+      "id": "train_284",
+      "slot": 300,
+      "transitions": 65,
+      "source_split": "train",
+      "episode_sha256": "f208aeb75db5c884add2742a327b6118817fa58b702e5d35b58628f5f9853749",
+      "replay_error": 0.0,
+      "cube_position": [
+        0.5873180790156487,
+        0.0025546953211829405
+      ],
+      "bowl_position": [
+        0.4675779670186986,
+        0.14083120462777793
+      ]
+    }
+  ],
+  "portable_bundle": "datasets/panda_place_bowl/training_place_bowl_v2_300",
+  "bundle_bytes": 2728521270,
+  "input_check": {
+    "passed": true,
+    "split_counts": {
+      "train": {
+        "episodes": 300,
+        "transitions": 21906
+      },
+      "validation": {
+        "episodes": 0,
+        "transitions": 0
+      },
+      "test": {
+        "episodes": 0,
+        "transitions": 0
+      }
+    },
+    "portable": true,
+    "all_source_images_actions_instructions_match": true,
+    "official_processor_batches": {
+      "train": {
+        "pixel_shape": [
+          6,
+          224,
+          224
+        ],
+        "supervised_tokens": 8,
+        "input_tokens": 37
+      }
+    }
+  }
+}

@@ -129,7 +129,7 @@ def run(directory,sim_python,*,port=0):
     if plan['task']=='color_lift':
         probe=seed_check+"from simulation.panda_env import PandaEnv; from simulation.color_lift_scene import SCENE_PATH,CAMERA_NAME,initialize_scene; e=PandaEnv(SCENE_PATH,camera=CAMERA_NAME); initialize_scene(e,"+repr(plan['cube_positions'][0])+", {'red':'red','blue':'blue'}); print(e.observe().shape); e.close()"
     if plan['task']=='place_bowl':
-        probe="from simulation.panda_env import PandaEnv; from simulation.place_bowl_scene import SCENE_PATH,CAMERA_NAME,initialize_scene; import numpy as np; e=PandaEnv(SCENE_PATH,camera=CAMERA_NAME); e.controller,s=initialize_scene(e.model,e.data,np.random.default_rng(0),slot="+repr(plan['scene_seeds'][0])+"); print(e.observe().shape); e.close()"
+        probe="from simulation.panda_env import PandaEnv; from simulation.place_bowl_scene import SCENE_PATH,CAMERA_NAME,initialize_scene; from inference.place_bowl_task import layout,validate_positions; import numpy as np; validate_positions("+repr(plan['cube_positions'])+",[layout(s) for s in "+repr(plan['scene_seeds'])+"]); e=PandaEnv(SCENE_PATH,camera=CAMERA_NAME)\nfor slot in "+repr(plan['scene_seeds'])+":\n    e.controller,s=initialize_scene(e.model,e.data,np.random.default_rng(0),slot=slot); e.observe()\nprint('All bowl layouts initialized and rendered'); e.close()"
     if plan['task']=='lift':
         probe="from simulation.panda_env import PandaEnv; from simulation.lift_scene import SCENE_PATH,CAMERA_NAME,initialize_scene; e=PandaEnv(SCENE_PATH,camera=CAMERA_NAME); initialize_scene(e,"+repr(plan['cube_positions'][0]['red'])+"); print(e.observe().shape); e.close()"
     if plan['task']=='multi_color_touch':
