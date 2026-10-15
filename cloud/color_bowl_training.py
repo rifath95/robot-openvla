@@ -52,12 +52,29 @@ def launch(profile_path,token=None,download_window=120):
     return 0
 
 
-def train(command,log,env):
-    with Path(log).open('a',buffering=1) as out,(Path(log).parent/'console.log').open('a',buffering=1) as console:
+def train(command,log,env,*,local_log=None):
+    from contextlib import ExitStack
+    with ExitStack() as stack:
+        local=stack.enter_context(Path(local_log).open('a',buffering=1)) if local_log else None
+        streams=[]
+        for path in (Path(log),Path(log).parent/'console.log'):
+            try:streams.append(stack.enter_context(path.open('a',buffering=1)))
+            except OSError:
+                if local is None:raise
+                print(f'Volume logging unavailable: {path}; retaining container log.',flush=True)
         process=subprocess.Popen([str(x) for x in command],cwd=PROJECT_ROOT,env=env,stdout=subprocess.PIPE,stderr=subprocess.STDOUT,text=True,bufsize=1,start_new_session=True)
         try:
             for line in process.stdout:
-                out.write(line);console.write(line);print(line,end='',flush=True)
+                if local is not None:local.write(line)
+                for stream in list(streams):
+                    try:stream.write(line)
+                    except OSError:
+                        if local is None:raise
+                        streams.remove(stream)
+                        try:stream.close()
+                        except OSError:pass
+                        print('Volume log write failed; container logging continues while checkpoint rescue completes.',flush=True)
+                print(line,end='',flush=True)
             code=process.wait()
             if code:raise subprocess.CalledProcessError(code,command)
         finally:

@@ -116,14 +116,8 @@ def validate(model, cfg, batch_transform, collator, device_id, update):
     metrics.update_started=time.monotonic()
 
 
-def save_adapter(model, processor, cfg, dataset, update):
-    if os.environ.get('PANDA_SAVE_CHECKPOINTS','1')=='0':
-        print(f'Benchmark: adapter checkpoint saving disabled at update {update}',flush=True)
-        return
-    save_started=time.monotonic()
-    local_update=update
-    update=cumulative_update(update)
-    folder=metrics.directory/f'checkpoint_{update:06d}'
+def write_adapter_files(folder, model, processor, cfg, dataset, update, local_update):
+    """Publish final metadata only after adapter and processor serialization."""
     folder.mkdir(parents=True,exist_ok=False)
     model.module.save_pretrained(folder)
     processor.save_pretrained(folder)
@@ -143,6 +137,33 @@ def save_adapter(model, processor, cfg, dataset, update):
         saved_config.update(dataset_provenance=provenance,source_model_path=provenance['base_model_volume_path'])
         (folder/'provenance.json').write_text(json.dumps(provenance,indent=2)+'\n')
     (folder/'training_config.json').write_text(json.dumps(saved_config,default=str,indent=2)+'\n')
+
+
+def save_adapter(model, processor, cfg, dataset, update):
+    if os.environ.get('PANDA_SAVE_CHECKPOINTS','1')=='0':
+        print(f'Benchmark: adapter checkpoint saving disabled at update {update}',flush=True)
+        return
+    save_started=time.monotonic()
+    local_update=update
+    update=cumulative_update(update)
+    folder=metrics.directory/f'checkpoint_{update:06d}'
+    try:
+        write_adapter_files(folder,model,processor,cfg,dataset,update,local_update)
+    except Exception as primary_error:
+        emergency=os.environ.get('PANDA_CHECKPOINT_RECOVERY_DIR')
+        if not emergency:raise
+        # The GPU model is still alive here. Save a fresh complete copy locally,
+        # then fail the run so the supervisor can recover without continuing on
+        # a full volume. Never call a partially written volume checkpoint safe.
+        destination=Path(emergency)/folder.name
+        write_adapter_files(destination,model,processor,cfg,dataset,update,local_update)
+        from cloud.checkpoint_ready import check_ready
+        check_ready(destination)
+        (Path(emergency)/'RECOVERY_REQUEST.json').write_text(json.dumps(dict(
+            checkpoint_update=update,checkpoint=str(destination),original_destination=str(folder),
+            reason=type(primary_error).__name__+': '+str(primary_error),complete=True),indent=2)+'\n')
+        print(f'Checkpoint rescued to container disk: {destination}. Stopping training for global recovery.',flush=True)
+        raise RuntimeError('Checkpoint persistence failed; complete container copy awaits global recovery') from primary_error
     (metrics.directory/'model_info.json').write_text(json.dumps(metrics.model_details,default=str,indent=2)+'\n')
     with (metrics.directory/'checkpoint_timings.jsonl').open('a') as stream:
         stream.write(json.dumps(dict(update=update,seconds=time.monotonic()-save_started))+'\n')

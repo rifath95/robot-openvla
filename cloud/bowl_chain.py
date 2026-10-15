@@ -61,8 +61,18 @@ def watchdog(config):
 
 def recovery(config):
     from cloud.chain_archive import recover_to_global
-    session=Path(config['session']);source=Path(config['sweep']);timings=Timings(session)
-    if not source.exists():return 0
+    from cloud.checkpoint_recovery import recover_checkpoints,record
+    session=Path(config['session']);source=Path(config['sweep'])
+    # Recovery must not depend on being able to write the failed network volume.
+    timings=Timings(Path(config['local'])/'recovery-timings');errors=[]
+    try:
+        if config.get('checkpoint_recovery'):
+            with timings.stage('checkpoint_global_recovery'):recover_checkpoints(config)
+    except Exception as exc:
+        errors.append(dict(stage='checkpoints',error=type(exc).__name__+': '+str(exc)))
+    if not source.exists():
+        record(config,'recovery_errors.json',errors)
+        return 1 if errors else 0
     # A final small-report failure must not recopy recordings already verified on HF.
     try:
         from cloud.archive_sweep import digest
@@ -70,14 +80,33 @@ def recovery(config):
         if (saved.get('verified') is True and saved.get('repo_id')==config['sweep_repo']
             and saved.get('path_in_repo')==source.name
             and saved.get('source_revision')==digest(source/'results.json')):
-            print('Sweep backup already verified; no global recovery copy needed.',flush=True);return 0
+            print('Sweep backup already verified; no global recovery copy needed.',flush=True)
+            record(config,'recovery_errors.json',errors)
+            return 1 if errors else 0
     except (OSError,ValueError):pass
-    with timings.stage('global_recovery'):
-        from cloud.chain_archive import prepare_recovery_archive
-        packed=prepare_recovery_archive(source,Path(config['local']))
-        receipt=recover_to_global(packed,Path(config['global_volume'])/'panda-chain-recovery'/session.name)
-        write_status(session/'global_recovery_receipt.json',receipt)
-    return 0
+    try:
+        with timings.stage('global_recovery'):
+            from cloud.chain_archive import prepare_recovery_archive
+            packed=prepare_recovery_archive(source,Path(config['local']))
+            receipt=recover_to_global(packed,Path(config['global_volume'])/'panda-chain-recovery'/session.name)
+            record(config,'global_recovery_receipt.json',receipt)
+    except Exception as exc:
+        errors.append(dict(stage='sweep',error=type(exc).__name__+': '+str(exc)))
+    record(config,'recovery_errors.json',errors)
+    return 1 if errors else 0
+
+
+def attempt_recovery(config,child_ids,pids):
+    remaining=min(5*3600-120,config['outer_deadline_monotonic']-time.monotonic()-120)
+    if remaining<=0:return 'no_time_remaining'
+    safe={k:v for k,v in config.items() if k not in ('pod_key','hf_token')}
+    with (Path(config['local'])/'recovery.log').open('a',buffering=1) as log:
+        child=subprocess.Popen([sys.executable,'-u','-m','cloud.bowl_chain','--recover'],cwd=PROJECT_ROOT,stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+        child_ids.append(child.pid);pids();child.stdin.write(json.dumps(safe).encode());child.stdin.close()
+        try:return child.wait(timeout=remaining)
+        except subprocess.TimeoutExpired:
+            kill_group(child.pid)
+            return 'timeout'
 
 
 def worker_module(config):
@@ -124,21 +153,18 @@ def supervise(config):
             try:
                 code=worker.wait(timeout=max(.01,inner-time.monotonic()));outcome='completed' if code==0 else 'failed';status['exit_code']=code
             except subprocess.TimeoutExpired:outcome='inner_timeout';kill_group(worker.pid);worker.wait(timeout=10)
-        interrupted_timings(session)
-        if outcome!='completed':
-            # Stop failed compute first, then preserve whatever recordings exist.
-            if worker.poll() is None:kill_group(worker.pid)
-            remaining=min(5*3600-120,config['outer_deadline_monotonic']-time.monotonic()-120)
-            if remaining>0:
-                with (local/'recovery.log').open('a',buffering=1) as log:
-                    child=subprocess.Popen([sys.executable,'-u','-m','cloud.bowl_chain','--recover'],cwd=PROJECT_ROOT,stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
-                    child_ids.append(child.pid);pids();child.stdin.write(json.dumps(safe).encode());child.stdin.close()
-                    try:status['recovery_exit_code']=child.wait(timeout=remaining)
-                    except subprocess.TimeoutExpired:kill_group(child.pid);status['recovery_exit_code']='timeout'
+        try:interrupted_timings(session)
+        except OSError:print('Volume timing writes failed; local recovery remains available.',flush=True)
     except BaseException as exc:
         status['supervisor_error']=type(exc).__name__
         if worker is not None and worker.poll() is None:kill_group(worker.pid)
     finally:
+        if outcome!='completed':
+            # Also run on volume/log/timing exceptions, not just worker exit codes.
+            # Keep recovery independent of persistent status writes and bounded
+            # by the unchanged outer watchdog deadline.
+            try:status['recovery_exit_code']=attempt_recovery(config,child_ids,pids)
+            except Exception as exc:status['recovery_error']=type(exc).__name__+': '+str(exc)
         # All persistent checkpoints are retained regardless of the outcome.
         status.update(phase=outcome,finished_at_utc=utc(),elapsed_seconds=time.monotonic()-started)
         try:
@@ -162,6 +188,9 @@ def supervise(config):
                 if (local/name).exists():
                     import shutil
                     shutil.copyfile(local/name,session/name)
+        except OSError:
+            write_status(local/'status.json',status)
+            print('Final volume reports unavailable; status and recovery receipts retained on container/global storage.',flush=True)
         finally:
             accepted=stop_request(config,'Bowl training/sweep/backup chain: '+outcome)
     return 0 if outcome=='completed' and accepted else 1

@@ -136,18 +136,22 @@ class ContinuationChainTests(unittest.TestCase):
                     checksums_sha256='dataset-hash', dataset_bundle='training_color_place_bowl_v1_600',
                     checkpoint_repo='owner/checkpoints', sweep_repo='owner/sweeps', global_volume=str(root/'global'),
                     hf_token='secret-hf', pod_key='secret-pod', code_commit='code',
+                    checkpoint_recovery=True,checkpoint_recovery_dir=str(local/'checkpoint-recovery'),
+                    recovery_checkpoint_updates=[8000,10000,12000],
                     started_at_utc='2026-10-15T00:00:00+00:00', timeout_budget={})
                 order = []
                 def command(cmd, *args, **kwargs):
                     self.assertNotIn('HF_TOKEN', kwargs['env'])
                     self.assertNotIn('RUNPOD_API_KEY', kwargs['env'])
                     order.append('preflight' if '--preflight' in cmd else 'sweep')
-                def train(cmd, log, env):
+                def train(cmd, log, env, **kwargs):
                     order.append('training')
                     self.assertEqual(str(cmd[cmd.index('--initial-update')+1]), '6000')
                     self.assertIn('--adapter', cmd)
                     self.assertNotIn('HF_TOKEN', env)
                     self.assertNotIn('RUNPOD_API_KEY', env)
+                    self.assertEqual(env['PANDA_CHECKPOINT_RECOVERY_DIR'],config['checkpoint_recovery_dir'])
+                    self.assertEqual(kwargs['local_log'],local/'training.log')
                     if fail:raise RuntimeError('training failed')
                 def backup(*args):
                     self.assertEqual(args[-1], [8000,10000,12000])

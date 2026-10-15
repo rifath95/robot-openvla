@@ -114,3 +114,43 @@ Local verification covers learned adapter reload/trainability on a tiny CPU
 model, cumulative metrics/checkpoint numbering, exact 600-trial inventory,
 portable pack/restore, stage failure ordering and existing supervisor paths.
 A complete continuation on the real 7B GPU model is first exercised on the pod.
+
+## Last-resort checkpoint protection
+
+Normal successful runs save checkpoints on the network volume and verify their
+HF backup. They do **not** copy checkpoints to the global volume.
+
+If a checkpoint save fails (for example, the network volume is full), the live
+trainer attempts to serialize the current adapter and its processor, statistics
+and provenance into `/root/panda-chain-work/SESSION/checkpoint-recovery/`.
+It validates the complete local checkpoint and stops training. Container logs
+continue even if volume log writes fail, so logging cannot kill the trainer
+before this rescue finishes. An incomplete network checkpoint is never counted
+as a successful save.
+
+After a failure or timeout, the supervisor stops compute and attempts checkpoint
+recovery **before sweep recovery**, within the unchanged five-hour outer buffer:
+
+1. Inspect the three requested updates, preferring complete emergency container
+   copies over incomplete volume copies. Preserve any complete final checkpoint
+   produced at an unscheduled update by the trainer's runtime guard as well.
+2. Skip checkpoints already covered by the matching verified HF backup receipt.
+3. Copy the remaining complete checkpoints to
+   `/workspace-global/panda-chain-recovery/SESSION/checkpoints/checkpoint_NNNNNN/`.
+   Each file is read back and checked by size and SHA-256 before a completion
+   receipt is published. No source checkpoint is deleted.
+4. Attempt the existing sweep recovery, then request pod stop even if recovery
+   itself fails or reaches its time limit.
+
+Recovery timing and receipts are first written on container disk, with a
+best-effort copy to the network volume. A full network volume therefore does
+not prevent recovery just because its status or timing files cannot be written.
+The global `CHECKPOINT_RECOVERY.json` lists recovered updates, already verified
+HF updates, missing/incomplete updates and errors. Unreached training updates
+cannot be recovered. Protection still depends on the recovery volume being
+mounted, writable and having sufficient free space; it is a bounded last resort.
+
+Tests inject ENOSPC during a real tiny LoRA adapter save, recover it to the global
+fixture and reload its learned output. They also cover failed HF verification,
+skipping already verified backups, incomplete checkpoint rejection, full-volume
+logging/status failures and global storage failure without false success.

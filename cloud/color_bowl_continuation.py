@@ -69,6 +69,8 @@ def launch(selected, global_volume):
     sweep_name = 'scripted_color_bowl_continue_'+name.removeprefix('panda-train-color-bowl-cont-').replace('-', '_')
     config = {k: v for k, v in training_profile.items() if k != 'file_sizes'}
     config.update(training_config=TRAINING_CONFIG, continuation_chain=True, estimated_seconds=22*3600,
+        checkpoint_recovery=True,recovery_checkpoint_updates=list(CONTINUATION_CHECKPOINTS),
+        checkpoint_recovery_dir=str(local/'checkpoint-recovery'),
         source_training_session=source.name, source_adapter=str(adapter), initial_update=6000,
         dataset_revision=sweep_profile['source_dataset_revision'],
         session=str(session), local=str(local), base_volume='/workspace/openvla-7b', base=str(local/'base'),
@@ -170,6 +172,8 @@ def worker(config):
     env.pop('HF_TOKEN', None)
     env.pop('RUNPOD_API_KEY', None)
     env.update(MUJOCO_GL='egl', PYOPENGL_PLATFORM='egl')
+    if config.get('checkpoint_recovery'):
+        env['PANDA_CHECKPOINT_RECOVERY_DIR']=config['checkpoint_recovery_dir']
     with stage('scene_initialization_and_render_preflight'):
         run_command([config['sim_python'], '-u', '-m', 'cloud.bowl_chain_sweep', '--preflight', sweep/'results.json'], session/'preflight.log', env=env)
     with stage('training_continuation'):
@@ -177,7 +181,8 @@ def worker(config):
             '--model', config['base'], '--adapter', initial_adapter, '--initial-update', '6000',
             '--base-staging-receipt', session/'model_staging.json',
             '--config', PROJECT_ROOT/TRAINING_CONFIG, '--output-root', session/'runs',
-            '--run-name', 'training', '--provenance', session/'provenance.json'], session/'training.log', env)
+            '--run-name', 'training', '--provenance', session/'provenance.json'], session/'training.log', env,
+            **({'local_log':local/'training.log'} if config.get('checkpoint_recovery') else {}))
         completion = verify_training(config['training_run'], 6000, CONTINUATION_CHECKPOINTS, initial_update=6000)
         write_status(session/'training_completion.json', completion)
     # Back up the three new checkpoints before the long sweep. Volume copies stay.
