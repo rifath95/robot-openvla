@@ -46,6 +46,21 @@ Default estimate is one hour, with one hour added for the inner deadline (two ho
 
 ## Download later on the Mac
 
+For one overall byte progress bar (percentage, speed and ETA), use:
+
+```bash
+caffeinate -i .venv-training/bin/python -m data_tools.download_sweep_archive \
+  --sweep SWEEP_NAME --revision VERIFIED_COMMIT
+```
+
+Stop any previous downloader with Ctrl+C first. This uses the same destination
+and Hugging Face partial-download cache as the command below. Rerun after an
+interruption to reuse completed work. Two regular HTTP transfers run at once;
+use `--workers 1` for one transfer. The bar counts retained bytes, including
+matching partial files. The HF downloader checks existing files and restoration
+verifies archive checksums. After 30 seconds without new bytes the bar shows
+`waiting for network`; ETA requires actual progress.
+
 Using your authenticated local HF installation:
 
 ```bash
