@@ -131,7 +131,7 @@ def watch_session(directory):
             status = json.loads(status_path.read_text())
             if status['phase'] != 'training':
                 print(f"\nTraining status: {status['phase']}; reports are ready to download.", flush=True)
-                return 0 if status.get('training_complete') else 1
+                return 0 if status.get('job_complete',status.get('training_complete')) else 1
         elif not seen_status and time.monotonic() >= startup_deadline:
             raise RuntimeError('Cloud supervisor did not create session status within 120 seconds')
         time.sleep(0.5)

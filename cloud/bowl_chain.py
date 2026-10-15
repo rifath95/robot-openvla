@@ -104,13 +104,14 @@ def supervise(config):
         watchdog_process.stdin.write(json.dumps(guard).encode());watchdog_process.stdin.close()
     pids()
     write_status(session/'chain_config.json',safe)
-    status=dict(phase='running',started_at_utc=utc(),timeout_budget=budget,code_commit=config['code_commit'],pod_id=config['pod_id'])
+    status=dict(phase='training' if config.get('training_only') else 'running',started_at_utc=utc(),timeout_budget=budget,code_commit=config['code_commit'],pod_id=config['pod_id'])
     write_status(session/'status.json',status)
     try:
         env=os.environ.copy();env.pop('RUNPOD_API_KEY',None);env.pop('HF_TOKEN',None)
         with (local/'console.log').open('a',buffering=1) as log:
             payload={k:v for k,v in config.items() if k!='pod_key'}
-            worker=subprocess.Popen([sys.executable,'-u','-m','cloud.bowl_chain_worker'],cwd=PROJECT_ROOT,env=env,stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
+            module='cloud.color_bowl_training' if config.get('training_only') else 'cloud.bowl_chain_worker'
+            worker=subprocess.Popen([sys.executable,'-u','-m',module],cwd=PROJECT_ROOT,env=env,stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
             child_ids.append(worker.pid);pids();worker.stdin.write(json.dumps(payload).encode());worker.stdin.close()
             try:
                 code=worker.wait(timeout=max(.01,inner-time.monotonic()));outcome='completed' if code==0 else 'failed';status['exit_code']=code
@@ -133,6 +134,21 @@ def supervise(config):
         # All persistent checkpoints are retained regardless of the outcome.
         status.update(phase=outcome,finished_at_utc=utc(),elapsed_seconds=time.monotonic()-started)
         try:
+            if config.get('training_only'):
+                # Make final diagnostics available during the synchronization
+                # window, before acknowledgment permits stopping.
+                import shutil
+                if (local/'console.log').exists():shutil.copyfile(local/'console.log',session/'supervisor_console.log')
+                completion=session/'training_completion.json'
+                if completion.exists():status.update(json.loads(completion.read_text()))
+                receipt=session/'checkpoint_hf_receipt.json'
+                status['hf_backup_verified']=receipt.exists() and json.loads(receipt.read_text()).get('verified') is True
+                if outcome=='completed' and not (status.get('training_complete') and status['hf_backup_verified']):
+                    outcome='failed';status['phase']=outcome
+                status['job_complete']=outcome=='completed' and bool(status.get('training_complete')) and status['hf_backup_verified']
+                from training.detached_run import wait_for_download
+                wait_for_download(session,status,config['outer_deadline_monotonic']-120,
+                    0 if outcome=='inner_timeout' else config.get('download_grace_seconds',120))
             write_status(session/'status.json',status)
             for name in ('console.log','recovery.log','watchdog.log'):
                 if (local/name).exists():

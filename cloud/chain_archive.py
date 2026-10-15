@@ -15,12 +15,12 @@ def verify_files(repo,repo_type,revision,prefix,records,token,local):
         print('HF verified:',record['path'],flush=True)
 
 
-def backup_training(session,repo,token,local):
+def backup_training(session,repo,token,local,checkpoints=(0,500,1000,2000,3000)):
     from huggingface_hub import HfApi
     from cloud.checkpoint_ready import check_ready
     started=time.monotonic()
     source=Path(session);run=source/'runs/training'
-    for cp in (0,500,1000,2000,3000):check_ready(run/f'checkpoint_{cp:06d}')
+    for cp in checkpoints:check_ready(run/f'checkpoint_{cp:06d}')
     staging=Path(local)/'checkpoint-backup';staging.mkdir(parents=True,exist_ok=False)
     records=[]
     for parent,dirs,files in os.walk(source):

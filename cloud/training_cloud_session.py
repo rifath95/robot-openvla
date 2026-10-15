@@ -6,6 +6,7 @@ network volume, and RunPod stop secret. Sleeping the Mac leaves training running
 
 from common.output_layout import output_path
 import argparse
+import getpass
 import json
 from pathlib import Path, PurePosixPath
 import re
@@ -133,9 +134,14 @@ def main():
     parser.add_argument('--adapter', help='Continue adapter weights with a fresh optimizer')
     parser.add_argument('--download-window-seconds', type=int, default=120)
     parser.add_argument('--fetch-only', action='store_true')
+    parser.add_argument('--prepared-color-bowl',action='store_true',help='Launch the prepared 600-demo training/download/backup workflow on container disk')
     parser.add_argument('--session', help='Saved session name; required for --fetch-only')
     parser.add_argument('--stop-after-fetch', action='store_true', help='Stop the resumed pod after a successful fetch-only download')
     args = parser.parse_args()
+    if args.prepared_color_bowl:
+        if args.fetch_only or args.adapter or args.dataset or args.config!='training/smoke.json':
+            parser.error('--prepared-color-bowl selects its own profile and inputs; use ordinary --fetch-only for later downloads')
+        args.config='training/color_place_bowl_600_6000.json'
     try:
         from training.dataset_profile import select_dataset
         args.dataset=str(select_dataset(json.loads((ROOT/args.config).read_text()),args.dataset))
@@ -155,8 +161,15 @@ def main():
     code = 0
     try:
         if not args.fetch_only:
-            result = subprocess.run(ssh + ['bash -s'], input=script, text=True,
-                                    stdout=subprocess.PIPE)
+            if args.prepared_color_bowl:
+                subprocess.run(ssh+['bash -s'],input=setup_script(),text=True,check=True)
+                token=getpass.getpass('Hugging Face WRITE token (hidden): ').strip()
+                if not token:raise ValueError('A Hugging Face write token is required')
+                remote='cd /root/robot-openvla && /opt/openvla/bin/python -u -m cloud.color_bowl_training --launch --token-stdin --download-window-seconds '+str(args.download_window_seconds)
+                result=subprocess.run(ssh+[remote],input=json.dumps(dict(hf_token=token)),text=True,stdout=subprocess.PIPE)
+            else:
+                result = subprocess.run(ssh + ['bash -s'], input=script, text=True,
+                                        stdout=subprocess.PIPE)
             print(result.stdout, end='', flush=True)
             match = re.search(r'^Cloud session started: (' + SESSION_PATTERN + r')$', result.stdout, re.MULTILINE)
             if result.returncode or not match:
@@ -182,6 +195,8 @@ def main():
             subprocess.run(ssh + ['cd /root/robot-openvla && /opt/openvla/bin/python -m training.detached_run --stop-only'], check=True, timeout=90)
         if not args.fetch_only:
             print('Reports saved locally. Cloud supervisor handles pod stopping; confirm Stopped in RunPod.', flush=True)
+        if status.get('job_complete') is False:
+            raise SystemExit('Reports downloaded. The prepared training/backup job did not fully complete; inspect status.json and console.log. Saved checkpoints remain on the volume.')
         if not status.get('training_complete') or code:
             raise SystemExit('Reports downloaded, but successful training completion was not confirmed. Inspect status.json and console.log.')
     except KeyboardInterrupt:

@@ -1,0 +1,46 @@
+{
+  "dataset_bundle": "training_color_place_bowl_v1_600",
+  "expected_camera": "bowl_camera",
+  "expected_split_counts": {
+    "train": {
+      "episodes": 600,
+      "transitions": 43344
+    },
+    "validation": {
+      "episodes": 0,
+      "transitions": 0
+    },
+    "test": {
+      "episodes": 0,
+      "transitions": 0
+    }
+  },
+  "batch_size": 8,
+  "grad_accumulation_steps": 1,
+  "max_steps": 6000,
+  "save_steps": 100,
+  "learning_rate": 0.0001,
+  "lora_rank": 32,
+  "lora_dropout": 0.0,
+  "use_lora": true,
+  "use_quantization": false,
+  "image_aug": false,
+  "shuffle_buffer_size": 512,
+  "validation_every": 100,
+  "validation_max_batches": 0,
+  "max_runtime_seconds": 25200,
+  "hard_limit_seconds": 43200,
+  "require_benchmark": false,
+  "expected_gpu": "NVIDIA A40",
+  "minimum_free_disk_gib": 4,
+  "checkpoint_updates": [
+    0,
+    1000,
+    2000,
+    4000,
+    6000
+  ],
+  "batch_policy": "config",
+  "stage_inputs_on_container": false,
+  "validation_enabled": false
+}

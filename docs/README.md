@@ -51,6 +51,8 @@ For result folders and replay locations, see the [local outputs layout](OUTPUT_L
 
 ## Fine-tuning
 
+- [Prepared 600-demo mixed colored bowl training and checkpoint backup](training/COLOR_PLACE_BOWL_600_TRAINING.md)
+
 - [Red/blue touch training profile and launch](training/COLOR_TOUCH_TRAINING.md)
 - [Four-color touch training profile and launch](training/FOUR_COLOR_TOUCH_TRAINING.md)
 - [Archived touch checkpoint 300 and restore instructions](training/TOUCH_CHECKPOINT_ARCHIVE.md)
