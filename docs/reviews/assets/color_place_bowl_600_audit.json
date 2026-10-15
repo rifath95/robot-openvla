@@ -1,0 +1,73 @@
+{
+  "passed": true,
+  "episodes": 600,
+  "training_episodes": 600,
+  "validation_episodes": 0,
+  "test_episodes": 0,
+  "reused_unchanged_red": 50,
+  "new_episodes": 550,
+  "transitions": 43344,
+  "scene_counts": {
+    "1": 200,
+    "2": 400
+  },
+  "requested_color_counts": {
+    "red": 150,
+    "blue": 150,
+    "green": 150,
+    "yellow": 150
+  },
+  "paired_layouts_verified": 200,
+  "maximum_replay_qpos_difference": 1.3792333941609058e-10,
+  "maximum_tracking_error_metres": 0.0016616595917471895,
+  "original_demonstrations_unchanged": true,
+  "all_task_successes": true,
+  "training_colors": [
+    "red",
+    "blue",
+    "green",
+    "yellow"
+  ],
+  "reserved_colors": [
+    "black",
+    "purple",
+    "orange",
+    "white"
+  ],
+  "portable_bundle": "training_color_place_bowl_v1_600",
+  "portable_bundle_bytes": 5410045114,
+  "export_and_input_check": {
+    "passed": true,
+    "split_counts": {
+      "train": {
+        "episodes": 600,
+        "transitions": 43344
+      },
+      "validation": {
+        "episodes": 0,
+        "transitions": 0
+      },
+      "test": {
+        "episodes": 0,
+        "transitions": 0
+      }
+    },
+    "portable": true,
+    "all_source_images_actions_instructions_match": true,
+    "official_processor_batches": {
+      "train": {
+        "pixel_shape": [
+          6,
+          224,
+          224
+        ],
+        "supervised_tokens": 8,
+        "input_tokens": 37
+      }
+    }
+  },
+  "upload_checksums_verified": true,
+  "model_weights_loaded": false,
+  "training_executed": false,
+  "hf_upload_executed": false
+}

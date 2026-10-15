@@ -33,6 +33,9 @@ def controller_fingerprint():
 
 def configure_recorded_scene(model, metadata):
     configure_grip(model)
+    if metadata.get('scene_profile')=='panda_color_place_bowl_v1':
+        from simulation.color_place_bowl_scene import configure_colors
+        configure_colors(model,metadata['cube_colors'])
     position = np.asarray(metadata['scenario']['scene']['bowl_position'], dtype=float)
     if position.shape != (3,) or not np.isfinite(position).all():
         raise ValueError('Invalid saved bowl position')
@@ -73,6 +76,10 @@ def record_episode(folder, scenario, *, scene_profile='panda_bowl_v1'):
     scene_path, instruction, initializer = SCENE_PATH, INSTRUCTION, randomize_scene
     if scene_profile=='panda_place_bowl_v1':
         from simulation.place_bowl_scene import SCENE_PATH as scene_path, INSTRUCTION as instruction, initialize_scene as initializer
+    elif scene_profile=='panda_color_place_bowl_v1':
+        from simulation.color_place_bowl_scene import scene_path as colored_path
+        scene_path=colored_path(len(scenario['cube_colors']))
+        instruction=f"pick up the {scenario['target_color']} cube and place it in the blue bowl."
     elif scene_profile!='panda_bowl_v1':
         raise ValueError('Unknown bowl scene profile')
     folder = Path(folder)
@@ -92,11 +99,23 @@ def record_episode(folder, scenario, *, scene_profile='panda_bowl_v1'):
     metadata['startup_policy']=policy
     metadata['controller_policy']='holding_correction_v1'
     metadata['controller_sha256']=controller_fingerprint()
+    if scene_profile=='panda_color_place_bowl_v1':
+        metadata.update(cube_colors=scenario['cube_colors'],target_color=scenario['target_color'])
     write_json(folder/'episode.json', metadata)
     try:
         with PandaEnv(scene_path, camera=CAMERA_NAME) as env:
             rng = np.random.default_rng(scenario['random_seed'])
-            env.controller, scene = initializer(env.model, env.data, rng, full_pose=True,
+            if scene_profile=='panda_color_place_bowl_v1':
+                from simulation.color_place_bowl_scene import initialize_scene,PlacementOutcome,cube_position as colored_position
+                scene=initialize_scene(env,scenario['layout'],scenario['cube_colors'])
+                scene['grasp_quaternion_wxyz']=env.controller.end_effector_pose()[1].tolist()
+                target_slot=next(s for s,c in scenario['cube_colors'].items() if c==scenario['target_color'])
+                observed_cube=lambda:colored_position(env,target_slot)
+                tracker=PlacementOutcome(env,scenario['target_color'],scenario['cube_colors'])
+            else:
+                tracker=None
+                observed_cube=lambda:cube_position(env)
+                env.controller, scene = initializer(env.model, env.data, rng, full_pose=True,
                                                     initial_gripper=scenario['initial_gripper'],
                                                     random_cube_yaw=scenario.get('random_cube_yaw',False),
                                                     coverage_target=scenario.get('coverage_target'),
@@ -106,7 +125,7 @@ def record_episode(folder, scenario, *, scene_profile='panda_bowl_v1'):
             metadata['starting_pose'] = scene['starting_pose']
             metadata['physics_seconds_per_action'] = PHYSICS_STEPS * float(env.model.opt.timestep)
             write_json(folder/'episode.json', metadata)
-            initial = cube_position(env)
+            initial = observed_cube()
             bowl = np.asarray(scene['bowl_position'])
             grasp_orientation = np.asarray(scene['grasp_quaternion_wxyz'])
             positions = [initial.copy()]
@@ -125,8 +144,14 @@ def record_episode(folder, scenario, *, scene_profile='panda_bowl_v1'):
                 motion_poses, motion_times = [env.data.qpos.copy()], [float(env.data.time)]
                 for count in range(0, PHYSICS_STEPS, 20):
                     env.controller.step(min(20, PHYSICS_STEPS-count))
-                    if unsafe_motion_contacts(env.model, env.data):
+                    if tracker is not None:tracker.observe(env)
+                    contacts=(unsafe_motion_contacts(env.model,env.data,environment_bodies=tuple(tracker.names))
+                              if tracker is not None else unsafe_motion_contacts(env.model,env.data))
+                    if contacts:
                         raise RuntimeError(f'Unsafe robot contact during {stage}')
+                    if tracker is not None and any(np.linalg.norm(colored_position(env,s)-tracker.initial[s])>.003
+                                                   for s in tracker.names if s!=target_slot):
+                        raise RuntimeError('Expert moved a distractor cube')
                     motion_poses.append(env.data.qpos.copy())
                     motion_times.append(float(env.data.time))
                 after, quaternion_after = env.controller.end_effector_pose()
@@ -136,7 +161,7 @@ def record_episode(folder, scenario, *, scene_profile='panda_bowl_v1'):
                 np.savez_compressed(directory/'motion_frames.npz', qpos=motion_poses, time=motion_times)
                 save_rgb_png(directory/'after.png', env.observe())
                 save_state(directory/'after_state.npz', env)
-                cube = cube_position(env)
+                cube = observed_cube()
                 positions.append(cube)
                 row = dict(index=len(rows)+1, stage=stage, instruction=instruction,
                            observation=f'{directory.name}/before.png', next_observation=f'{directory.name}/after.png',
@@ -178,7 +203,7 @@ def record_episode(folder, scenario, *, scene_profile='panda_bowl_v1'):
             move(initial+[0, 0, .003], 1, 'lower_to_grasp')
             act([0, 0, 0, 0, 0, 0, 0], 'close')
             move(initial+[0, 0, .15], 0, 'lift')
-            if cube_position(env)[2] < initial[2]+.08:
+            if observed_cube()[2] < initial[2]+.08:
                 raise RuntimeError('Cube did not lift through contact grasp')
             move([*bowl[:2], .424], 0, 'transfer_to_bowl')
             # Release above the rim rather than putting open fingers inside walls.
@@ -187,7 +212,12 @@ def record_episode(folder, scenario, *, scene_profile='panda_bowl_v1'):
             move([*bowl[:2], .424], 1, 'retreat')
             if scene_profile=='panda_bowl_v1':
                 act([0, 0, 0, 0, 0, 0, 1], 'settle_in_bowl')
-            result = task_result(initial, bowl, positions, env)
+            result = task_result(initial, bowl, positions, env) if tracker is None else tracker.result(env)
+            if tracker is not None:
+                movement=max((np.linalg.norm(colored_position(env,s)-tracker.initial[s])
+                              for s in tracker.names if s!=target_slot),default=0.)
+                result['maximum_final_distractor_displacement_metres']=float(movement)
+                if movement>.003:raise RuntimeError('Expert displaced a distractor cube')
             metadata.update(result, transition_count=len(rows))
             write_json(folder/'episode.json', metadata)
             if not result['success']:
@@ -205,6 +235,9 @@ def replay_episode(folder):
     scene_path=SCENE_PATH
     if metadata.get('scene_profile')=='panda_place_bowl_v1':
         from simulation.place_bowl_scene import SCENE_PATH as scene_path
+    elif metadata.get('scene_profile')=='panda_color_place_bowl_v1':
+        from simulation.color_place_bowl_scene import scene_path as colored_path
+        scene_path=colored_path(len(metadata['cube_colors']))
     if metadata.get('controller_sha256') not in (None,controller_fingerprint()):
         raise ValueError('Episode controller differs from collection; do not certify it with different control code')
     if (metadata['scene_xml_sha256'] != scene_fingerprint(scene_path) or metadata['mujoco_version'] != mujoco.__version__
@@ -215,17 +248,27 @@ def replay_episode(folder):
     with PandaEnv(scene_path, camera=CAMERA_NAME) as env:
         configure_recorded_scene(env.model, metadata)
         restore_state(folder/'initial_state.npz', env)
-        initial = cube_position(env)
+        tracker=None
+        if metadata.get('scene_profile')=='panda_color_place_bowl_v1':
+            from simulation.color_place_bowl_scene import PlacementOutcome,cube_position as colored_position
+            tracker=PlacementOutcome(env,metadata['target_color'],metadata['cube_colors'])
+            target_slot=next(s for s,c in metadata['cube_colors'].items() if c==metadata['target_color'])
+            observed_cube=lambda:colored_position(env,target_slot)
+        else:observed_cube=lambda:cube_position(env)
+        initial = observed_cube()
         positions = [initial]
         for row in rows:
             result = env.controller.apply_action(to_controller_action(row['action']))
             if not result.converged:
                 raise RuntimeError(f'Replay IK failed at step {row["index"]}')
-            env.controller.step(PHYSICS_STEPS)
-            positions.append(cube_position(env))
+            for count in range(0,PHYSICS_STEPS,20):
+                env.controller.step(min(20,PHYSICS_STEPS-count))
+                if tracker is not None:tracker.observe(env)
+            positions.append(observed_cube())
             with np.load(folder/f'step_{row["index"]:04d}/after_state.npz') as saved:
                 errors.append(float(np.max(np.abs(env.data.qpos-saved['qpos']))))
-        result = task_result(initial, np.asarray(metadata['scenario']['scene']['bowl_position']), positions, env)
+        result = (task_result(initial, np.asarray(metadata['scenario']['scene']['bowl_position']), positions, env)
+                  if tracker is None else tracker.result(env))
         save_rgb_png(folder/'replay_final.png', env.observe())
     report = dict(result, replayed_transitions=len(rows), maximum_qpos_difference=max(errors),
                   episode_sha256=fingerprint(folder), passed=bool(result['success'] and max(errors) < 1e-6))

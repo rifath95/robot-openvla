@@ -61,4 +61,9 @@ class PlacementTests(unittest.TestCase):
                 geom=mujoco.mj_name2id(m,mujoco.mjtObj.mjOBJ_GEOM,slot+'_geom');np.testing.assert_allclose(m.geom_rgba[geom],PALETTE[color])
             bowl=mujoco.mj_name2id(m,mujoco.mjtObj.mjOBJ_BODY,'bowl');np.testing.assert_allclose(m.body_pos[bowl],[*layout['bowl'],.254])
 
+    def test_distractor_resting_on_table_is_not_a_robot_collision(self):
+        from simulation.panda_start_poses import unsafe_motion_contacts
+        env,names,_=self.environment(2)
+        self.assertEqual(unsafe_motion_contacts(env.model,env.data,environment_bodies=tuple(names)),[])
+
 if __name__=='__main__':unittest.main()

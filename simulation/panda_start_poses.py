@@ -66,13 +66,13 @@ def initialize_start_pose(env, position, yaw, reference_quaternion, *, roll=0, p
                 actual_joint_positions=joints.tolist(), penetrating_contacts=0)
 
 
-def unsafe_motion_contacts(model, data):
+def unsafe_motion_contacts(model, data, *, environment_bodies=()):
     """Allow intended gripper contacts, reject arm collisions and deep table penetration."""
     gripper = {'hand', 'left_finger', 'right_finger'}
     unsafe = []
-    for contact in robot_contacts(model, data):
+    for contact in robot_contacts(model, data, environment_bodies=environment_bodies):
         names = set(contact['bodies'])
-        allowed = names <= gripper | {'cube', 'blue_cube', 'table'}
+        allowed = names <= gripper | {'cube', 'blue_cube', 'table', *environment_bodies}
         if not allowed or ('table' in names and contact['distance'] < -.004):
             unsafe.append(contact)
     return unsafe

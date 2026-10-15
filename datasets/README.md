@@ -132,3 +132,14 @@ The expanded portable bundle is `training_place_bowl_v2_300/`: **300 train,
 split labels are preserved as provenance, while all episodes are exported to
 training. `WATCH_TRAJECTORIES.md` has direct Replay and Action Replay buttons.
 See [the expansion review](../docs/reviews/PLACE_BOWL_300.md) for checks and upload.
+
+## Phase 4 mixed colored-cube bowl placement
+
+`panda_color_place_bowl/` contains the completed 600-demonstration mixture: 200
+single-cube and 400 two-cube recordings, with 150 requested targets per training
+color (red, blue, green and yellow). Fifty original single-red demonstrations
+are reused unchanged. Every two-cube layout is demonstrated for both target
+requests after a fresh reset. All episodes are training data; unseen colors and
+independent simulator layouts are used for later behavioral evaluation.
+`WATCH_TRAJECTORIES.md` offers direct Replay and Action Replay buttons. See
+[the dataset review](../docs/reviews/COLOR_PLACE_BOWL_600.md) for checks and packaging.

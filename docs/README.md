@@ -36,6 +36,8 @@ For result folders and replay locations, see the [local outputs layout](OUTPUT_L
 
 ## Demonstrations and datasets
 
+- [600 mixed one/two-cube color-conditioned bowl-placement demonstrations](reviews/COLOR_PLACE_BOWL_600.md)
+
 - [300 all-training bowl-placement demonstrations](reviews/PLACE_BOWL_300.md)
 
 - [First ten single-cube grasp/lift demonstrations](reviews/LIFT_CUBE_FIRST_TEN.md)
