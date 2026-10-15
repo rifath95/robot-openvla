@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OpenVLA · Bowl playground</title>
+<style>
+body{font:15px system-ui;background:#10151d;color:#eef2fa;margin:24px}main{max-width:1200px;margin:auto}h1{font-size:24px}section{background:#1b2431;border-radius:12px;padding:18px;margin:14px 0}button,select,input,textarea{font:inherit;border-radius:6px;border:1px solid #526279;padding:9px;color:inherit;background:#263346}button{cursor:pointer;margin:3px}button.selected{background:#3977d6}button:disabled{opacity:.4;cursor:wait}label{display:inline-block;margin:6px}textarea{width:95%;height:58px}#live{width:100%;max-width:800px;background:#080d13;border-radius:8px;aspect-ratio:4/3}#status{white-space:pre-wrap;line-height:1.6}.muted{color:#b7c5d8;font-size:13px}.grid{display:grid;grid-template-columns:minmax(400px,2fr) minmax(300px,1fr);gap:18px}.play{background:#237450}.stop{background:#943b46}@media(max-width:850px){.grid{display:block}}
+</style>
+<main><h1>OpenVLA · Bowl playground</h1><p class="muted">MuJoCo runs on this Mac. OpenVLA runs on your cloud GPU. The controls and instruction text are never included in the model’s camera image.</p>
+<section><b>Checkpoint</b><span id="models"></span><div id="modelStatus" class="muted">Connecting…</div></section>
+<div class="grid"><section><img id="live" alt="Live MuJoCo scene"><div id="status">Starting…</div></section>
+<div><section><b>Scene</b><p id="counts"></p><div id="colors"></div>
+<label>Scored target <select id="target"></select></label>
+<label>Scene seed <input id="seed" type="number" min="0" max="2147483647" value="1000" style="width:100px"></label>
+<p><button id="reset">Apply / reset same positions</button><button id="random">New positions</button></p>
+<div class="muted">Seen in training: red, blue, green, yellow. Other colors are unseen. Three and four cubes are also outside the training scenes.</div></section>
+<section><label for="instruction"><b>Instruction — editable</b></label>
+<textarea id="instruction">pick up the red cube and place it in the blue bowl.</textarea>
+<label><input type="checkbox" id="sample"> Sample action tokens</label>
+<p><button class="play" id="play">▶ Play (up to 120 actions)</button><button id="act">Act once</button><button class="stop" id="stop">■ Stop</button></p>
+<p class="muted">Play continues from the current pose. Stop holds the pose and discards pending predictions. Reset restores the initial arm and layout. Instructions are sent exactly as typed; scoring follows the selected target.</p></section></div></div>
+<p class="muted">Closing this page or stopping the local command does not unload the cloud model or stop pod billing. Stop the pod in RunPod when finished.</p></main>
+<script>
+const token=new URLSearchParams(location.search).get('token'), $=id=>document.getElementById(id);
+const palette=['red','blue','green','yellow','black','purple','orange','white','pink','brown','cyan'];
+let count=1,checkpoint=0,busy=false,sceneDirty=false;
+async function command(command,extra={}){try{const r=await fetch('/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,command,...extra})});const v=await r.json();if(!r.ok)throw Error(v.error);return true}catch(e){$('status').textContent=String(e);return false}}
+function selectedColors(){return [...$('colors').querySelectorAll('select')].map(s=>s.value)}
+function targets(){const previous=$('target').value;$('target').replaceChildren();selectedColors().forEach(c=>{const o=new Option(c,c);$('target').add(o)});if(selectedColors().includes(previous))$('target').value=previous;else fillInstruction()}
+function fillInstruction(){$('instruction').value=`pick up the ${$('target').value||'red'} cube and place it in the blue bowl.`}
+function rebuild(){const old=selectedColors();$('colors').replaceChildren();for(let i=0;i<count;i++){const label=document.createElement('label');label.textContent=`Cube ${i+1} `;const select=document.createElement('select');palette.forEach(c=>select.add(new Option(c,c)));select.value=old[i]||palette[i];select.onchange=()=>{targets();sceneDirty=true};label.append(select);$('colors').append(label)}targets();[...$('counts').children].forEach(b=>b.classList.toggle('selected',Number(b.dataset.count)===count))}
+[1,2,3,4].forEach(n=>{const b=document.createElement('button');b.dataset.count=n;b.textContent=n+(n===1?' cube':' cubes');b.onclick=()=>{count=n;rebuild();sceneDirty=true};$('counts').append(b)});
+[0,1000,2000,4000,6000].forEach(cp=>{const b=document.createElement('button');b.textContent=cp===0?'0 · untrained adapter':cp;b.dataset.cp=cp;b.onclick=()=>{checkpoint=cp;command('checkpoint',{checkpoint:cp})};$('models').append(b)});
+async function scene(random){if(random)$('seed').value=Math.floor(Math.random()*1000000)+2000;if(new Set(selectedColors()).size!==count){$('status').textContent='Choose distinct colors before applying the scene.';return}const ok=await command('scene',{scene:{count,colors:selectedColors(),target:$('target').value,seed:Number($('seed').value)}});if(ok)sceneDirty=false}
+$('seed').oninput=()=>{sceneDirty=true};$('target').onchange=()=>{fillInstruction();sceneDirty=true};$('reset').onclick=()=>scene(false);$('random').onclick=()=>scene(true);
+$('play').onclick=()=>command('play',{instruction:$('instruction').value,sample:$('sample').checked});
+$('act').onclick=()=>command('act',{instruction:$('instruction').value,sample:$('sample').checked});
+$('stop').onclick=()=>command('stop');rebuild();
+window.addEventListener('pagehide',()=>navigator.sendBeacon('/command',JSON.stringify({token,command:'stop'})));
+async function poll(){try{const r=await fetch('/state?token='+encodeURIComponent(token));const s=await r.json();checkpoint=s.checkpoint;const m=s.model||{};busy=m.status==='loading';$('modelStatus').textContent=`${m.status||'Connecting'} · checkpoint ${m.checkpoint??'—'}${m.model_load_seconds?' · load '+m.model_load_seconds.toFixed(1)+' s':''}${m.error?' · '+m.error:''}`;[...$('models').children].forEach(b=>{b.classList.toggle('selected',Number(b.dataset.cp)===checkpoint);b.disabled=busy});$('status').textContent=(sceneDirty?'Scene edits pending — click Apply / reset.\n':'')+s.phase+'\nActions: '+s.steps+(s.result?' · '+s.result.outcome:'')+(s.run?'\nSaved: '+s.run:'');$('play').disabled=$('act').disabled=sceneDirty||!m.model_loaded||m.checkpoint!==checkpoint;$('live').src='/frame?token='+encodeURIComponent(token)+'&t='+Date.now()}catch(e){$('status').textContent='Local simulator disconnected. Check the launcher terminal.'}setTimeout(poll,150)}poll();
+</script></html>

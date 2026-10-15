@@ -16,6 +16,7 @@ For result folders and replay locations, see the [local outputs layout](OUTPUT_L
 
 ## Cloud sessions and inference
 
+- [Interactive bowl playground: checkpoint buttons, scene colors and typed instructions](cloud/INTERACTIVE_BOWL_PLAYGROUND.md)
 - [Prepared 800-trial colored bowl comparison, HF delivery and automatic stop](cloud/COLOR_BOWL_600_SWEEP.md)
 
 - [Prepared single-pod bowl training, 1,000-trial sweep, verified HF backup and global recovery](cloud/BOWL_TRAIN_SWEEP_CHAIN.md)

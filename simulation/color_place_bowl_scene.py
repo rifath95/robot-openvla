@@ -1,4 +1,4 @@
-"""One/two/four colored cubes with the unchanged placement bowl and controller."""
+"""One to four colored cubes with the unchanged placement bowl and controller."""
 import itertools
 import math
 from common.paths import PROJECT_ROOT
@@ -7,7 +7,7 @@ CAMERA_NAME="bowl_camera"
 
 
 def slots(count):
-    if type(count) is not int or count not in (1,2,4):raise ValueError('Require one, two or four cubes')
+    if type(count) is not int or count not in (1,2,3,4):raise ValueError('Require one to four cubes')
     return ['cube']+[f'cube_{i}' for i in range(1,count)]
 
 

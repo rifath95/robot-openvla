@@ -34,7 +34,8 @@ def capture_png(path):
 
 def request_prediction(image_path, instruction, *, server_url="http://127.0.0.1:8000",
                        expected_mode="openvla", timeout_seconds=180,
-                       request_id=None, progress=None, expert_action=None, generation=None):
+                       request_id=None, progress=None, expert_action=None, generation=None,
+                       checkpoint=None):
     """Request and validate one action, without touching any simulation state."""
     url = urlsplit(server_url)
     if url.scheme != "http" or not url.hostname or url.path not in ("", "/") or url.query or url.fragment or url.username:
@@ -47,6 +48,10 @@ def request_prediction(image_path, instruction, *, server_url="http://127.0.0.1:
     started = time.perf_counter()
     payload = {"request_id": request_id, "instruction": instruction,
                "image_png_base64": base64.b64encode(Path(image_path).read_bytes()).decode("ascii")}
+    if checkpoint is not None:
+        if type(checkpoint) is not int or checkpoint < 0:
+            raise ValueError('Invalid requested checkpoint')
+        payload['checkpoint'] = checkpoint
     if expert_action is not None:
         if (expected_mode != 'openvla' or not isinstance(expert_action, list) or len(expert_action) != 7
                 or any(type(x) not in (int, float) or not math.isfinite(x) for x in expert_action)
@@ -86,6 +91,8 @@ def request_prediction(image_path, instruction, *, server_url="http://127.0.0.1:
             raise ValueError(f"Server returned HTTP {response.status}: {result}")
         if result.get("request_id") != request_id or result.get("mode") != expected_mode or result.get("model_loaded") is not (expected_mode == "openvla"):
             raise ValueError("Unexpected server mode or request ID")
+        if checkpoint is not None and result.get('checkpoint') != checkpoint:
+            raise ValueError('Prediction came from a different checkpoint')
         action = result.get("action")
         if not isinstance(action, list) or len(action) != 7 or any(type(x) not in (int, float) or not math.isfinite(x) for x in action):
             raise ValueError("Response must contain seven finite action numbers")
