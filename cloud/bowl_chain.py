@@ -110,7 +110,8 @@ def supervise(config):
         env=os.environ.copy();env.pop('RUNPOD_API_KEY',None);env.pop('HF_TOKEN',None)
         with (local/'console.log').open('a',buffering=1) as log:
             payload={k:v for k,v in config.items() if k!='pod_key'}
-            module='cloud.color_bowl_training' if config.get('training_only') else 'cloud.bowl_chain_worker'
+            module=('cloud.color_bowl_training' if config.get('training_only') else
+                    'cloud.color_bowl_sweep' if config.get('sweep_only') else 'cloud.bowl_chain_worker')
             worker=subprocess.Popen([sys.executable,'-u','-m',module],cwd=PROJECT_ROOT,env=env,stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
             child_ids.append(worker.pid);pids();worker.stdin.write(json.dumps(payload).encode());worker.stdin.close()
             try:

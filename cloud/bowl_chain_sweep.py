@@ -42,7 +42,7 @@ def classify_failure(code,summary,status):
 
 def run(config):
     directory=Path(config['sweep']);persistent=Path(config['session'])/'sweep-reports';timings=Timings(Path(config['session']))
-    payload=json.loads((directory/'results.json').read_text());plan=payload['plan'];rows=payload['trials'];validate_saved(payload)
+    payload=json.loads((directory/'results.json').read_text());plan=payload['plan'];rows=payload['trials'];total=len(validate_saved(payload))
     done={r['directory'] for r in rows};specs=[r for r in trial_specs(plan) if r['directory'] not in done]
     env=os.environ.copy();env.pop('RUNPOD_API_KEY',None);env.pop('HF_TOKEN',None);env['MUJOCO_GL']='egl';env['PYOPENGL_PLATFORM']='egl'
     base=Path(config['base']);training=Path(config['training_run']);server=None;started=time.monotonic();error=None
@@ -54,12 +54,24 @@ def run(config):
             # Avoid making a second base copy: adapters alone are copied below.
             adapter=Path(config['local'])/f'adapters/checkpoint_{cp or 500:06d}'
             from cloud.checkpoint_ready import check_ready
-            source=check_ready(training/f'checkpoint_{cp or 500:06d}')
+            with timings.stage(f'checkpoint_wait_{cp:06d}'):
+                from cloud.sweep_worker import wait_checkpoint
+                source=wait_checkpoint(training/f'checkpoint_{cp or 500:06d}',
+                    config.get('checkpoint_wait_seconds',0),Path(config['source_status']) if config.get('source_status') else None)
+            if config.get('source_dataset_sha256'):
+                saved=json.loads((source/'training_config.json').read_text())
+                provenance=saved.get('dataset_provenance',{})
+                if (saved.get('checkpoint_update')!=cp or provenance.get('checksums_sha256')!=config['source_dataset_sha256']
+                    or provenance.get('dataset_revision')!=config['source_dataset_revision']):raise ValueError('Checkpoint belongs to a different training dataset/update')
             with timings.stage(f'checkpoint_staging_{cp:06d}'):
                 if not adapter.exists():
                     import shutil
                     shutil.copytree(source,adapter)
                 check_ready(adapter)
+                if config.get('verify_adapter_copy'):
+                    from cloud.archive_sweep import digest
+                    for f in source.rglob('*'):
+                        if f.is_file() and digest(f)!=digest(adapter/f.relative_to(source)):raise ValueError('Staged adapter checksum mismatch')
             ready=Path(config['local'])/f'ready_{cp:06d}.json';ready.unlink(missing_ok=True)
             log_path=directory/f'cloud_server_{cp:06d}.log'
             with log_path.open('a',buffering=1) as log:
@@ -84,14 +96,14 @@ def run(config):
                     row={k:v for k,v in spec.items() if k!='layout'}
                     row.update(controller_failed=controller_failed,infrastructure_failed=infrastructure_failed,error=trial_status.get('error'),stop_reason=summary.get('stop_reason'),model_label='Base' if cp==0 else f'Checkpoint {cp}',phase=summary.get('phase','Missing summary'),completed_steps=summary.get('completed_steps',0),outcome=result.get('outcome','unmeasured'),placement_success=result.get('success',False),wrong_placement=result.get('wrong_placement',False),cubes=result.get('cubes'),returncode=code,trial_seconds=time.monotonic()-trial_start,started_at_utc=at,finished_at_utc=utc())
                     rows.append(row);plan['elapsed_seconds']=time.monotonic()-started;write_reports(directory,plan,rows);mirror_reports(directory,persistent)
-                    print(f'Saved {len(rows)}/1000 trials: {row["outcome"]} ({row["trial_seconds"]:.1f}s)',flush=True)
+                    print(f'Saved {len(rows)}/{total} trials: {row["outcome"]} ({row["trial_seconds"]:.1f}s)',flush=True)
                     if infrastructure_failed:raise RuntimeError('Trial infrastructure failure; partial results retained')
                     wait_server(server,port,30)
             if server.poll() is None:server.terminate()
             try:server.wait(timeout=30)
             except subprocess.TimeoutExpired:server.kill();server.wait(timeout=5)
             server=None
-        if len(rows)!=1000:raise ValueError('Sweep did not finish all 1000 trials')
+        if len(rows)!=total:raise ValueError(f'Sweep did not finish all {total} trials')
     except BaseException as exc:error=type(exc).__name__;raise
     finally:
         if server is not None:

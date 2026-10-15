@@ -47,7 +47,7 @@ def wait_checkpoint(folder,seconds=0,status_path=None):
         if status_path is not None and Path(status_path).is_file():
             try:status=json.loads(Path(status_path).read_text())
             except (OSError,ValueError):status={}
-            if status.get('phase') in ('completed','incomplete','training_failed','wrapper_failed','wall_limit_reached','awaiting_sync'):
+            if status.get('phase') in ('completed','incomplete','training_failed','wrapper_failed','wall_limit_reached','awaiting_sync','failed','inner_timeout'):
                 raise RuntimeError(f'Training ended without required complete checkpoint: {folder}')
         if not announced:
             print(f'Waiting for fully saved checkpoint: {folder} (up to {seconds}s)',flush=True);announced=True

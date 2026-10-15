@@ -5,6 +5,8 @@ GROUPS=(('single_seen',['red'],20),('single_unseen',['black'],20),
         ('two_red_present',['red','black'],20),('two_red_absent',['black','purple'],20),
         ('four_red_present',['red','green','black','purple'],10),('four_red_absent',['green','black','purple','orange'],10))
 CHECKPOINTS=[0,500,1000,2000,3000]
+COLORED_CHECKPOINTS=[1000,2000,4000,6000]
+COLORED_VARIANT='colored_bowl_600_v1'
 
 
 def timeout_budget(estimate=25*3600):
@@ -27,6 +29,18 @@ def make_plan(session):
                 timeout_budget=timeout_budget(),estimated_seconds=25*3600,elapsed_seconds=0)
 
 
+def make_colored_plan(session):
+    import json
+    from common.paths import PROJECT_ROOT
+    profile=json.loads((PROJECT_ROOT/'inference/sweep_profiles/color_place_bowl_600.json').read_text())
+    plan=make_plan(session)
+    plan.update(variant=COLORED_VARIANT,groups=profile['groups'],checkpoints=list(COLORED_CHECKPOINTS),include_base_model=False,
+        action_statistics_checkpoint=1000,training_colors=['red','blue','green','yellow'],
+        historical_baseline=profile['historical_baseline'],layout_sha256=profile['layout_sha256'],
+        estimated_seconds=20*3600,timeout_budget=timeout_budget(20*3600))
+    return plan
+
+
 def trial_specs(plan):
     for cp in plan['checkpoints']:
         for g in plan['groups']:
@@ -42,8 +56,19 @@ def trial_specs(plan):
 
 def validate_saved(payload):
     plan=payload['plan'];rows=payload['trials']
-    if plan.get('checkpoints')!=CHECKPOINTS or not plan.get('include_base_model') or plan.get('sampling') is not False or plan.get('steps')!=120:raise ValueError('Altered chain sweep')
-    if plan.get('action_statistics_checkpoint')!=500:raise ValueError('Wrong base normalization reference')
+    colored=plan.get('variant')==COLORED_VARIANT
+    if plan.get('variant') not in (None,COLORED_VARIANT):raise ValueError('Unknown bowl sweep variant')
+    if (plan.get('checkpoints')!=(COLORED_CHECKPOINTS if colored else CHECKPOINTS)
+        or plan.get('include_base_model') is not (False if colored else True)
+        or plan.get('sampling') is not False or plan.get('steps')!=120):raise ValueError('Altered chain sweep')
+    if plan.get('action_statistics_checkpoint')!=(1000 if colored else 500):raise ValueError('Wrong base normalization reference')
+    if colored:
+        import hashlib,json
+        from common.paths import PROJECT_ROOT
+        profile=json.loads((PROJECT_ROOT/'inference/sweep_profiles/color_place_bowl_600.json').read_text())
+        sha=hashlib.sha256(json.dumps(plan['groups'],sort_keys=True).encode()).hexdigest()
+        if (sha!=profile['layout_sha256'] or plan.get('layout_sha256')!=sha or plan.get('historical_baseline')!=profile['historical_baseline']
+            or plan.get('training_colors')!=['red','blue','green','yellow']):raise ValueError('Changed comparison layouts or baseline provenance')
     import re
     if not re.fullmatch('panda-train-[A-Za-z0-9_-]+',plan.get('training_session','')):raise ValueError('Invalid session')
     if len(plan['groups'])!=len(GROUPS):raise ValueError('Wrong group inventory')
@@ -52,7 +77,7 @@ def validate_saved(payload):
         for seed,layout in zip(g['scene_seeds'],g['layouts']):
             validate_layout(layout,len(colors));validate_layout_copy(layout,positions(seed,len(colors)))
     specs={s['directory']:s for s in trial_specs(plan)}
-    if len(specs)!=1000 or len({r['directory'] for r in rows})!=len(rows):raise ValueError('Invalid trial inventory')
+    if len(specs)!=(800 if colored else 1000) or len({r['directory'] for r in rows})!=len(rows):raise ValueError('Invalid trial inventory')
     for r in rows:
         if r['directory'] not in specs or any(r.get(k)!=specs[r['directory']][k] for k in ('checkpoint','seed','target_color','cube_colors','cube_count','color_set')):raise ValueError('Trial differs from plan')
     return specs
