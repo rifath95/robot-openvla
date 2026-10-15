@@ -1,0 +1,1175 @@
+{
+  "sweep": "scripted_bowl_chain_20261014_174530_4acde087",
+  "trials": 1000,
+  "summary_mismatches": [],
+  "models": {
+    "0": {
+      "n": 200,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 4,
+      "outcomes": {
+        "no_lift": 200
+      },
+      "trial_seconds": 13003.24956633686
+    },
+    "500": {
+      "n": 200,
+      "correct": 10,
+      "target_lift": 34,
+      "other_lift": 1,
+      "any_lift": 35,
+      "controller_failures": 57,
+      "outcomes": {
+        "target_lifted_not_placed": 24,
+        "no_lift": 165,
+        "correct_placed": 10,
+        "wrong_cube_lifted": 1
+      },
+      "trial_seconds": 9952.832342324546
+    },
+    "1000": {
+      "n": 200,
+      "correct": 16,
+      "target_lift": 32,
+      "other_lift": 0,
+      "any_lift": 32,
+      "controller_failures": 18,
+      "outcomes": {
+        "target_lifted_not_placed": 16,
+        "correct_placed": 16,
+        "no_lift": 168
+      },
+      "trial_seconds": 11613.665981984697
+    },
+    "2000": {
+      "n": 200,
+      "correct": 25,
+      "target_lift": 54,
+      "other_lift": 1,
+      "any_lift": 55,
+      "controller_failures": 21,
+      "outcomes": {
+        "correct_placed": 25,
+        "no_lift": 145,
+        "target_lifted_not_placed": 29,
+        "wrong_cube_lifted": 1
+      },
+      "trial_seconds": 11593.551118126605
+    },
+    "3000": {
+      "n": 200,
+      "correct": 32,
+      "target_lift": 49,
+      "other_lift": 0,
+      "any_lift": 49,
+      "controller_failures": 19,
+      "outcomes": {
+        "no_lift": 151,
+        "correct_placed": 32,
+        "target_lifted_not_placed": 17
+      },
+      "trial_seconds": 11470.018473156262
+    }
+  },
+  "groups": {
+    "0:single_seen": {
+      "n": 20,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 2,
+      "outcomes": {
+        "no_lift": 20
+      },
+      "trial_seconds": 1381.5088444855064
+    },
+    "0:single_unseen": {
+      "n": 20,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 0,
+      "outcomes": {
+        "no_lift": 20
+      },
+      "trial_seconds": 1281.6881655321922
+    },
+    "0:two_red_present": {
+      "n": 40,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 0,
+      "outcomes": {
+        "no_lift": 40
+      },
+      "trial_seconds": 2577.0353863588534
+    },
+    "0:two_red_absent": {
+      "n": 40,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 0,
+      "outcomes": {
+        "no_lift": 40
+      },
+      "trial_seconds": 2459.5434939081315
+    },
+    "0:four_red_present": {
+      "n": 40,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 1,
+      "outcomes": {
+        "no_lift": 40
+      },
+      "trial_seconds": 2637.1305569983087
+    },
+    "0:four_red_absent": {
+      "n": 40,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 1,
+      "outcomes": {
+        "no_lift": 40
+      },
+      "trial_seconds": 2666.3431190538686
+    },
+    "500:single_seen": {
+      "n": 20,
+      "correct": 1,
+      "target_lift": 7,
+      "other_lift": 0,
+      "any_lift": 7,
+      "controller_failures": 3,
+      "outcomes": {
+        "target_lifted_not_placed": 6,
+        "no_lift": 13,
+        "correct_placed": 1
+      },
+      "trial_seconds": 1205.0912631920073
+    },
+    "500:single_unseen": {
+      "n": 20,
+      "correct": 0,
+      "target_lift": 1,
+      "other_lift": 0,
+      "any_lift": 1,
+      "controller_failures": 9,
+      "outcomes": {
+        "no_lift": 19,
+        "target_lifted_not_placed": 1
+      },
+      "trial_seconds": 868.3560894262046
+    },
+    "500:two_red_present": {
+      "n": 40,
+      "correct": 4,
+      "target_lift": 11,
+      "other_lift": 0,
+      "any_lift": 11,
+      "controller_failures": 15,
+      "outcomes": {
+        "target_lifted_not_placed": 7,
+        "no_lift": 29,
+        "correct_placed": 4
+      },
+      "trial_seconds": 1759.2674177193549
+    },
+    "500:two_red_absent": {
+      "n": 40,
+      "correct": 1,
+      "target_lift": 10,
+      "other_lift": 1,
+      "any_lift": 11,
+      "controller_failures": 9,
+      "outcomes": {
+        "no_lift": 29,
+        "target_lifted_not_placed": 9,
+        "wrong_cube_lifted": 1,
+        "correct_placed": 1
+      },
+      "trial_seconds": 2184.4981996887363
+    },
+    "500:four_red_present": {
+      "n": 40,
+      "correct": 2,
+      "target_lift": 3,
+      "other_lift": 0,
+      "any_lift": 3,
+      "controller_failures": 9,
+      "outcomes": {
+        "no_lift": 37,
+        "correct_placed": 2,
+        "target_lifted_not_placed": 1
+      },
+      "trial_seconds": 2094.6198332831264
+    },
+    "500:four_red_absent": {
+      "n": 40,
+      "correct": 2,
+      "target_lift": 2,
+      "other_lift": 0,
+      "any_lift": 2,
+      "controller_failures": 12,
+      "outcomes": {
+        "no_lift": 38,
+        "correct_placed": 2
+      },
+      "trial_seconds": 1840.9995390151162
+    },
+    "1000:single_seen": {
+      "n": 20,
+      "correct": 9,
+      "target_lift": 11,
+      "other_lift": 0,
+      "any_lift": 11,
+      "controller_failures": 0,
+      "outcomes": {
+        "target_lifted_not_placed": 2,
+        "correct_placed": 9,
+        "no_lift": 9
+      },
+      "trial_seconds": 1013.7179124052636
+    },
+    "1000:single_unseen": {
+      "n": 20,
+      "correct": 0,
+      "target_lift": 2,
+      "other_lift": 0,
+      "any_lift": 2,
+      "controller_failures": 4,
+      "outcomes": {
+        "no_lift": 18,
+        "target_lifted_not_placed": 2
+      },
+      "trial_seconds": 1114.0831807462964
+    },
+    "1000:two_red_present": {
+      "n": 40,
+      "correct": 6,
+      "target_lift": 16,
+      "other_lift": 0,
+      "any_lift": 16,
+      "controller_failures": 5,
+      "outcomes": {
+        "no_lift": 24,
+        "target_lifted_not_placed": 10,
+        "correct_placed": 6
+      },
+      "trial_seconds": 2317.9212169896346
+    },
+    "1000:two_red_absent": {
+      "n": 40,
+      "correct": 1,
+      "target_lift": 3,
+      "other_lift": 0,
+      "any_lift": 3,
+      "controller_failures": 2,
+      "outcomes": {
+        "no_lift": 37,
+        "target_lifted_not_placed": 2,
+        "correct_placed": 1
+      },
+      "trial_seconds": 2476.6218577669933
+    },
+    "1000:four_red_present": {
+      "n": 40,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 2,
+      "outcomes": {
+        "no_lift": 40
+      },
+      "trial_seconds": 2438.267424795544
+    },
+    "1000:four_red_absent": {
+      "n": 40,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 5,
+      "outcomes": {
+        "no_lift": 40
+      },
+      "trial_seconds": 2253.0543892809656
+    },
+    "2000:single_seen": {
+      "n": 20,
+      "correct": 8,
+      "target_lift": 14,
+      "other_lift": 0,
+      "any_lift": 14,
+      "controller_failures": 2,
+      "outcomes": {
+        "correct_placed": 8,
+        "no_lift": 6,
+        "target_lifted_not_placed": 6
+      },
+      "trial_seconds": 1049.2393952773418
+    },
+    "2000:single_unseen": {
+      "n": 20,
+      "correct": 3,
+      "target_lift": 6,
+      "other_lift": 0,
+      "any_lift": 6,
+      "controller_failures": 1,
+      "outcomes": {
+        "no_lift": 14,
+        "target_lifted_not_placed": 3,
+        "correct_placed": 3
+      },
+      "trial_seconds": 1156.0158442633692
+    },
+    "2000:two_red_present": {
+      "n": 40,
+      "correct": 6,
+      "target_lift": 18,
+      "other_lift": 0,
+      "any_lift": 18,
+      "controller_failures": 7,
+      "outcomes": {
+        "no_lift": 22,
+        "target_lifted_not_placed": 12,
+        "correct_placed": 6
+      },
+      "trial_seconds": 2215.810507961083
+    },
+    "2000:two_red_absent": {
+      "n": 40,
+      "correct": 6,
+      "target_lift": 11,
+      "other_lift": 0,
+      "any_lift": 11,
+      "controller_failures": 3,
+      "outcomes": {
+        "no_lift": 29,
+        "correct_placed": 6,
+        "target_lifted_not_placed": 5
+      },
+      "trial_seconds": 2362.5964121250436
+    },
+    "2000:four_red_present": {
+      "n": 40,
+      "correct": 0,
+      "target_lift": 3,
+      "other_lift": 1,
+      "any_lift": 4,
+      "controller_failures": 4,
+      "outcomes": {
+        "no_lift": 36,
+        "wrong_cube_lifted": 1,
+        "target_lifted_not_placed": 3
+      },
+      "trial_seconds": 2376.136218685657
+    },
+    "2000:four_red_absent": {
+      "n": 40,
+      "correct": 2,
+      "target_lift": 2,
+      "other_lift": 0,
+      "any_lift": 2,
+      "controller_failures": 4,
+      "outcomes": {
+        "no_lift": 38,
+        "correct_placed": 2
+      },
+      "trial_seconds": 2433.75273981411
+    },
+    "3000:single_seen": {
+      "n": 20,
+      "correct": 10,
+      "target_lift": 13,
+      "other_lift": 0,
+      "any_lift": 13,
+      "controller_failures": 1,
+      "outcomes": {
+        "no_lift": 7,
+        "correct_placed": 10,
+        "target_lifted_not_placed": 3
+      },
+      "trial_seconds": 967.1696054926142
+    },
+    "3000:single_unseen": {
+      "n": 20,
+      "correct": 4,
+      "target_lift": 7,
+      "other_lift": 0,
+      "any_lift": 7,
+      "controller_failures": 0,
+      "outcomes": {
+        "no_lift": 13,
+        "target_lifted_not_placed": 3,
+        "correct_placed": 4
+      },
+      "trial_seconds": 1173.7625610227697
+    },
+    "3000:two_red_present": {
+      "n": 40,
+      "correct": 9,
+      "target_lift": 15,
+      "other_lift": 0,
+      "any_lift": 15,
+      "controller_failures": 4,
+      "outcomes": {
+        "correct_placed": 9,
+        "no_lift": 25,
+        "target_lifted_not_placed": 6
+      },
+      "trial_seconds": 2179.722671972355
+    },
+    "3000:two_red_absent": {
+      "n": 40,
+      "correct": 9,
+      "target_lift": 11,
+      "other_lift": 0,
+      "any_lift": 11,
+      "controller_failures": 3,
+      "outcomes": {
+        "target_lifted_not_placed": 2,
+        "no_lift": 29,
+        "correct_placed": 9
+      },
+      "trial_seconds": 2223.801729968516
+    },
+    "3000:four_red_present": {
+      "n": 40,
+      "correct": 0,
+      "target_lift": 2,
+      "other_lift": 0,
+      "any_lift": 2,
+      "controller_failures": 6,
+      "outcomes": {
+        "no_lift": 38,
+        "target_lifted_not_placed": 2
+      },
+      "trial_seconds": 2458.578360762913
+    },
+    "3000:four_red_absent": {
+      "n": 40,
+      "correct": 0,
+      "target_lift": 1,
+      "other_lift": 0,
+      "any_lift": 1,
+      "controller_failures": 5,
+      "outcomes": {
+        "no_lift": 39,
+        "target_lifted_not_placed": 1
+      },
+      "trial_seconds": 2466.9835439370945
+    }
+  },
+  "colors": {
+    "0:red": {
+      "n": 50,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 2,
+      "outcomes": {
+        "no_lift": 50
+      },
+      "trial_seconds": 3346.718425516039
+    },
+    "0:black": {
+      "n": 80,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 0,
+      "outcomes": {
+        "no_lift": 80
+      },
+      "trial_seconds": 5117.748468069127
+    },
+    "0:purple": {
+      "n": 40,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 1,
+      "outcomes": {
+        "no_lift": 40
+      },
+      "trial_seconds": 2554.5375572231133
+    },
+    "0:green": {
+      "n": 20,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 1,
+      "outcomes": {
+        "no_lift": 20
+      },
+      "trial_seconds": 1307.3142307596281
+    },
+    "0:orange": {
+      "n": 10,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 0,
+      "outcomes": {
+        "no_lift": 10
+      },
+      "trial_seconds": 676.9308847689535
+    },
+    "500:red": {
+      "n": 50,
+      "correct": 3,
+      "target_lift": 12,
+      "other_lift": 0,
+      "any_lift": 12,
+      "controller_failures": 14,
+      "outcomes": {
+        "target_lifted_not_placed": 9,
+        "no_lift": 38,
+        "correct_placed": 3
+      },
+      "trial_seconds": 2523.468017827021
+    },
+    "500:black": {
+      "n": 80,
+      "correct": 4,
+      "target_lift": 15,
+      "other_lift": 1,
+      "any_lift": 16,
+      "controller_failures": 28,
+      "outcomes": {
+        "no_lift": 64,
+        "target_lifted_not_placed": 11,
+        "correct_placed": 4,
+        "wrong_cube_lifted": 1
+      },
+      "trial_seconds": 3775.884927335661
+    },
+    "500:purple": {
+      "n": 40,
+      "correct": 2,
+      "target_lift": 6,
+      "other_lift": 0,
+      "any_lift": 6,
+      "controller_failures": 7,
+      "outcomes": {
+        "target_lifted_not_placed": 4,
+        "no_lift": 34,
+        "correct_placed": 2
+      },
+      "trial_seconds": 2182.666626447579
+    },
+    "500:green": {
+      "n": 20,
+      "correct": 1,
+      "target_lift": 1,
+      "other_lift": 0,
+      "any_lift": 1,
+      "controller_failures": 6,
+      "outcomes": {
+        "no_lift": 19,
+        "correct_placed": 1
+      },
+      "trial_seconds": 955.2401487363968
+    },
+    "500:orange": {
+      "n": 10,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 2,
+      "outcomes": {
+        "no_lift": 10
+      },
+      "trial_seconds": 515.572621977888
+    },
+    "1000:red": {
+      "n": 50,
+      "correct": 11,
+      "target_lift": 22,
+      "other_lift": 0,
+      "any_lift": 22,
+      "controller_failures": 3,
+      "outcomes": {
+        "target_lifted_not_placed": 11,
+        "correct_placed": 11,
+        "no_lift": 28
+      },
+      "trial_seconds": 2829.210801794892
+    },
+    "1000:black": {
+      "n": 80,
+      "correct": 5,
+      "target_lift": 10,
+      "other_lift": 0,
+      "any_lift": 10,
+      "controller_failures": 10,
+      "outcomes": {
+        "no_lift": 70,
+        "target_lifted_not_placed": 5,
+        "correct_placed": 5
+      },
+      "trial_seconds": 4623.852014775854
+    },
+    "1000:purple": {
+      "n": 40,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 1,
+      "outcomes": {
+        "no_lift": 40
+      },
+      "trial_seconds": 2462.511477588443
+    },
+    "1000:green": {
+      "n": 20,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 3,
+      "outcomes": {
+        "no_lift": 20
+      },
+      "trial_seconds": 1110.8286908466835
+    },
+    "1000:orange": {
+      "n": 10,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 1,
+      "outcomes": {
+        "no_lift": 10
+      },
+      "trial_seconds": 587.262996978825
+    },
+    "2000:red": {
+      "n": 50,
+      "correct": 14,
+      "target_lift": 26,
+      "other_lift": 0,
+      "any_lift": 26,
+      "controller_failures": 7,
+      "outcomes": {
+        "correct_placed": 14,
+        "no_lift": 24,
+        "target_lifted_not_placed": 12
+      },
+      "trial_seconds": 2719.1264282306656
+    },
+    "2000:black": {
+      "n": 80,
+      "correct": 5,
+      "target_lift": 19,
+      "other_lift": 0,
+      "any_lift": 19,
+      "controller_failures": 6,
+      "outcomes": {
+        "no_lift": 61,
+        "target_lifted_not_placed": 14,
+        "correct_placed": 5
+      },
+      "trial_seconds": 4803.898424309678
+    },
+    "2000:purple": {
+      "n": 40,
+      "correct": 5,
+      "target_lift": 8,
+      "other_lift": 1,
+      "any_lift": 9,
+      "controller_failures": 1,
+      "outcomes": {
+        "no_lift": 31,
+        "correct_placed": 5,
+        "target_lifted_not_placed": 3,
+        "wrong_cube_lifted": 1
+      },
+      "trial_seconds": 2455.6486048796214
+    },
+    "2000:green": {
+      "n": 20,
+      "correct": 1,
+      "target_lift": 1,
+      "other_lift": 0,
+      "any_lift": 1,
+      "controller_failures": 3,
+      "outcomes": {
+        "no_lift": 19,
+        "correct_placed": 1
+      },
+      "trial_seconds": 1104.377911628224
+    },
+    "2000:orange": {
+      "n": 10,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 4,
+      "outcomes": {
+        "no_lift": 10
+      },
+      "trial_seconds": 510.49974907841533
+    },
+    "3000:red": {
+      "n": 50,
+      "correct": 16,
+      "target_lift": 21,
+      "other_lift": 0,
+      "any_lift": 21,
+      "controller_failures": 7,
+      "outcomes": {
+        "no_lift": 29,
+        "correct_placed": 16,
+        "target_lifted_not_placed": 5
+      },
+      "trial_seconds": 2559.7792913955636
+    },
+    "3000:black": {
+      "n": 80,
+      "correct": 10,
+      "target_lift": 21,
+      "other_lift": 0,
+      "any_lift": 21,
+      "controller_failures": 3,
+      "outcomes": {
+        "no_lift": 59,
+        "target_lifted_not_placed": 11,
+        "correct_placed": 10
+      },
+      "trial_seconds": 4800.5043596450705
+    },
+    "3000:purple": {
+      "n": 40,
+      "correct": 6,
+      "target_lift": 6,
+      "other_lift": 0,
+      "any_lift": 6,
+      "controller_failures": 2,
+      "outcomes": {
+        "no_lift": 34,
+        "correct_placed": 6
+      },
+      "trial_seconds": 2463.828608784359
+    },
+    "3000:green": {
+      "n": 20,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 5,
+      "outcomes": {
+        "no_lift": 20
+      },
+      "trial_seconds": 1079.0035354041029
+    },
+    "3000:orange": {
+      "n": 10,
+      "correct": 0,
+      "target_lift": 1,
+      "other_lift": 0,
+      "any_lift": 1,
+      "controller_failures": 2,
+      "outcomes": {
+        "no_lift": 9,
+        "target_lifted_not_placed": 1
+      },
+      "trial_seconds": 566.9026779271662
+    }
+  },
+  "cube_counts": {
+    "0:1": {
+      "n": 40,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 2,
+      "outcomes": {
+        "no_lift": 40
+      },
+      "trial_seconds": 2663.1970100176986
+    },
+    "0:2": {
+      "n": 80,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 0,
+      "outcomes": {
+        "no_lift": 80
+      },
+      "trial_seconds": 5036.578880266985
+    },
+    "0:4": {
+      "n": 80,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 2,
+      "outcomes": {
+        "no_lift": 80
+      },
+      "trial_seconds": 5303.473676052177
+    },
+    "500:1": {
+      "n": 40,
+      "correct": 1,
+      "target_lift": 8,
+      "other_lift": 0,
+      "any_lift": 8,
+      "controller_failures": 12,
+      "outcomes": {
+        "target_lifted_not_placed": 7,
+        "no_lift": 32,
+        "correct_placed": 1
+      },
+      "trial_seconds": 2073.447352618212
+    },
+    "500:2": {
+      "n": 80,
+      "correct": 5,
+      "target_lift": 21,
+      "other_lift": 1,
+      "any_lift": 22,
+      "controller_failures": 24,
+      "outcomes": {
+        "target_lifted_not_placed": 16,
+        "no_lift": 58,
+        "correct_placed": 5,
+        "wrong_cube_lifted": 1
+      },
+      "trial_seconds": 3943.765617408091
+    },
+    "500:4": {
+      "n": 80,
+      "correct": 4,
+      "target_lift": 5,
+      "other_lift": 0,
+      "any_lift": 5,
+      "controller_failures": 21,
+      "outcomes": {
+        "no_lift": 75,
+        "correct_placed": 4,
+        "target_lifted_not_placed": 1
+      },
+      "trial_seconds": 3935.6193722982425
+    },
+    "1000:1": {
+      "n": 40,
+      "correct": 9,
+      "target_lift": 13,
+      "other_lift": 0,
+      "any_lift": 13,
+      "controller_failures": 4,
+      "outcomes": {
+        "target_lifted_not_placed": 4,
+        "correct_placed": 9,
+        "no_lift": 27
+      },
+      "trial_seconds": 2127.80109315156
+    },
+    "1000:2": {
+      "n": 80,
+      "correct": 7,
+      "target_lift": 19,
+      "other_lift": 0,
+      "any_lift": 19,
+      "controller_failures": 7,
+      "outcomes": {
+        "no_lift": 61,
+        "target_lifted_not_placed": 12,
+        "correct_placed": 7
+      },
+      "trial_seconds": 4794.543074756628
+    },
+    "1000:4": {
+      "n": 80,
+      "correct": 0,
+      "target_lift": 0,
+      "other_lift": 0,
+      "any_lift": 0,
+      "controller_failures": 7,
+      "outcomes": {
+        "no_lift": 80
+      },
+      "trial_seconds": 4691.321814076509
+    },
+    "2000:1": {
+      "n": 40,
+      "correct": 11,
+      "target_lift": 20,
+      "other_lift": 0,
+      "any_lift": 20,
+      "controller_failures": 3,
+      "outcomes": {
+        "correct_placed": 11,
+        "no_lift": 20,
+        "target_lifted_not_placed": 9
+      },
+      "trial_seconds": 2205.255239540711
+    },
+    "2000:2": {
+      "n": 80,
+      "correct": 12,
+      "target_lift": 29,
+      "other_lift": 0,
+      "any_lift": 29,
+      "controller_failures": 10,
+      "outcomes": {
+        "no_lift": 51,
+        "target_lifted_not_placed": 17,
+        "correct_placed": 12
+      },
+      "trial_seconds": 4578.406920086127
+    },
+    "2000:4": {
+      "n": 80,
+      "correct": 2,
+      "target_lift": 5,
+      "other_lift": 1,
+      "any_lift": 6,
+      "controller_failures": 8,
+      "outcomes": {
+        "no_lift": 74,
+        "wrong_cube_lifted": 1,
+        "target_lifted_not_placed": 3,
+        "correct_placed": 2
+      },
+      "trial_seconds": 4809.888958499767
+    },
+    "3000:1": {
+      "n": 40,
+      "correct": 14,
+      "target_lift": 20,
+      "other_lift": 0,
+      "any_lift": 20,
+      "controller_failures": 1,
+      "outcomes": {
+        "no_lift": 20,
+        "correct_placed": 14,
+        "target_lifted_not_placed": 6
+      },
+      "trial_seconds": 2140.932166515384
+    },
+    "3000:2": {
+      "n": 80,
+      "correct": 18,
+      "target_lift": 26,
+      "other_lift": 0,
+      "any_lift": 26,
+      "controller_failures": 7,
+      "outcomes": {
+        "correct_placed": 18,
+        "no_lift": 54,
+        "target_lifted_not_placed": 8
+      },
+      "trial_seconds": 4403.524401940871
+    },
+    "3000:4": {
+      "n": 80,
+      "correct": 0,
+      "target_lift": 3,
+      "other_lift": 0,
+      "any_lift": 3,
+      "controller_failures": 11,
+      "outcomes": {
+        "no_lift": 77,
+        "target_lifted_not_placed": 3
+      },
+      "trial_seconds": 4925.561904700007
+    }
+  },
+  "first_multi_lift": {
+    "500": {
+      "correct": 26,
+      "wrong": 1
+    },
+    "1000": {
+      "correct": 19
+    },
+    "2000": {
+      "correct": 34,
+      "wrong": 1
+    },
+    "3000": {
+      "correct": 29
+    }
+  },
+  "paired": {
+    "0": [
+      {
+        "cube_count": 2,
+        "layouts": 40,
+        "all_targets_placed": 0,
+        "all_targets_lifted": 0,
+        "at_least_two_targets_lifted": 0
+      },
+      {
+        "cube_count": 4,
+        "layouts": 20,
+        "all_targets_placed": 0,
+        "all_targets_lifted": 0,
+        "at_least_two_targets_lifted": 0
+      }
+    ],
+    "500": [
+      {
+        "cube_count": 2,
+        "layouts": 40,
+        "all_targets_placed": 0,
+        "all_targets_lifted": 0,
+        "at_least_two_targets_lifted": 0
+      },
+      {
+        "cube_count": 4,
+        "layouts": 20,
+        "all_targets_placed": 0,
+        "all_targets_lifted": 0,
+        "at_least_two_targets_lifted": 0
+      }
+    ],
+    "1000": [
+      {
+        "cube_count": 2,
+        "layouts": 40,
+        "all_targets_placed": 1,
+        "all_targets_lifted": 4,
+        "at_least_two_targets_lifted": 4
+      },
+      {
+        "cube_count": 4,
+        "layouts": 20,
+        "all_targets_placed": 0,
+        "all_targets_lifted": 0,
+        "at_least_two_targets_lifted": 0
+      }
+    ],
+    "2000": [
+      {
+        "cube_count": 2,
+        "layouts": 40,
+        "all_targets_placed": 0,
+        "all_targets_lifted": 5,
+        "at_least_two_targets_lifted": 5
+      },
+      {
+        "cube_count": 4,
+        "layouts": 20,
+        "all_targets_placed": 0,
+        "all_targets_lifted": 0,
+        "at_least_two_targets_lifted": 1
+      }
+    ],
+    "3000": [
+      {
+        "cube_count": 2,
+        "layouts": 40,
+        "all_targets_placed": 2,
+        "all_targets_lifted": 5,
+        "at_least_two_targets_lifted": 5
+      },
+      {
+        "cube_count": 4,
+        "layouts": 20,
+        "all_targets_placed": 0,
+        "all_targets_lifted": 0,
+        "at_least_two_targets_lifted": 0
+      }
+    ]
+  },
+  "paired_3000_vs_2000": {
+    "new_wins": 22,
+    "new_losses": 15,
+    "both_success": 10,
+    "two_sided_exact_p": 0.3240086000878364
+  },
+  "examples": {
+    "0:no_lift": [
+      "base_model_single_seen_1c_seed_1000_red",
+      "base_model_single_seen_1c_seed_1001_red"
+    ],
+    "500:target_lifted_not_placed": [
+      "checkpoint_000500_single_seen_1c_seed_1000_red",
+      "checkpoint_000500_single_seen_1c_seed_1002_red"
+    ],
+    "500:no_lift": [
+      "checkpoint_000500_single_seen_1c_seed_1001_red",
+      "checkpoint_000500_single_seen_1c_seed_1003_red"
+    ],
+    "500:correct_placed": [
+      "checkpoint_000500_single_seen_1c_seed_1016_red",
+      "checkpoint_000500_two_red_present_2c_seed_1001_black"
+    ],
+    "500:wrong_cube_lifted": [
+      "checkpoint_000500_two_red_absent_2c_seed_1001_black"
+    ],
+    "1000:target_lifted_not_placed": [
+      "checkpoint_001000_single_seen_1c_seed_1000_red",
+      "checkpoint_001000_single_seen_1c_seed_1008_red"
+    ],
+    "1000:correct_placed": [
+      "checkpoint_001000_single_seen_1c_seed_1001_red",
+      "checkpoint_001000_single_seen_1c_seed_1002_red"
+    ],
+    "1000:no_lift": [
+      "checkpoint_001000_single_seen_1c_seed_1003_red",
+      "checkpoint_001000_single_seen_1c_seed_1009_red"
+    ],
+    "2000:correct_placed": [
+      "checkpoint_002000_single_seen_1c_seed_1000_red",
+      "checkpoint_002000_single_seen_1c_seed_1002_red"
+    ],
+    "2000:no_lift": [
+      "checkpoint_002000_single_seen_1c_seed_1001_red",
+      "checkpoint_002000_single_seen_1c_seed_1005_red"
+    ],
+    "2000:target_lifted_not_placed": [
+      "checkpoint_002000_single_seen_1c_seed_1003_red",
+      "checkpoint_002000_single_seen_1c_seed_1009_red"
+    ],
+    "2000:wrong_cube_lifted": [
+      "checkpoint_002000_four_red_present_4c_seed_1000_purple"
+    ],
+    "3000:no_lift": [
+      "checkpoint_003000_single_seen_1c_seed_1000_red",
+      "checkpoint_003000_single_seen_1c_seed_1005_red"
+    ],
+    "3000:correct_placed": [
+      "checkpoint_003000_single_seen_1c_seed_1001_red",
+      "checkpoint_003000_single_seen_1c_seed_1003_red"
+    ],
+    "3000:target_lifted_not_placed": [
+      "checkpoint_003000_single_seen_1c_seed_1002_red",
+      "checkpoint_003000_single_seen_1c_seed_1008_red"
+    ]
+  }
+}

@@ -98,3 +98,4 @@ For result folders and replay locations, see the [local outputs layout](OUTPUT_L
 - [Phase 4 bowl placement: first ten](reviews/PLACE_BOWL_FIRST_TEN.md): blue bowl interior, fixed lift start, physical placement and replay checks.
 
 - [Phase 4 bowl placement expanded to 50](reviews/PLACE_BOWL_50.md): verified examples, upload bundle and proposed pilot configuration.
+- [300-demo red-only bowl model: complete 1,000-trial review](reviews/PLACE_BOWL_300_SWEEP.md): checkpoint comparison, matched color requests and remaining placement failures.
