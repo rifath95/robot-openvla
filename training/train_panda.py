@@ -19,6 +19,8 @@ def main():
     p.add_argument('--upstream',type=Path,default=Path('/opt/openvla-source'))
     p.add_argument('--provenance',type=Path,help='Chain dataset/model provenance copied into checkpoints')
     p.add_argument('--adapter',type=Path,help='Continue from LoRA weights in a new run with a fresh optimizer')
+    p.add_argument('--initial-update',type=int,default=0,help='Cumulative starting update; requires matching adapter metadata')
+    p.add_argument('--base-staging-receipt',type=Path,help='Verified base copy receipt when continuing from a staged base')
     p.add_argument('--no-checkpoints',action='store_true',help='Benchmark only: skip adapter saves while retaining metrics and reports')
     p.add_argument('--prepare-only',action='store_true',help='Print launch command without running training')
     p.add_argument('--run-name',help='Optional unique run name inside output-root (used by detached supervisor)')
@@ -48,8 +50,12 @@ def main():
     adapter=None
     if args.adapter:
         from training.continuation import validate_adapter
-        try:adapter=validate_adapter(args.adapter,config,args.model)
+        try:adapter=validate_adapter(args.adapter,config,args.model,staging_receipt=args.base_staging_receipt)
         except (ValueError,OSError) as exc:p.error(str(exc))
+    from training.update_numbering import validate_initial_update
+    try:validate_initial_update(adapter,args.initial_update)
+    except (ValueError,OSError) as exc:p.error(str(exc))
+    if args.base_staging_receipt and not adapter:p.error('--base-staging-receipt requires --adapter')
     for key in ['batch_size','grad_accumulation_steps','max_steps','save_steps','validation_every','max_runtime_seconds']:
         if config[key]<1:p.error(f'{key} must be positive')
     from training.checkpoint_schedule import validate_schedule
@@ -113,6 +119,7 @@ def main():
         PANDA_MAX_RUNTIME=str(config.pop('max_runtime_seconds')),
         PANDA_BATCH_SELECTION=json.dumps(batch_selection),
         PANDA_INITIAL_ADAPTER=str(adapter) if adapter else '',
+        PANDA_INITIAL_UPDATE=str(args.initial_update),
         PANDA_SAVE_CHECKPOINTS='0' if args.no_checkpoints else '1',
         PYTHONPATH=os.pathsep.join([str(Path.cwd()),str(args.upstream.resolve()),env.get('PYTHONPATH','')]),
         TF_CPP_MIN_LOG_LEVEL='2',TOKENIZERS_PARALLELISM='false',WANDB_MODE='disabled')

@@ -74,16 +74,17 @@ def download_dataset(config):
     return destination
 
 
-def verify_training(run,expected_updates=3000,checkpoints=(0,500,1000,2000,3000)):
+def verify_training(run,expected_updates=3000,checkpoints=(0,500,1000,2000,3000),initial_update=0):
     from cloud.checkpoint_ready import check_ready
     run=Path(run);metrics=[json.loads(line) for line in (run/'metrics.jsonl').read_text().splitlines()]
     updates=[r['update'] for r in metrics if 'train_loss' in r]
-    if updates!=list(range(1,expected_updates+1)):raise ValueError(f'Training did not complete exactly {expected_updates} updates')
+    if updates!=list(range(initial_update+1,initial_update+expected_updates+1)):raise ValueError(f'Training did not complete exactly {expected_updates} updates from {initial_update}')
     if any('validation_loss' in r for r in metrics):raise ValueError('Unexpected validation in all-training experiment')
     for cp in checkpoints:check_ready(run/f'checkpoint_{cp:06d}')
     for name in ('loss.png','loss_smoothed.png','experiment.json','model_info.json'):
         if not (run/name).is_file():raise ValueError('Missing training report: '+name)
-    return dict(training_complete=True,last_update=expected_updates,validation_enabled=False,
+    return dict(training_complete=True,last_update=initial_update+expected_updates,validation_enabled=False,
+        initial_update=initial_update,additional_updates=expected_updates,
         training_update_seconds=sum(r.get('training_update_wall_seconds',0) for r in metrics),
         checkpoint_seconds=sum(json.loads(line)['seconds'] for line in (run/'checkpoint_timings.jsonl').read_text().splitlines()))
 

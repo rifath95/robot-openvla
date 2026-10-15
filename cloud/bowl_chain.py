@@ -80,6 +80,14 @@ def recovery(config):
     return 0
 
 
+def worker_module(config):
+    choices=[(flag,module) for flag,module in (
+        ('continuation_chain','cloud.color_bowl_continuation'),
+        ('training_only','cloud.color_bowl_training'),('sweep_only','cloud.color_bowl_sweep')) if config.get(flag)]
+    if len(choices)>1:raise ValueError('Conflicting chain worker modes')
+    return choices[0][1] if choices else 'cloud.bowl_chain_worker'
+
+
 def interrupted_timings(session):
     path=Path(session)/'stage_timings.jsonl'
     if not path.exists():return
@@ -110,8 +118,7 @@ def supervise(config):
         env=os.environ.copy();env.pop('RUNPOD_API_KEY',None);env.pop('HF_TOKEN',None)
         with (local/'console.log').open('a',buffering=1) as log:
             payload={k:v for k,v in config.items() if k!='pod_key'}
-            module=('cloud.color_bowl_training' if config.get('training_only') else
-                    'cloud.color_bowl_sweep' if config.get('sweep_only') else 'cloud.bowl_chain_worker')
+            module=worker_module(config)
             worker=subprocess.Popen([sys.executable,'-u','-m',module],cwd=PROJECT_ROOT,env=env,stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
             child_ids.append(worker.pid);pids();worker.stdin.write(json.dumps(payload).encode());worker.stdin.close()
             try:

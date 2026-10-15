@@ -8,6 +8,7 @@ import torch
 from torch.utils.data import DataLoader
 
 from training.panda_rlds import PandaRLDSDataset
+from training.update_numbering import initial_update, cumulative_update
 
 
 class Metrics:
@@ -33,15 +34,19 @@ class Metrics:
             validation_max_batches=int(os.environ['PANDA_VALIDATION_MAX_BATCHES']),
             max_runtime_seconds=int(os.environ['PANDA_MAX_RUNTIME']),
             initial_adapter=os.environ.get('PANDA_INITIAL_ADAPTER') or None,
+            initial_update=initial_update(),
             continuation_mode='adapter_weights_fresh_optimizer' if os.environ.get('PANDA_INITIAL_ADAPTER') else 'fresh_base',
-            checkpoint_updates=json.loads(os.environ['PANDA_CHECKPOINT_UPDATES']) if os.environ.get('PANDA_CHECKPOINT_UPDATES') else None,
+            checkpoint_updates=[cumulative_update(u) for u in json.loads(os.environ['PANDA_CHECKPOINT_UPDATES'])] if os.environ.get('PANDA_CHECKPOINT_UPDATES') else None,
             checkpoint_saving=os.environ.get('PANDA_SAVE_CHECKPOINTS','1')!='0',
             note='Runtime guard is checked between updates; it does not stop pod billing.'),indent=2)+'\n')
         if hasattr(self,'model_details'):
             (self.directory/'model_info.json').write_text(json.dumps(self.model_details,default=str,indent=2)+'\n')
 
     def log(self, values, step):
+        local_step=step
+        step=cumulative_update(step)
         row=dict(update=step,elapsed_seconds=time.monotonic()-self.started,**values)
+        if initial_update():row.update(run_update=local_step,initial_update=initial_update())
         if torch.cuda.is_available():
             torch.cuda.synchronize()
             row['gpu_allocated_gib']=torch.cuda.memory_allocated()/2**30
@@ -116,6 +121,8 @@ def save_adapter(model, processor, cfg, dataset, update):
         print(f'Benchmark: adapter checkpoint saving disabled at update {update}',flush=True)
         return
     save_started=time.monotonic()
+    local_update=update
+    update=cumulative_update(update)
     folder=metrics.directory/f'checkpoint_{update:06d}'
     folder.mkdir(parents=True,exist_ok=False)
     model.module.save_pretrained(folder)
@@ -127,6 +134,9 @@ def save_adapter(model, processor, cfg, dataset, update):
             source_dataset_path=os.environ['PANDA_SOURCE_DATASET'],
             input_staging=json.loads(os.environ['PANDA_INPUT_STAGING']))
     saved_config.update(checkpoint_update=update,training_elapsed_seconds_at_save=time.monotonic()-metrics.started if hasattr(metrics,'started') else None)
+    if initial_update():
+        saved_config.update(initial_update=initial_update(),run_update=local_update,
+            initial_adapter=os.environ.get('PANDA_INITIAL_ADAPTER'),continuation_mode='adapter_weights_fresh_optimizer')
     saved_config['validation_enabled']=os.environ.get('PANDA_VALIDATION_ENABLED','1')!='0'
     if os.environ.get('PANDA_PROVENANCE'):
         provenance=json.loads(os.environ['PANDA_PROVENANCE'])

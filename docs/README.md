@@ -16,6 +16,7 @@ For result folders and replay locations, see the [local outputs layout](OUTPUT_L
 
 ## Cloud sessions and inference
 
+- [Checkpoint 6000 → 12000 continuation, 600 matched trials and verified HF delivery](cloud/COLOR_BOWL_CONTINUATION_CHAIN.md)
 - [Interactive bowl playground: checkpoint buttons, scene colors and typed instructions](cloud/INTERACTIVE_BOWL_PLAYGROUND.md)
 - [Prepared 800-trial colored bowl comparison, HF delivery and automatic stop](cloud/COLOR_BOWL_600_SWEEP.md)
 

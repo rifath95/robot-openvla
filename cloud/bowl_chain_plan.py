@@ -7,6 +7,8 @@ GROUPS=(('single_seen',['red'],20),('single_unseen',['black'],20),
 CHECKPOINTS=[0,500,1000,2000,3000]
 COLORED_CHECKPOINTS=[1000,2000,4000,6000]
 COLORED_VARIANT='colored_bowl_600_v1'
+CONTINUATION_VARIANT='colored_bowl_600_continue_12000_v1'
+CONTINUATION_CHECKPOINTS=[8000,10000,12000]
 
 
 def timeout_budget(estimate=25*3600):
@@ -41,6 +43,16 @@ def make_colored_plan(session):
     return plan
 
 
+def make_continuation_plan(session,source_session):
+    plan=make_colored_plan(session)
+    plan.update(variant=CONTINUATION_VARIANT,checkpoints=list(CONTINUATION_CHECKPOINTS),
+        action_statistics_checkpoint=8000,initial_training_session=source_session,
+        initial_checkpoint_update=6000,additional_updates=6000,
+        continuation_mode='adapter_weights_fresh_optimizer',
+        estimated_seconds=22*3600,timeout_budget=timeout_budget(22*3600))
+    return plan
+
+
 def trial_specs(plan):
     for cp in plan['checkpoints']:
         for g in plan['groups']:
@@ -56,12 +68,14 @@ def trial_specs(plan):
 
 def validate_saved(payload):
     plan=payload['plan'];rows=payload['trials']
-    colored=plan.get('variant')==COLORED_VARIANT
-    if plan.get('variant') not in (None,COLORED_VARIANT):raise ValueError('Unknown bowl sweep variant')
-    if (plan.get('checkpoints')!=(COLORED_CHECKPOINTS if colored else CHECKPOINTS)
+    continuation=plan.get('variant')==CONTINUATION_VARIANT
+    colored=plan.get('variant') in (COLORED_VARIANT,CONTINUATION_VARIANT)
+    if plan.get('variant') not in (None,COLORED_VARIANT,CONTINUATION_VARIANT):raise ValueError('Unknown bowl sweep variant')
+    expected_checkpoints=CONTINUATION_CHECKPOINTS if continuation else COLORED_CHECKPOINTS if colored else CHECKPOINTS
+    if (plan.get('checkpoints')!=expected_checkpoints
         or plan.get('include_base_model') is not (False if colored else True)
         or plan.get('sampling') is not False or plan.get('steps')!=120):raise ValueError('Altered chain sweep')
-    if plan.get('action_statistics_checkpoint')!=(1000 if colored else 500):raise ValueError('Wrong base normalization reference')
+    if plan.get('action_statistics_checkpoint')!=(8000 if continuation else 1000 if colored else 500):raise ValueError('Wrong base normalization reference')
     if colored:
         import hashlib,json
         from common.paths import PROJECT_ROOT
@@ -70,6 +84,9 @@ def validate_saved(payload):
         if (sha!=profile['layout_sha256'] or plan.get('layout_sha256')!=sha or plan.get('historical_baseline')!=profile['historical_baseline']
             or plan.get('training_colors')!=['red','blue','green','yellow']):raise ValueError('Changed comparison layouts or baseline provenance')
     import re
+    if continuation and (plan.get('initial_checkpoint_update')!=6000 or plan.get('additional_updates')!=6000
+        or plan.get('continuation_mode')!='adapter_weights_fresh_optimizer'
+        or not re.fullmatch('panda-train-color-bowl-[A-Za-z0-9_-]+',plan.get('initial_training_session',''))):raise ValueError('Invalid continuation provenance')
     if not re.fullmatch('panda-train-[A-Za-z0-9_-]+',plan.get('training_session','')):raise ValueError('Invalid session')
     if len(plan['groups'])!=len(GROUPS):raise ValueError('Wrong group inventory')
     for g,(name,colors,n) in zip(plan['groups'],GROUPS):
@@ -77,7 +94,7 @@ def validate_saved(payload):
         for seed,layout in zip(g['scene_seeds'],g['layouts']):
             validate_layout(layout,len(colors));validate_layout_copy(layout,positions(seed,len(colors)))
     specs={s['directory']:s for s in trial_specs(plan)}
-    if len(specs)!=(800 if colored else 1000) or len({r['directory'] for r in rows})!=len(rows):raise ValueError('Invalid trial inventory')
+    if len(specs)!=(600 if continuation else 800 if colored else 1000) or len({r['directory'] for r in rows})!=len(rows):raise ValueError('Invalid trial inventory')
     for r in rows:
         if r['directory'] not in specs or any(r.get(k)!=specs[r['directory']][k] for k in ('checkpoint','seed','target_color','cube_colors','cube_count','color_set')):raise ValueError('Trial differs from plan')
     return specs
