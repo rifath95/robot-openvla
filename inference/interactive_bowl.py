@@ -15,6 +15,7 @@ import uuid
 import webbrowser
 
 from common.paths import PROJECT_ROOT
+from inference.playground_config import CHECKPOINTS
 
 
 def background(function, *args, **kwargs):
@@ -72,7 +73,7 @@ class Engine:
         self.moves = 0
         self.rejections = 0
         self.frame = b''
-        self.view = dict(phase='Starting', checkpoint=0, model=dict(status='connecting'),
+        self.view = dict(phase='Starting', checkpoint=CHECKPOINTS[0], model=dict(status='connecting'),
                          scene=None, steps=0, instruction='', output=str(output))
         self.health_future = None
         self.checkpoint_selected = False

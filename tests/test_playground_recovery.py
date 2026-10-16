@@ -106,7 +106,7 @@ class RealRecoveryIntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=PROJECT_ROOT/'outputs') as tmp:
             e=Engine('http://unused',tmp);e.health_future=Future()
             try:
-                e.reset(e.scene);e.view['model']=dict(model_loaded=True,checkpoint=0)
+                e.reset(e.scene);e.view['model']=dict(model_loaded=True,checkpoint=6000)
                 e.begin('typed instruction',120,recovery=dict(enabled=True,method='sampling'))
                 old_folder=e.folder
                 old_response=Future();e.pending=old_response
@@ -137,7 +137,7 @@ class RealRecoveryIntegrationTests(unittest.TestCase):
                 self.assertEqual(events,['manual_nudge_started','nudge_finished'])
                 # Manual movement also works with no loaded model, and Stop
                 # cancels an already prepared increment without moving the arm.
-                e.reset(e.scene);e.view['model']=dict(model_loaded=False,checkpoint=0)
+                e.reset(e.scene);e.view['model']=dict(model_loaded=False,checkpoint=6000)
                 e.command(dict(command='manual_nudge'));e.request()
                 initial=e.env.data.qpos.copy()
                 e.command(dict(command='stop'));e.tick()
@@ -153,7 +153,7 @@ class RealRecoveryIntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=PROJECT_ROOT/'outputs') as tmp:
             e=Engine('http://unused',tmp);e.health_future=Future()
             try:
-                e.reset(e.scene);e.view['model']=dict(model_loaded=True,checkpoint=0)
+                e.reset(e.scene);e.view['model']=dict(model_loaded=True,checkpoint=6000)
                 e.begin('test',100,recovery=dict(enabled=True,method='nudge'))
                 folder=e.folder
                 initial=physical_state(e.env)
@@ -206,7 +206,7 @@ class RealRecoveryIntegrationTests(unittest.TestCase):
         with tempfile.TemporaryDirectory(dir=PROJECT_ROOT/'outputs') as tmp:
             e=Engine('http://unused',tmp);e.health_future=Future()
             try:
-                e.reset(e.scene);e.view['model']=dict(model_loaded=True,checkpoint=0)
+                e.reset(e.scene);e.view['model']=dict(model_loaded=True,checkpoint=6000)
                 e.begin('pick up the red cube and place it in the blue bowl.',1000,recovery=dict(enabled=True,window=4,sampling_steps=5,max_attempts=1))
                 folder=e.folder
                 response=dict(unnorm_key='panda_grasp_v1',action=[0,0,0,0,0,0,1],checkpoint=0)

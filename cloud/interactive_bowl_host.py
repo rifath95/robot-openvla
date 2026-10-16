@@ -12,13 +12,14 @@ import threading
 import time
 
 from common.paths import PROJECT_ROOT
+from inference.playground_config import CHECKPOINTS, PROFILE_RELATIVE, STAGING_DIRECTORY
 
-CHECKPOINTS = (0, 1000, 2000, 4000, 6000)
-STAGING = Path('/root/panda-interactive-bowl')
+PROFILE = PROJECT_ROOT / PROFILE_RELATIVE
+STAGING = Path(STAGING_DIRECTORY)
 
 
 def stage(root=STAGING, selected=None):
-    from cloud.color_bowl_sweep import PROFILE, resolve_training
+    from cloud.color_bowl_sweep import resolve_training
     from cloud.checkpoint_ready import check_ready
     from cloud.bowl_chain_worker import stage_base
     from cloud.archive_sweep import digest
@@ -28,7 +29,7 @@ def stage(root=STAGING, selected=None):
     source = resolve_training(json.loads(PROFILE.read_text()), selected=selected)
     root.mkdir(parents=True, exist_ok=True)
     identity = dict(training_session=source.name, training_path=str(source),
-                    checkpoints=list(CHECKPOINTS), base=str(root/'base'))
+                    checkpoints=list(CHECKPOINTS), training_profile=PROFILE_RELATIVE, base=str(root/'base'))
     marker = root/'staged.json'
     if marker.exists():
         if json.loads(marker.read_text()) != identity:
@@ -37,10 +38,10 @@ def stage(root=STAGING, selected=None):
             check_ready(root/f'adapters/checkpoint_{cp:06d}')
         return identity
     if shutil.disk_usage(root).free < 22*1024**3:
-        raise ValueError('Need 22 GiB free on container disk for base and five adapters')
+        raise ValueError('Need 22 GiB free on container disk for base and four inference adapters')
     base = root/'base'
     if base.exists():
-        raise ValueError('Incomplete previous staging; inspect /root/panda-interactive-bowl/base before retrying')
+        raise ValueError(f'Incomplete previous staging; inspect {base} before retrying')
     print('Copying base model once to container disk...', flush=True)
     stage_base('/workspace/openvla-7b', base)
     for cp in CHECKPOINTS:
@@ -54,9 +55,9 @@ def stage(root=STAGING, selected=None):
             raise ValueError('Checkpoint identity does not match the 600-demo run')
         target = root/f'adapters/checkpoint_{cp:06d}'
         target.parent.mkdir(exist_ok=True)
-        shutil.copytree(adapter, target)
+        shutil.copytree(adapter, target, ignore=shutil.ignore_patterns('training_state'))
         for path in adapter.rglob('*'):
-            if path.is_file() and digest(path) != digest(target/path.relative_to(adapter)):
+            if path.is_file() and 'training_state' not in path.relative_to(adapter).parts and digest(path) != digest(target/path.relative_to(adapter)):
                 raise ValueError('Adapter staging checksum mismatch')
         check_ready(target)
         print(f'Staged checkpoint {cp} on container disk.', flush=True)
@@ -72,7 +73,8 @@ class Models:
         self.lock = threading.Lock()
         self.state_lock = threading.Lock()
         self.state = dict(status='idle', model_loaded=False, checkpoint=None,
-                          training_session=self.identity['training_session'])
+                          training_session=self.identity['training_session'],
+                          training_profile=self.identity.get('training_profile'),checkpoints=list(CHECKPOINTS))
         self.child = None
         self.port = None
 
@@ -201,7 +203,7 @@ def main():
     models = Models(STAGING)
     with ThreadingHTTPServer(('127.0.0.1', args.port), Handler) as server:
         server.models = models
-        models.select(0)
+        models.select(CHECKPOINTS[0])
         print('Interactive host ready; checkpoints stay loaded between trials. Pod remains running.', flush=True)
         try:
             server.serve_forever()

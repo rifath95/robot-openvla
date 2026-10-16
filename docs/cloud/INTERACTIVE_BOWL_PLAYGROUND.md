@@ -5,6 +5,11 @@ Use a separate A40 pod with the training image and the same network volume.
 is no dataset download or global-volume requirement for manual testing.
 The running automated sweep uses its own pod and checkout.
 
+The playground now defaults to the uninterrupted 12,000-update run, with
+checkpoints **6,000, 8,000, 10,000 and 12,000**. It no longer needs the original
+6,000-update training run on the volume. Default model-family constants live in
+`inference/playground_config.py`.
+
 ## First fetch the training reports
 
 From the Mac repository folder, substitute the new pod's SSH command:
@@ -15,7 +20,7 @@ caffeinate -i .venv/bin/python -m cloud.interactive_bowl_session \
   --reports-only
 ```
 
-This finds the exact 600-demonstration colored bowl training session from its
+This finds the uninterrupted 600-demonstration colored bowl training session from its
 dataset provenance, downloads reports to `outputs/training/phase3_training/`,
 and leaves the pod running. It does not stage weights or load a GPU model.
 Use `--training-session panda-train-color-bowl-...` if multiple matching runs exist.
@@ -44,8 +49,8 @@ controls together. MuJoCo and physics run on the Mac; prediction runs on the GPU
 It does not require a separate native MuJoCo viewer window. The terminal also
 prints the localhost URL so the page can be reopened.
 
-- Checkpoint buttons: **0, 1,000, 2,000, 4,000, 6,000**. Checkpoint zero is the
-  freshly initialized adapter baseline, with this dataset's action normalization.
+- Checkpoint buttons: **6,000, 8,000, 10,000, 12,000**, from the uninterrupted
+  training run. The first loaded checkpoint is 6,000.
 - Choose **1, 2, 3 or 4 cubes** and distinct colors. Red/blue/green/yellow were
   trained; black/purple/orange/white/pink/brown/cyan were not.
 - Choose the target color; the instruction box initially fills the corresponding
@@ -69,9 +74,10 @@ physics steps per action are reused. Simulation stays frozen during inference.
 
 ## Model staging and lifetime
 
-On first startup, the base and all five checkpoints are copied and checked on
-**container disk**, under `/root/panda-interactive-bowl`. GPU loads read these
-copies. Adapters merge into the base in VRAM using the existing inference backend;
+On first startup, the base and all four inference adapters are copied and checked on
+**container disk**, under `/root/panda-interactive-bowl-uninterrupted`. GPU loads read these
+copies. The final checkpoint’s optimizer/input-stream state is excluded from
+inference staging; its full backup remains on the volume and HF. Adapters merge into the base in VRAM using the existing inference backend;
 no merged model is written to the network volume. Switching checkpoint first
 releases the old model and loads the new one. All trials with the same checkpoint
 reuse its loaded model. Weight staging is reused when reopening local controls
@@ -83,8 +89,13 @@ auto-stop the pod. Stop it in RunPod when finished.** A model server has a 12-ho
 readiness runtime; selecting the checkpoint again reloads an expired server.
 Keep the Mac awake and connected while actively controlling it.
 
-Cloud host log: `/root/panda-interactive-bowl/host.log`.
-Per-checkpoint logs: `/root/panda-interactive-bowl/checkpoint_NNNNNN.log`.
+An already-running host from the old model family is rejected rather than
+silently reused or stopped. Use a fresh playground pod, or request explicit
+old-host stop/restart commands before reconnecting. The running automated sweep
+is not changed by these local playground edits.
+
+Cloud host log: `/root/panda-interactive-bowl-uninterrupted/host.log`.
+Per-checkpoint logs: `/root/panda-interactive-bowl-uninterrupted/checkpoint_NNNNNN.log`.
 Local recordings: `outputs/simulator_runs/interactive/bowl_DATE_TIME/trial_.../`.
 Each contains the typed instruction, checkpoint provenance, before/after images,
 actions, physics states, motion frames and a `RUN_REPORT.md` with direct Replay

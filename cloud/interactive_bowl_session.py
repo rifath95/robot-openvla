@@ -11,10 +11,14 @@ from urllib.request import urlopen
 
 from common.paths import PROJECT_ROOT
 from cloud.cloud_session import REPOSITORY, parse_ssh, ssh_arguments
+from inference.playground_config import STAGING_DIRECTORY,validate_host
 
 
 def bootstrap(selected=None):
     option = ' --training-session '+shlex.quote(selected) if selected else ''
+    check = shlex.quote('import json; from urllib.request import urlopen; '
+        'from inference.playground_config import validate_host; '
+        f'validate_host(json.load(urlopen("http://127.0.0.1:8010/health", timeout=5)),{selected!r})')
     return f'''set -euo pipefail
 if [ -d /root/robot-openvla/.git ]; then
   git -C /root/robot-openvla pull --ff-only
@@ -23,10 +27,11 @@ else
 fi
 cd /root/robot-openvla
 if curl -fsS http://127.0.0.1:8010/health >/dev/null; then
+  /opt/openvla/bin/python -c {check}
   echo 'Existing interactive host retained.'
 else
   /opt/openvla/bin/python -u -m cloud.interactive_bowl_host --prepare{option}
-  nohup /opt/openvla/bin/python -u -m cloud.interactive_bowl_host > /root/panda-interactive-bowl/host.log 2>&1 < /dev/null &
+  nohup /opt/openvla/bin/python -u -m cloud.interactive_bowl_host > {STAGING_DIRECTORY}/host.log 2>&1 < /dev/null &
 fi
 '''
 
@@ -46,7 +51,7 @@ def main():
 if [ -d /root/robot-openvla/.git ]; then git -C /root/robot-openvla pull --ff-only; else git clone https://github.com/rifath95/robot-openvla.git /root/robot-openvla; fi
 cd /root/robot-openvla
 /opt/openvla/bin/python -c '''+shlex.quote(
-            'import json; from cloud.color_bowl_sweep import PROFILE,resolve_training; '
+            'import json; from cloud.interactive_bowl_host import PROFILE; from cloud.color_bowl_sweep import resolve_training; '
             f'print("SOURCE_SESSION="+resolve_training(json.loads(PROFILE.read_text()),selected={args.training_session!r}).name)')
         result = subprocess.run(ssh+['bash -s'], input=command, text=True, capture_output=True, check=True)
         names = [line.split('=', 1)[1] for line in result.stdout.splitlines() if line.startswith('SOURCE_SESSION=')]
@@ -73,11 +78,12 @@ cd /root/robot-openvla
             try:
                 with urlopen('http://127.0.0.1:8010/health', timeout=2) as response:
                     health = json.load(response)
+                validate_host(health,args.training_session)
                 print('Training session:', health['training_session'], flush=True)
                 break  # Controls can open while the first checkpoint loads.
             except OSError:
                 if time.monotonic() > deadline:
-                    raise RuntimeError('Host did not start; inspect /root/panda-interactive-bowl/host.log')
+                    raise RuntimeError(f'Host did not start; inspect {STAGING_DIRECTORY}/host.log')
                 time.sleep(1)
         destination = PROJECT_ROOT/'outputs/simulator_runs/interactive'/datetime.now(timezone.utc).strftime('bowl_%Y%m%d_%H%M%S')
         from inference.interactive_bowl import serve

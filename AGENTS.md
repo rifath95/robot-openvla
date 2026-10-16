@@ -1,5 +1,12 @@
 # Simulator sweep result delivery
 
+For pod cleanup, discuss the exact plan first and provide commands for the user
+to run when requested. Agreement with a recommendation is not permission for
+the agent to execute deletion. Do not modify pod files, upload backups or stop
+services without explicit authorization to perform those operations. Read-only
+SSH inspection also requires the user's authorization. Local preparation and
+testing must not change a running pod or its immutable experiment checkout.
+
 The agreed default is a two-stage workflow: run simulation on its GPU pod, save
 results to the network volume and auto-stop; then launch a cheaper transfer pod
 on the same volume to pack/upload to HF, verify and auto-stop. A CPU pod is

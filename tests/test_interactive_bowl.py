@@ -10,10 +10,44 @@ from unittest.mock import Mock, patch
 
 from cloud.interactive_bowl_host import Models
 from cloud.interactive_bowl_session import bootstrap
+from inference.playground_config import CHECKPOINTS, PROFILE_RELATIVE,validate_host
 from inference.interactive_bowl import Engine, validate_scene
 
 
 class InteractiveControlsTests(unittest.TestCase):
+    def test_default_family_and_reused_host_identity(self):
+        self.assertEqual(CHECKPOINTS,(6000,8000,10000,12000))
+        ready=dict(training_profile=PROFILE_RELATIVE,checkpoints=list(CHECKPOINTS),training_session='new-run')
+        validate_host(ready,'new-run')
+        for changed in (dict(training_profile='old-profile'),dict(checkpoints=[0,1000,2000,4000,6000]),dict(training_session='other-run')):
+            with self.assertRaisesRegex(ValueError,'different'):
+                validate_host(dict(ready,**changed),'new-run')
+        self.assertIn('validate_host',bootstrap())
+
+    def test_staging_excludes_final_optimizer_and_input_state(self):
+        from cloud.interactive_bowl_host import stage,PROFILE
+        from types import SimpleNamespace
+        profile=json.loads(PROFILE.read_text())
+        with tempfile.TemporaryDirectory() as tmp:
+            root=Path(tmp);source=root/'new-run'
+            for cp in CHECKPOINTS:
+                folder=source/f'runs/training/checkpoint_{cp:06d}';folder.mkdir(parents=True)
+                (folder/'training_config.json').write_text(json.dumps(dict(checkpoint_update=cp,
+                    dataset_provenance=dict(checksums_sha256=profile['source_dataset_sha256'],dataset_revision=profile['source_dataset_revision']))))
+            state=source/'runs/training/checkpoint_012000/training_state';state.mkdir()
+            (state/'state.pt').write_bytes(b'optimizer');(state/'input.data').write_bytes(b'iterator')
+            target=root/'staging'
+            with patch('cloud.scripted_eval_control.active_training',return_value=False), \
+                    patch('cloud.color_bowl_sweep.resolve_training',return_value=source) as resolve, \
+                    patch('cloud.checkpoint_ready.check_ready',side_effect=Path), \
+                    patch('cloud.bowl_chain_worker.stage_base',side_effect=lambda _,p:p.mkdir()), \
+                    patch('cloud.interactive_bowl_host.shutil.disk_usage',return_value=SimpleNamespace(free=30*1024**3)):
+                identity=stage(target)
+            self.assertEqual(identity['training_profile'],PROFILE_RELATIVE)
+            self.assertEqual(resolve.call_args.args[0]['source_training_config'],'training/color_place_bowl_600_uninterrupted_12000.json')
+            self.assertTrue((target/'adapters/checkpoint_012000/training_config.json').is_file())
+            self.assertFalse((target/'adapters/checkpoint_012000/training_state').exists())
+
     def test_client_binds_prediction_to_selected_checkpoint(self):
         from cloud.connection_client import request_prediction
         with tempfile.TemporaryDirectory() as tmp:
@@ -67,15 +101,15 @@ class InteractiveControlsTests(unittest.TestCase):
             models = Models(root)
             models.child = Mock()
             models.child.poll.return_value = None
-            models.update(status='ready', model_loaded=True, checkpoint=2000)
+            models.update(status='ready', model_loaded=True, checkpoint=6000)
             with patch.object(models, 'load') as load:
-                models.select(2000)
+                models.select(6000)
                 load.assert_not_called()
                 models.child.terminate.assert_not_called()
             models.lock.acquire()
             try:
                 with self.assertRaisesRegex(ValueError, 'in progress'):
-                    models.select(4000)
+                    models.select(8000)
             finally:
                 models.lock.release()
 
@@ -84,7 +118,7 @@ class InteractiveControlsTests(unittest.TestCase):
             root = Path(tmp)
             (root/'staged.json').write_text(json.dumps(dict(training_session='test')))
             models = Models(root)
-            models.update(status='ready', model_loaded=True, checkpoint=2000)
+            models.update(status='ready', model_loaded=True, checkpoint=6000)
             with patch('cloud.interactive_bowl_host.http.client.HTTPConnection') as connection:
                 with self.assertRaisesRegex(ValueError, 'cancelled'):
                     models.predict(dict(checkpoint=1000, instruction='test'))
@@ -114,7 +148,7 @@ class RealSimulatorTests(unittest.TestCase):
                     engine.reset(dict(count=count, colors=colors, seed=1001, target=colors[-1]))
                     self.assertTrue(engine.frame.startswith(b'\x89PNG'))
                     self.assertEqual(engine.env.observe().shape, (480, 640, 3))
-                engine.view['model'] = dict(model_loaded=True, checkpoint=0)
+                engine.view['model'] = dict(model_loaded=True, checkpoint=6000)
                 instruction = 'Please put the orange cube into that blue bowl.'
                 engine.begin(instruction, 1)
                 folder = engine.folder

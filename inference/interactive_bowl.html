@@ -30,14 +30,14 @@ Play continues from the current pose. Stop holds the pose and discards pending p
 <script>
 const token=new URLSearchParams(location.search).get('token'), $=id=>document.getElementById(id);
 const palette=['red','blue','green','yellow','black','purple','orange','white','pink','brown','cyan'];
-let count=1,checkpoint=0,busy=false,sceneDirty=false;
+let count=1,checkpoint=6000,busy=false,sceneDirty=false;
 async function command(command,extra={}){try{const r=await fetch('/command',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({token,command,...extra})});const v=await r.json();if(!r.ok)throw Error(v.error);return true}catch(e){$('status').textContent=String(e);return false}}
 function selectedColors(){return [...$('colors').querySelectorAll('select')].map(s=>s.value)}
 function targets(){const previous=$('target').value;$('target').replaceChildren();selectedColors().forEach(c=>{const o=new Option(c,c);$('target').add(o)});if(selectedColors().includes(previous))$('target').value=previous;else fillInstruction()}
 function fillInstruction(){$('instruction').value=`pick up the ${$('target').value||'red'} cube and place it in the blue bowl.`}
 function rebuild(){const old=selectedColors();$('colors').replaceChildren();for(let i=0;i<count;i++){const label=document.createElement('label');label.textContent=`Cube ${i+1} `;const select=document.createElement('select');palette.forEach(c=>select.add(new Option(c,c)));select.value=old[i]||palette[i];select.onchange=()=>{targets();sceneDirty=true};label.append(select);$('colors').append(label)}targets();[...$('counts').children].forEach(b=>b.classList.toggle('selected',Number(b.dataset.count)===count))}
 [1,2,3,4].forEach(n=>{const b=document.createElement('button');b.dataset.count=n;b.textContent=n+(n===1?' cube':' cubes');b.onclick=()=>{count=n;rebuild();sceneDirty=true};$('counts').append(b)});
-[0,1000,2000,4000,6000].forEach(cp=>{const b=document.createElement('button');b.textContent=cp===0?'0 · untrained adapter':cp;b.dataset.cp=cp;b.onclick=()=>{checkpoint=cp;command('checkpoint',{checkpoint:cp})};$('models').append(b)});
+[6000,8000,10000,12000].forEach(cp=>{const b=document.createElement('button');b.textContent=cp;b.dataset.cp=cp;b.onclick=()=>{checkpoint=cp;command('checkpoint',{checkpoint:cp})};$('models').append(b)});
 async function scene(random){if(random)$('seed').value=Math.floor(Math.random()*1000000)+2000;if(new Set(selectedColors()).size!==count){$('status').textContent='Choose distinct colors before applying the scene.';return}const ok=await command('scene',{scene:{count,colors:selectedColors(),target:$('target').value,seed:Number($('seed').value)}});if(ok)sceneDirty=false}
 $('seed').oninput=()=>{sceneDirty=true};$('target').onchange=()=>{fillInstruction();sceneDirty=true};$('reset').onclick=()=>scene(false);$('random').onclick=()=>scene(true);
 function trialOptions(){return {instruction:$('instruction').value,steps:Number($('steps').value),sample:$('sample').checked,recovery:{enabled:['sampling','nudge'].includes($('recoveryMethod').value),method:$('recoveryMethod').value==='nudge'?'nudge':'sampling',sampling_steps:Number($('recoverySteps').value),window:Number($('stallWindow').value),max_attempts:Number($('recoveryAttempts').value)}}}
