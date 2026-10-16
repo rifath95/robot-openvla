@@ -105,6 +105,21 @@ In the instruction panel, set the action limit (for example 1,000), choose a
   return to greedy prediction.
 - **Move upward (up to 10 cm)**: use the normal controller to move vertically
   upward, then return to greedy prediction. It never enables sampling.
+- **Manual — use Move up button**: automatic detection is off; you decide when
+  to intervene with the **↑ Move up 10 cm** button.
+
+The manual button is also available alongside either automatic recovery method
+or Off. It pauses the current trial, discards any pending model response, and
+records a separate manual upward-movement trial. It uses the same 10 cm move,
+55 cm world-Z ceiling, controller bounds, fixed horizontal target and gripper
+setting as automatic upward recovery. It does not query or require a loaded
+model. After the move the arm holds; press Play or Act once to resume with the
+settings currently selected. Stop cancels the movement. Repeated clicks during
+an upward recovery are rejected. A background prediction already sent to the
+GPU may finish, but its discarded response cannot move the arm.
+
+Manual trials record `manual_nudge=true` in their episode and summary, a
+`manual_nudge_started` event, and the usual replay/action-replay recordings.
 
 Settings are captured at trial start. Manual **Sample action tokens throughout**
 remains separate and disables automatic recovery. Act once executes only one

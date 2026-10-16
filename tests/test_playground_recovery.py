@@ -100,6 +100,53 @@ class RecoveryTests(unittest.TestCase):
             self.assertEqual(e.recovery_sampled_requests,1)
 
 class RealRecoveryIntegrationTests(unittest.TestCase):
+    def test_manual_button_discards_prediction_moves_and_holds_without_model(self):
+        from common.paths import PROJECT_ROOT
+        from inference.playground_recovery import physical_state
+        with tempfile.TemporaryDirectory(dir=PROJECT_ROOT/'outputs') as tmp:
+            e=Engine('http://unused',tmp);e.health_future=Future()
+            try:
+                e.reset(e.scene);e.view['model']=dict(model_loaded=True,checkpoint=0)
+                e.begin('typed instruction',120,recovery=dict(enabled=True,method='sampling'))
+                old_folder=e.folder
+                old_response=Future();e.pending=old_response
+                before=physical_state(e.env)
+                e.command(dict(command='manual_nudge'))
+                manual_folder=e.folder
+                self.assertNotEqual(manual_folder,old_folder)
+                self.assertIsNone(e.pending)
+                self.assertTrue(e.manual_nudge)
+                with self.assertRaisesRegex(ValueError,'already in progress'):
+                    e.command(dict(command='manual_nudge'))
+                old_response.set_result(dict(action=[1]*7))
+                with patch.object(e,'publish_frame'),patch('inference.interactive_bowl.time.sleep'),patch('cloud.connection_client.request_prediction') as predict:
+                    while e.active:
+                        e.request();pending=e.pending;e.pending=None;e.execute(pending.result())
+                    predict.assert_not_called()
+                after=physical_state(e.env)
+                self.assertAlmostEqual(after['hand'][2]-before['hand'][2],.1,delta=.003)
+                np.testing.assert_allclose(after['hand'][:2],before['hand'][:2],atol=.003)
+                self.assertIn('press Play',e.view['phase'])
+                self.assertFalse(e.view['manual_nudge_active'])
+                summary=json.loads((manual_folder/'summary.json').read_text())
+                self.assertTrue(summary['manual_nudge'])
+                self.assertEqual(summary['prediction_attempts'],0)
+                self.assertFalse(summary['recovery_settings']['enabled'])
+                self.assertEqual(json.loads((old_folder/'summary.json').read_text())['completed_steps'],0)
+                events=[json.loads(l)['event'] for l in (manual_folder/'recovery_events.jsonl').read_text().splitlines()]
+                self.assertEqual(events,['manual_nudge_started','nudge_finished'])
+                # Manual movement also works with no loaded model, and Stop
+                # cancels an already prepared increment without moving the arm.
+                e.reset(e.scene);e.view['model']=dict(model_loaded=False,checkpoint=0)
+                e.command(dict(command='manual_nudge'));e.request()
+                initial=e.env.data.qpos.copy()
+                e.command(dict(command='stop'));e.tick()
+                self.assertFalse(e.active)
+                np.testing.assert_array_equal(e.env.data.qpos,initial)
+            finally:
+                e.closed.set()
+                if e.env:e.env.close()
+
     def test_upward_nudge_uses_physics_without_querying_model(self):
         from common.paths import PROJECT_ROOT
         from inference.playground_recovery import physical_state,nudge_policy

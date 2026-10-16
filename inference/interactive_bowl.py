@@ -85,6 +85,7 @@ class Engine:
         self.recovery_sampled_requests = 0
         self.nudge = None
         self.nudge_actions = 0
+        self.manual_nudge = False
 
     def publish_frame(self):
         from simulation.capture_camera import save_rgb_png
@@ -100,6 +101,7 @@ class Engine:
 
     def finish(self, phase):
         self.active = False
+        self.view['manual_nudge_active'] = False
         self.view['phase'] = phase
         if self.recovery:self.view['recovery']=dict(self.recovery.status(),active=False)
         if self.folder:
@@ -109,7 +111,7 @@ class Engine:
                 task_result=result, rejected_steps=self.rejections,action_limit=self.limit,
                 recovery_settings=self.recovery.config,recovery_events=self.recovery_events,
                 sampled_prediction_requests=self.sampled_requests,recovery_sampled_requests=self.recovery_sampled_requests,
-                nudge_actions=self.nudge_actions))
+                nudge_actions=self.nudge_actions,manual_nudge=self.manual_nudge))
             from common.replay_links import replay_buttons
             (self.folder/'RUN_REPORT.md').write_text(
                 '# Interactive bowl trial\n\n'+self.instruction+'\n\n'+
@@ -117,7 +119,7 @@ class Engine:
                 f'Status: {phase}. Outcome: {result["outcome"]}.\n\n'
                 f'Action limit: {self.limit}. Recovery: {self.recovery.config["method"] if self.recovery.config["enabled"] else "off"}. '
                 f'Recovery attempts: {self.recovery.attempts}. Sampled prediction requests: {self.sampled_requests}. '
-                f'Upward recovery actions: {self.nudge_actions}.\n\n'
+                f'Upward recovery actions: {self.nudge_actions}. Manual intervention: {self.manual_nudge}.\n\n'
                 '[Recovery events](recovery_events.jsonl) · [Trial summary](summary.json)\n\n'+replay_buttons(self.folder)+'\n')
             self.folder = None
 
@@ -141,7 +143,7 @@ class Engine:
         self.view.update(scene=self.scene, phase='Ready — enter instruction and press Play or Act once', steps=0)
         self.publish_frame()
 
-    def begin(self, instruction, steps, sample=False, recovery=None):
+    def begin(self, instruction, steps, sample=False, recovery=None, *, manual_nudge=False):
         if not isinstance(instruction, str) or not instruction.strip() or len(instruction) > 1000:
             raise ValueError('Enter an instruction (up to 1,000 characters)')
         from inference.playground_recovery import integer,settings
@@ -152,7 +154,7 @@ class Engine:
         if self.active or self.pending is not None:
             raise ValueError('A prediction is still in progress; wait for it to finish')
         model = self.view['model']
-        if (not model.get('model_loaded') or model.get('checkpoint') != self.view['checkpoint']):
+        if not manual_nudge and (not model.get('model_loaded') or model.get('checkpoint') != self.view['checkpoint']):
             raise ValueError('Wait for the selected checkpoint to finish loading')
         from simulation.color_place_bowl_scene import PlacementOutcome, CAMERA_NAME, scene_fingerprint
         from data_tools.bowl_demonstrations import controller_fingerprint
@@ -169,6 +171,7 @@ class Engine:
         self.recovery_sampled_requests=0
         self.nudge=None
         self.nudge_actions=0
+        self.manual_nudge=manual_nudge
         self.stop.clear()
         self.epoch += 1
         self.step = 0
@@ -185,12 +188,31 @@ class Engine:
             scene_xml_sha256=scene_fingerprint(self.scene['count']), training_eligible=False,
             checkpoint=self.view['checkpoint'], model=self.view['model'], sample_actions=sample,
             action_limit=steps,recovery_settings=self.recovery.config,recovery_detection_policy=DETECTION_POLICY,
-            nudge_policy=nudge_policy(),
+            nudge_policy=nudge_policy(),manual_nudge=manual_nudge,
             scoring_note='Scored target is the selected target dropdown; instruction text is sent unchanged.'))
         (self.folder/'recovery_events.jsonl').touch()
         self.view.update(instruction=instruction, phase='Running', steps=0, action_limit=steps,
             recovery=dict(self.recovery.status(),active=True),run=str(self.folder))
         self.active = True
+
+    def start_manual_nudge(self):
+        """Pause inference, discard its pending response and record a manual move."""
+        if self.env is None:raise ValueError('Wait for the scene to initialize')
+        if self.active and self.recovery and self.recovery.mode=='nudge':
+            raise ValueError('An upward recovery is already in progress')
+        self.finish('Paused for manual upward recovery')
+        self.epoch+=1
+        # Background prediction may finish, but its result no longer has an
+        # execution path. The manual motion never queries the cloud model.
+        self.pending=None
+        from inference.playground_recovery import nudge_policy
+        self.begin(self.instruction,nudge_policy()['max_actions'],manual_nudge=True)
+        self.recovery.mode='nudge'
+        event=dict(event='manual_nudge_started',step=0,simulation_time=float(self.env.data.time))
+        self.recovery_events.append(event)
+        with (self.folder/'recovery_events.jsonl').open('a') as stream:stream.write(json.dumps(event)+'\n')
+        self.view.update(manual_nudge_active=True,phase='Manual recovery — moving upward',
+                         recovery=dict(self.recovery.status(),active=True))
 
     def request(self):
         from cloud.connection_client import request_prediction
@@ -281,7 +303,7 @@ class Engine:
             executed_physics_steps=executed, position_tracking_error_metres=tracking,
             task_result=self.outcome.result(self.env),sampling_source=self.prediction_source,
             sampled=self.prediction_sampled)
-        if self.recovery.config['enabled']:
+        if self.recovery.config['enabled'] or self.manual_nudge:
             from inference.playground_recovery import physical_state
             row['physical_state_after']=physical_state(self.env,self.names)
         (self.stepdir/'execution.json').write_text(json.dumps(row, indent=2)+'\n')
@@ -306,7 +328,7 @@ class Engine:
             self.finish('Placement reached: '+row['task_result']['outcome'])
         elif self.step >= self.limit:
             self.finish('Completed requested actions — Play or Act once to continue')
-        elif self.recovery.config['enabled']:
+        elif self.recovery.config['enabled'] or self.manual_nudge:
             state=row['physical_state_after']
             if self.prediction_source=='nudge':
                 from inference.playground_recovery import nudge_policy
@@ -325,13 +347,17 @@ class Engine:
                 self.recovery_events.append(event)
                 with (self.folder/'recovery_events.jsonl').open('a') as stream:stream.write(json.dumps(event)+'\n')
             self.view['recovery']=dict(self.recovery.status(),active=True)
-            if self.recovery.mode=='exhausted':self.finish('Stopped — automatic recovery attempts exhausted')
+            if self.manual_nudge and reached:
+                self.finish('Manual recovery complete — press Play or Act once to resume')
+            elif self.recovery.mode=='exhausted':self.finish('Stopped — automatic recovery attempts exhausted')
 
     def command(self, value):
         kind = value.get('command')
         if kind == 'stop':
             self.epoch += 1
             self.finish('Stopped — arm held at its current position')
+        elif kind == 'manual_nudge':
+            self.start_manual_nudge()
         elif kind == 'scene':
             self.reset(validate_scene(value['scene']))
         elif kind == 'checkpoint':
