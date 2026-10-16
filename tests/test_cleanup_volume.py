@@ -1,5 +1,6 @@
 """Fixed cleanup scope, verified archival gate and deletion progress; no SSH."""
 import json
+import errno
 from pathlib import Path
 import tempfile
 import time
@@ -11,6 +12,40 @@ from cloud import cleanup_volume as c
 
 
 class CleanupTests(unittest.TestCase):
+    def test_nonempty_directory_is_rescanned_before_retry(self):
+        with tempfile.TemporaryDirectory() as tmp,patch.object(c.time,'sleep'):
+            root=Path(tmp);target=root/'cache';target.mkdir();(target/'first').write_bytes(b'one')
+            real=Path.rmdir;calls=[]
+            def rmdir(path):
+                if path==target and not calls:
+                    calls.append(path);(target/'late-entry').write_bytes(b'two')
+                    raise OSError(errno.ENOTEMPTY,'stale or late entry')
+                return real(path)
+            counts=dict(files=0,directories=0,bytes=0,last_log=time.monotonic())
+            with patch.object(Path,'rmdir',rmdir):c.remove_with_progress(target,counts)
+            self.assertFalse(target.exists());self.assertEqual(counts['files'],2)
+            self.assertEqual(counts['directories'],1)
+
+    def test_persistent_filesystem_error_leaves_target_and_continues(self):
+        with tempfile.TemporaryDirectory() as tmp,patch.object(c,'ROOT',Path(tmp)), \
+                patch.object(c,'SELECTED',{}),patch.object(c,'ALREADY_BACKED',()), \
+                patch.object(c,'PILOTS',()),patch.object(c,'DATASETS',('busy','good')), \
+                patch('huggingface_hub.HfApi') as api,patch.object(c.os,'nice'):
+            root=Path(tmp);bad=root/'busy';good=root/'good';bad.mkdir();good.mkdir()
+            (bad/'entry').write_text('keep');(good/'entry').write_text('delete')
+            reports=root/'reports/cleanup';reports.mkdir(parents=True)
+            api.return_value.repo_info.return_value.private=True
+            remove=c.remove_with_progress
+            def removal(path,counts):
+                if path==bad:raise OSError(errno.EBUSY,'busy network cache')
+                return remove(path,counts)
+            with patch.object(c,'remove_with_progress',side_effect=removal):
+                self.assertEqual(c.worker(dict(reports=str(reports),token='test')),0)
+            self.assertTrue(bad.exists());self.assertFalse(good.exists())
+            result=json.loads((reports/'cleanup_complete.json').read_text())
+            self.assertFalse(result['complete']);self.assertEqual(len(result['remaining_targets']),1)
+            self.assertNotIn(str(bad),result['removed_targets'])
+
     def test_targets_exclude_current_training_and_all_other_sweeps(self):
         with tempfile.TemporaryDirectory() as tmp, patch.object(c,'ROOT',Path(tmp)):
             root=Path(tmp)

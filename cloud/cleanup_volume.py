@@ -1,5 +1,6 @@
 """Execute the agreed October 16 cleanup; never stop a pod or a sweep."""
 import argparse
+import errno
 import fcntl
 import getpass
 import json
@@ -115,13 +116,27 @@ def remove_with_progress(path, counters):
     """One traversal, with progress instead of an expensive preliminary inventory."""
     if path.is_symlink():raise ValueError('Refusing deletion through symlink: '+str(path))
     if path.is_dir():
-        with os.scandir(path) as entries:
-            for entry in entries:remove_with_progress(Path(entry.path), counters)
-        path.rmdir()
+        for attempt in range(3):
+            try:
+                with os.scandir(path) as entries:
+                    for entry in entries:remove_with_progress(Path(entry.path), counters)
+            except FileNotFoundError:
+                return  # Already removed; safe to resume a partial cleanup.
+            try:
+                path.rmdir()
+                break
+            except FileNotFoundError:
+                return
+            except OSError as exc:
+                if exc.errno not in (errno.ENOTEMPTY,errno.EEXIST) or attempt==2:raise
+                print(f'Retrying directory after nonempty response ({attempt+1}/2): {path}',flush=True)
+                time.sleep(.5*(attempt+1))
         counters['directories'] += 1
     elif path.exists():
-        size = path.stat().st_size
-        path.unlink()
+        try:
+            size = path.stat().st_size
+            path.unlink()
+        except FileNotFoundError:return
         counters['files'] += 1
         counters['bytes'] += size
     if time.monotonic()-counters['last_log'] >= 3:
@@ -154,6 +169,7 @@ def worker(config):
             if p.is_file() and p.suffix in ('.json', '.jsonl', '.md', '.log', '.txt'):
                 shutil.copyfile(p, reports/p.name)
     items = targets(protected)
+    removed=[];remaining=[]
     counters = dict(files=0, directories=0, bytes=0, last_log=time.monotonic())
     for index, path in enumerate(items, 1):
         # This allowlist excludes the base, current training, active sweep and global volume.
@@ -165,12 +181,21 @@ def worker(config):
                 saved.mkdir(exist_ok=True)
                 shutil.copyfile(metadata, saved/(path.name+'.json'))
         print(f'Removing target {index}/{len(items)}: {path}', flush=True)
-        remove_with_progress(path, counters)
+        try:remove_with_progress(path, counters)
+        except OSError as exc:
+            remaining.append(dict(path=str(path),error=str(exc),errno=exc.errno))
+            print(f'LEFT FOR LATER: {path}: {exc}. Continuing other approved targets.',flush=True)
+            continue
+        removed.append(str(path))
         print(f'Finished target {index}/{len(items)}', flush=True)
     write_status(Path(config['reports'])/'cleanup_complete.json',
-                 dict(complete=not protected,cleanup_finished=True,protected_sessions=protected,removed_targets=[str(p) for p in items],
+                 dict(complete=not protected and not remaining,cleanup_finished=True,protected_sessions=protected,
+                      removed_targets=removed,remaining_targets=remaining,
                       files_removed=counters['files'], logical_bytes_removed=counters['bytes']))
-    print('CLEANUP FINISHED with preserved sessions: '+', '.join(protected) if protected else 'CLEANUP COMPLETE.',flush=True)
+    if protected or remaining:
+        print(f'CLEANUP FINISHED. Preserved sessions: {protected}; remaining targets: {len(remaining)}.',flush=True)
+    else:print('CLEANUP COMPLETE.',flush=True)
+    if remaining:print(f'{len(remaining)} target(s) still need cleanup; see remaining_targets in cleanup_complete.json.',flush=True)
     print('Reports and current checkpoints retained. Pod and sweep left running.', flush=True)
     print('Network-volume free space: %.2f GiB' % (shutil.disk_usage(ROOT).free/1024**3), flush=True)
     return 0

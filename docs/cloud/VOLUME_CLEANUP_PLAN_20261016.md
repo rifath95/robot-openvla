@@ -123,3 +123,12 @@ October 16 retry correction: the first attempt stopped before deletion because
 the red/blue checkpoint-100 directory lacked `adapter_model.safetensors`. Earlier
 folder listings were not proof of complete checkpoints. Retain that entire
 training session until a recoverable best checkpoint can be identified.
+
+Network-filesystem deletion retries: if `rmdir` returns `ENOTEMPTY`/`EEXIST`,
+rescan that directory and retry twice with short backoff. Entries already removed
+are harmless on rerun. Persistent filesystem errors leave the affected target
+for later and continue other approved targets. `remaining_targets` in
+`cleanup_complete.json` lists paths/errors; `removed_targets` contains only
+completed targets, and `complete` remains false if anything is protected or
+left over. A failed target can already be partially removed. This avoids one
+stubborn cache directory blocking the rest of the approved cleanup.
