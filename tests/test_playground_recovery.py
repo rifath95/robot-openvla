@@ -16,11 +16,27 @@ class RecoveryTests(unittest.TestCase):
         d=Detector(8);d.reset(state())
         for _ in range(8):d.add(state())
         self.assertEqual(d.detect()['kind'],'stall')
-        for movement in ('arm','cube','gripper'):
+        for movement in ('arm','gripper'):
             d.reset(state())
             for n in range(1,21):
                 d.add(state(x=n*.002 if movement=='arm' else 0,cube=n*.002 if movement=='cube' else 0,grip=n*.001 if movement=='gripper' else 0))
                 self.assertIsNone(d.detect(),movement)
+
+    def test_detector_ignores_simulator_cube_state(self):
+        d=Detector(4);d.reset(state())
+        for n in range(4):d.add(state(cube=n*.1))
+        self.assertEqual(d.detect()['kind'],'stall')
+        d.add(dict(joints=[0]*7,hand=[0,0,0],gripper=0))
+
+    def test_nudge_is_separate_and_returns_to_greedy(self):
+        r=Recovery(dict(enabled=True,method='nudge',window=4,max_attempts=1),state())
+        for _ in range(4):events=r.observe(state())
+        self.assertEqual(events[0]['event'],'nudge_started')
+        self.assertFalse(r.sampling)
+        self.assertEqual(r.observe(state()),[])
+        self.assertEqual(r.finish_nudge(state(x=.1))[0]['event'],'nudge_finished')
+        for _ in range(12):events=r.observe(state(x=.1))
+        self.assertEqual(events[0]['event'],'recovery_exhausted')
 
     def test_two_three_four_step_cycles_require_three_returns(self):
         for period in (2,3,4):
@@ -31,8 +47,8 @@ class RecoveryTests(unittest.TestCase):
             self.assertEqual(d.detect()['kind'],'cycle');self.assertEqual(d.detect()['period'],period)
         d=Detector(8);d.reset(state())
         for n in range(1,20):
-            d.add(state(x=(n%2)*.01,cube=n*.002))
-            self.assertIsNone(d.detect(),'Cube progress must prevent a cycle flag')
+            d.add(state(x=(n%2)*.01+n*.005))
+            self.assertIsNone(d.detect(),'Robot progress must prevent a cycle flag')
 
     def test_sampling_returns_to_greedy_retries_and_stops_at_bound(self):
         r=Recovery(dict(enabled=True,sampling_steps=5,window=4,max_attempts=2),state())
@@ -57,7 +73,7 @@ class RecoveryTests(unittest.TestCase):
     def test_off_by_default_and_invalid_controls_rejected(self):
         r=Recovery(settings(),state())
         for _ in range(30):self.assertEqual(r.observe(state()),[])
-        for bad in [dict(enabled='yes'),dict(sampling_steps=0),dict(window=3),dict(max_attempts=0)]:
+        for bad in [dict(enabled='yes'),dict(method='random'),dict(sampling_steps=0),dict(window=3),dict(max_attempts=0)]:
             with self.assertRaises(ValueError):settings(bad)
         with tempfile.TemporaryDirectory() as tmp:
             e=Engine('http://unused',tmp)
@@ -84,6 +100,59 @@ class RecoveryTests(unittest.TestCase):
             self.assertEqual(e.recovery_sampled_requests,1)
 
 class RealRecoveryIntegrationTests(unittest.TestCase):
+    def test_upward_nudge_uses_physics_without_querying_model(self):
+        from common.paths import PROJECT_ROOT
+        from inference.playground_recovery import physical_state,nudge_policy
+        with tempfile.TemporaryDirectory(dir=PROJECT_ROOT/'outputs') as tmp:
+            e=Engine('http://unused',tmp);e.health_future=Future()
+            try:
+                e.reset(e.scene);e.view['model']=dict(model_loaded=True,checkpoint=0)
+                e.begin('test',100,recovery=dict(enabled=True,method='nudge'))
+                folder=e.folder
+                initial=physical_state(e.env)
+                quaternion=e.env.controller.end_effector_pose()[1].copy()
+                gripper=e.env.data.ctrl[e.env.controller.gripper_actuator_id]
+                self.assertAlmostEqual(nudge_policy()['distance_metres'],.1)
+                e.recovery.mode='nudge';e.recovery.attempts=1
+                with patch.object(e,'publish_frame'),patch('inference.interactive_bowl.time.sleep'),patch('cloud.connection_client.request_prediction') as predict:
+                    while e.active and e.recovery.mode=='nudge':
+                        e.request()
+                        pending=e.pending;e.pending=None
+                        e.execute(pending.result())
+                    predict.assert_not_called()
+                self.assertTrue(e.active,e.view['phase'])
+                final=physical_state(e.env)
+                self.assertAlmostEqual(final['hand'][2]-initial['hand'][2],.1,delta=.003)
+                np.testing.assert_allclose(final['hand'][:2],initial['hand'][:2],atol=.003)
+                self.assertGreater(abs(float(np.dot(quaternion,e.env.controller.end_effector_pose()[1]))),.999)
+                self.assertAlmostEqual(e.env.data.ctrl[e.env.controller.gripper_actuator_id],gripper)
+                self.assertEqual(e.recovery.mode,'assessing')
+                self.assertNotIn('cubes',final)
+                e.finish('test finished')
+                summary=json.loads((folder/'summary.json').read_text())
+                self.assertEqual(summary['prediction_attempts'],0)
+                self.assertGreater(summary['nudge_actions'],0)
+                actions=[json.loads(l)['action'] for l in (folder/'transitions.jsonl').read_text().splitlines()]
+                self.assertTrue(all(np.linalg.norm(a[:3])<=.010001 for a in actions))
+                self.assertTrue(all(a[2]>=0 and a[3:6]==[0,0,0] for a in actions))
+                # Replaying the same robot feedback at the height ceiling must
+                # stop instead of allowing repeated recoveries to climb forever.
+                e.begin('test',100,recovery=dict(enabled=True,method='nudge'))
+                e.recovery.mode='nudge';e.request()
+                self.assertFalse(e.active)
+                self.assertIn('height limit',e.view['phase'])
+                # The global action cap can interrupt a multi-increment nudge.
+                e.reset(e.scene);e.begin('test',1,recovery=dict(enabled=True,method='nudge'))
+                e.recovery.mode='nudge'
+                with patch.object(e,'publish_frame'),patch('inference.interactive_bowl.time.sleep'):
+                    e.request();pending=e.pending;e.pending=None;e.execute(pending.result())
+                self.assertFalse(e.active)
+                self.assertEqual(e.nudge_actions,1)
+                self.assertIn('Completed requested actions',e.view['phase'])
+            finally:
+                e.closed.set()
+                if e.env:e.env.close()
+
     def test_real_stationary_arm_triggers_sample_burst_then_greedy_and_stops(self):
         import time
         from common.paths import PROJECT_ROOT

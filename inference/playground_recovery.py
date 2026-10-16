@@ -1,8 +1,8 @@
-"""Physical-state stall/cycle detection and bounded temporary sampling recovery."""
+"""Robot-feedback stall/cycle detection with separate sampling/upward recovery."""
 from collections import deque
 import numpy as np
 
-DETECTION_POLICY=dict(version=1,joint_tolerance_radians=.015,position_tolerance_metres=.003,
+DETECTION_POLICY=dict(version=2,feedback='robot_only',joint_tolerance_radians=.015,position_tolerance_metres=.003,
     gripper_tolerance_metres=.002,cycle_periods=[2,3,4],cycle_repeats=3,minimum_greedy_assessment=12)
 
 
@@ -16,20 +16,29 @@ def settings(value=None):
     if not isinstance(value,dict):raise ValueError('Invalid recovery settings')
     enabled=value.get('enabled',False)
     if type(enabled) is not bool:raise ValueError('Recovery enabled must be boolean')
-    return dict(enabled=enabled,sampling_steps=integer(value.get('sampling_steps',8),5,10,'Recovery sampling actions'),
+    method=value.get('method','sampling')
+    if method not in ('sampling','nudge'):raise ValueError('Recovery method must be sampling or nudge')
+    return dict(enabled=enabled,method=method,sampling_steps=integer(value.get('sampling_steps',8),5,10,'Recovery sampling actions'),
         window=integer(value.get('window',8),4,50,'Stall/assessment window'),
         max_attempts=integer(value.get('max_attempts',3),1,10,'Maximum recovery attempts'))
 
 
-def physical_state(env,names):
+def physical_state(env,names=None):
     import mujoco
-    from simulation.color_place_bowl_scene import cube_position
     fingers=[mujoco.mj_name2id(env.model,mujoco.mjtObj.mjOBJ_JOINT,n) for n in ('finger_joint1','finger_joint2')]
     if min(fingers)<0:raise ValueError('Missing gripper joints')
     return dict(joints=env.data.qpos[env.controller.qpos_indices].tolist(),
         hand=env.controller.end_effector_pose()[0].tolist(),
-        gripper=float(sum(env.data.qpos[env.model.jnt_qposadr[j]] for j in fingers)),
-        cubes=[cube_position(env,slot).tolist() for slot in names])
+        gripper=float(sum(env.data.qpos[env.model.jnt_qposadr[j]] for j in fingers)))
+
+
+def nudge_policy():
+    # Calibrated scene constants, not object state or grasp/contact detection.
+    from simulation.touch_scene import START_POSITION
+    table_top=.25
+    distance=(START_POSITION[2]-table_top)/2
+    return dict(distance_metres=distance,ceiling_z_metres=START_POSITION[2]+distance,
+                table_top_z_metres=table_top,start_z_metres=START_POSITION[2],max_actions=20)
 
 
 class Detector:
@@ -41,9 +50,8 @@ class Detector:
 
     def add(self,state):
         joints=np.asarray(state['joints'],dtype=float);hand=np.asarray(state['hand'],dtype=float)
-        cubes=np.asarray(state['cubes'],dtype=float).reshape(-1)
-        if joints.shape!=(7,) or hand.shape!=(3,) or cubes.size%3:raise ValueError('Invalid physical-state dimensions')
-        vector=np.r_[joints/.015,hand/.003,float(state['gripper'])/.002,cubes/.003]
+        if joints.shape!=(7,) or hand.shape!=(3,):raise ValueError('Invalid physical-state dimensions')
+        vector=np.r_[joints/.015,hand/.003,float(state['gripper'])/.002]
         if not np.all(np.isfinite(vector)):raise ValueError('Nonfinite physical state')
         if self.history and vector.shape!=self.history[-1].shape:raise ValueError('Scene changed during recovery detection')
         self.history.append(vector)
@@ -75,11 +83,11 @@ class Recovery:
     def sampling(self):return self.mode=='sampling'
 
     def status(self):
-        return dict(mode=self.mode,attempts=self.attempts,max_attempts=self.config['max_attempts'],
+        return dict(mode=self.mode,method=self.config['method'],attempts=self.attempts,max_attempts=self.config['max_attempts'],
             sampling_remaining=self.remaining,assessment_steps=self.assessed,last_detection=self.last_detection)
 
     def observe(self,state):
-        if self.mode in ('disabled','exhausted'):return []
+        if self.mode in ('disabled','exhausted','nudge'):return []
         self.detector.add(state)
         if self.mode=='sampling':
             self.remaining-=1
@@ -96,9 +104,15 @@ class Recovery:
             if self.attempts>=self.config['max_attempts']:
                 self.mode='exhausted'
                 return [dict(event='recovery_exhausted',detection=detection,attempt=self.attempts)]
-            self.attempts+=1;self.remaining=self.config['sampling_steps'];self.mode='sampling'
-            return [dict(event='sampling_started',detection=detection,attempt=self.attempts,actions=self.remaining)]
+            self.attempts+=1
+            self.mode='sampling' if self.config['method']=='sampling' else 'nudge'
+            self.remaining=self.config['sampling_steps'] if self.sampling else 0
+            return [dict(event=self.mode+'_started',detection=detection,attempt=self.attempts,actions=self.remaining)]
         if self.mode=='assessing':
             self.mode='greedy'
             return [dict(event='progress_resumed',attempt=self.attempts,note='No stall/cycle in greedy assessment window; task success not implied')]
         return []
+
+    def finish_nudge(self,state):
+        self.mode='assessing';self.assessed=0;self.detector.reset(state)
+        return [dict(event='nudge_finished',next_mode='greedy',attempt=self.attempts)]

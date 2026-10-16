@@ -97,51 +97,61 @@ Mac-to-cloud path still need their first check on the new pod.
 
 ## Optional automatic recovery
 
-In the instruction panel, set the action limit (for example 1,000), enable
-**Automatically recover from stalling or cycles**, then press Play. Settings
-are captured at trial start; editing controls does not alter an active trial.
-Recovery is off by default. Manual **Sample action tokens throughout** remains
-available and is mutually exclusive with greedy-plus-automatic-recovery mode.
-Act once still requests exactly one prediction; recovery history resets with
-each new Play/Act trial, scene or checkpoint.
+In the instruction panel, set the action limit (for example 1,000), choose a
+**Recovery method**, then press Play:
 
-The detector uses only post-action physical states: seven arm joints, grasp-point
-position, actual finger opening, and every cube position. Repeated model outputs
-alone do not trigger it. The default stall window is 8 prediction attempts;
-users can select 4–50. A stall requires all recorded ranges within 0.015 radians
-per arm joint, 3 mm per Cartesian coordinate/cube coordinate, and 2 mm gripper
-opening. Cycle detection checks periods 2, 3 and 4, requiring three returns to
-matching phase states with a real excursion. It checks all repeated phases to
-avoid treating cumulative movement or lifting as a closed loop. These are
-heuristic physical tolerances; assessment uses steps, never network waiting time.
+- **Off**: no automatic intervention.
+- **Switch to sampling**: temporarily sample 5–10 predictions (default 8), then
+  return to greedy prediction.
+- **Move upward (up to 10 cm)**: use the normal controller to move vertically
+  upward, then return to greedy prediction. It never enables sampling.
 
-A detection starts **5–10 sampled predictions** (default 8, temperature 1, top-p
-1). Then requests explicitly return to greedy. A greedy assessment lasts at
-least 12 predictions (or the longer chosen stall window) so four-step cycles can
-be observed three times. If stalling/cycling persists, another burst starts;
-after the configured maximum recovery attempts (default 3; range 1–10), the trial
-stops. An escaped assessment window is logged as progress resumed, not task
-success. Recovery attempts are bounded across the entire trial. There are no
-random position/orientation perturbations.
+Settings are captured at trial start. Manual **Sample action tokens throughout**
+remains separate and disables automatic recovery. Act once executes only one
+model prediction; recovery history resets with each Play/Act trial, scene or
+checkpoint. Automated sweeps retain their existing behavior.
+
+Both recovery methods use **robot feedback only**: seven arm joints, the
+forward-kinematic grasp-point position and actual finger opening. Cube positions,
+contact information and grasp detection are not inputs to recovery. Simulator
+object state is still used separately for outcome scoring and recordings.
+Repeated model outputs alone do not trigger recovery. The default stall window
+is 8 action attempts (selectable 4–50), with tolerances of 0.015 radians per
+joint, 3 mm per hand coordinate and 2 mm for gripper opening. Cycle detection
+checks periods 2, 3 and 4 with three repeated returns and a real excursion.
+These are heuristics; an intentional stationary hold can also trigger recovery.
+
+The calibrated starting grasp point is at world Z=0.45 m and the tabletop is at
+Z=0.25 m: 20 cm clearance. Upward recovery requests **half that clearance, 10 cm**,
+from the current hand position, capped at world Z=0.55 m (30 cm above the table).
+The target X/Y and commanded gripper setting stay fixed; rotational increments
+are zero. The normal 1 cm translation bound, IK retries and physics execute the
+move over several recorded actions, without teleporting or predicting actions
+from the model. Actual poses can have normal controller tracking error. A move
+has at most 20 action attempts; inability to reach it or already being at the
+height ceiling stops the trial. This prevents repeated nudges climbing forever.
+
+After either recovery, greedy assessment lasts at least 12 predictions (or the
+longer chosen stall window). If stalling/cycling persists, the selected method
+tries again up to **Maximum recovery attempts** (default 3). The count is bounded
+across the whole trial. Successful assessment means no detected stall/cycle,
+not task success. The detector history resets after a completed nudge.
 
 Placement, manual Stop, action limit, nonfinite state, tracking failure and the
-existing three-rejection stop retain priority. Recovery never bypasses the
-controller's action/IK bounds. The global action limit includes greedy and
-sampled prediction attempts. Rejected attempts count toward the limit/burst.
-
-The status panel shows mode (`sampling`, `assessing` with greedy predictions,
-`greedy`, `disabled`, or `exhausted`), attempts used, and sampled predictions
-remaining. Camera input remains the plain camera image without HTML controls.
+existing three-rejection stop retain priority. The action limit includes model
+predictions and individual nudge increments. The live status distinguishes
+`nudge`, `sampling`, `assessing`, `greedy`, `disabled` and `exhausted` modes.
+Camera input remains the plain image without HTML controls.
 
 Each trial records:
 
-- `episode.json`: chosen action limit, manual sampling and recovery settings.
-- `step_NNN/generation_request.json`: requested decoding mode and its source.
+- `episode.json`: chosen action limit, manual sampling, recovery settings and nudge calibration.
+- `step_NNN/generation_request.json`: requested decoding mode and its source; nudges explicitly mark `model_queried=false`.
 - `step_NNN/execution.json`: physical state after execution when recovery is
   enabled, plus whether that prediction was greedy/manual/recovery sampling.
-- `recovery_events.jsonl`: detections, sampling starts/ends, progress assessments
+- `recovery_events.jsonl`: detections, sampling/nudge starts/ends, progress assessments
   and exhausted retries, including step, simulation time and physical state.
-- `summary.json` / `RUN_REPORT.md`: recovery events, counts, limit and outcome,
+- `summary.json` / `RUN_REPORT.md`: recovery events, counts (including nudge actions), limit and outcome,
   with the usual direct Replay and Action Replay links.
 
 Local tests exercise stall/cycle detection, continued movement/lifting, retry
@@ -149,3 +159,6 @@ limits, decoding switches, invalid inputs and real MuJoCo control with a mocked
 prediction endpoint. A real-model comparison is still needed to measure whether
 recovery improves success. These controls apply only to interactive playground
 trials; automated sweep policies retain their configured decoding behavior.
+
+`nudge_attempt_N.json` records each upward target, held gripper command and bounds.
+Recovery moves are included in the usual Replay and Action Replay recordings.

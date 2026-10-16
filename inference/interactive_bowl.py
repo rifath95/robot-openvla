@@ -83,6 +83,8 @@ class Engine:
         self.recovery_events = []
         self.sampled_requests = 0
         self.recovery_sampled_requests = 0
+        self.nudge = None
+        self.nudge_actions = 0
 
     def publish_frame(self):
         from simulation.capture_camera import save_rgb_png
@@ -102,18 +104,20 @@ class Engine:
         if self.recovery:self.view['recovery']=dict(self.recovery.status(),active=False)
         if self.folder:
             result = self.outcome.result(self.env)
-            self.save('summary.json', dict(phase=phase, completed_steps=self.moves, prediction_attempts=self.step,
+            self.save('summary.json', dict(phase=phase, completed_steps=self.moves, prediction_attempts=self.step-self.nudge_actions,total_action_attempts=self.step,
                 checkpoint=self.view['checkpoint'], instruction=self.instruction,
                 task_result=result, rejected_steps=self.rejections,action_limit=self.limit,
                 recovery_settings=self.recovery.config,recovery_events=self.recovery_events,
-                sampled_prediction_requests=self.sampled_requests,recovery_sampled_requests=self.recovery_sampled_requests))
+                sampled_prediction_requests=self.sampled_requests,recovery_sampled_requests=self.recovery_sampled_requests,
+                nudge_actions=self.nudge_actions))
             from common.replay_links import replay_buttons
             (self.folder/'RUN_REPORT.md').write_text(
                 '# Interactive bowl trial\n\n'+self.instruction+'\n\n'+
                 f'Checkpoint: {self.view["checkpoint"]}. Scene seed: {self.scene["seed"]}. '
                 f'Status: {phase}. Outcome: {result["outcome"]}.\n\n'
-                f'Action limit: {self.limit}. Automatic recovery: {self.recovery.config["enabled"]}. '
-                f'Recovery attempts: {self.recovery.attempts}. Sampled prediction requests: {self.sampled_requests}.\n\n'
+                f'Action limit: {self.limit}. Recovery: {self.recovery.config["method"] if self.recovery.config["enabled"] else "off"}. '
+                f'Recovery attempts: {self.recovery.attempts}. Sampled prediction requests: {self.sampled_requests}. '
+                f'Upward recovery actions: {self.nudge_actions}.\n\n'
                 '[Recovery events](recovery_events.jsonl) · [Trial summary](summary.json)\n\n'+replay_buttons(self.folder)+'\n')
             self.folder = None
 
@@ -158,11 +162,13 @@ class Engine:
         self.instruction = instruction  # Preserve exactly what the user entered.
         self.limit = steps
         self.sample = sample
-        from inference.playground_recovery import Recovery,physical_state,DETECTION_POLICY
+        from inference.playground_recovery import Recovery,physical_state,DETECTION_POLICY,nudge_policy
         self.recovery=Recovery(config,physical_state(self.env,self.names) if config['enabled'] else None)
         self.recovery_events=[]
         self.sampled_requests=0
         self.recovery_sampled_requests=0
+        self.nudge=None
+        self.nudge_actions=0
         self.stop.clear()
         self.epoch += 1
         self.step = 0
@@ -179,6 +185,7 @@ class Engine:
             scene_xml_sha256=scene_fingerprint(self.scene['count']), training_eligible=False,
             checkpoint=self.view['checkpoint'], model=self.view['model'], sample_actions=sample,
             action_limit=steps,recovery_settings=self.recovery.config,recovery_detection_policy=DETECTION_POLICY,
+            nudge_policy=nudge_policy(),
             scoring_note='Scored target is the selected target dropdown; instruction text is sent unchanged.'))
         (self.folder/'recovery_events.jsonl').touch()
         self.view.update(instruction=instruction, phase='Running', steps=0, action_limit=steps,
@@ -192,6 +199,33 @@ class Engine:
         self.stepdir.mkdir()
         self.save_state(self.stepdir/'scene_state.npz')
         save_rgb_png(self.stepdir/'before.png', self.env.observe())
+        if self.recovery.mode=='nudge':
+            import numpy as np
+            from inference.playground_recovery import nudge_policy
+            policy=nudge_policy()
+            hand=self.env.controller.end_effector_pose()[0]
+            if self.nudge is None:
+                goal=hand.copy()
+                goal[2]=min(hand[2]+policy['distance_metres'],policy['ceiling_z_metres'])
+                if goal[2]-hand[2]<.002:
+                    self.finish('Stopped — upward recovery height limit reached')
+                    return
+                self.nudge=dict(goal=goal.tolist(),actions=0,
+                    gripper=float(np.clip(self.env.data.ctrl[self.env.controller.gripper_actuator_id]/255.,0.,1.)))
+                self.save('nudge_attempt_'+str(self.recovery.attempts)+'.json',dict(self.nudge,policy=policy))
+            delta=np.asarray(self.nudge['goal'])-hand
+            delta[2]=max(0.,delta[2])
+            self.nudge['actions']+=1
+            self.prediction_sampled=False
+            self.prediction_source='nudge'
+            self.save(str(self.stepdir.relative_to(self.folder)/'generation_request.json'),
+                dict(source='nudge',model_queried=False,sampled=False))
+            self.pending_epoch=self.epoch
+            self.pending=Future()
+            self.pending.set_result(dict(unnorm_key='panda_grasp_v1',
+                action=[*delta.tolist(),0.,0.,0.,self.nudge['gripper']],source='nudge',model_queried=False))
+            self.view['phase']='Recovery — moving upward'
+            return
         options = dict(server_url=self.origin, checkpoint=self.view['checkpoint'])
         automatic=self.recovery.sampling
         self.prediction_sampled=self.sample or automatic
@@ -254,11 +288,12 @@ class Engine:
         if executed == PHYSICS_STEPS:
             with (self.folder/'transitions.jsonl').open('a') as stream:
                 stream.write(json.dumps(dict(index=self.moves+1, action=from_controller_action(action).tolist(),
-                    source_step_directory=self.stepdir.name,
+                    source_step_directory=self.stepdir.name,source=self.prediction_source,
                     physics_steps=executed, instruction=self.instruction, executed=True))+'\n')
             self.moves += 1
             self.rejections = 0
         self.step += 1
+        if self.prediction_source=='nudge':self.nudge_actions+=1
         self.view.update(steps=self.step, result=row['task_result'], last_action=prediction['action'])
         self.publish_frame()
         if self.stop.is_set():
@@ -273,7 +308,18 @@ class Engine:
             self.finish('Completed requested actions — Play or Act once to continue')
         elif self.recovery.config['enabled']:
             state=row['physical_state_after']
-            events=self.recovery.observe(state)
+            if self.prediction_source=='nudge':
+                from inference.playground_recovery import nudge_policy
+                import numpy as np
+                reached=np.linalg.norm(np.asarray(state['hand'])-self.nudge['goal'])<=.002
+                if reached:
+                    events=self.recovery.finish_nudge(state)
+                    self.nudge=None
+                elif self.nudge['actions']>=nudge_policy()['max_actions']:
+                    self.finish('Stopped — upward recovery did not reach its target')
+                    return
+                else:events=[]
+            else:events=self.recovery.observe(state)
             for event in events:
                 event.update(step=self.step,simulation_time=float(self.env.data.time),physical_state=state)
                 self.recovery_events.append(event)

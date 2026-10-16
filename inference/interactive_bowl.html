@@ -16,12 +16,12 @@ body{font:15px system-ui;background:#10151d;color:#eef2fa;margin:24px}main{max-w
 <textarea id="instruction">pick up the red cube and place it in the blue bowl.</textarea>
 <label>Action limit <input id="steps" type="number" min="1" max="10000" step="1" value="120" style="width:100px"></label>
 <label><input type="checkbox" id="sample"> Sample action tokens throughout</label>
-<div><label><input type="checkbox" id="autoRecovery"> Automatically recover from stalling or cycles</label></div>
+<div><label>Recovery method <select id="recoveryMethod"><option value="off">Off</option><option value="sampling">Switch to sampling</option><option value="nudge">Move upward (up to 10 cm)</option></select></label></div>
 <div id="recoveryControls">
 <label>Sampled actions per recovery <input id="recoverySteps" type="number" min="5" max="10" step="1" value="8" style="width:60px"></label>
 <label>Stall window (actions) <input id="stallWindow" type="number" min="4" max="50" step="1" value="8" style="width:60px"></label>
 <label>Maximum recovery attempts <input id="recoveryAttempts" type="number" min="1" max="10" step="1" value="3" style="width:60px"></label>
-<p class="muted">Recovery temporarily samples, then returns to greedy for at least 12 actions to assess progress. Detection uses physical states, not repeated predictions or network waiting time. No random arm perturbations.</p>
+<p class="muted">Choose sampling or an upward move, then greedy prediction assesses progress for at least 12 actions. Upward recovery holds horizontal position and gripper setting, with a height ceiling of 55 cm above the world origin (30 cm above the table). Detection uses only robot feedback, never cube positions or contacts. The action limit includes recovery moves.</p>
 </div>
 <p><button class="play" id="play">▶ Play</button><button id="act">Act once</button><button class="stop" id="stop">■ Stop</button></p>
 <p class="muted">Play continues from the current pose. Stop holds the pose and discards pending predictions. Reset restores the initial arm and layout. Instructions are sent exactly as typed; scoring follows the selected target.</p></section></div></div>
@@ -39,8 +39,10 @@ function rebuild(){const old=selectedColors();$('colors').replaceChildren();for(
 [0,1000,2000,4000,6000].forEach(cp=>{const b=document.createElement('button');b.textContent=cp===0?'0 · untrained adapter':cp;b.dataset.cp=cp;b.onclick=()=>{checkpoint=cp;command('checkpoint',{checkpoint:cp})};$('models').append(b)});
 async function scene(random){if(random)$('seed').value=Math.floor(Math.random()*1000000)+2000;if(new Set(selectedColors()).size!==count){$('status').textContent='Choose distinct colors before applying the scene.';return}const ok=await command('scene',{scene:{count,colors:selectedColors(),target:$('target').value,seed:Number($('seed').value)}});if(ok)sceneDirty=false}
 $('seed').oninput=()=>{sceneDirty=true};$('target').onchange=()=>{fillInstruction();sceneDirty=true};$('reset').onclick=()=>scene(false);$('random').onclick=()=>scene(true);
-function trialOptions(){return {instruction:$('instruction').value,steps:Number($('steps').value),sample:$('sample').checked,recovery:{enabled:$('autoRecovery').checked,sampling_steps:Number($('recoverySteps').value),window:Number($('stallWindow').value),max_attempts:Number($('recoveryAttempts').value)}}}
-$('sample').onchange=()=>{if($('sample').checked)$('autoRecovery').checked=false;$('autoRecovery').disabled=$('sample').checked};
+function trialOptions(){return {instruction:$('instruction').value,steps:Number($('steps').value),sample:$('sample').checked,recovery:{enabled:$('recoveryMethod').value!=='off',method:$('recoveryMethod').value==='nudge'?'nudge':'sampling',sampling_steps:Number($('recoverySteps').value),window:Number($('stallWindow').value),max_attempts:Number($('recoveryAttempts').value)}}}
+function recoveryControls(){const method=$('recoveryMethod').value;$('recoverySteps').disabled=method!=='sampling';$('stallWindow').disabled=$('recoveryAttempts').disabled=method==='off'}
+$('sample').onchange=()=>{if($('sample').checked)$('recoveryMethod').value='off';$('recoveryMethod').disabled=$('sample').checked;recoveryControls()};
+$('recoveryMethod').onchange=recoveryControls;recoveryControls();
 $('play').onclick=()=>command('play',trialOptions());
 $('act').onclick=()=>command('act',trialOptions());
 $('stop').onclick=()=>command('stop');rebuild();
