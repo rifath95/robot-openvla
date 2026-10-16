@@ -9,6 +9,8 @@ COLORED_CHECKPOINTS=[1000,2000,4000,6000]
 COLORED_VARIANT='colored_bowl_600_v1'
 CONTINUATION_VARIANT='colored_bowl_600_continue_12000_v1'
 CONTINUATION_CHECKPOINTS=[8000,10000,12000]
+UNINTERRUPTED_VARIANT='colored_bowl_600_uninterrupted_12000_v1'
+UNINTERRUPTED_CHECKPOINTS=[6000,8000,10000,12000]
 
 
 def timeout_budget(estimate=25*3600):
@@ -53,6 +55,13 @@ def make_continuation_plan(session,source_session):
     return plan
 
 
+def make_uninterrupted_plan(session):
+    plan=make_colored_plan(session)
+    plan.update(variant=UNINTERRUPTED_VARIANT,checkpoints=list(UNINTERRUPTED_CHECKPOINTS),
+        action_statistics_checkpoint=6000,estimated_seconds=12*3600,timeout_budget=timeout_budget(12*3600))
+    return plan
+
+
 def trial_specs(plan):
     for cp in plan['checkpoints']:
         for g in plan['groups']:
@@ -68,14 +77,15 @@ def trial_specs(plan):
 
 def validate_saved(payload):
     plan=payload['plan'];rows=payload['trials']
+    uninterrupted=plan.get('variant')==UNINTERRUPTED_VARIANT
     continuation=plan.get('variant')==CONTINUATION_VARIANT
-    colored=plan.get('variant') in (COLORED_VARIANT,CONTINUATION_VARIANT)
-    if plan.get('variant') not in (None,COLORED_VARIANT,CONTINUATION_VARIANT):raise ValueError('Unknown bowl sweep variant')
-    expected_checkpoints=CONTINUATION_CHECKPOINTS if continuation else COLORED_CHECKPOINTS if colored else CHECKPOINTS
+    colored=plan.get('variant') in (COLORED_VARIANT,CONTINUATION_VARIANT,UNINTERRUPTED_VARIANT)
+    if plan.get('variant') not in (None,COLORED_VARIANT,CONTINUATION_VARIANT,UNINTERRUPTED_VARIANT):raise ValueError('Unknown bowl sweep variant')
+    expected_checkpoints=UNINTERRUPTED_CHECKPOINTS if uninterrupted else CONTINUATION_CHECKPOINTS if continuation else COLORED_CHECKPOINTS if colored else CHECKPOINTS
     if (plan.get('checkpoints')!=expected_checkpoints
         or plan.get('include_base_model') is not (False if colored else True)
         or plan.get('sampling') is not False or plan.get('steps')!=120):raise ValueError('Altered chain sweep')
-    if plan.get('action_statistics_checkpoint')!=(8000 if continuation else 1000 if colored else 500):raise ValueError('Wrong base normalization reference')
+    if plan.get('action_statistics_checkpoint')!=(6000 if uninterrupted else 8000 if continuation else 1000 if colored else 500):raise ValueError('Wrong base normalization reference')
     if colored:
         import hashlib,json
         from common.paths import PROJECT_ROOT

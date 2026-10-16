@@ -41,6 +41,11 @@ def integrated_source():
     log_block=source[log_start:optimizer_start]
     optimizer_block=source[optimizer_start:save_start]
     source=source[:log_start]+optimizer_block+log_block+source[save_start:]
+    replace('        for batch_idx, batch in enumerate(dataloader):',
+            '        training_iterator = iter(dataloader)\n'
+            '        from training.resume_state import restore_if_requested\n'
+            '        restore_if_requested(vla, optimizer, vla_dataset, cfg)\n'
+            '        for batch_idx, batch in enumerate(training_iterator):')
     # Adapter-only saves avoid a second 7B model and expensive per-save merges.
     start=source.index('            # Save Model Checkpoint =>>')
     end=source.index('\n\n\nif __name__',start)
@@ -49,7 +54,7 @@ def integrated_source():
                     validate(vla, cfg, batch_transform, collator, device_id, gradient_step_idx)
                 finished = gradient_step_idx >= cfg.max_steps or budget_expired()
                 if checkpoint_due(gradient_step_idx, cfg.save_steps) or finished:
-                    save_adapter(vla, processor, cfg, vla_dataset, gradient_step_idx)
+                    save_adapter(vla, processor, cfg, vla_dataset, gradient_step_idx, optimizer=optimizer, final=finished)
                 if finished:
                     wandb.plot()
                     break

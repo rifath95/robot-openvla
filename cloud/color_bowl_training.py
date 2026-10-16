@@ -4,6 +4,7 @@ from datetime import datetime,timezone
 from pathlib import Path
 from common.paths import PROJECT_ROOT
 from cloud.chain_timing import Timings,utc
+from cloud.bowl_chain_plan import timeout_budget
 from training.detached_run import preflight,write_status
 
 
@@ -29,6 +30,7 @@ def launch(profile_path,token=None,download_window=120):
     token=(token if token is not None else getpass.getpass('Hugging Face WRITE token (hidden): ')).strip()
     if not token or '{{' in token:raise ValueError('A resolved HF write token is required')
     revision=resolve_upload(profile,token)
+    revision=profile.get('dataset_revision_pinned',revision)
     name='panda-train-color-bowl-'+datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')+'-'+uuid.uuid4().hex[:8]
     session=Path('/workspace/panda-training/sessions')/name;local=Path('/root/panda-training-work')/name
     session.mkdir(parents=True,exist_ok=False);local.mkdir(parents=True,exist_ok=False)
@@ -38,7 +40,7 @@ def launch(profile_path,token=None,download_window=120):
     subprocess.run(['git','-C',str(code),'checkout','--detach',commit],check=True)
     config={k:v for k,v in profile.items() if k!='file_sizes'}
     config.update(dataset_revision=revision,session=str(session),local=str(local),base_volume='/workspace/openvla-7b',base=str(local/'base'),dataset=str(local/profile['dataset_bundle']),training_run=str(session/'runs/training'),sweep=str(local/'no-sweep'),global_volume=None,training_only=True,download_grace_seconds=download_window,
-        timeout_budget=dict(estimated_seconds=14400,inner_buffer_seconds=10800,outer_buffer_seconds=18000,inner_seconds=25200,outer_seconds=43200),pod_id=pod,pod_key=key,hf_token=token,code_commit=commit)
+        timeout_budget=timeout_budget(profile.get('estimated_seconds',14400)),pod_id=pod,pod_key=key,hf_token=token,code_commit=commit)
     env=os.environ.copy();env.pop('RUNPOD_API_KEY',None);env.pop('HF_TOKEN',None)
     with (local/'supervisor.log').open('a',buffering=1) as log:
         child=subprocess.Popen([sys.executable,'-u','-m','cloud.bowl_chain','--supervise'],cwd=code,env=env,stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,pass_fds=(lock.fileno(),))
@@ -48,7 +50,7 @@ def launch(profile_path,token=None,download_window=120):
     print('Dataset revision:',revision,flush=True)
     print('Watch:',local/'console.log',flush=True)
     print('Persistent reports/checkpoints:',session,flush=True)
-    print('Inner limit 7 hours; independent outer limit 12 hours. Five checkpoints retained on volume.',flush=True)
+    print(f'Inner limit {config["timeout_budget"]["inner_seconds"]/3600:g} hours; independent outer limit {config["timeout_budget"]["outer_seconds"]/3600:g} hours. Checkpoints retained on volume.',flush=True)
     return 0
 
 
@@ -99,7 +101,7 @@ def worker(config):
         return timings.stage(name)
     with stage('storage_preflight'):
         if shutil.disk_usage(local).free<40*1024**3:raise ValueError('Need 40 GiB free on container disk')
-        if shutil.disk_usage(session).free<5*1024**3:raise ValueError('Need 5 GiB free on network volume')
+        if shutil.disk_usage(session).free<config.get('minimum_volume_free_gib',5)*1024**3:raise ValueError('Insufficient free space on network volume for checkpoints and resume state')
     api=HfApi(token=config['hf_token'])
     with stage('hf_write_preflight'):
         api.create_repo(config['checkpoint_repo'],repo_type='model',private=True,exist_ok=True)
@@ -114,11 +116,15 @@ def worker(config):
     with stage('training'):
         train([sys.executable,'-u','-m','training.train_panda','--dataset',config['dataset'],'--model',config['base'],'--config',PROJECT_ROOT/config['training_config'],'--output-root',session/'runs','--run-name','training','--provenance',session/'provenance.json'],session/'training.log',env)
         completion=verify_training(config['training_run'],profile['max_steps'],checkpoints)
+        if profile.get('save_final_training_state',True):
+            from training.resume_state import verify_state
+            verify_state(Path(config['training_run'])/f'checkpoint_{profile["max_steps"]:06d}',profile['max_steps'])
+            completion['final_training_state_verified']=True
         write_status(session/'training_completion.json',completion)
     with stage('checkpoint_hf_backup_and_verification'):backup_training(session,config['checkpoint_repo'],config['hf_token'],local,checkpoints)
     lines=['# Colored cube-to-bowl training', '', '600 training demonstrations / 43,344 action examples; all four training colors balanced.',
-        'Fresh base, 6,000 updates; microbatch 8, accumulation 1, learning rate 0.0001, rank 32; no validation split.',
-        'Checkpoints 0, 1000, 2000, 4000, 6000 retained on volume and verified on HF.',
+        f'Fresh base, {profile["max_steps"]:,} updates; microbatch 8, accumulation 1, learning rate 0.0001, rank 32; no validation split.',
+        f'Checkpoints {checkpoints} retained on volume and verified on HF; final checkpoint includes optimizer, RNG and input-stream state.',
         f'Dataset: `{config["dataset_repo"]}@{config["dataset_revision"]}`.',
         f'Training-update wall time: {completion["training_update_seconds"]:.2f} seconds.',
         f'Checkpoint-save wall time: {completion["checkpoint_seconds"]:.2f} seconds.',

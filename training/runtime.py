@@ -35,7 +35,7 @@ class Metrics:
             max_runtime_seconds=int(os.environ['PANDA_MAX_RUNTIME']),
             initial_adapter=os.environ.get('PANDA_INITIAL_ADAPTER') or None,
             initial_update=initial_update(),
-            continuation_mode='adapter_weights_fresh_optimizer' if os.environ.get('PANDA_INITIAL_ADAPTER') else 'fresh_base',
+            continuation_mode=('full_training_state' if os.environ.get('PANDA_RESUME_CHECKPOINT') else 'adapter_weights_fresh_optimizer') if os.environ.get('PANDA_INITIAL_ADAPTER') else 'fresh_base',
             checkpoint_updates=[cumulative_update(u) for u in json.loads(os.environ['PANDA_CHECKPOINT_UPDATES'])] if os.environ.get('PANDA_CHECKPOINT_UPDATES') else None,
             checkpoint_saving=os.environ.get('PANDA_SAVE_CHECKPOINTS','1')!='0',
             note='Runtime guard is checked between updates; it does not stop pod billing.'),indent=2)+'\n')
@@ -116,7 +116,7 @@ def validate(model, cfg, batch_transform, collator, device_id, update):
     metrics.update_started=time.monotonic()
 
 
-def write_adapter_files(folder, model, processor, cfg, dataset, update, local_update):
+def write_adapter_files(folder, model, processor, cfg, dataset, update, local_update, *, optimizer=None, final=False):
     """Publish final metadata only after adapter and processor serialization."""
     folder.mkdir(parents=True,exist_ok=False)
     model.module.save_pretrained(folder)
@@ -130,16 +130,21 @@ def write_adapter_files(folder, model, processor, cfg, dataset, update, local_up
     saved_config.update(checkpoint_update=update,training_elapsed_seconds_at_save=time.monotonic()-metrics.started if hasattr(metrics,'started') else None)
     if initial_update():
         saved_config.update(initial_update=initial_update(),run_update=local_update,
-            initial_adapter=os.environ.get('PANDA_INITIAL_ADAPTER'),continuation_mode='adapter_weights_fresh_optimizer')
+            initial_adapter=os.environ.get('PANDA_INITIAL_ADAPTER'),continuation_mode=('full_training_state' if os.environ.get('PANDA_RESUME_CHECKPOINT') else 'adapter_weights_fresh_optimizer'))
     saved_config['validation_enabled']=os.environ.get('PANDA_VALIDATION_ENABLED','1')!='0'
     if os.environ.get('PANDA_PROVENANCE'):
         provenance=json.loads(os.environ['PANDA_PROVENANCE'])
         saved_config.update(dataset_provenance=provenance,source_model_path=provenance['base_model_volume_path'])
         (folder/'provenance.json').write_text(json.dumps(provenance,indent=2)+'\n')
+    if final and os.environ.get('PANDA_SAVE_FINAL_STATE','1')=='1':
+        if optimizer is None:raise ValueError('Final resumable checkpoint needs optimizer')
+        from training.resume_state import save_state
+        save_state(folder,model,optimizer,dataset,update,cfg)
+        saved_config['resumable_training_state']=True
     (folder/'training_config.json').write_text(json.dumps(saved_config,default=str,indent=2)+'\n')
 
 
-def save_adapter(model, processor, cfg, dataset, update):
+def save_adapter(model, processor, cfg, dataset, update, *, optimizer=None, final=False):
     if os.environ.get('PANDA_SAVE_CHECKPOINTS','1')=='0':
         print(f'Benchmark: adapter checkpoint saving disabled at update {update}',flush=True)
         return
@@ -147,8 +152,9 @@ def save_adapter(model, processor, cfg, dataset, update):
     local_update=update
     update=cumulative_update(update)
     folder=metrics.directory/f'checkpoint_{update:06d}'
+    save_options=dict(optimizer=optimizer,final=True) if final else {}
     try:
-        write_adapter_files(folder,model,processor,cfg,dataset,update,local_update)
+        write_adapter_files(folder,model,processor,cfg,dataset,update,local_update,**save_options)
     except Exception as primary_error:
         emergency=os.environ.get('PANDA_CHECKPOINT_RECOVERY_DIR')
         if not emergency:raise
@@ -156,7 +162,7 @@ def save_adapter(model, processor, cfg, dataset, update):
         # then fail the run so the supervisor can recover without continuing on
         # a full volume. Never call a partially written volume checkpoint safe.
         destination=Path(emergency)/folder.name
-        write_adapter_files(destination,model,processor,cfg,dataset,update,local_update)
+        write_adapter_files(destination,model,processor,cfg,dataset,update,local_update,**save_options)
         from cloud.checkpoint_ready import check_ready
         check_ready(destination)
         (Path(emergency)/'RECOVERY_REQUEST.json').write_text(json.dumps(dict(

@@ -35,3 +35,13 @@ plots, metrics, logs, configuration, dataset/source provenance, completion
 status and available timings. Reports must be independently downloadable from
 HF without downloading adapter weights or restarting a pod. Provide the
 report-only download command and destination when the run completes.
+
+# Resumable long training
+
+For long training experiments, keep intermediate checkpoints as inference-ready
+LoRA adapters. At the final checkpoint (also on a graceful runtime-limit exit),
+save adapter weights plus optimizer state, cumulative update, RNG states and
+input-iterator state so future continuation can restore training state. Back up
+this final state to HF when HF delivery is selected, and keep report downloads
+independent of optimizer/adapter payloads. Do not silently treat an adapter-only
+continuation as a full resume.

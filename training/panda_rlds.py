@@ -41,8 +41,22 @@ class PandaRLDSDataset(IterableDataset):
                                              reshuffle_each_iteration=True).repeat()
         self.dataset_length=self.manifest['split_counts'][self.split]['transitions']
 
+    def save_input_state(self, prefix):
+        import tensorflow as tf
+        if not hasattr(self, '_tf_iterator'):raise ValueError('Cannot save input stream before training begins')
+        tf.train.Checkpoint(iterator=self._tf_iterator).write(str(prefix))
+
+    def restore_input_state(self, prefix):
+        self._restore_prefix=str(prefix)
+
     def __iter__(self):
-        for row in self.dataset.as_numpy_iterator():
+        import tensorflow as tf
+        self._tf_iterator=iter(self.dataset)
+        if getattr(self, '_restore_prefix', None):
+            tf.train.Checkpoint(iterator=self._tf_iterator).read(self._restore_prefix).assert_consumed()
+            self._restore_prefix=None
+        for tensors in self._tf_iterator:
+            row=tf.nest.map_structure(lambda value:value.numpy(),tensors)
             with Image.open(io.BytesIO(row['observation']['image'])) as im:
                 image=np.asarray(im.convert('RGB'))
             batch={'dataset_name':b'panda_grasp_v1',

@@ -46,12 +46,12 @@ class ColorBowlTrainingTests(unittest.TestCase):
                     order.append('backup');self.assertEqual(args[4],[0,1000,2000,4000,6000])
                     (session/'checkpoint_hf_receipt.json').write_text('{"verified":true}')
                 completion=dict(training_complete=True,last_update=6000,training_update_seconds=12000,checkpoint_seconds=10)
-                with patch('huggingface_hub.HfApi',return_value=api),patch('shutil.disk_usage',return_value=SimpleNamespace(free=100*1024**3)),patch('cloud.bowl_chain_worker.download_dataset',side_effect=lambda _:order.append('download')),patch('cloud.bowl_chain_worker.stage_base',side_effect=lambda *a:order.append('base') or {}),patch('cloud.color_bowl_training.train',side_effect=train),patch('cloud.bowl_chain_worker.verify_training',return_value=completion),patch('cloud.chain_archive.backup_training',side_effect=backup),patch('cloud.chain_archive.verify_files'):
+                with patch('huggingface_hub.HfApi',return_value=api),patch('shutil.disk_usage',return_value=SimpleNamespace(free=100*1024**3)),patch('cloud.bowl_chain_worker.download_dataset',side_effect=lambda _:order.append('download')),patch('cloud.bowl_chain_worker.stage_base',side_effect=lambda *a:order.append('base') or {}),patch('cloud.color_bowl_training.train',side_effect=train),patch('cloud.bowl_chain_worker.verify_training',return_value=completion),patch('training.resume_state.verify_state') as state_check,patch('cloud.chain_archive.backup_training',side_effect=backup),patch('cloud.chain_archive.verify_files'):
                     if fail:
                         with self.assertRaisesRegex(RuntimeError,'training failed'):worker(config)
                         self.assertNotIn('backup',order)
                     else:
-                        self.assertEqual(worker(config),0);self.assertEqual(order,['download','base','training','backup'])
+                        self.assertEqual(worker(config),0);self.assertEqual(order,['download','base','training','backup']);state_check.assert_called_once_with(session/'runs/training/checkpoint_006000',6000)
                         self.assertTrue((session/'training_completion.json').exists())
                         self.assertNotIn('never-log-secret',''.join(p.read_text() for p in session.glob('*.json')))
 

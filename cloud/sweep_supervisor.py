@@ -20,7 +20,13 @@ SWEEP_ROOT=Path('/workspace/panda-training/scripted-evaluations')
 
 
 def supervise(directory,pod_id,key,*,mode,estimated_seconds,sim_python=None,heartbeat_grace=180):
-    directory=Path(directory);budget=timeout_budget(estimated_seconds);started=time.monotonic();process=None
+    directory=Path(directory)
+    budget=timeout_budget(estimated_seconds)
+    saved=json.loads((directory/'results.json').read_text()) if (directory/'results.json').exists() else {}
+    if saved.get('plan',{}).get('task')=='multi_place_bowl':
+        from cloud.bowl_chain_plan import timeout_budget as bowl_budget
+        budget=bowl_budget(estimated_seconds)
+    started=time.monotonic();process=None
     status=dict(phase='running',mode=mode,pod_id=pod_id,started_at_utc=datetime.now(timezone.utc).isoformat(),
         timeout_budget=budget,code_commit=subprocess.check_output(['git','rev-parse','HEAD'],cwd=PROJECT_ROOT,text=True).strip())
     def persist():

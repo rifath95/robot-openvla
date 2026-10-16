@@ -18,6 +18,7 @@ def main():
     p.add_argument('--config',type=Path,default=Path('training/smoke.json'))
     p.add_argument('--upstream',type=Path,default=Path('/opt/openvla-source'))
     p.add_argument('--provenance',type=Path,help='Chain dataset/model provenance copied into checkpoints')
+    p.add_argument('--resume-checkpoint',type=Path,help='Restore final adapter, optimizer, RNG and dataset iterator; max_steps is additional updates')
     p.add_argument('--adapter',type=Path,help='Continue from LoRA weights in a new run with a fresh optimizer')
     p.add_argument('--initial-update',type=int,default=0,help='Cumulative starting update; requires matching adapter metadata')
     p.add_argument('--base-staging-receipt',type=Path,help='Verified base copy receipt when continuing from a staged base')
@@ -47,6 +48,29 @@ def main():
     args.batch_policy=args.batch_policy or config.pop('batch_policy','auto')
     config.pop('batch_policy',None)
     if args.batch_policy not in ('auto','config'):p.error('batch_policy must be auto or config')
+    save_final_state=config.pop('save_final_training_state',True)
+    if type(save_final_state) is not bool:p.error('save_final_training_state must be boolean')
+    if args.resume_checkpoint:
+        if args.adapter:p.error('Choose --adapter or --resume-checkpoint')
+        args.adapter=args.resume_checkpoint
+        from training.resume_state import verify_state
+        try:
+            saved=json.loads((args.resume_checkpoint/'training_config.json').read_text())
+            verify_state(args.resume_checkpoint,saved['checkpoint_update'])
+            if args.initial_update not in (0,saved['checkpoint_update']):raise ValueError('Resume update mismatch')
+            args.initial_update=saved['checkpoint_update']
+            for key in ('batch_size','grad_accumulation_steps','learning_rate','lora_rank','lora_dropout'):
+                if saved.get(key)!=config.get(key):raise ValueError('Resume configuration differs: '+key)
+            provenance=saved.get('dataset_provenance',{})
+            if args.provenance:
+                current=json.loads(args.provenance.read_text())
+                for key in ('checksums_sha256','dataset_revision'):
+                    if provenance.get(key)!=current.get(key):raise ValueError('Resume dataset provenance differs')
+            else:
+                from cloud.archive_sweep import digest
+                if saved.get('dataset_provenance',{}).get('checksums_sha256')!=digest(args.dataset/'SHA256SUMS'):
+                    raise ValueError('Resume requires matching dataset checksum manifest')
+        except (ValueError,OSError,KeyError) as exc:p.error(str(exc))
     adapter=None
     if args.adapter:
         from training.continuation import validate_adapter
@@ -121,6 +145,8 @@ def main():
         PANDA_INITIAL_ADAPTER=str(adapter) if adapter else '',
         PANDA_INITIAL_UPDATE=str(args.initial_update),
         PANDA_SAVE_CHECKPOINTS='0' if args.no_checkpoints else '1',
+        PANDA_SAVE_FINAL_STATE='1' if save_final_state else '0',
+        PANDA_RESUME_CHECKPOINT=str(adapter) if args.resume_checkpoint else '',
         PYTHONPATH=os.pathsep.join([str(Path.cwd()),str(args.upstream.resolve()),env.get('PYTHONPATH','')]),
         TF_CPP_MIN_LOG_LEVEL='2',TOKENIZERS_PARALLELISM='false',WANDB_MODE='disabled')
     command=[sys.executable,'-m','torch.distributed.run','--standalone','--nnodes','1','--nproc-per-node','1',str(generated),

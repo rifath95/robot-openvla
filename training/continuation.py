@@ -38,6 +38,6 @@ def attach_lora(model,lora_config):
     from peft import PeftModel,get_peft_model
     checkpoint=os.environ.get('PANDA_INITIAL_ADAPTER','')
     if checkpoint:
-        print('Continuing from adapter weights with a fresh optimizer:',checkpoint,flush=True)
+        print('Resuming full training state:' if os.environ.get('PANDA_RESUME_CHECKPOINT') else 'Continuing from adapter weights with a fresh optimizer:',checkpoint,flush=True)
         return PeftModel.from_pretrained(model,checkpoint,is_trainable=True)
     return get_peft_model(model,lora_config)

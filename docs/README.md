@@ -6,6 +6,8 @@ and limitations, and [repository layout](REPOSITORY_LAYOUT.md) for code location
 
 For result folders and replay locations, see the [local outputs layout](OUTPUT_LAYOUT.md).
 
+- [Uninterrupted 12,000-update colored bowl training and parallel sweep](cloud/UNINTERRUPTED_COLOR_BOWL_12000.md)
+
 ## Simulation and controls
 
 - [Manual cube-to-bowl scene](simulation/BOWL_SCENE.md)

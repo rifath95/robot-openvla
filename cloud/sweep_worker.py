@@ -87,6 +87,9 @@ def summarize(spec,folder,returncode):
 def run(directory,sim_python,*,port=0):
     directory=Path(directory);payload=json.loads((directory/'results.json').read_text())
     validate_saved(payload);plan=payload['plan'];rows=payload['trials']
+    if plan['task']=='multi_place_bowl':
+        from cloud.bowl_transfer_worker import run as run_bowl
+        return run_bowl(directory,sim_python)
     previous=float(plan.get('elapsed_seconds',0));started=time.monotonic()
     if plan['task']=='multi_color_touch':
         rows[:]=[r for r in rows if r.get('outcome')!='unmeasured' and r.get('phase')!='Missing summary']

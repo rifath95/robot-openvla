@@ -133,7 +133,10 @@ def main():
     if not budget['remaining_trials']:p.error('All trials are already saved; nothing to launch')
     chosen_estimate=args.estimated_seconds if args.estimated_seconds is not None else payload['plan'].get('estimated_seconds')
     if chosen_estimate is not None:
-        from cloud.sweep_plan import timeout_budget
+        if payload['plan']['task']=='multi_place_bowl':
+            from cloud.bowl_chain_plan import timeout_budget
+        else:
+            from cloud.sweep_plan import timeout_budget
         budget.update(timeout_budget(chosen_estimate))
     payload['plan']['timeout_budget']=budget
     payload['plan']['execution_mode']='cloud_sequential'

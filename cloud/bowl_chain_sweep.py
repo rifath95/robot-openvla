@@ -66,12 +66,12 @@ def run(config):
             with timings.stage(f'checkpoint_staging_{cp:06d}'):
                 if not adapter.exists():
                     import shutil
-                    shutil.copytree(source,adapter)
+                    shutil.copytree(source,adapter,ignore=shutil.ignore_patterns('training_state'))
                 check_ready(adapter)
                 if config.get('verify_adapter_copy'):
                     from cloud.archive_sweep import digest
                     for f in source.rglob('*'):
-                        if f.is_file() and digest(f)!=digest(adapter/f.relative_to(source)):raise ValueError('Staged adapter checksum mismatch')
+                        if f.is_file() and 'training_state' not in f.relative_to(source).parts and digest(f)!=digest(adapter/f.relative_to(source)):raise ValueError('Staged adapter checksum mismatch')
             ready=Path(config['local'])/f'ready_{cp:06d}.json';ready.unlink(missing_ok=True)
             log_path=directory/f'cloud_server_{cp:06d}.log'
             with log_path.open('a',buffering=1) as log:
