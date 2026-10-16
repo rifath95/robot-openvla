@@ -22,6 +22,18 @@ Use `--training-session panda-train-color-bowl-...` if multiple matching runs ex
 
 ## Then open the simulator controls
 
+Open **`playground.py` in the repository root** in your Mac editor and press
+**Run Python File / Play** (in the terminal). Paste the full pod SSH command
+at the prompt and press Enter. It uses `.venv/bin/python` automatically, prepares
+the existing cloud host and opens the browser controls. On macOS it also keeps
+the Mac awake while the launcher runs; keep the lid open and the Mac connected.
+Keep its terminal open while testing. Closing it leaves the cloud model and pod
+running. The pasted generic key path uses the existing personal-key fallback.
+
+The equivalent command is `.venv/bin/python playground.py`. You can optionally
+pass `--training-session panda-train-color-bowl-...` to select a particular run.
+The existing command remains available:
+
 ```bash
 caffeinate -i .venv/bin/python -m cloud.interactive_bowl_session \
   --ssh 'ssh root@HOST -p PORT -i ~/.ssh/id_ed25519_maxalderone'

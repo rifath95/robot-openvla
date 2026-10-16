@@ -27,7 +27,7 @@ are grouped according to the [output layout](OUTPUT_LAYOUT.md).
 
 ## Familiar commands
 
-Nine small root launchers delegate to the implementation packages:
+Ten small root launchers delegate to the implementation packages:
 
 | Root command file | Implementation |
 |---|---|
@@ -35,6 +35,7 @@ Nine small root launchers delegate to the implementation packages:
 | `launch_sim.py` | `simulation.launch_sim` |
 | `replay_run.py` | `simulation.replay_run` |
 | `cloud_session.py` | `cloud.cloud_session` |
+| `playground.py` (press Play, then paste SSH) | `cloud.interactive_bowl_session` |
 | `benchmark_cloud_session.py` | `cloud.benchmark_cloud_session` |
 | `upload_training_dataset.py` | `cloud.upload_training_dataset` |
 | `download_training_dataset.py` | `cloud.download_training_dataset` |

@@ -15,6 +15,10 @@ or open the local `outputs/README.md` index.
 The small root launchers preserve familiar commands such as
 `.venv/bin/python end_effector_demo.py` and `.venv/bin/python cloud_session.py`.
 
+For the interactive simulator playground, open [playground.py](playground.py),
+press **Run / Play**, paste the pod's SSH command in the terminal and press Enter.
+See the [playground guide](docs/cloud/INTERACTIVE_BOWL_PLAYGROUND.md) for controls.
+
 For measured GPU batch capacity, memory headroom and speed selection, see
 [TRAINING_BATCHES.md](docs/training/TRAINING_BATCHES.md).
 The cross-GPU capacity and throughput table is in
