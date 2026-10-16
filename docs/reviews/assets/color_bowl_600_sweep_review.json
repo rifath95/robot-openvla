@@ -1,0 +1,390 @@
+{
+  "1000": {
+    "all": {
+      "n": 200,
+      "success": 8,
+      "lift": 19,
+      "controller_fail": 93
+    },
+    "one": {
+      "n": 40,
+      "success": 5,
+      "lift": 12,
+      "controller_fail": 18
+    },
+    "two": {
+      "n": 80,
+      "success": 1,
+      "lift": 3,
+      "controller_fail": 41
+    },
+    "four": {
+      "n": 80,
+      "success": 2,
+      "lift": 4,
+      "controller_fail": 34
+    },
+    "seen_targets": {
+      "n": 70,
+      "success": 3,
+      "lift": 11,
+      "controller_fail": 33
+    },
+    "unseen_targets": {
+      "n": 130,
+      "success": 5,
+      "lift": 8,
+      "controller_fail": 60
+    },
+    "by_color": {
+      "black": {
+        "n": 80,
+        "success": 4
+      },
+      "green": {
+        "n": 20,
+        "success": 1
+      },
+      "orange": {
+        "n": 10,
+        "success": 0
+      },
+      "purple": {
+        "n": 40,
+        "success": 1
+      },
+      "red": {
+        "n": 50,
+        "success": 2
+      }
+    },
+    "groups": {
+      "four_red_absent": {
+        "n": 40,
+        "success": 1
+      },
+      "four_red_present": {
+        "n": 40,
+        "success": 1
+      },
+      "single_seen": {
+        "n": 20,
+        "success": 2
+      },
+      "single_unseen": {
+        "n": 20,
+        "success": 3
+      },
+      "two_red_absent": {
+        "n": 40,
+        "success": 1
+      },
+      "two_red_present": {
+        "n": 40,
+        "success": 0
+      }
+    },
+    "outcomes": {
+      "no_lift": 180,
+      "target_lifted_not_placed": 11,
+      "correct_placed": 8,
+      "wrong_cube_lifted": 1
+    },
+    "first_lift": {
+      "none": 152,
+      "correct": 7,
+      "wrong": 1
+    },
+    "summary_mismatches": 0
+  },
+  "2000": {
+    "all": {
+      "n": 200,
+      "success": 20,
+      "lift": 57,
+      "controller_fail": 21
+    },
+    "one": {
+      "n": 40,
+      "success": 8,
+      "lift": 17,
+      "controller_fail": 4
+    },
+    "two": {
+      "n": 80,
+      "success": 10,
+      "lift": 27,
+      "controller_fail": 5
+    },
+    "four": {
+      "n": 80,
+      "success": 2,
+      "lift": 13,
+      "controller_fail": 12
+    },
+    "seen_targets": {
+      "n": 70,
+      "success": 7,
+      "lift": 20,
+      "controller_fail": 8
+    },
+    "unseen_targets": {
+      "n": 130,
+      "success": 13,
+      "lift": 37,
+      "controller_fail": 13
+    },
+    "by_color": {
+      "black": {
+        "n": 80,
+        "success": 11
+      },
+      "green": {
+        "n": 20,
+        "success": 0
+      },
+      "orange": {
+        "n": 10,
+        "success": 0
+      },
+      "purple": {
+        "n": 40,
+        "success": 2
+      },
+      "red": {
+        "n": 50,
+        "success": 7
+      }
+    },
+    "groups": {
+      "four_red_absent": {
+        "n": 40,
+        "success": 1
+      },
+      "four_red_present": {
+        "n": 40,
+        "success": 1
+      },
+      "single_seen": {
+        "n": 20,
+        "success": 3
+      },
+      "single_unseen": {
+        "n": 20,
+        "success": 5
+      },
+      "two_red_absent": {
+        "n": 40,
+        "success": 2
+      },
+      "two_red_present": {
+        "n": 40,
+        "success": 8
+      }
+    },
+    "outcomes": {
+      "target_lifted_not_placed": 37,
+      "no_lift": 142,
+      "correct_placed": 20,
+      "wrong_cube_lifted": 1
+    },
+    "first_lift": {
+      "correct": 40,
+      "none": 119,
+      "wrong": 1
+    },
+    "summary_mismatches": 0
+  },
+  "4000": {
+    "all": {
+      "n": 200,
+      "success": 58,
+      "lift": 95,
+      "controller_fail": 39
+    },
+    "one": {
+      "n": 40,
+      "success": 16,
+      "lift": 30,
+      "controller_fail": 3
+    },
+    "two": {
+      "n": 80,
+      "success": 21,
+      "lift": 37,
+      "controller_fail": 17
+    },
+    "four": {
+      "n": 80,
+      "success": 21,
+      "lift": 28,
+      "controller_fail": 19
+    },
+    "seen_targets": {
+      "n": 70,
+      "success": 24,
+      "lift": 36,
+      "controller_fail": 11
+    },
+    "unseen_targets": {
+      "n": 130,
+      "success": 34,
+      "lift": 59,
+      "controller_fail": 28
+    },
+    "by_color": {
+      "black": {
+        "n": 80,
+        "success": 22
+      },
+      "green": {
+        "n": 20,
+        "success": 7
+      },
+      "orange": {
+        "n": 10,
+        "success": 2
+      },
+      "purple": {
+        "n": 40,
+        "success": 10
+      },
+      "red": {
+        "n": 50,
+        "success": 17
+      }
+    },
+    "groups": {
+      "four_red_absent": {
+        "n": 40,
+        "success": 9
+      },
+      "four_red_present": {
+        "n": 40,
+        "success": 12
+      },
+      "single_seen": {
+        "n": 20,
+        "success": 8
+      },
+      "single_unseen": {
+        "n": 20,
+        "success": 8
+      },
+      "two_red_absent": {
+        "n": 40,
+        "success": 10
+      },
+      "two_red_present": {
+        "n": 40,
+        "success": 11
+      }
+    },
+    "outcomes": {
+      "correct_placed": 58,
+      "target_lifted_not_placed": 37,
+      "no_lift": 105
+    },
+    "first_lift": {
+      "correct": 65,
+      "none": 95
+    },
+    "summary_mismatches": 0
+  },
+  "6000": {
+    "all": {
+      "n": 200,
+      "success": 80,
+      "lift": 107,
+      "controller_fail": 28
+    },
+    "one": {
+      "n": 40,
+      "success": 23,
+      "lift": 28,
+      "controller_fail": 3
+    },
+    "two": {
+      "n": 80,
+      "success": 32,
+      "lift": 43,
+      "controller_fail": 14
+    },
+    "four": {
+      "n": 80,
+      "success": 25,
+      "lift": 36,
+      "controller_fail": 11
+    },
+    "seen_targets": {
+      "n": 70,
+      "success": 33,
+      "lift": 44,
+      "controller_fail": 6
+    },
+    "unseen_targets": {
+      "n": 130,
+      "success": 47,
+      "lift": 63,
+      "controller_fail": 22
+    },
+    "by_color": {
+      "black": {
+        "n": 80,
+        "success": 33
+      },
+      "green": {
+        "n": 20,
+        "success": 9
+      },
+      "orange": {
+        "n": 10,
+        "success": 5
+      },
+      "purple": {
+        "n": 40,
+        "success": 9
+      },
+      "red": {
+        "n": 50,
+        "success": 24
+      }
+    },
+    "groups": {
+      "four_red_absent": {
+        "n": 40,
+        "success": 14
+      },
+      "four_red_present": {
+        "n": 40,
+        "success": 11
+      },
+      "single_seen": {
+        "n": 20,
+        "success": 12
+      },
+      "single_unseen": {
+        "n": 20,
+        "success": 11
+      },
+      "two_red_absent": {
+        "n": 40,
+        "success": 14
+      },
+      "two_red_present": {
+        "n": 40,
+        "success": 18
+      }
+    },
+    "outcomes": {
+      "correct_placed": 80,
+      "no_lift": 93,
+      "target_lifted_not_placed": 27
+    },
+    "first_lift": {
+      "correct": 79,
+      "none": 81
+    },
+    "summary_mismatches": 0
+  }
+}

@@ -99,3 +99,5 @@ For result folders and replay locations, see the [local outputs layout](OUTPUT_L
 
 - [Phase 4 bowl placement expanded to 50](reviews/PLACE_BOWL_50.md): verified examples, upload bundle and proposed pilot configuration.
 - [300-demo red-only bowl model: complete 1,000-trial review](reviews/PLACE_BOWL_300_SWEEP.md): checkpoint comparison, matched color requests and remaining placement failures.
+
+- [600-demo colored bowl model: complete 800-trial review](reviews/COLOR_BOWL_600_SWEEP.md): checkpoint 6,000 reaches 40% placement, with unseen-color selection and four-cube transfer.

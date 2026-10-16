@@ -26,3 +26,12 @@ All replay and action-replay buttons in generated WATCH_TRAJECTORIES.md and run
 reports must directly launch local playback via common.replay_links and the
 analysis.replay_launcher service. Do not link those buttons to Python source
 files. Both playback modes start automatically; preserve manual CLI defaults.
+
+# Training report delivery
+
+Whenever the user chooses HF upload before a training pod auto-stops, include
+and verify the training reports as well as the selected checkpoints. Preserve
+plots, metrics, logs, configuration, dataset/source provenance, completion
+status and available timings. Reports must be independently downloadable from
+HF without downloading adapter weights or restarting a pod. Provide the
+report-only download command and destination when the run completes.
