@@ -62,43 +62,40 @@ shuffled input after a save/load with uninterrupted execution.
 
 ## Second pod: parallel 800-trial sweep
 
-Start after checkpoint 6,000 is fully saved. Use the same network volume, an
-inference-capable GPU with EGL (`NVIDIA_DRIVER_CAPABILITIES=all`), at least 25 GiB
-free on container disk and **35 GiB free on network volume** for recordings.
-The new training itself needs only the smaller 8 GiB reserve above.
+Start after checkpoint 6,000 is fully saved. Use the same network volume and
+an inference-capable GPU with EGL (`NVIDIA_DRIVER_CAPABILITIES=all`). Set the
+container disk to **200 GB**, with **110 GiB actually free** after image startup;
+allow at least **1 GiB free on network volume** for compact reports, in addition
+to the training checkpoint reserve. Raw recordings and packed archives stay on
+container disk. Attach the existing global recovery volume at `/workspace-global`
+for fallback if HF delivery fails, as in the previous same-pod sweeps.
 
-Prepare locally, replacing the training session with the printed name:
+On the sweep pod after cloning/pulling, replace the training session name:
 
 ```bash
-.venv/bin/python -m data_tools.prepare_uninterrupted_bowl_sweep \
+/opt/openvla/bin/python -u -m cloud.color_bowl_sweep --launch \
+  --profile inference/sweep_profiles/color_place_bowl_600_uninterrupted.json \
   --training-session panda-train-color-bowl-REPLACE
 ```
 
-Then launch the prepared folder with the second pod's SSH:
-
-```bash
-caffeinate -i .venv/bin/python -m cloud.cloud_sweep_session \
-  --ssh 'SSH_FROM_SECOND_POD' --resume outputs/sweeps/scripted_uninterrupted_bowl_REPLACE
-```
+Supply the HF write token at the hidden prompt. This launches a detached worker;
+Mac may disconnect. The source profile selects only this new uninterrupted run,
+not the older 6,000-update or fresh-optimizer continuation runs.
 
 800 trials: four checkpoints × 200 fixed trials. Same six groups and layouts as
 previous sweeps: single red/black (20 each), two red+black/black+purple (40 each),
 four red-present/red-absent (40 each). Greedy, maximum 120 actions, same placement
 criteria. Later checkpoints are waited for (up to 12 h each, within the overall
 budget); incomplete saves are never loaded. Staged inference copies exclude
-optimizer/input state. Estimated budget 12 h, inner limit 15 h, outer limit 20 h.
+optimizer/input state. Estimated budget **12 h including HF delivery**, inner
+limit **15 h**, independent outer limit **20 h**.
 
-**Default two-stage delivery:** simulator writes recordings to network volume
-and auto-stops. Packing/upload stays off the simulator pod. Prepare the existing
-HF write token before the cheaper transfer pod is launched; run there:
+**User-selected same-pod delivery:** finish trials → pack/upload to
+`Maxalderone/robot-openvla-simulator-results` → verify archived files and final
+reports → auto-stop the sweep pod. The existing supervisor handles failure,
+timeout, bounded global recovery and shutdown. No transfer pod is required.
+Training checkpoints remain on network volume and in their separate HF model
+repository. Training pod shutdown does not stop the separate sweep pod.
 
-```bash
-/opt/openvla/bin/python -u -m cloud.archive_sweep \
-  --sweep scripted_uninterrupted_bowl_REPLACE \
-  --repo Maxalderone/robot-openvla-simulator-results
-```
-
-This helper verifies the upload and auto-stops the transfer pod. Original volume
-results remain unless deletion is explicitly selected. Do not delete checkpoints
-while either pod may need them. Training pod shutdown does not stop the separate
-sweep pod.
+The standard `cloud.cloud_sweep_session` transfer-pod route remains available for
+other experiments; it is not the selected route for this one.

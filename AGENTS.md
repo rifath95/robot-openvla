@@ -45,3 +45,9 @@ input-iterator state so future continuation can restore training state. Back up
 this final state to HF when HF delivery is selected, and keep report downloads
 independent of optimizer/adapter payloads. Do not silently treat an adapter-only
 continuation as a full resume.
+
+For the uninterrupted 12,000-update colored bowl experiment (checkpoints 6,000,
+8,000, 10,000, 12,000), the user explicitly chose **same-pod HF delivery** for
+the separate sweep pod: run 800 trials, pack/upload results to HF, verify, then
+auto-stop. Use cloud.color_bowl_sweep with the color_place_bowl_600_uninterrupted
+profile. Do not substitute the default transfer-pod delivery for this experiment.

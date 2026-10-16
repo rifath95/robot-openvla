@@ -19,7 +19,8 @@ def main():
     p=argparse.ArgumentParser(description=__doc__);p.add_argument('--training-session',required=True);a=p.parse_args()
     folder=prepare(a.training_session)
     print('Prepared 800 trials:',folder)
-    print('Use cloud.cloud_sweep_session --resume',folder.relative_to(PROJECT_ROOT),'--ssh <SSH>')
-    print('Default delivery: save on volume and auto-stop, then archive_sweep on a cheaper transfer pod.')
+    print('For this experiment, launch on the sweep pod:')
+    print('/opt/openvla/bin/python -u -m cloud.color_bowl_sweep --launch --profile inference/sweep_profiles/color_place_bowl_600_uninterrupted.json --training-session',a.training_session)
+    print('Delivery: pack/upload on sweep pod, verify HF, then auto-stop. Mac may disconnect.')
 
 if __name__=='__main__':main()
