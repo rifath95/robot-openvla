@@ -12,7 +12,7 @@ cannot be promised identical to that run. GPU nondeterminism also remains.
 Use the existing A40 training image, same network volume with base weights,
 container disk at least 80 GB (40 GiB actually free), and at least 8 GiB free on
 the network volume for adapters, final optimizer/input state and reports.
-Training is expected to take about 6.5–8 hours. Estimated budget 8 h, inner
+Training is expected to take about 6.5–7.5 hours on a comparable A40. Estimated budget 8 h, inner
 supervisor limit 11 h, outer independent limit 16 h. The training loop's own
 10 h guard leaves time for final saving and verified HF delivery.
 
@@ -99,3 +99,61 @@ repository. Training pod shutdown does not stop the separate sweep pod.
 
 The standard `cloud.cloud_sweep_session` transfer-pod route remains available for
 other experiments; it is not the selected route for this one.
+
+## Timing verification against completed runs (October 16, 2026)
+
+These are actual recorded stage times, excluding provisioning/image download and
+final shutdown latency. Nested checkpoint/model-loading stages are already inside
+the simulator stage; do not sum them again.
+
+| Completed work | Measured time |
+|---|---:|
+| Original 600-demo run: 6,000 updates, training stage | 3 h 23 min 36 s |
+| Continuation: 6,000 further updates, training stage | 3 h 8 min 58 s |
+| Combined training-stage reference for 12,000 updates | 6 h 32 min 33 s |
+| Prior four-model, 800-trial sweep: simulator stage | 10 h 7 min 26 s |
+| That sweep: packing, upload and verification | 22 min 3 s |
+| That sweep: setup through final reports | 10 h 30 min 48 s |
+| Continuation three-model, 600-trial sweep: simulator stage | 6 h 37 min 21 s |
+| That sweep: packing, upload and verification | 13 min 49 s |
+
+The exact upcoming checkpoint numbers have previous trial records:
+
+| Checkpoint | Trials | Sum of trial times | Mean seconds/trial |
+|---|---:|---:|---:|
+| 6,000 | 200 | 2 h 33 min 26 s | 46.03 |
+| 8,000 | 200 | 2 h 3 min 30 s | 37.05 |
+| 10,000 | 200 | 2 h 16 min 21 s | 40.90 |
+| 12,000 | 200 | 2 h 14 min 47 s | 40.43 |
+| Combined | 800 | 9 h 8 min 4 s | 41.10 |
+
+This combines the previous 6,000 checkpoint from the first run and the three
+fresh-optimizer continuation checkpoints. The new uninterrupted run will have
+different weights and may take different numbers of actions to finish or fail.
+The historical sum is a timing reference, not a prediction for identical models.
+Add checkpoint switching, trial/report overhead, staging, packing and verified
+HF upload: **9.5–11 hours** is a reasonable expected sweep range on a comparable
+A40. Budget **12 hours** remains appropriate, including HF delivery.
+
+Likewise, the 6 h 33 min training reference supports **6.5–7.5 hours expected**,
+including staging and delivery allowance; retain **8 hours** as the planning
+budget. The new final optimizer/input-state save and its HF backup have not yet
+been timed at full model scale, so the planning margin is retained. Training
+backup stages previously took 25–41 seconds for adapters/reports only.
+
+| Job | Expected duration | Planning estimate | Inner limit (+3 h) | Outer limit (+5 h beyond inner) |
+|---|---|---:|---:|---:|
+| Training, 12,000 updates | 6.5–7.5 h | 8 h | 11 h | 16 h |
+| Sweep plus HF delivery, 800 trials | 9.5–11 h | 12 h | 15 h | 20 h |
+
+No executable budget was reduced: the existing estimates are conservative and
+consistent with observed times. Trial duration depends on behavior/early exits;
+training duration depends on host/GPU contention. Starting the sweep after a
+complete checkpoint 6,000 should normally avoid waits: previous 200-trial blocks
+took about 2–2.6 hours while 2,000 training updates take about 1.0–1.1 hours.
+The checkpoint wait guard remains in place for unusually slow training.
+
+Sources: local `TIMINGS.md`, `stage_timings.jsonl` and `results.json` from
+`panda-train-color-bowl-20261015-094416-4344d31f`,
+`scripted_color_bowl_models_20261015_112315_46cfdb52` and
+`scripted_color_bowl_continue_20261015_151409_140b3657`.
