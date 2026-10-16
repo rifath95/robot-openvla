@@ -6,6 +6,45 @@ after discussing the targets. Do not use the old `archive_training_checkpoints`
 launcher on the running sweep pod: it backs up more than this selected set and
 auto-stops the pod.
 
+## Prepared execution and watcher
+
+The selective helper is `cloud.cleanup_volume`. Run on the pod after pulling
+the prepared code:
+
+```bash
+cd /root/robot-openvla
+git pull --ff-only
+/opt/openvla/bin/python -u -m cloud.cleanup_volume --launch
+```
+
+Enter the HF write token at its hidden prompt. This is detached and never
+requests a pod stop. It does not change the running sweep checkout or processes.
+It stages only the four selected older adapters and their reports on container
+disk, uploads/verifies them, retains receipts, then removes the approved volume
+targets. Existing verified checkpoint receipts are trusted without repeating
+expensive file inventories. Reports and per-checkpoint training metadata remain.
+Copies already on HF are verified against source hashes before reuse.
+
+Watch from another pod terminal:
+
+```bash
+tail -F /workspace/panda-training/reports/volume-cleanup-20261016/cleanup.log
+```
+
+Progress reports target index/total, removed files/directories and logical GiB,
+without a preliminary recursive count. This is not a precise byte percentage.
+The actual shared-volume free space is printed on completion. Ctrl+C exits
+the watcher only. Local tests use temporary folders and mocked HF; no pod
+cleanup was run during preparation.
+
+Planning budget 60 minutes, inner 75 minutes, outer 90 minutes. No new backup
+or deletion target starts after inner; an in-progress verification may finish.
+Outer terminates the cleanup worker process group only, never the pod/sweep.
+Rerunning reuses verified receipts and handles already-removed targets.
+The sweep's own supervisor may stop the pod when its work finishes; this
+helper does not override that supervisor. If interrupted, inspect status/logs
+and rerun the same command on a later pod if necessary.
+
 ## Keep on the volume
 
 - `/workspace/openvla-7b`: base model, about 15 GiB.
