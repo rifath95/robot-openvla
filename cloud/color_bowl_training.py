@@ -127,11 +127,18 @@ def worker(config):
     os.environ.update(HF_XET_CHUNK_CACHE_SIZE_BYTES='0',HF_XET_CACHE=str(local/'xet-cache'))
     with stage('dataset_download_and_verification'):download_dataset(config)
     with stage('model_staging'):write_status(session/'model_staging.json',stage_base(config['base_volume'],config['base']))
+    initial_adapter=None;initial_identity=None
+    if config.get('initial_adapter'):
+        from training.initial_adapter import stage_initial_adapter
+        with stage('original_initial_adapter_download_and_verification'):
+            initial_adapter,initial_identity=stage_initial_adapter(config['initial_adapter'],local,config,token=config['hf_token'])
+            write_status(session/'initial_adapter_source.json',initial_identity)
     provenance=dict(dataset_repo=config['dataset_repo'],dataset_revision=config['dataset_revision'],checksums_sha256=config['checksums_sha256'],bundle=config['dataset_bundle'],training_episodes=600,training_examples=43344,all_training=True,base_model_volume_path=config['base_volume'],code_commit=config['code_commit'])
+    if initial_identity:provenance.update(initial_adapter=initial_identity,initialization_mode='restored_initial_lora')
     write_status(session/'provenance.json',provenance)
     env=os.environ.copy();env.pop('HF_TOKEN',None);env.pop('RUNPOD_API_KEY',None)
     with stage('training'):
-        train([sys.executable,'-u','-m','training.train_panda','--dataset',config['dataset'],'--model',config['base'],'--config',PROJECT_ROOT/config['training_config'],'--output-root',session/'runs','--run-name','training','--provenance',session/'provenance.json'],session/'training.log',env)
+        train([sys.executable,'-u','-m','training.train_panda','--dataset',config['dataset'],'--model',config['base'],'--config',PROJECT_ROOT/config['training_config'],'--output-root',session/'runs','--run-name','training','--provenance',session/'provenance.json',*(['--adapter',str(initial_adapter),'--base-staging-receipt',str(session/'model_staging.json')] if initial_adapter else [])],session/'training.log',env)
         completion,checkpoints=verify_computation(config['training_run'],profile,checkpoints,config.get('deadline_policy')=='compute_then_delivery_v1')
         if profile.get('save_final_training_state',True):
             from training.resume_state import verify_state
@@ -139,8 +146,9 @@ def worker(config):
             completion['final_training_state_verified']=True
         write_status(session/'training_completion.json',completion)
     with stage('checkpoint_hf_backup_and_verification'):backup_training(session,config['checkpoint_repo'],config['hf_token'],local,checkpoints)
+    start_label='Original checkpoint-zero LoRA initialization' if initial_adapter else 'Fresh base'
     lines=['# Colored cube-to-bowl training', '', '600 training demonstrations / 43,344 action examples; all four training colors balanced.',
-        f'Fresh base, {completion["last_update"]:,}/{profile["max_steps"]:,} requested updates; microbatch 8, accumulation 1, learning rate 0.0001, rank 32; no validation split.',
+        f'{start_label}, {completion["last_update"]:,}/{profile["max_steps"]:,} requested updates; microbatch 8, accumulation 1, learning rate 0.0001, rank 32; no validation split.',
         f'Checkpoints {checkpoints} retained on volume and verified on HF; final checkpoint includes optimizer, RNG and input-stream state.',
         f'Dataset: `{config["dataset_repo"]}@{config["dataset_revision"]}`.',
         f'Training-update wall time: {completion["training_update_seconds"]:.2f} seconds.',

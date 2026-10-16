@@ -144,6 +144,7 @@ def main():
         PANDA_BATCH_SELECTION=json.dumps(batch_selection),
         PANDA_INITIAL_ADAPTER=str(adapter) if adapter else '',
         PANDA_INITIAL_UPDATE=str(args.initial_update),
+        PANDA_INITIAL_ADAPTER_UPDATE=str(json.loads((adapter/'training_config.json').read_text())['checkpoint_update']) if adapter else '',
         PANDA_SAVE_CHECKPOINTS='0' if args.no_checkpoints else '1',
         PANDA_SAVE_FINAL_STATE='1' if save_final_state else '0',
         PANDA_RESUME_CHECKPOINT=str(adapter) if args.resume_checkpoint else '',

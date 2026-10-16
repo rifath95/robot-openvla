@@ -1,11 +1,20 @@
 # Uninterrupted 12,000-update colored bowl experiment
 
-Fresh base; same pinned 600-demo dataset (`training_color_place_bowl_v1_600`,
+Same unmerged base plus the **original saved checkpoint-zero LoRA matrices**; same pinned 600-demo dataset (`training_color_place_bowl_v1_600`,
 HF revision `0bf1faf4036cbfd5e3c7282111f1d9a54b2d020f`). Batch 8,
 accumulation 1, LR 0.0001, LoRA rank 32, no augmentation or validation.
 Checkpoints: 6,000, 8,000, 10,000, 12,000. No optimizer reset during training.
-The earlier run did not record all initial RNG states; the first 6,000 updates
-cannot be promised identical to that run. GPU nondeterminism also remains.
+The initialization comes from the pinned original model backup:
+`Maxalderone/robot-openvla-checkpoints@80884aea4ccfb77277cedcbf9b1710ea09bb5a0d`,
+`sessions/panda-train-color-bowl-20261015-094416-4344d31f/runs/training/checkpoint_000000`.
+All 14 files are checked against the original verified receipt; the adapter SHA256
+is `8d987cb02c6cd7888bcb52993d68999a32c2ea543177e4e104b3d791cdadf277`.
+LoRA B matrices must be zero and dataset/update/rank/dropout metadata must match.
+The adapter is downloaded directly to container disk (~487 MB total), with no
+new LoRA random initialization. Optimizer starts fresh at update zero and is
+kept continuously through 12,000. The earlier run did not record all initial RNG
+states; batch order and the first 6,000 updates cannot be promised identical.
+GPU nondeterminism also remains.
 
 ## First pod: training only
 

@@ -81,5 +81,84 @@
   },
   "minimum_volume_free_gib": 8,
   "dataset_revision_pinned": "0bf1faf4036cbfd5e3c7282111f1d9a54b2d020f",
-  "deadline_policy": "compute_then_delivery_v1"
+  "deadline_policy": "compute_then_delivery_v1",
+  "initial_adapter": {
+    "repo_id": "Maxalderone/robot-openvla-checkpoints",
+    "revision": "80884aea4ccfb77277cedcbf9b1710ea09bb5a0d",
+    "path_in_repo": "sessions/panda-train-color-bowl-20261015-094416-4344d31f/runs/training/checkpoint_000000",
+    "source_training_session": "panda-train-color-bowl-20261015-094416-4344d31f",
+    "checkpoint_update": 0,
+    "files": [
+      {
+        "path": "README.md",
+        "bytes": 5152,
+        "sha256": "70bb08a3cc4edb2dadfcf5d4922268645124d6e0061c24ce4aaaf5e3c4a43042"
+      },
+      {
+        "path": "adapter_config.json",
+        "bytes": 993,
+        "sha256": "124c13361e4736113059765d9f7db20e678c59ce225fc776c69e9c7ae411b319"
+      },
+      {
+        "path": "adapter_model.safetensors",
+        "bytes": 484458600,
+        "sha256": "8d987cb02c6cd7888bcb52993d68999a32c2ea543177e4e104b3d791cdadf277"
+      },
+      {
+        "path": "added_tokens.json",
+        "bytes": 21,
+        "sha256": "ab43123267b190cb7990bc9f2ae4ad32dcb7ed029fb0fccb1b4e062c6f54a2a1"
+      },
+      {
+        "path": "dataset_statistics.json",
+        "bytes": 1598,
+        "sha256": "1714d5d684ca316b2829b7e2fa91c9f5c0cb09acb5c47b724a44fef00786478e"
+      },
+      {
+        "path": "preprocessor_config.json",
+        "bytes": 1650,
+        "sha256": "bd024783fb785cbdfe35b710b621c5e8678d4c157a9ba625675e67d40d1757da"
+      },
+      {
+        "path": "processing_prismatic.py",
+        "bytes": 12718,
+        "sha256": "06563586bbc73d36501a14a231a3174904ede830d33174d0c625ece8e931ef1e"
+      },
+      {
+        "path": "processor_config.json",
+        "bytes": 130,
+        "sha256": "167e026d8121f6cb0bf5c18310b97ba8139152f970822bb3824213bd37dc7a76"
+      },
+      {
+        "path": "provenance.json",
+        "bytes": 473,
+        "sha256": "a104b2b2414091f53eacef2527cb0048da4be293311b3fa8675344e2ad582594"
+      },
+      {
+        "path": "special_tokens_map.json",
+        "bytes": 552,
+        "sha256": "cb90ee5cf5793aa444039af9795b00db59d3fef8942e7eca9cf1990bab370d61"
+      },
+      {
+        "path": "tokenizer.json",
+        "bytes": 1842976,
+        "sha256": "8f5e2869e1807b8bb3c7717a294539c37e9de5d728ad60e31ef57e83cc5ea527"
+      },
+      {
+        "path": "tokenizer.model",
+        "bytes": 499723,
+        "sha256": "9e556afd44213b6bd1be2b850ebbbd98f5481437a8021afaf58ee7fb1818d347"
+      },
+      {
+        "path": "tokenizer_config.json",
+        "bytes": 1192,
+        "sha256": "f5f1d3ed015ebb71cf11686ff00bc8e0c25957bbf3952f95312cecc9b168fbea"
+      },
+      {
+        "path": "training_config.json",
+        "bytes": 1597,
+        "sha256": "c8f9fe8546f681ee029595a8b187fc4c1a01a42463bc94589f7b7bdaae09aed7"
+      }
+    ]
+  }
 }

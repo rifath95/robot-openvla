@@ -62,3 +62,9 @@ gracefully; allow checkpoint saving, packing, HF upload and verification to
 continue until the outer guard. Preserve and label unfinished work as incomplete.
 Reserve a short interval before outer for recovery cleanup and the pod stop API.
 For the current run: training budget/inner/outer 8/10/12 h; sweep 12/15/18 h.
+
+For the new uninterrupted 12,000-update colored bowl run, initialize LoRA from
+the original saved checkpoint 0 of panda-train-color-bowl-20261015-094416-4344d31f,
+using the pinned HF source and hashes in its training profile. Do not create a
+new random LoRA initialization. Start a fresh optimizer at update zero and keep
+it continuous through 12,000; save full training state at the final checkpoint.

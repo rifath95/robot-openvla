@@ -9,6 +9,7 @@ from torch.utils.data import DataLoader
 
 from training.panda_rlds import PandaRLDSDataset
 from training.update_numbering import initial_update, cumulative_update
+from training.continuation import initialization_mode
 
 
 class Metrics:
@@ -35,7 +36,7 @@ class Metrics:
             max_runtime_seconds=int(os.environ['PANDA_MAX_RUNTIME']),
             initial_adapter=os.environ.get('PANDA_INITIAL_ADAPTER') or None,
             initial_update=initial_update(),
-            continuation_mode=('full_training_state' if os.environ.get('PANDA_RESUME_CHECKPOINT') else 'adapter_weights_fresh_optimizer') if os.environ.get('PANDA_INITIAL_ADAPTER') else 'fresh_base',
+            continuation_mode=initialization_mode(),
             checkpoint_updates=[cumulative_update(u) for u in json.loads(os.environ['PANDA_CHECKPOINT_UPDATES'])] if os.environ.get('PANDA_CHECKPOINT_UPDATES') else None,
             checkpoint_saving=os.environ.get('PANDA_SAVE_CHECKPOINTS','1')!='0',
             note='Runtime guard is checked between updates; it does not stop pod billing.'),indent=2)+'\n')
@@ -131,6 +132,7 @@ def write_adapter_files(folder, model, processor, cfg, dataset, update, local_up
     if initial_update():
         saved_config.update(initial_update=initial_update(),run_update=local_update,
             initial_adapter=os.environ.get('PANDA_INITIAL_ADAPTER'),continuation_mode=('full_training_state' if os.environ.get('PANDA_RESUME_CHECKPOINT') else 'adapter_weights_fresh_optimizer'))
+    saved_config.update(initialization_mode=initialization_mode(),initial_adapter=os.environ.get('PANDA_INITIAL_ADAPTER') or None)
     saved_config['validation_enabled']=os.environ.get('PANDA_VALIDATION_ENABLED','1')!='0'
     if os.environ.get('PANDA_PROVENANCE'):
         provenance=json.loads(os.environ['PANDA_PROVENANCE'])

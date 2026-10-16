@@ -34,10 +34,17 @@ def validate_adapter(path,config,model,*,staging_receipt=None):
     return path
 
 
+def initialization_mode():
+    if os.environ.get('PANDA_RESUME_CHECKPOINT'):return 'full_training_state'
+    if not os.environ.get('PANDA_INITIAL_ADAPTER'):return 'fresh_base'
+    if os.environ.get('PANDA_INITIAL_ADAPTER_UPDATE')=='0':return 'restored_initial_lora'
+    return 'adapter_weights_fresh_optimizer'
+
+
 def attach_lora(model,lora_config):
     from peft import PeftModel,get_peft_model
     checkpoint=os.environ.get('PANDA_INITIAL_ADAPTER','')
     if checkpoint:
-        print('Resuming full training state:' if os.environ.get('PANDA_RESUME_CHECKPOINT') else 'Continuing from adapter weights with a fresh optimizer:',checkpoint,flush=True)
+        print(initialization_mode()+':',checkpoint,flush=True)
         return PeftModel.from_pretrained(model,checkpoint,is_trainable=True)
     return get_peft_model(model,lora_config)
