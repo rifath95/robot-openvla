@@ -78,8 +78,34 @@ class CleanupTests(unittest.TestCase):
             self.assertFalse((reports/'selected.json').exists())
             self.assertTrue(cp.exists())
 
-    def test_deadline_and_symlink_guards(self):
-        with self.assertRaises(TimeoutError):c.check_deadline(dict(inner_deadline=0))
+    def test_missing_checkpoint_protects_entire_session_but_allows_other_targets(self):
+        with tempfile.TemporaryDirectory() as tmp,patch.object(c,'ROOT',Path(tmp)), \
+                patch.object(c,'SELECTED',{'old':(100,)}),patch.object(c,'ALREADY_BACKED',()), \
+                patch.object(c,'PILOTS',()),patch.object(c,'DATASETS',('obsolete_dataset',)), \
+                patch('huggingface_hub.HfApi') as api,patch.object(c.os,'nice'):
+            root=Path(tmp);cp=root/'sessions/old/runs/training/checkpoint_000500'
+            cp.mkdir(parents=True);(cp/'adapter_model.safetensors').write_bytes(b'keep remaining weights')
+            obsolete=root/'obsolete_dataset';obsolete.mkdir();(obsolete/'record').write_bytes(b'delete')
+            reports=root/'reports/cleanup';reports.mkdir(parents=True)
+            api.return_value.repo_info.return_value.private=True
+            cfg=dict(reports=str(reports),local=str(root/'local'),token='test')
+            self.assertEqual(c.worker(cfg),0)
+            self.assertTrue((cp/'adapter_model.safetensors').exists())
+            self.assertFalse(obsolete.exists())
+            result=json.loads((reports/'cleanup_complete.json').read_text())
+            self.assertFalse(result['complete']);self.assertEqual(result['protected_sessions'],['old'])
+            api.return_value.upload_folder.assert_not_called()
+
+    def test_supervisor_waits_without_cleanup_timeout(self):
+        with tempfile.TemporaryDirectory() as tmp,patch.object(c.subprocess,'Popen') as launch:
+            root=Path(tmp);(root/'cleanup_complete.json').write_text('{"complete": true}')
+            launch.return_value.wait.return_value=0
+            self.assertEqual(c.supervise(dict(reports=str(root))),0)
+            launch.return_value.wait.assert_called_once_with()
+            status=json.loads((root/'status.json').read_text())
+            self.assertIsNone(status['timeout']);self.assertFalse(status['pod_stop_requested'])
+
+    def test_symlink_guard(self):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);keep=root/'keep';keep.write_text('safe')
             link=root/'link';link.symlink_to(keep)

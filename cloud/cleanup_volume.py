@@ -7,13 +7,11 @@ import os
 from pathlib import Path
 import re
 import shutil
-import signal
 import subprocess
 import sys
 import time
 
 from common.paths import PROJECT_ROOT
-from cloud.bowl_chain_plan import timeout_budget
 from training.detached_run import write_status
 
 ROOT = Path('/workspace/panda-training')
@@ -36,11 +34,6 @@ DATASETS = ('training_four_color_touch_v1', 'training_lift_v1',
 OLD_SWEEP = 'scripted_color_lift_models_20261014_144240_51b35ee5'
 
 
-def check_deadline(config):
-    if time.monotonic() >= config['inner_deadline']:
-        raise TimeoutError('Inner deadline reached; no new cleanup work started. Rerun to continue.')
-
-
 def checkpoint_folders(session):
     return sorted(p for p in (ROOT/'sessions'/session/'runs/training').glob('checkpoint_*')
                   if re.fullmatch(r'checkpoint_[0-9]{6}', p.name))
@@ -58,9 +51,18 @@ def archive_selected(session, updates, config, api):
                 saved.get('path_in_repo') == 'sessions/'+session and
                 saved.get('checkpoints') == list(updates)):
             print('Reusing verified cleanup receipt:', session, flush=True)
-            return
+            return True
     source = ROOT/'sessions'/session
-    for cp in updates:check_ready(source/f'runs/training/checkpoint_{cp:06d}')
+    for cp in updates:
+        try:check_ready(source/f'runs/training/checkpoint_{cp:06d}')
+        except (FileNotFoundError, ValueError) as exc:
+            # Historical folder listings may contain report-only checkpoints.
+            # Never substitute another model or delete its remaining weights.
+            print(f'SKIPPED {session}: checkpoint {cp} is missing or incomplete: {exc}',flush=True)
+            print('All checkpoint folders for this session will be retained. Other approved cleanup can continue.',flush=True)
+            write_status(Path(config['reports'])/(session+'.skipped.json'),
+                         dict(archived=False,checkpoints_retained=True,checkpoint=cp,reason=str(exc)))
+            return False
     stage = Path(config['local'])/session
     stage.mkdir(parents=True, exist_ok=True)
     records = []
@@ -96,12 +98,13 @@ def archive_selected(session, updates, config, api):
                               revision=revision, checkpoints=list(updates), files=records))
     print('Verified selected backup:', session, flush=True)
     shutil.rmtree(stage)
+    return True
 
 
-def targets():
+def targets(protected_sessions=()):
     result = []
     for session in (*SELECTED, *ALREADY_BACKED, *PILOTS):
-        result.extend(checkpoint_folders(session))
+        if session not in protected_sessions:result.extend(checkpoint_folders(session))
     result.extend(ROOT/name for name in DATASETS)
     result.extend((ROOT/'scripted-evaluations'/OLD_SWEEP,
                    ROOT/'reports/hf-archives'/OLD_SWEEP/'packed-parts'))
@@ -132,10 +135,11 @@ def worker(config):
     os.nice(19)
     api = HfApi(token=config['token'])
     if not api.repo_info(REPO, repo_type='model').private:raise ValueError('Expected private checkpoint repository')
-    # All archival requirements must pass before any volume deletion.
+    # Verification failure aborts deletion. Missing historical weights protect
+    # that whole session while allowing unrelated approved targets to proceed.
+    protected=[]
     for session, updates in SELECTED.items():
-        check_deadline(config)
-        archive_selected(session, updates, config, api)
+        if archive_selected(session, updates, config, api) is False:protected.append(session)
     for session in ALREADY_BACKED:
         receipt = json.loads((ROOT/'sessions'/session/'checkpoint_hf_receipt.json').read_text())
         if (receipt.get('verified') is not True or receipt.get('repo_id') != REPO or
@@ -149,10 +153,9 @@ def worker(config):
         for p in old.iterdir():
             if p.is_file() and p.suffix in ('.json', '.jsonl', '.md', '.log', '.txt'):
                 shutil.copyfile(p, reports/p.name)
-    items = targets()
+    items = targets(protected)
     counters = dict(files=0, directories=0, bytes=0, last_log=time.monotonic())
     for index, path in enumerate(items, 1):
-        check_deadline(config)
         # This allowlist excludes the base, current training, active sweep and global volume.
         if not path.is_relative_to(ROOT):raise ValueError('Invalid cleanup path')
         if path.name.startswith('checkpoint_') and path.exists():
@@ -165,30 +168,25 @@ def worker(config):
         remove_with_progress(path, counters)
         print(f'Finished target {index}/{len(items)}', flush=True)
     write_status(Path(config['reports'])/'cleanup_complete.json',
-                 dict(complete=True, removed_targets=[str(p) for p in items],
+                 dict(complete=not protected,cleanup_finished=True,protected_sessions=protected,removed_targets=[str(p) for p in items],
                       files_removed=counters['files'], logical_bytes_removed=counters['bytes']))
-    print('CLEANUP COMPLETE. Reports and current checkpoints retained. Pod and sweep left running.', flush=True)
+    print('CLEANUP FINISHED with preserved sessions: '+', '.join(protected) if protected else 'CLEANUP COMPLETE.',flush=True)
+    print('Reports and current checkpoints retained. Pod and sweep left running.', flush=True)
     print('Network-volume free space: %.2f GiB' % (shutil.disk_usage(ROOT).free/1024**3), flush=True)
     return 0
 
 
 def supervise(config):
     start = time.monotonic()
-    config['inner_deadline'] = start+config['budget']['inner_seconds']
     child = subprocess.Popen([sys.executable, '-u', '-m', 'cloud.cleanup_volume', '--worker'],
         cwd=PROJECT_ROOT, stdin=subprocess.PIPE, start_new_session=True,
         pass_fds=(config['lock_fd'],) if 'lock_fd' in config else ())
     child.stdin.write(json.dumps(config).encode());child.stdin.close()
-    try:
-        code = child.wait(timeout=config['budget']['outer_seconds'])
-    except subprocess.TimeoutExpired:
-        os.killpg(child.pid, signal.SIGTERM)
-        try:child.wait(timeout=10)
-        except subprocess.TimeoutExpired:os.killpg(child.pid, signal.SIGKILL);child.wait()
-        print('Outer cleanup deadline reached; cleanup terminated. Pod/sweep untouched.', flush=True)
-        code = 124
-    write_status(Path(config['reports'])/'status.json', dict(exit_code=code, complete=code==0,
-                 elapsed_seconds=time.monotonic()-start, budget=config['budget'], pod_stop_requested=False))
+    code = child.wait()
+    result=Path(config['reports'])/'cleanup_complete.json'
+    complete=code==0 and result.exists() and json.loads(result.read_text()).get('complete') is True
+    write_status(Path(config['reports'])/'status.json', dict(exit_code=code, complete=complete,
+                 elapsed_seconds=time.monotonic()-start, timeout=None, pod_stop_requested=False))
     return code
 
 
@@ -215,18 +213,20 @@ def main():
     local.mkdir(exist_ok=True)
     if shutil.disk_usage(local).free < 3*1024**3:
         raise SystemExit('Need 3 GiB free on container disk for selective backup and verification.')
-    budget = timeout_budget(3600)
-    config = dict(reports=str(reports), local=str(local), token=token, budget=budget,lock_fd=lock.fileno())
+    config = dict(reports=str(reports), local=str(local), token=token,lock_fd=lock.fileno())
     env = os.environ.copy()
     for key in ('HF_TOKEN', 'RUNPOD_API_KEY'):env.pop(key, None)
-    with (reports/'cleanup.log').open('a', buffering=1) as log:
+    log_path=reports/'cleanup.log'
+    if log_path.exists():
+        log_path.rename(reports/('cleanup.previous-'+str(time.time_ns())+'.log'))
+    with log_path.open('a', buffering=1) as log:
         child = subprocess.Popen([sys.executable, '-u', '-m', 'cloud.cleanup_volume', '--supervise'],
             cwd=PROJECT_ROOT, env=env, stdin=subprocess.PIPE, stdout=log, stderr=subprocess.STDOUT,
             start_new_session=True, pass_fds=(lock.fileno(),))
         child.stdin.write(json.dumps(config).encode());child.stdin.close()
     print('Detached selective archive + cleanup started. Mac may disconnect.')
     print('Watch:', reports/'cleanup.log')
-    print('Budget: 60 min; inner: 75 min; outer: 90 min. This command never stops the pod.')
+    print('No cleanup timeout. Runs until finished or the sweep stops the pod. Never stops the pod itself.')
     return 0
 
 

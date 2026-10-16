@@ -61,6 +61,12 @@ profile. Do not substitute the default transfer-pod delivery for this experiment
 
 # Deadline policy
 
+Exception explicitly agreed with the user: `cloud.cleanup_volume` runs without
+its own inner/outer timeout, until finished or the sweep auto-stops the pod.
+It must never stop the pod itself. Missing historical checkpoint weights protect
+that entire session from deletion; report the skip and continue unrelated approved
+targets. An HF verification failure still blocks deletion.
+
 This is the standing default for **all future timed jobs**, including training,
 benchmarks, simulator sweeps, transfers, HF uploads and chained workflows, unless
 the user explicitly overrides it. For a complete planning budget B, use

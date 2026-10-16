@@ -21,7 +21,11 @@ Enter the HF write token at its hidden prompt. This is detached and never
 requests a pod stop. It does not change the running sweep checkout or processes.
 It stages only the four selected older adapters and their reports on container
 disk, uploads/verifies them, retains receipts, then removes the approved volume
-targets. Existing verified checkpoint receipts are trusted without repeating
+targets. Missing/incomplete selected checkpoints protect that entire old session from
+deletion; other approved targets can proceed. No alternative checkpoint is
+silently substituted. A skipped session is named in `cleanup_complete.json`
+and leaves its `complete` flag false. HF verification errors still abort deletion.
+Existing verified checkpoint receipts are trusted without repeating
 expensive file inventories. Reports and per-checkpoint training metadata remain.
 Copies already on HF are verified against source hashes before reuse.
 
@@ -37,10 +41,11 @@ The actual shared-volume free space is printed on completion. Ctrl+C exits
 the watcher only. Local tests use temporary folders and mocked HF; no pod
 cleanup was run during preparation.
 
-Planning budget 60 minutes, inner 75 minutes, outer 90 minutes. No new backup
-or deletion target starts after inner; an in-progress verification may finish.
-Outer terminates the cleanup worker process group only, never the pod/sweep.
-Rerunning reuses verified receipts and handles already-removed targets.
+This cleanup is the explicit exception to the general percentage timeout rule:
+it has **no cleanup-specific inner or outer timeout**. It continues until finished
+or the pod stops. Rerunning reuses verified receipts and handles already-removed
+targets. Previous logs are retained under `cleanup.previous-*.log`, so the new
+`cleanup.log` does not redisplay an earlier traceback.
 The sweep's own supervisor may stop the pod when its work finishes; this
 helper does not override that supervisor. If interrupted, inspect status/logs
 and rerun the same command on a later pod if necessary.
@@ -113,3 +118,8 @@ After cleanup, the large retained items should be the base plus current
 uninterrupted checkpoints (about 21 GiB combined), with reports and small
 metadata in addition. Directory-size figures are approximate and include some
 reports that will remain. No active sweep input or output is a deletion target.
+
+October 16 retry correction: the first attempt stopped before deletion because
+the red/blue checkpoint-100 directory lacked `adapter_model.safetensors`. Earlier
+folder listings were not proof of complete checkpoints. Retain that entire
+training session until a recoverable best checkpoint can be identified.
