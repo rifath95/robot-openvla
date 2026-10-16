@@ -14,8 +14,16 @@ body{font:15px system-ui;background:#10151d;color:#eef2fa;margin:24px}main{max-w
 <div class="muted">Seen in training: red, blue, green, yellow. Other colors are unseen. Three and four cubes are also outside the training scenes.</div></section>
 <section><label for="instruction"><b>Instruction — editable</b></label>
 <textarea id="instruction">pick up the red cube and place it in the blue bowl.</textarea>
-<label><input type="checkbox" id="sample"> Sample action tokens</label>
-<p><button class="play" id="play">▶ Play (up to 120 actions)</button><button id="act">Act once</button><button class="stop" id="stop">■ Stop</button></p>
+<label>Action limit <input id="steps" type="number" min="1" max="10000" step="1" value="120" style="width:100px"></label>
+<label><input type="checkbox" id="sample"> Sample action tokens throughout</label>
+<div><label><input type="checkbox" id="autoRecovery"> Automatically recover from stalling or cycles</label></div>
+<div id="recoveryControls">
+<label>Sampled actions per recovery <input id="recoverySteps" type="number" min="5" max="10" step="1" value="8" style="width:60px"></label>
+<label>Stall window (actions) <input id="stallWindow" type="number" min="4" max="50" step="1" value="8" style="width:60px"></label>
+<label>Maximum recovery attempts <input id="recoveryAttempts" type="number" min="1" max="10" step="1" value="3" style="width:60px"></label>
+<p class="muted">Recovery temporarily samples, then returns to greedy for at least 12 actions to assess progress. Detection uses physical states, not repeated predictions or network waiting time. No random arm perturbations.</p>
+</div>
+<p><button class="play" id="play">▶ Play</button><button id="act">Act once</button><button class="stop" id="stop">■ Stop</button></p>
 <p class="muted">Play continues from the current pose. Stop holds the pose and discards pending predictions. Reset restores the initial arm and layout. Instructions are sent exactly as typed; scoring follows the selected target.</p></section></div></div>
 <p class="muted">Closing this page or stopping the local command does not unload the cloud model or stop pod billing. Stop the pod in RunPod when finished.</p></main>
 <script>
@@ -31,9 +39,11 @@ function rebuild(){const old=selectedColors();$('colors').replaceChildren();for(
 [0,1000,2000,4000,6000].forEach(cp=>{const b=document.createElement('button');b.textContent=cp===0?'0 · untrained adapter':cp;b.dataset.cp=cp;b.onclick=()=>{checkpoint=cp;command('checkpoint',{checkpoint:cp})};$('models').append(b)});
 async function scene(random){if(random)$('seed').value=Math.floor(Math.random()*1000000)+2000;if(new Set(selectedColors()).size!==count){$('status').textContent='Choose distinct colors before applying the scene.';return}const ok=await command('scene',{scene:{count,colors:selectedColors(),target:$('target').value,seed:Number($('seed').value)}});if(ok)sceneDirty=false}
 $('seed').oninput=()=>{sceneDirty=true};$('target').onchange=()=>{fillInstruction();sceneDirty=true};$('reset').onclick=()=>scene(false);$('random').onclick=()=>scene(true);
-$('play').onclick=()=>command('play',{instruction:$('instruction').value,sample:$('sample').checked});
-$('act').onclick=()=>command('act',{instruction:$('instruction').value,sample:$('sample').checked});
+function trialOptions(){return {instruction:$('instruction').value,steps:Number($('steps').value),sample:$('sample').checked,recovery:{enabled:$('autoRecovery').checked,sampling_steps:Number($('recoverySteps').value),window:Number($('stallWindow').value),max_attempts:Number($('recoveryAttempts').value)}}}
+$('sample').onchange=()=>{if($('sample').checked)$('autoRecovery').checked=false;$('autoRecovery').disabled=$('sample').checked};
+$('play').onclick=()=>command('play',trialOptions());
+$('act').onclick=()=>command('act',trialOptions());
 $('stop').onclick=()=>command('stop');rebuild();
 window.addEventListener('pagehide',()=>navigator.sendBeacon('/command',JSON.stringify({token,command:'stop'})));
-async function poll(){try{const r=await fetch('/state?token='+encodeURIComponent(token));const s=await r.json();checkpoint=s.checkpoint;const m=s.model||{};busy=m.status==='loading';$('modelStatus').textContent=`${m.status||'Connecting'} · checkpoint ${m.checkpoint??'—'}${m.model_load_seconds?' · load '+m.model_load_seconds.toFixed(1)+' s':''}${m.error?' · '+m.error:''}`;[...$('models').children].forEach(b=>{b.classList.toggle('selected',Number(b.dataset.cp)===checkpoint);b.disabled=busy});$('status').textContent=(sceneDirty?'Scene edits pending — click Apply / reset.\n':'')+s.phase+'\nActions: '+s.steps+(s.result?' · '+s.result.outcome:'')+(s.run?'\nSaved: '+s.run:'');$('play').disabled=$('act').disabled=sceneDirty||!m.model_loaded||m.checkpoint!==checkpoint;$('live').src='/frame?token='+encodeURIComponent(token)+'&t='+Date.now()}catch(e){$('status').textContent='Local simulator disconnected. Check the launcher terminal.'}setTimeout(poll,150)}poll();
+async function poll(){try{const r=await fetch('/state?token='+encodeURIComponent(token));const s=await r.json();checkpoint=s.checkpoint;const m=s.model||{};busy=m.status==='loading';$('modelStatus').textContent=`${m.status||'Connecting'} · checkpoint ${m.checkpoint??'—'}${m.model_load_seconds?' · load '+m.model_load_seconds.toFixed(1)+' s':''}${m.error?' · '+m.error:''}`;[...$('models').children].forEach(b=>{b.classList.toggle('selected',Number(b.dataset.cp)===checkpoint);b.disabled=busy});$('status').textContent=(sceneDirty?'Scene edits pending — click Apply / reset.\n':'')+s.phase+'\nActions: '+s.steps+(s.action_limit?' / '+s.action_limit:'')+(s.recovery?'\nRecovery: '+(s.recovery.active===false?'inactive ('+s.recovery.mode+')':s.recovery.mode)+' · attempts '+(s.recovery.attempts||0)+' / '+(s.recovery.max_attempts||'—')+(s.recovery.sampling_remaining?' · sampled actions remaining '+s.recovery.sampling_remaining:''):'')+(s.result?' · '+s.result.outcome:'')+(s.run?'\nSaved: '+s.run:'');$('play').disabled=$('act').disabled=sceneDirty||!m.model_loaded||m.checkpoint!==checkpoint;$('live').src='/frame?token='+encodeURIComponent(token)+'&t='+Date.now()}catch(e){$('status').textContent='Local simulator disconnected. Check the launcher terminal.'}setTimeout(poll,150)}poll();
 </script></html>

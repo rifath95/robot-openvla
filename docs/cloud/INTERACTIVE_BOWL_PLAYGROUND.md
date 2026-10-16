@@ -42,7 +42,7 @@ prints the localhost URL so the page can be reopened.
 - **Apply / reset same positions** applies scene/color/target selections, restoring
   the same seed's initial arm, cubes and bowl. **New positions** chooses a new seed.
   Count/color selections must be applied before running the new scene.
-- **Play** runs at most 120 predictions from the current pose, stopping on placement,
+- **Play** runs up to the editable **Action limit** (1–10,000; default 120) predictions from the current pose, stopping on placement,
   tracking failure, three rejected actions or your stop request.
 - **Act once** predicts and executes one action, retaining the resulting pose.
 - **Stop** cancels the trial, discards late predictions, and holds the current pose.
@@ -82,3 +82,58 @@ Local checks cover all four scene counts rendering and initializing, real
 controller execution, instruction preservation, cancelled-response rejection,
 same-model reuse and checkpoint identity checks. A real GPU switch and the full
 Mac-to-cloud path still need their first check on the new pod.
+
+## Optional automatic recovery
+
+In the instruction panel, set the action limit (for example 1,000), enable
+**Automatically recover from stalling or cycles**, then press Play. Settings
+are captured at trial start; editing controls does not alter an active trial.
+Recovery is off by default. Manual **Sample action tokens throughout** remains
+available and is mutually exclusive with greedy-plus-automatic-recovery mode.
+Act once still requests exactly one prediction; recovery history resets with
+each new Play/Act trial, scene or checkpoint.
+
+The detector uses only post-action physical states: seven arm joints, grasp-point
+position, actual finger opening, and every cube position. Repeated model outputs
+alone do not trigger it. The default stall window is 8 prediction attempts;
+users can select 4–50. A stall requires all recorded ranges within 0.015 radians
+per arm joint, 3 mm per Cartesian coordinate/cube coordinate, and 2 mm gripper
+opening. Cycle detection checks periods 2, 3 and 4, requiring three returns to
+matching phase states with a real excursion. It checks all repeated phases to
+avoid treating cumulative movement or lifting as a closed loop. These are
+heuristic physical tolerances; assessment uses steps, never network waiting time.
+
+A detection starts **5–10 sampled predictions** (default 8, temperature 1, top-p
+1). Then requests explicitly return to greedy. A greedy assessment lasts at
+least 12 predictions (or the longer chosen stall window) so four-step cycles can
+be observed three times. If stalling/cycling persists, another burst starts;
+after the configured maximum recovery attempts (default 3; range 1–10), the trial
+stops. An escaped assessment window is logged as progress resumed, not task
+success. Recovery attempts are bounded across the entire trial. There are no
+random position/orientation perturbations.
+
+Placement, manual Stop, action limit, nonfinite state, tracking failure and the
+existing three-rejection stop retain priority. Recovery never bypasses the
+controller's action/IK bounds. The global action limit includes greedy and
+sampled prediction attempts. Rejected attempts count toward the limit/burst.
+
+The status panel shows mode (`sampling`, `assessing` with greedy predictions,
+`greedy`, `disabled`, or `exhausted`), attempts used, and sampled predictions
+remaining. Camera input remains the plain camera image without HTML controls.
+
+Each trial records:
+
+- `episode.json`: chosen action limit, manual sampling and recovery settings.
+- `step_NNN/generation_request.json`: requested decoding mode and its source.
+- `step_NNN/execution.json`: physical state after execution when recovery is
+  enabled, plus whether that prediction was greedy/manual/recovery sampling.
+- `recovery_events.jsonl`: detections, sampling starts/ends, progress assessments
+  and exhausted retries, including step, simulation time and physical state.
+- `summary.json` / `RUN_REPORT.md`: recovery events, counts, limit and outcome,
+  with the usual direct Replay and Action Replay links.
+
+Local tests exercise stall/cycle detection, continued movement/lifting, retry
+limits, decoding switches, invalid inputs and real MuJoCo control with a mocked
+prediction endpoint. A real-model comparison is still needed to measure whether
+recovery improves success. These controls apply only to interactive playground
+trials; automated sweep policies retain their configured decoding behavior.
