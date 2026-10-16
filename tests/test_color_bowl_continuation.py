@@ -73,8 +73,8 @@ class ContinuationChainTests(unittest.TestCase):
         self.assertEqual(len(validate_saved(dict(plan=plan, trials=[]))), 600)
         for cp in plan['checkpoints']:
             self.assertEqual(sum(s['checkpoint']==cp for s in trial_specs(plan)), 200)
-        self.assertEqual(plan['timeout_budget']['inner_seconds'], 25*3600)
-        self.assertEqual(plan['timeout_budget']['outer_seconds'], 30*3600)
+        self.assertEqual(plan['timeout_budget']['inner_seconds'], 27.5*3600)
+        self.assertEqual(plan['timeout_budget']['outer_seconds'], 33*3600)
         for field, value in [('checkpoints', [6000, 8000, 12000]), ('initial_checkpoint_update', 0)]:
             bad = copy.deepcopy(plan)
             bad[field] = value

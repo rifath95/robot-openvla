@@ -10,6 +10,8 @@ def write_report(folder,plan,rows,error=None):
         'Requested-color placement requires prior lift ≥8 cm, settled cube within 4.5 cm of bowl center and 4 mm of resting height, and empty hand ≥8 cm away. Wrong-cube placement is not success. Sampling off; each request has a fresh reset.', '',
         '| Model | Trials | Correct placements | Success rate | Clean successes | Wrong/both placements | Target lifted, not placed | Wrong cube lifted | No lift | Controller failures | Infrastructure failures |',
         '|---|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|']
+    if plan.get('compute_stop_reason')=='inner_compute_deadline':
+        lines[2:2]=['**INCOMPLETE: computation deadline reached. Only completed trials are included; remaining trials were not run.**','']
     for cp,trials in sorted(groups.items()):
         count=lambda outcome:sum(r.get('outcome')==outcome for r in trials)
         good=sum(r.get('placement_success',False) for r in trials)

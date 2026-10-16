@@ -21,7 +21,11 @@ def sha256(path):
 def restore(source,destination=None):
     source=resolve_output_path(source).resolve();manifest=json.loads((source/'manifest.json').read_text())
     records=json.loads((source/'reports/results.json').read_text());specs=validate_saved(records)
-    if len(records['trials'])!=manifest['trials'] or len(specs)!=manifest['trials']:raise ValueError('Incomplete archive trial inventory')
+    partial=(manifest.get('complete') is False and manifest.get('expected_trials')==len(specs)
+        and manifest.get('stop_reason')=='inner_compute_deadline'
+        and records['plan'].get('compute_stop_reason')=='inner_compute_deadline'
+        and not records.get('launcher_error') and manifest['trials']<len(specs))
+    if len(records['trials'])!=manifest['trials'] or (len(specs)!=manifest['trials'] and not partial):raise ValueError('Incomplete archive trial inventory')
     name=manifest['sweep']
     if not name.startswith('scripted_') or Path(name).name!=name:raise ValueError('Invalid sweep name')
     destination=Path(destination).resolve() if destination else output_path(name)

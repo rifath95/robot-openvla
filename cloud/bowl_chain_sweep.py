@@ -43,11 +43,14 @@ def classify_failure(code,summary,status):
 def run(config):
     directory=Path(config['sweep']);persistent=Path(config['session'])/'sweep-reports';timings=Timings(Path(config['session']))
     payload=json.loads((directory/'results.json').read_text());plan=payload['plan'];rows=payload['trials'];total=len(validate_saved(payload))
+    plan.pop('compute_stop_reason',None)
     done={r['directory'] for r in rows};specs=[r for r in trial_specs(plan) if r['directory'] not in done]
     env=os.environ.copy();env.pop('RUNPOD_API_KEY',None);env.pop('HF_TOKEN',None);env['MUJOCO_GL']='egl';env['PYOPENGL_PLATFORM']='egl'
     base=Path(config['base']);training=Path(config['training_run']);server=None;started=time.monotonic();error=None
     try:
+        from cloud.compute_deadline import check,ComputeDeadlineReached
         for cp in plan['checkpoints']:
+            check()
             selected=[s for s in specs if s['checkpoint']==cp]
             if not selected:continue
             # Base is reused from the container staging done before training.
@@ -82,6 +85,7 @@ def run(config):
                 port=health['server_port'];startup=directory/f'startup_cloud_{cp:06d}.json'
                 startup.write_text(json.dumps(dict(health.get('startup_info',{}),execution_mode='cloud_sequential',model_label='Base' if cp==0 else f'Checkpoint {cp}'),indent=2)+'\n')
                 for spec in selected:
+                    check()
                     trial=directory/spec['directory'];positions=Path(config['local'])/'trial_layout.json';positions.write_text(json.dumps(spec['layout']))
                     if trial.exists():raise ValueError('Unexpected unindexed trial directory; resume explicitly after review')
                     command=[config['sim_python'],'-u','-m','inference.remote_loop','--task','multi_place_bowl','--target-color',spec['target_color'],'--cube-colors',*spec['cube_colors'],'--instruction',f"pick up the {spec['target_color']} cube and place it in the blue bowl.",'--scene-seed',str(spec['seed']),'--scene-positions',str(positions),'--steps','120','--no-view','--start-immediately','--startup-info',str(startup),'--output-dir',str(trial),'--server-url',f'http://127.0.0.1:{port}','--max-runtime-seconds','900']
@@ -104,6 +108,10 @@ def run(config):
             except subprocess.TimeoutExpired:server.kill();server.wait(timeout=5)
             server=None
         if len(rows)!=total:raise ValueError(f'Sweep did not finish all {total} trials')
+    except ComputeDeadlineReached:
+        if len(rows)<total:
+            plan['compute_stop_reason']='inner_compute_deadline'
+            print('Computation deadline reached; delivering completed trials as an incomplete sweep.',flush=True)
     except BaseException as exc:error=type(exc).__name__;raise
     finally:
         if server is not None:

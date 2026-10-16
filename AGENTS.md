@@ -51,3 +51,14 @@ For the uninterrupted 12,000-update colored bowl experiment (checkpoints 6,000,
 the separate sweep pod: run 800 trials, pack/upload results to HF, verify, then
 auto-stop. Use cloud.color_bowl_sweep with the color_place_bowl_600_uninterrupted
 profile. Do not substitute the default transfer-pod delivery for this experiment.
+
+# Deadline policy
+
+Planning budgets must comfortably cover the complete job through saving, HF
+delivery/verification, recovery allowance and pod shutdown. Set the inner
+computation deadline to 125% of that budget and the outer deadline to 150% of
+the original budget (not 150% of inner). At inner, stop starting computation
+gracefully; allow checkpoint saving, packing, HF upload and verification to
+continue until the outer guard. Preserve and label unfinished work as incomplete.
+Reserve a short interval before outer for recovery cleanup and the pod stop API.
+For the current run: training budget/inner/outer 8/10/12 h; sweep 12/15/18 h.

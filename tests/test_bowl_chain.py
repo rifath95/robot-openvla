@@ -27,7 +27,7 @@ class ChainTests(unittest.TestCase):
         with self.assertRaises(ValueError):validate_saved(dict(plan=plan,trials=[damaged]))
 
     def test_timeout_buffers_and_failed_stage_timings(self):
-        budget=timeout_budget();self.assertEqual(budget['inner_seconds'],28*3600);self.assertEqual(budget['outer_seconds'],33*3600)
+        budget=timeout_budget();self.assertEqual(budget['inner_seconds'],31.25*3600);self.assertEqual(budget['outer_seconds'],37.5*3600)
         with tempfile.TemporaryDirectory() as tmp:
             timer=Timings(tmp)
             with self.assertRaises(RuntimeError):

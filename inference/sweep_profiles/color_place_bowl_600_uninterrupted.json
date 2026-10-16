@@ -1786,5 +1786,6 @@
       ]
     }
   ],
-  "uninterrupted": true
+  "uninterrupted": true,
+  "deadline_policy": "compute_then_delivery_v1"
 }

@@ -20,6 +20,8 @@ from cloud.scripted_touch_session import write_reports
 def wait_server(process,port,seconds=900,ready_file=None):
     deadline=time.monotonic()+seconds
     while time.monotonic()<deadline:
+        from cloud.compute_deadline import check
+        check()
         if process.poll() is not None:raise RuntimeError('Cloud inference server exited; inspect server log')
         try:
             selected=port
@@ -40,6 +42,8 @@ def wait_checkpoint(folder,seconds=0,status_path=None):
     from cloud.checkpoint_ready import check_ready
     deadline=time.monotonic()+seconds;announced=False
     while True:
+        from cloud.compute_deadline import check
+        check()
         try:return check_ready(folder)
         except (OSError,ValueError,KeyError,TypeError) as exc:
             if not seconds or time.monotonic()>=deadline:

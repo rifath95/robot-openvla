@@ -29,7 +29,7 @@
   "validation_every": 100,
   "validation_max_batches": 0,
   "max_runtime_seconds": 36000,
-  "hard_limit_seconds": 57600,
+  "hard_limit_seconds": 43200,
   "require_benchmark": false,
   "expected_gpu": "NVIDIA A40",
   "minimum_free_disk_gib": 8,

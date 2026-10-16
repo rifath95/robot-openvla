@@ -96,7 +96,7 @@ def launch(selected, global_volume):
     print('Watch training:', session/'training.log', flush=True)
     print('Watch sweep:', session/'sweep.log', flush=True)
     print('Status/timings/checkpoints:', session, flush=True)
-    print('Estimated budget 22 h; inner limit 25 h; independent outer limit 30 h.', flush=True)
+    print(f'Estimated budget 22 h; inner limit {config["timeout_budget"]["inner_seconds"]/3600:g} h; independent outer limit {config["timeout_budget"]["outer_seconds"]/3600:g} h.', flush=True)
     print('Checkpoints retained on volume. Supervisor requests pod stop after completion, failure or timeout.', flush=True)
     return 0
 

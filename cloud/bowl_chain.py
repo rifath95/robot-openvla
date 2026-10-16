@@ -97,7 +97,7 @@ def recovery(config):
 
 
 def attempt_recovery(config,child_ids,pids):
-    remaining=min(5*3600-120,config['outer_deadline_monotonic']-time.monotonic()-120)
+    remaining=config['outer_deadline_monotonic']-time.monotonic()-120
     if remaining<=0:return 'no_time_remaining'
     safe={k:v for k,v in config.items() if k not in ('pod_key','hf_token')}
     with (Path(config['local'])/'recovery.log').open('a',buffering=1) as log:
@@ -132,6 +132,8 @@ def supervise(config):
     local=Path(config['local']);session=Path(config['session']);budget=config['timeout_budget'];worker=None;child_ids=[];outcome='failed';started=time.monotonic()
     config.update(started_at_utc=utc(),started_monotonic=started)
     config['outer_deadline_monotonic']=started+budget['outer_seconds'];inner=started+budget['inner_seconds']
+    cooperative=config.get('deadline_policy')=='compute_then_delivery_v1'
+    if cooperative:config['compute_deadline_monotonic']=inner
     def pids():write_status(local/'processes.json',dict(supervisor=os.getpid(),supervisor_birth=process_birth(os.getpid()),children=child_ids,births={str(pid):process_birth(pid) for pid in child_ids}))
     safe={k:v for k,v in config.items() if k not in ('pod_key','hf_token')};
     guard={k:v for k,v in config.items() if k!='hf_token'}
@@ -145,21 +147,26 @@ def supervise(config):
     write_status(session/'status.json',status)
     try:
         env=os.environ.copy();env.pop('RUNPOD_API_KEY',None);env.pop('HF_TOKEN',None)
+        if cooperative:env['PANDA_COMPUTE_DEADLINE_MONOTONIC']=str(inner)
         with (local/'console.log').open('a',buffering=1) as log:
             payload={k:v for k,v in config.items() if k!='pod_key'}
             module=worker_module(config)
             worker=subprocess.Popen([sys.executable,'-u','-m',module],cwd=PROJECT_ROOT,env=env,stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT,start_new_session=True)
             child_ids.append(worker.pid);pids();worker.stdin.write(json.dumps(payload).encode());worker.stdin.close()
             try:
-                code=worker.wait(timeout=max(.01,inner-time.monotonic()));outcome='completed' if code==0 else 'failed';status['exit_code']=code
-            except subprocess.TimeoutExpired:outcome='inner_timeout';kill_group(worker.pid);worker.wait(timeout=10)
+                code=worker.wait(timeout=max(.01,(config['outer_deadline_monotonic']-120 if cooperative else inner)-time.monotonic()));outcome='completed' if code==0 else 'failed';status['exit_code']=code
+                if cooperative and code==0 and (session/'worker_completion.json').is_file():
+                    delivered=json.loads((session/'worker_completion.json').read_text())
+                    if delivered.get('work_complete') is False and delivered.get('delivery_verified') is True:
+                        outcome='incomplete';status['delivery_verified']=True
+            except subprocess.TimeoutExpired:outcome='outer_timeout' if cooperative else 'inner_timeout';kill_group(worker.pid);worker.wait(timeout=10)
         try:interrupted_timings(session)
         except OSError:print('Volume timing writes failed; local recovery remains available.',flush=True)
     except BaseException as exc:
         status['supervisor_error']=type(exc).__name__
         if worker is not None and worker.poll() is None:kill_group(worker.pid)
     finally:
-        if outcome!='completed':
+        if outcome!='completed' and not (outcome=='incomplete' and status.get('delivery_verified')):
             # Also run on volume/log/timing exceptions, not just worker exit codes.
             # Keep recovery independent of persistent status writes and bounded
             # by the unchanged outer watchdog deadline.
@@ -182,7 +189,7 @@ def supervise(config):
                 status['job_complete']=outcome=='completed' and bool(status.get('training_complete')) and status['hf_backup_verified']
                 from training.detached_run import wait_for_download
                 wait_for_download(session,status,config['outer_deadline_monotonic']-120,
-                    0 if outcome=='inner_timeout' else config.get('download_grace_seconds',120))
+                    0 if outcome in ('inner_timeout','outer_timeout') else config.get('download_grace_seconds',120))
             write_status(session/'status.json',status)
             for name in ('console.log','recovery.log','watchdog.log'):
                 if (local/name).exists():
@@ -201,7 +208,6 @@ def launch(profile,global_volume):
     if active_training():raise ValueError('Use a separate pod with no active training')
     pod,key=preflight()
     config=json.loads(Path(profile).read_text());budget=timeout_budget(config['estimated_seconds'])
-    if budget['inner_seconds']!=28*3600 or budget['outer_seconds']!=33*3600:raise ValueError('Unexpected chain timeout settings')
     if not global_volume.is_absolute():raise ValueError('Global recovery mount must be absolute')
     # Its actual read/write probe runs inside the guarded worker.
     token=getpass.getpass('Hugging Face WRITE token (hidden): ').strip()
@@ -223,7 +229,7 @@ def launch(profile,global_volume):
         child.stdin.write(json.dumps(config).encode());child.stdin.close()
     print('Detached long bowl chain started. Mac may disconnect.',flush=True)
     print('Session:',name,flush=True);print('Watch:',local/'console.log',flush=True);print('Persistent reports:',session,flush=True)
-    print('Inner limit: 28 hours; independent outer limit: 33 hours. Checkpoints retained on volume.',flush=True)
+    print(f'Inner limit: {budget["inner_seconds"]/3600:g} hours; independent outer limit: {budget["outer_seconds"]/3600:g} hours. Checkpoints retained on volume.',flush=True)
     print('Global recovery mount:',global_volume,flush=True)
     print('Supervisor setup status:',local/'supervisor.log',flush=True)
     return 0

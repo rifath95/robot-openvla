@@ -45,11 +45,13 @@ def backup_training(session,repo,token,local,checkpoints=(0,500,1000,2000,3000))
     return receipt
 
 
-def backup_sweep(source,repo,token,local,receipt_dir):
+def backup_sweep(source,repo,token,local,receipt_dir,*,allow_partial=False):
     from huggingface_hub import HfApi
     from cloud.sweep_plan import validate_saved
     source=Path(source);payload=json.loads((source/'results.json').read_text());specs=validate_saved(payload)
-    if payload.get('launcher_error') or len(payload['trials'])!=len(specs):raise ValueError('Cannot archive an incomplete sweep as complete')
+    complete=len(payload['trials'])==len(specs)
+    graceful=allow_partial and payload['plan'].get('compute_stop_reason')=='inner_compute_deadline'
+    if payload.get('launcher_error') or (not complete and not graceful):raise ValueError('Cannot archive an incomplete sweep as complete')
     staging=Path(local)/'sweep-backup';staging.mkdir(parents=True,exist_ok=False)
     api=HfApi(token=token);prefix=source.name
     if not api.repo_info(repo,repo_type='dataset').private:raise ValueError('Sweep backup repository must be private')
@@ -65,11 +67,12 @@ def backup_sweep(source,repo,token,local,receipt_dir):
     package(source,staging,payload,on_part=timed_part)
     # The final revision contains every uploaded part plus the report manifest.
     final_upload_started=time.monotonic()
-    commit=api.upload_folder(repo_id=repo,repo_type='dataset',folder_path=staging,path_in_repo=prefix,allow_patterns=['reports/*','manifest.json'],commit_message=f'Complete {prefix} archive')
+    commit=api.upload_folder(repo_id=repo,repo_type='dataset',folder_path=staging,path_in_repo=prefix,allow_patterns=['reports/*','manifest.json'],commit_message=f'{"Complete" if complete else "Incomplete computation-limited"} {prefix} archive')
     manifest=json.loads((staging/'manifest.json').read_text());records=manifest['files']+[dict(path='manifest.json',bytes=(staging/'manifest.json').stat().st_size,sha256=digest(staging/'manifest.json'))]
     verification_start=time.monotonic();verify_files(repo,'dataset',commit.oid,prefix,records,token,local)
-    receipt=dict(verified=True,repo_id=repo,repo_type='dataset',revision=commit.oid,path_in_repo=prefix,verified_bytes=sum(r['bytes'] for r in records),trials=manifest['trials'],source_revision=manifest['source_revision'],verified_at_utc=utc(),packing_and_upload_seconds=verification_start-start,verification_seconds=time.monotonic()-verification_start)
-    parts=[json.loads(line) for line in (Path(receipt_dir)/'archive_part_timings.jsonl').read_text().splitlines()]
+    receipt=dict(verified=True,repo_id=repo,repo_type='dataset',revision=commit.oid,path_in_repo=prefix,verified_bytes=sum(r['bytes'] for r in records),trials=manifest['trials'],complete=complete,expected_trials=len(specs),source_revision=manifest['source_revision'],verified_at_utc=utc(),packing_and_upload_seconds=verification_start-start,verification_seconds=time.monotonic()-verification_start)
+    timings_file=Path(receipt_dir)/'archive_part_timings.jsonl'
+    parts=[json.loads(line) for line in timings_file.read_text().splitlines()] if timings_file.exists() else []
     receipt.update(packing_seconds=sum(r['seconds'] for r in parts if r['event']=='packing'),upload_seconds=sum(r['seconds'] for r in parts if r['event']=='upload')+verification_start-final_upload_started)
     (Path(receipt_dir)/'sweep_hf_receipt.json').write_text(json.dumps(receipt,indent=2)+'\n')
     return receipt

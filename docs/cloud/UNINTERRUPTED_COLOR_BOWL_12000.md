@@ -13,8 +13,10 @@ Use the existing A40 training image, same network volume with base weights,
 container disk at least 80 GB (40 GiB actually free), and at least 8 GiB free on
 the network volume for adapters, final optimizer/input state and reports.
 Training is expected to take about 6.5–7.5 hours on a comparable A40. Estimated budget 8 h, inner
-supervisor limit 11 h, outer independent limit 16 h. The training loop's own
-10 h guard leaves time for final saving and verified HF delivery.
+computation limit 10 h, outer independent limit 12 h. The computation deadline
+is measured from supervisor startup, including staging. It ends updates
+gracefully; saving, upload and verification may continue after 10 h. The outer
+guard reserves a short shutdown interval before the 12 h deadline.
 
 Run in the pod terminal after cloning/pulling this repository:
 
@@ -88,7 +90,9 @@ four red-present/red-absent (40 each). Greedy, maximum 120 actions, same placeme
 criteria. Later checkpoints are waited for (up to 12 h each, within the overall
 budget); incomplete saves are never loaded. Staged inference copies exclude
 optimizer/input state. Estimated budget **12 h including HF delivery**, inner
-limit **15 h**, independent outer limit **20 h**.
+computation limit **15 h**, independent outer limit **18 h**. At inner, stop
+starting new trials; finish the current bounded trial and upload the saved
+subset as explicitly incomplete. Delivery may continue beyond inner.
 
 **User-selected same-pod delivery:** finish trials → pack/upload to
 `Maxalderone/robot-openvla-simulator-results` → verify archived files and final
@@ -141,13 +145,15 @@ budget. The new final optimizer/input-state save and its HF backup have not yet
 been timed at full model scale, so the planning margin is retained. Training
 backup stages previously took 25–41 seconds for adapters/reports only.
 
-| Job | Expected duration | Planning estimate | Inner limit (+3 h) | Outer limit (+5 h beyond inner) |
+| Job | Expected duration | Planning estimate | Inner computation limit (125%) | Outer limit (150% of planning budget) |
 |---|---|---:|---:|---:|
-| Training, 12,000 updates | 6.5–7.5 h | 8 h | 11 h | 16 h |
-| Sweep plus HF delivery, 800 trials | 9.5–11 h | 12 h | 15 h | 20 h |
+| Training, 12,000 updates | 6.5–7.5 h | 8 h | 10 h | 12 h |
+| Sweep plus HF delivery, 800 trials | 9.5–11 h | 12 h | 15 h | 18 h |
 
-No executable budget was reduced: the existing estimates are conservative and
-consistent with observed times. Trial duration depends on behavior/early exits;
+The planning estimates remain conservative and consistent with observed times.
+The timeout policy was subsequently revised to 125%/150% of those complete-job
+budgets, replacing the earlier fixed-hour margins. Inner is cooperative; it no
+longer kills a healthy upload. Outer remains enforced by an independent guard. Trial duration depends on behavior/early exits;
 training duration depends on host/GPU contention. Starting the sweep after a
 complete checkpoint 6,000 should normally avoid waits: previous 200-trial blocks
 took about 2–2.6 hours while 2,000 training updates take about 1.0–1.1 hours.

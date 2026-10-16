@@ -15,8 +15,10 @@ UNINTERRUPTED_CHECKPOINTS=[6000,8000,10000,12000]
 
 def timeout_budget(estimate=25*3600):
     if type(estimate) not in (int,float) or not math.isfinite(estimate) or estimate<=0:raise ValueError('Invalid estimate')
-    return dict(estimated_seconds=math.ceil(estimate),inner_buffer_seconds=3*3600,outer_buffer_seconds=5*3600,
-                inner_seconds=math.ceil(estimate)+3*3600,outer_seconds=math.ceil(estimate)+8*3600)
+    estimate=math.ceil(estimate)
+    inner=math.ceil(estimate*1.25);outer=math.ceil(estimate*1.5)
+    return dict(estimated_seconds=estimate,inner_buffer_seconds=inner-estimate,
+                outer_buffer_seconds=outer-inner,inner_seconds=inner,outer_seconds=outer)
 
 
 def validate_layout_copy(actual,expected):

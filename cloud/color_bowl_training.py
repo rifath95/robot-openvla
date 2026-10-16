@@ -86,6 +86,23 @@ def train(command,log,env,*,local_log=None):
             process.stdout.close()
 
 
+def verify_computation(run,profile,checkpoints,allow_graceful_partial=False):
+    from cloud.bowl_chain_worker import verify_training
+    run=Path(run);marker=run/'compute_completion.json'
+    if allow_graceful_partial and marker.is_file():
+        final=json.loads(marker.read_text());last=final['last_update']
+        if final.get('training_complete') is False:
+            if (type(last) is not int or not 0<last<profile['max_steps'] or
+                final.get('run_update')!=last or final.get('reason')!='computation_limit'):
+                raise ValueError('Invalid graceful training-stop record')
+            actual=sorted(set([u for u in checkpoints if u<=last]+[last]))
+            completion=verify_training(run,last,actual)
+            completion.update(training_complete=False,requested_updates=profile['max_steps'],
+                compute_stop_reason='computation_limit',preserved_updates=last)
+            return completion,actual
+    return verify_training(run,profile['max_steps'],checkpoints),checkpoints
+
+
 def worker(config):
     import shutil
     from huggingface_hub import HfApi
@@ -115,22 +132,23 @@ def worker(config):
     env=os.environ.copy();env.pop('HF_TOKEN',None);env.pop('RUNPOD_API_KEY',None)
     with stage('training'):
         train([sys.executable,'-u','-m','training.train_panda','--dataset',config['dataset'],'--model',config['base'],'--config',PROJECT_ROOT/config['training_config'],'--output-root',session/'runs','--run-name','training','--provenance',session/'provenance.json'],session/'training.log',env)
-        completion=verify_training(config['training_run'],profile['max_steps'],checkpoints)
+        completion,checkpoints=verify_computation(config['training_run'],profile,checkpoints,config.get('deadline_policy')=='compute_then_delivery_v1')
         if profile.get('save_final_training_state',True):
             from training.resume_state import verify_state
-            verify_state(Path(config['training_run'])/f'checkpoint_{profile["max_steps"]:06d}',profile['max_steps'])
+            verify_state(Path(config['training_run'])/f'checkpoint_{completion["last_update"]:06d}',completion['last_update'])
             completion['final_training_state_verified']=True
         write_status(session/'training_completion.json',completion)
     with stage('checkpoint_hf_backup_and_verification'):backup_training(session,config['checkpoint_repo'],config['hf_token'],local,checkpoints)
     lines=['# Colored cube-to-bowl training', '', '600 training demonstrations / 43,344 action examples; all four training colors balanced.',
-        f'Fresh base, {profile["max_steps"]:,} updates; microbatch 8, accumulation 1, learning rate 0.0001, rank 32; no validation split.',
+        f'Fresh base, {completion["last_update"]:,}/{profile["max_steps"]:,} requested updates; microbatch 8, accumulation 1, learning rate 0.0001, rank 32; no validation split.',
         f'Checkpoints {checkpoints} retained on volume and verified on HF; final checkpoint includes optimizer, RNG and input-stream state.',
         f'Dataset: `{config["dataset_repo"]}@{config["dataset_revision"]}`.',
         f'Training-update wall time: {completion["training_update_seconds"]:.2f} seconds.',
         f'Checkpoint-save wall time: {completion["checkpoint_seconds"]:.2f} seconds.',
         '', '[Stage timings](TIMINGS.md) · [Smoothed loss](runs/training/loss_smoothed.png)']
+    if not completion['training_complete']:lines[2:2]=['**INCOMPLETE: computation limit reached; completed updates and resumable state preserved.**','']
     (session/'RUN_TRAINING_REPORT.md').write_text('\n'.join(lines)+'\n')
-    write_status(session/'worker_completion.json',dict(training_complete=True,checkpoint_backup_verified=True,finished_at_utc=utc()))
+    write_status(session/'worker_completion.json',dict(training_complete=completion['training_complete'],work_complete=completion['training_complete'],checkpoint_backup_verified=True,delivery_verified=True,finished_at_utc=utc()))
     with stage('final_report_hf_backup'):
         staging=local/'final-reports';staging.mkdir()
         for p in session.iterdir():

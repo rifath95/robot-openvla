@@ -91,7 +91,11 @@ def package(source,staging,payload,*,part_cache=None,on_part=None):
         if path.is_file() and not path.is_symlink() and path.suffix in ('.json','.jsonl','.md','.log','.txt'):
             shutil.copyfile(path,reports/path.name)
     for path in sorted(reports.iterdir()):manifest.append(dict(path=str(path.relative_to(staging)),bytes=path.stat().st_size,sha256=digest(path)))
-    (staging/'manifest.json').write_text(json.dumps(dict(sweep=source.name,source_revision=source_revision,trials=len(payload['trials']),files=manifest),indent=2)+'\n')
+    inventory=dict(sweep=source.name,source_revision=source_revision,trials=len(payload['trials']),files=manifest)
+    if payload['plan'].get('compute_stop_reason')=='inner_compute_deadline':
+        from cloud.sweep_plan import validate_saved
+        inventory.update(complete=False,expected_trials=len(validate_saved(payload)),stop_reason='inner_compute_deadline')
+    (staging/'manifest.json').write_text(json.dumps(inventory,indent=2)+'\n')
     return manifest
 
 

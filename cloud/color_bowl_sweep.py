@@ -45,7 +45,7 @@ def launch(global_volume,selected=None,profile_path=PROFILE):
     subprocess.run(['git','clone','--shared',str(PROJECT_ROOT),str(code)],check=True)
     subprocess.run(['git','-C',str(code),'checkout','--detach',commit],check=True)
     sweep_name='scripted_color_bowl_models_'+name.removeprefix('panda-train-bowl-sweep-').replace('-','_')
-    config=dict(session=str(session),local=str(local),sweep=str(local/'scripted-evaluations'/sweep_name),base_volume='/workspace/openvla-7b',base=str(local/'base'),global_volume=str(global_volume),selected_training_session=selected,sweep_profile=str(profile_path.relative_to(PROJECT_ROOT)),sweep_only=True,sweep_repo=profile['sweep_repo'],timeout_budget=timeout_budget(profile.get('estimated_seconds',20*3600)),pod_id=pod,pod_key=key,hf_token=token,code_commit=commit)
+    config=dict(session=str(session),local=str(local),sweep=str(local/'scripted-evaluations'/sweep_name),base_volume='/workspace/openvla-7b',base=str(local/'base'),global_volume=str(global_volume),selected_training_session=selected,deadline_policy=profile.get('deadline_policy'),sweep_profile=str(profile_path.relative_to(PROJECT_ROOT)),sweep_only=True,sweep_repo=profile['sweep_repo'],timeout_budget=timeout_budget(profile.get('estimated_seconds',20*3600)),pod_id=pod,pod_key=key,hf_token=token,code_commit=commit)
     env=os.environ.copy();env.pop('RUNPOD_API_KEY',None);env.pop('HF_TOKEN',None)
     with (local/'supervisor.log').open('a',buffering=1) as log:
         child=subprocess.Popen([sys.executable,'-u','-m','cloud.bowl_chain','--supervise'],cwd=code,env=env,stdin=subprocess.PIPE,stdout=log,stderr=subprocess.STDOUT,start_new_session=True,pass_fds=(lock.fileno(),))
@@ -108,10 +108,14 @@ def worker(config):
     with stage('scene_initialization_and_render_preflight'):run_command([config['sim_python'],'-u','-m','cloud.bowl_chain_sweep','--preflight',sweep/'results.json'],session/'preflight.log',env=env)
     with stage('simulator_sweep'):run_command([sys.executable,'-u','-m','cloud.bowl_chain_sweep','--config',local/'worker_config.json'],session/'sweep.log',env=env)
     os.environ.update(HF_XET_CHUNK_CACHE_SIZE_BYTES='0',HF_XET_CACHE=str(local/'xet-cache'))
-    with stage('sweep_packing_upload_and_verification'):backup_sweep(sweep,config['sweep_repo'],config['hf_token'],local,session)
-    (session/'RUN_SWEEP_REPORT.md').write_text(f'# Colored bowl sweep delivery\n\n800 trials; exact prior layouts; checkpoints {checkpoints}.\nResults uploaded and verified on HF before pod stop.\nHistorical base results use the old 300-demo action normalization.\n[Stage timings](TIMINGS.md)\n')
+    with stage('sweep_packing_upload_and_verification'):
+        payload=json.loads((sweep/'results.json').read_text())
+        partial=payload['plan'].get('compute_stop_reason')=='inner_compute_deadline'
+        backup_sweep(sweep,config['sweep_repo'],config['hf_token'],local,session,**({'allow_partial':True} if partial else {}))
+    (session/'RUN_SWEEP_REPORT.md').write_text(f'# Colored bowl sweep delivery\n\n{len(payload["trials"])}/800 trials saved; exact prior layouts; checkpoints {checkpoints}.\nResults uploaded and verified on HF before pod stop.\nHistorical base results use the old 300-demo action normalization.\n[Stage timings](TIMINGS.md)\n')
     with stage('final_report_upload_and_verification'):publish_reports(sweep,local,session,config['sweep_repo'],config['hf_token'])
     publish_reports(sweep,local,session,config['sweep_repo'],config['hf_token'])
+    write_status(session/'worker_completion.json',dict(work_complete=not partial,delivery_verified=True,trials=len(payload['trials']),expected_trials=800))
     return 0
 
 

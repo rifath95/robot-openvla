@@ -80,5 +80,6 @@
     "verification.json": 273
   },
   "minimum_volume_free_gib": 8,
-  "dataset_revision_pinned": "0bf1faf4036cbfd5e3c7282111f1d9a54b2d020f"
+  "dataset_revision_pinned": "0bf1faf4036cbfd5e3c7282111f1d9a54b2d020f",
+  "deadline_policy": "compute_then_delivery_v1"
 }

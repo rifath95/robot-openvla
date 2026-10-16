@@ -12,7 +12,7 @@ class ColoredSweepTests(unittest.TestCase):
         profile=json.loads(PROFILE.read_text());plan=make_colored_plan('panda-train-color-bowl-test')
         self.assertEqual(plan['groups'],profile['groups']);self.assertEqual(plan['checkpoints'],[1000,2000,4000,6000])
         self.assertFalse(plan['include_base_model']);self.assertEqual(len(validate_saved(dict(plan=plan,trials=[]))),800)
-        self.assertEqual(plan['timeout_budget']['inner_seconds'],23*3600);self.assertEqual(plan['timeout_budget']['outer_seconds'],28*3600)
+        self.assertEqual(plan['timeout_budget']['inner_seconds'],25*3600);self.assertEqual(plan['timeout_budget']['outer_seconds'],30*3600)
         self.assertEqual(plan['historical_baseline']['trials'],200)
         self.assertIn('300-demo',plan['historical_baseline']['normalization'])
         for damage in ('layout','checkpoint','baseline'):

@@ -175,8 +175,14 @@ def save_adapter(model, processor, cfg, dataset, update, *, optimizer=None, fina
         stream.write(json.dumps(dict(update=update,seconds=time.monotonic()-save_started))+'\n')
     metrics.plot()
     metrics.update_started=time.monotonic()
+    if final:
+        completed=local_update>=cfg.max_steps
+        (metrics.directory/'compute_completion.json').write_text(json.dumps(dict(
+            training_complete=completed,last_update=update,run_update=local_update,
+            reason='requested_updates_completed' if completed else 'computation_limit'),indent=2)+'\n')
     print(f'Saved adapter checkpoint: {folder}',flush=True)
 
 
 def budget_expired():
-    return time.monotonic()-metrics.started>=int(os.environ['PANDA_MAX_RUNTIME'])
+    from cloud.compute_deadline import expired
+    return expired() or time.monotonic()-metrics.started>=int(os.environ['PANDA_MAX_RUNTIME'])
