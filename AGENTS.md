@@ -54,6 +54,14 @@ profile. Do not substitute the default transfer-pod delivery for this experiment
 
 # Deadline policy
 
+This is the standing default for **all future timed jobs**, including training,
+benchmarks, simulator sweeps, transfers, HF uploads and chained workflows, unless
+the user explicitly overrides it. For a complete planning budget B, use
+inner = ceil(1.25 * B) and outer = ceil(1.50 * B). Both percentages refer to B.
+Before deploying any job, verify its launcher follows this rule; update older
+fixed-hour buffer implementations before using them. Do not change deadlines
+of already-running jobs or rewrite historical run metadata.
+
 Planning budgets must comfortably cover the complete job through saving, HF
 delivery/verification, recovery allowance and pod shutdown. Set the inner
 computation deadline to 125% of that budget and the outer deadline to 150% of
