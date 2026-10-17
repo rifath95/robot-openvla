@@ -1,8 +1,25 @@
 # robot-openvla
 
-A robotics workspace for connecting a simulated Franka Panda arm to OpenVLA. Development currently runs on a MacBook using Python and MuJoCo 3.14.0, without ROS.
+An experiment in adapting pretrained OpenVLA to a particular robot and controller:
+a simulated Franka Panda in MuJoCo. We fine-tuned the model on our own
+image/instruction/action demonstrations, then evaluated whether it could use
+that embodiment to touch, lift, and place cubes while retaining pretrained
+color knowledge. Development uses Python, MuJoCo 3.14.0 and cloud NVIDIA GPUs,
+with an interactive simulator on the Mac and automated simulation in the cloud,
+without ROS.
 
-Last updated: 2026-10-14. Update this document as milestones, run instructions, and model locations change.
+**Phase 3 is complete.** Our best observed cube-to-bowl model achieved
+**80/200 successful placements (40%)** across the declared one-, two- and
+four-cube evaluation scenes, including colors absent from fine-tuning.
+Color-guided touching was more reliable: **95% seen-color contact and 82.5%
+unseen-color contact** in its two-cube evaluation. These are measured results
+in our simulator, not a claim of reliable general robot manipulation.
+
+Last updated: 2026-10-17. See the
+[Phase 3 completion report](docs/reviews/PHASE3_COMPLETION.md) for the full
+experiment history, best checkpoints, color-retention evidence and limitations.
+All completed lift/bowl work previously labeled Phase 4 now belongs to Phase 3.
+Phase 4 is reserved for [potential future explorations](docs/reviews/PHASE4_PENDING_WORK.md).
 
 Code is organized by purpose: `simulation/`, `inference/`, `cloud/`,
 `data_tools/`, `training/`, and `analysis/`. Tests live in `tests/`, dependency
@@ -30,27 +47,13 @@ For batch-one prediction latency, the Mac/cloud timing breakdown, and estimated
 [GPU_INFERENCE_COMPARISON.md](docs/benchmarks/GPU_INFERENCE_COMPARISON.md).
 New simulator trials automatically refresh that report from saved measurements.
 
-**Phases 1, 2, and 3 are complete.** Phase 3 established reproducible Panda
-fine-tuning and measured instruction-guided cube touching. The final four-color
-checkpoint achieved **95% correct contact on seen colors (38/40)** and **82.5%
-on unseen colors (33/40)**, compared with **17.5% unseen success for the pretrained
-base**. Black, purple, orange, and white were absent from fine-tuning.
-
-See the [Phase 3 completion summary](docs/reviews/PHASE3_COMPLETION.md) for the
-experiments, findings, saved artifacts and limitations, and the
-[final model sweep review](docs/reviews/FOUR_COLOR_MODEL_SWEEP_REVIEW.md) for the
-480-trial evaluation. The original pick-and-place objective was narrowed after
-unsuccessful grasp/lift experiments; reliable model-driven pick-and-place remains
-open. The [multi-cube sweep review](docs/reviews/MULTI_CUBE_MODEL_SWEEP_REVIEW.md)
-recommends checkpoint 300 for that harder color-selection task. Phase 4 has started
-with single-cube grasp/lift demonstrations. The 50-trajectory pilot achieved
-**7/10 successful lifts on unseen positions at checkpoint 300**; the pretrained
-base achieved 0/10. The dataset is now [expanded to 300](docs/reviews/LIFT_CUBE_300.md)
-and trained for 1,000 updates. Its checkpoint 1,000 achieved **16/20 successful
-lifts on tested unseen positions**. These simulator results demonstrate progress,
-not broad reliability.
-
-The parallel bowl-placement dataset is now [expanded to 300 demonstrations](docs/reviews/PLACE_BOWL_300.md), retaining the reviewed original 50. All 300 are assigned to training. A [detached training/sweep/HF-backup chain](docs/cloud/BOWL_TRAIN_SWEEP_CHAIN.md) is prepared for 3,000 updates and 1,000 color-selection placement trials; it has not yet been launched. Checkpoints stay on the network volume; global storage provides recovery for recordings if HF backup fails.
+The latest comparisons are the [600-demo colored bowl sweep](docs/reviews/COLOR_BOWL_600_SWEEP.md),
+[adapter-only continuation with a fresh optimizer](docs/reviews/COLOR_BOWL_CONTINUATION_SWEEP.md),
+and [uninterrupted 12,000-update sweep](docs/reviews/UNINTERRUPTED_COLOR_BOWL_12000_SWEEP.md).
+The original 6,000-update checkpoint remains the strongest observed bowl model.
+The new uninterrupted run declined from 30.5% at 6,000 to 20% at 12,000 despite
+improving training loss. Select checkpoints using simulator outcomes as well as
+training metrics.
 
 ## Goal
 
@@ -74,8 +77,8 @@ The seven values are `[dx, dy, dz, droll, dpitch, dyaw, gripper]`: three positio
 | --- | --- | --- |
 | 1 | Establish local simulation, seven-value control, and OpenVLA inference. | **Completed** |
 | 2 | Connect local simulation to cloud OpenVLA and demonstrate a live repeated control loop. | **Completed** |
-| 3 | Adapt OpenVLA to our Panda setup and evaluate instruction-guided touching on new scenes, including unseen colors. | **Completed — fine-tuning and 480-trial baseline/checkpoint comparison** |
-| 4 | Expand to other tasks and measure transfer to tasks excluded from fine-tuning. | **In progress — lift/bowl pilots and expanded bowl evaluation** |
+| 3 | Adapt OpenVLA to our Panda setup; evaluate touching, lifting, color selection and bowl placement. | **Completed — best bowl placement 40%; retained unseen-color knowledge** |
+| 4 | Explore OpenVLA adaptation in another environment, potentially LIBERO with a larger existing demonstration dataset. | **Proposed — environment, dataset and experiments not selected** |
 
 ### Phase 1 — completed: local foundation
 
@@ -104,53 +107,64 @@ interval; current commands use a 0.4 s interval. Model loading is a separate cos
 See [CONTROL_FINDINGS.md](docs/simulation/CONTROL_FINDINGS.md) and
 [CONTROL_CALIBRATION.md](docs/simulation/CONTROL_CALIBRATION.md) for evidence and limitations.
 
-**Completion means the remote control pipeline works.** Model-driven pickup has
-not been demonstrated. The latest grasp-point/interval changes and exhausted-retry
-recovery still need verification together in a long real cloud trial. The Panda
-convention defines our interface; it does not establish pretrained Bridge-to-Panda
-policy calibration. Session/server limits do not terminate the rented pod or stop billing.
+**At Phase 2 completion, the remote control pipeline worked; model-driven pickup
+was still unproven.** Phase 3 subsequently demonstrated learned lifting and bowl
+placement. The controller convention alone does not establish pretrained
+Bridge-to-Panda policy calibration. Legacy session/server limits are distinct
+from the later supervised jobs that request automatic pod stopping.
 
-### Phase 3 — completed: Panda adaptation and color-guided touching
+### Phase 3 — completed: embodiment adaptation and color retention
 
-The phase began with pick-and-place demonstrations, cloud LoRA training and
-simulator trials. More data and lower losses did not establish successful pickup.
-We investigated controller continuity, action replay, teacher-forced versus
-normally generated actions, and supervision that depended on the script's hidden
-phase. We then narrowed the task to cube touching to test adaptation separately
-from grasping and multi-stage planning.
+We adapted OpenVLA to our camera, Panda action convention and revised
+pose-holding controller through LoRA fine-tuning on scripted demonstrations.
+The experiments progressed from failed early pick-and-place attempts through
+simpler touching, color selection and lifting, then back to bowl placement.
+Recorded-action replay and controller/supervision diagnostics were essential
+before judging learned behavior.
 
-- Built replay-verified demonstrations, portable RLDS bundles, training-only
-  action statistics, and Hugging Face upload/download with checksum verification.
-- Added reproducible LoRA training, checkpoint/validation schedules, loss plots,
-  timings, GPU benchmarks and detached cloud supervisors with pod-stop requests.
-- Demonstrated single-cube touch contact at 20/20 new positions with checkpoint
-  300 (17/20 clean completions), then instruction-dependent red/blue selection.
-- Expanded to 300 four-color demonstrations: 200 train, 50 validation, 50 test.
-  Trained fresh from OpenVLA for 1,000 updates at microbatch 8, accumulation 1,
-  learning rate 0.0001 and LoRA rank 32.
-- Evaluated the base and five checkpoints in 480 automated cloud trials. The
-  final checkpoint achieved 71/80 correct contacts, including 33/40 for reserved
-  unseen colors. Both target instructions succeeded in 14/20 unseen paired scenes.
+| Milestone | Best observed result | Evidence |
+|---|---|---|
+| Two-cube color-guided touch | 38/40 seen-color and 33/40 unseen-color correct contacts | [480-trial review](docs/reviews/FOUR_COLOR_MODEL_SWEEP_REVIEW.md) |
+| Single-cube lift after 300 demonstrations | 16/20 successful lifts on tested unseen positions, checkpoint 1,000 | [Lift dataset and results](docs/reviews/LIFT_CUBE_300.md) |
+| Colored cube into blue bowl after 600 demonstrations | **80/200 placements (40%), original checkpoint 6,000** | [800-trial review](docs/reviews/COLOR_BOWL_600_SWEEP.md) |
+| Further training through 12,000 updates | No improvement over the original 6,000 checkpoint in either continuation or uninterrupted run | [Latest comparison](docs/reviews/UNINTERRUPTED_COLOR_BOWL_12000_SWEEP.md) |
 
-This demonstrates useful unseen-color generalization consistent with pretrained
-color knowledge remaining usable after adaptation. It does not establish broad
-robotic task competence or solve the original pick-and-place objective.
-The [completion summary](docs/reviews/PHASE3_COMPLETION.md) records the full scope
-and evidence; [training](docs/training/FOUR_COLOR_TOUCH_TRAINING.md) and
-[sweep](docs/cloud/FOUR_COLOR_MODEL_SWEEP.md) guides reproduce the final experiment.
+The bowl dataset contains 200 single-cube and 400 two-cube demonstrations,
+43,344 action examples, all assigned to training. Fine-tuning colors were red,
+blue, green and yellow; evaluation also requested black, purple and orange,
+with four-cube scenes extending beyond the training scene size. At the best
+checkpoint, unseen-color targets were placed in 47/130 trials. Among multi-cube
+trials reaching a qualifying lift, the first lifted cube was the requested one
+in 79/79 cases, including all 49 unseen-target cases. This conditional selection
+measure must not be confused with overall task success.
 
-### Phase 4 — started: single-cube grasping and lifting
+These results show that fine-tuning can teach useful behavior for our embodiment
+while pretrained color knowledge remains usable. Grasping, transport and release
+are still unreliable. Lower teacher-forced loss does not guarantee better
+closed-loop behavior; the observed performance peak and later decline are part
+of the result.
 
-Fifty replay-verified grasp/lift demonstrations are available in
-`datasets/panda_lift_cube/`. The arm starts in a fixed pose with an open gripper;
-cube positions vary. See the [50-trajectory review](docs/reviews/LIFT_CUBE_50.md).
-No fine-tuning has started for this task. Run a short pilot and evaluate actual
-lift success before expanding further or adding color distractors.
-Compare each extension with the Phase 3 baseline and measure retention of the
-existing touch/color skill. Reliable pick-and-place, broad starting-pose coverage
-and real-robot transfer remain future goals.
+The phase also delivered replay-verified datasets, cloud training and sweeps,
+GPU benchmarks, an interactive checkpoint/scene/instruction playground, optional
+recovery controls, verified Hugging Face delivery, downloadable reports and final
+checkpoints containing optimizer/RNG/input-stream state for full continuation.
+Recovery-assisted demos are separate from the reported greedy-policy sweeps.
+See the [completion report](docs/reviews/PHASE3_COMPLETION.md) for scope and limits.
 
-## What works so far
+### Phase 4 — potential future explorations
+
+Consider testing the same pretrained OpenVLA in a different robot/simulation
+environment, potentially LIBERO, using a larger existing demonstration dataset
+from Hugging Face rather than collecting every trajectory ourselves. The next
+question is whether that environment/data setup gives better task completion
+while preserving instruction and color knowledge.
+
+No Phase 4 environment, dataset or training run is committed yet. First check
+camera/action/controller compatibility, establish a pretrained baseline and a
+small fine-tuning pilot, then evaluate on held-out scenes and instructions.
+See the [future exploration plan](docs/reviews/PHASE4_PENDING_WORK.md).
+
+## Early local foundation (historical)
 
 - Loaded the Franka Panda model from Google DeepMind's MuJoCo Menagerie.
 - Created a scene with a table, a movable red cube, and a fixed camera.
@@ -416,16 +430,16 @@ The successful test used `bridge_orig` action statistics. These statistics are f
 
 ## Current status and next intended work
 
-**Phases 1–3 are complete; Phase 4's 50-trajectory lift dataset is ready for pilot preparation.** The current learned skill
-is instruction-guided cube touching, with successful transfer to colors excluded
-from fine-tuning. Checkpoint 1,000 from `panda-train-20261013-110217-1084` is the
-best observed model in the two-cube sweep; checkpoint 300 leads the multi-cube
-sweep. The [50-trajectory lift review](docs/reviews/LIFT_CUBE_50.md) describes the
-next experiment. It demonstrates expert execution, not a trained lift policy.
+**Phases 1–3 are complete.** The best observed bowl-placement result is 40%
+from original checkpoint 6,000 of `panda-train-color-bowl-20261015-094416-4344d31f`.
+Touching, lifting, multi-cube evaluation and both 12,000-update comparisons are
+all part of Phase 3. Phase 4 is a proposed exploration in another environment;
+see the [completion report](docs/reviews/PHASE3_COMPLETION.md) and
+[future directions](docs/reviews/PHASE4_PENDING_WORK.md).
 
 Use [CLOUD_QUICKSTART.md](docs/cloud/CLOUD_QUICKSTART.md) for remote sessions,
 [FOUR_COLOR_TOUCH_TRAINING.md](docs/training/FOUR_COLOR_TOUCH_TRAINING.md) for the
-final training profile, and [CLOUD_SIMULATOR_SWEEPS.md](docs/cloud/CLOUD_SIMULATOR_SWEEPS.md)
+historical touch training profile, and [CLOUD_SIMULATOR_SWEEPS.md](docs/cloud/CLOUD_SIMULATOR_SWEEPS.md)
 for cloud-only trials, saved results and resume behavior. The agreed default is
 [two separate pods](docs/cloud/TWO_STAGE_SWEEP_WORKFLOW.md): simulation first,
 then a cheaper pod for HF transfer, with automatic stopping after each stage.

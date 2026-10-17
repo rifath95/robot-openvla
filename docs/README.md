@@ -1,8 +1,13 @@
 # Documentation index
 
-**Phases 1–3 are complete; Phase 4 has trained lift/bowl pilots, expanded datasets, and a prepared overnight training/evaluation chain.** Start with the
-[Phase 3 completion summary](reviews/PHASE3_COMPLETION.md) for achieved results
-and limitations, and [repository layout](REPOSITORY_LAYOUT.md) for code locations.
+**Phases 1–3 are complete as of October 17, 2026.** Phase 3 includes all
+completed touching, lifting, bowl placement, color-transfer and long-training
+experiments. Best observed bowl-placement success is **80/200 (40%)** at the
+original 6,000-update checkpoint. Start with the
+[Phase 3 completion summary](reviews/PHASE3_COMPLETION.md) for results and limits,
+the [potential Phase 4 explorations](reviews/PHASE4_PENDING_WORK.md) for future
+directions, and [repository layout](REPOSITORY_LAYOUT.md) for code locations.
+Older experiment documents may retain the phase labels used when they were written.
 
 For result folders and replay locations, see the [local outputs layout](OUTPUT_LAYOUT.md).
 
@@ -95,11 +100,11 @@ For result folders and replay locations, see the [local outputs layout](OUTPUT_L
 - [Phase 3: training and inference consistency](reviews/PIPELINE_AUDIT.md)
 - [Local audit after Panda v2 fine-tuning](reviews/V2_LOCAL_AUDIT.md)
 
-- [Phase 4 lift dataset expanded to 300](reviews/LIFT_CUBE_300.md): preserved pilot demonstrations, split counts, verification and training setup.
+- [Phase 3 lift dataset expanded to 300](reviews/LIFT_CUBE_300.md): preserved pilot demonstrations, split counts, verification and training setup.
 
-- [Phase 4 bowl placement: first ten](reviews/PLACE_BOWL_FIRST_TEN.md): blue bowl interior, fixed lift start, physical placement and replay checks.
+- [Phase 3 bowl placement: first ten](reviews/PLACE_BOWL_FIRST_TEN.md): blue bowl interior, fixed lift start, physical placement and replay checks.
 
-- [Phase 4 bowl placement expanded to 50](reviews/PLACE_BOWL_50.md): verified examples, upload bundle and proposed pilot configuration.
+- [Phase 3 bowl placement expanded to 50](reviews/PLACE_BOWL_50.md): verified examples, upload bundle and proposed pilot configuration.
 - [300-demo red-only bowl model: complete 1,000-trial review](reviews/PLACE_BOWL_300_SWEEP.md): checkpoint comparison, matched color requests and remaining placement failures.
 
 - [600-demo colored bowl model: complete 800-trial review](reviews/COLOR_BOWL_600_SWEEP.md): checkpoint 6,000 reaches 40% placement, with unseen-color selection and four-cube transfer.

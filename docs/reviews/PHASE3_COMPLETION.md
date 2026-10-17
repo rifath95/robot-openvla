@@ -1,8 +1,109 @@
-# Phase 3 completion: Panda fine-tuning and color-guided touching
+# Phase 3 completion: OpenVLA embodiment adaptation and color retention
 
-**Status: completed October 13, 2026.** Phase 3 demonstrated that OpenVLA can be adapted to our simulated Franka Panda, execute a learned closed-loop touch skill, follow color instructions, and generalize to colors absent from fine-tuning. The final checkpoint achieved 95% correct contact on seen colors and 82.5% on unseen colors in the final controlled simulator sweep.
+**Status: completed October 17, 2026.** All work completed so far—including
+experiments initially called Phase 4—belongs to Phase 3. This report supersedes
+the narrower October 13 touch-only completion boundary. Historical run names,
+configurations and result files are preserved.
 
-The phase originally targeted pick-and-place. That objective was narrowed after unsuccessful grasp/lift experiments to establish a simpler, measurable adaptation result. Completion therefore means the training/evaluation pipeline and color-guided touch milestone are demonstrated. It does **not** mean the original pick-and-place objective has been achieved.
+Our goal was to take pretrained OpenVLA and adapt its visual/language/action
+knowledge to our particular embodiment: a Franka Panda, camera and controller
+in MuJoCo. We collected demonstrations in that setup, fine-tuned LoRA adapters,
+and measured actual closed-loop behavior rather than relying on training loss.
+
+**Best observed cube-to-bowl success: 80/200 (40%) at original checkpoint 6,000.**
+The model learned useful touching, lifting and placement behavior; successful
+instruction-dependent selection of colors absent from fine-tuning shows that
+pretrained color knowledge remained usable. Manipulation remains unreliable,
+especially with distractors, and more training did not consistently help.
+This phase establishes partial adaptation, not a solved pick-and-place task or
+real-robot transfer.
+
+## Final results across tasks
+
+| Task / experiment | Result | Interpretation |
+|---|---|---|
+| Four-color touch, checkpoint 1,000 | 38/40 seen and 33/40 unseen correct contacts | Strong learned touch behavior and unseen-color generalization on this suite |
+| Expanded single-cube lift, checkpoint 1,000 | 16/20 successful lifts on tested unseen positions | Learned grasp/lift behavior; smaller evaluation than the bowl sweeps |
+| 600-demo colored bowl, original checkpoint 6,000 | **80/200 placements (40%)** | Best observed bowl checkpoint across the completed runs |
+| Same model continued with fresh optimizer | 27.5%, 32%, 32% at 8,000/10,000/12,000 | Additional training did not beat original 6,000 |
+| New uninterrupted run from original saved initialization | 30.5%, 27%, 26%, 20% at 6,000/8,000/10,000/12,000 | Continuous optimizer state did not prevent the later decline |
+
+The original bowl run improved from 4% at 1,000 to 10% at 2,000, 29% at 4,000
+and 40% at 6,000. Later evaluated models did worse overall even as training loss
+improved. The new uninterrupted run already differed at 6,000, so these runs do
+not isolate optimizer reset as a cause or prove that resetting improves training.
+All figures refer to declared simulator suites, not universal success rates.
+
+Evidence: [600-demo bowl sweep](COLOR_BOWL_600_SWEEP.md),
+[continuation sweep](COLOR_BOWL_CONTINUATION_SWEEP.md),
+[uninterrupted training](UNINTERRUPTED_COLOR_BOWL_12000_TRAINING.md) and
+[uninterrupted sweep](UNINTERRUPTED_COLOR_BOWL_12000_SWEEP.md).
+
+## Final bowl dataset, model and evaluation
+
+- Dataset: 600 demonstrations, 43,344 action examples; 200 single-cube and 400
+  two-cube demonstrations. All are training data; simulator sweeps provide the
+  separate behavioral evaluation. See [collection and audit](COLOR_PLACE_BOWL_600.md).
+- Fine-tuning colors: red, blue, green and yellow. Requested unseen colors in
+  the bowl sweep: black, purple and orange. Blue/yellow were not requested by
+  that sweep. Earlier touch sweeps also evaluated unseen white.
+- Best model: `panda-train-color-bowl-20261015-094416-4344d31f`, checkpoint 6,000;
+  batch 8, learning rate 0.0001, LoRA rank 32. Checkpoint backups are in the HF
+  model repository `Maxalderone/robot-openvla-checkpoints`; local volume copies
+  may be removed after verified backup.
+- Main comparison: 200 tasks per model across one-, two- and four-cube scenes,
+  with red present or absent; greedy generation, no recovery intervention and
+  120 action attempts. The four-cube case was not demonstrated in training.
+- Placement success requires a prior ≥8 cm lift, the requested cube settled
+  within 4.5 cm of bowl center and 4 mm of resting height, with the hand ≥8 cm
+  away. Contact or lifting alone is not placement success.
+
+At the best checkpoint, placements were 23/40 for single-cube scenes, 32/80 for
+two-cube scenes and 25/80 for four-cube scenes. Unseen targets achieved 47/130
+placements (36.2%). In multi-cube trials with a qualifying lift, the requested
+cube was lifted first in 79/79 cases, including 49/49 unseen-target lifts;
+81/160 multi-cube trials had no qualifying lift. Thus correct color selection
+among lifts is strong, while overall motor success is much lower.
+
+Identical-image paired black/purple requests successfully selected and placed
+each requested cube after separate resets. Those color names were not supplied
+in fine-tuning demonstrations. This is strong behavioral evidence of retained
+pretrained color grounding. Fine-tuning can teach how to use existing features
+for actions; the experiment does not isolate the internal source of every
+prediction or establish that all pretrained knowledge was preserved.
+
+Remaining failures include no lift, tracking failures, and targets lifted but
+released outside the bowl. Across the latest uninterrupted comparison all 800
+trials completed with no infrastructure failures; the observed decline is not
+explained by failed launches. See the detailed review for matching checks and
+limits of the comparison.
+
+## Later Phase 3 experiments after the touch milestone
+
+We expanded single-cube lift from 50 to 300 demonstrations and tested the
+red-only lift policy on two differently colored cubes in a 160-trial sweep.
+We also developed bowl placement from 10 reviewed demonstrations through 50,
+300 red-only demonstrations and finally 600 mixed one/two-cube demonstrations.
+The red-only bowl comparison used 1,000 trials; the colored-bowl comparison used
+800, followed by a 600-trial continuation comparison and an 800-trial
+uninterrupted comparison. These are distinct evaluations, not additional
+training examples.
+
+A bowl initialization defect was fixed before later bowl evaluations: objects
+are positioned before settling, and layouts are preflighted. The revised
+pose-holding controller remains the common interface. Earlier failures and fixes
+remain documented rather than being rewritten as successful experiments.
+
+The interactive playground now supports checkpoint selection, cube counts and
+colors, editable instructions and action limits. Sampling recovery, upward
+nudges and a manual nudge are available for experiments. These interventions
+were **not** used to obtain the reported greedy-policy success rates.
+
+## Earlier touch milestone and experiment history
+
+The following sections retain the detailed October 13 touch experiment record;
+“final” in that historical milestone refers to the touch experiment, not the
+last experiment of the expanded Phase 3.
 
 ## Starting point and approach
 
@@ -113,6 +214,25 @@ Follow the [final training guide](../training/FOUR_COLOR_TOUCH_TRAINING.md) and 
 
 ## Limits and handoff to Phase 4
 
-This is a simulated touch result, not grasping, lifting, placement or real-robot success. Contact need not be centered or gentle and may move the cube. Initial arm pose, camera and cube orientation are fixed; variation is limited to the declared scene workspace and color assignments. Ten scenes per pair limit precision, and reusing this suite to choose checkpoints makes fresh evaluation desirable before broader claims.
+All results are simulation results with a fixed camera, constrained workspace
+and starting arm pose. Task definitions and denominators differ across touching,
+lifting and placement; their percentages should not be directly compared as if
+they measured the same skill. Suites were reused to compare checkpoints, so
+fresh scenes remain important for further model selection claims. We have not
+established reliable general manipulation, robustness to arbitrary camera/robot
+changes, or real-robot transfer.
 
-Phase 4 started October 14 with a [ten-demonstration single-cube grasp/lift pilot](LIFT_CUBE_FIRST_TEN.md), then [expanded to 50 verified demonstrations](LIFT_CUBE_50.md) after review. Fine-tuning has not started for this task. Preserve the Phase 3 model and evaluation as a reference, and measure both the new skill and retention of color-guided touching.
+Training uses image/instruction/action imitation, including teacher forcing;
+rollout evaluation uses generated actions and evolving observations. Better
+training loss alone is insufficient. Continuous optimizer state did not solve
+that mismatch in the completed experiment. Final long-run checkpoints now save
+optimizer, RNG and input-stream state as well as adapters, supporting future
+full-state continuation. Training reports are independently downloadable from HF.
+
+Phase 4 has not started under the revised boundary. Potential exploration is to
+adapt the same pretrained OpenVLA in another environment, possibly LIBERO with
+a larger existing demonstration dataset from Hugging Face. First select and
+validate environment/data/action compatibility and a small baseline/pilot;
+then measure task success and retention on held-out conditions. This is a
+research direction, not an assumption that changing environments will improve
+performance. See [potential Phase 4 work](PHASE4_PENDING_WORK.md).
