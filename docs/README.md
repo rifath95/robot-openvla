@@ -106,4 +106,6 @@ For result folders and replay locations, see the [local outputs layout](OUTPUT_L
 
 - [Colored bowl continuation: checkpoints 8,000–12,000](reviews/COLOR_BOWL_CONTINUATION_SWEEP.md): matched 600-trial evaluation; checkpoint 6,000 remains best overall.
 
-- [Uninterrupted colored bowl training: 12,000 updates](reviews/UNINTERRUPTED_COLOR_BOWL_12000_TRAINING.md): completed run, training metrics, timings and verified full-state backup; simulator comparison pending.
+- [Uninterrupted colored bowl training: 12,000 updates](reviews/UNINTERRUPTED_COLOR_BOWL_12000_TRAINING.md): completed run, training metrics, timings and verified full-state backup; see the completed simulator comparison below.
+
+- [Uninterrupted colored bowl: completed 800-trial sweep](reviews/UNINTERRUPTED_COLOR_BOWL_12000_SWEEP.md): new 6,000 reaches 30.5%, new 12,000 20%; original 6,000 remains best observed at 40%.

@@ -1,0 +1,418 @@
+{
+  "sweep": "scripted_color_bowl_models_20261016_121931_8f24640a",
+  "training_session": "panda-train-color-bowl-20261016-084536-c17080be",
+  "verified_trials": 800,
+  "greedy_only": true,
+  "initial_images_matching_original": 198,
+  "by_checkpoint": {
+    "6000": {
+      "placements": 61,
+      "target_lifts": 90,
+      "controller_failures": 29,
+      "infrastructure_failures": 0,
+      "wrong_placements": 0,
+      "outcomes": {
+        "correct_placed": 61,
+        "no_lift": 108,
+        "target_lifted_not_placed": 29,
+        "wrong_cube_lifted": 2
+      },
+      "by_group": {
+        "single_seen": {
+          "trials": 20,
+          "placements": 11,
+          "lifts": 15
+        },
+        "single_unseen": {
+          "trials": 20,
+          "placements": 9,
+          "lifts": 10
+        },
+        "two_red_present": {
+          "trials": 40,
+          "placements": 16,
+          "lifts": 23
+        },
+        "two_red_absent": {
+          "trials": 40,
+          "placements": 11,
+          "lifts": 16
+        },
+        "four_red_present": {
+          "trials": 40,
+          "placements": 7,
+          "lifts": 11
+        },
+        "four_red_absent": {
+          "trials": 40,
+          "placements": 7,
+          "lifts": 15
+        }
+      },
+      "by_color": {
+        "red": {
+          "trials": 50,
+          "placements": 22,
+          "lifts": 27
+        },
+        "black": {
+          "trials": 80,
+          "placements": 23,
+          "lifts": 40
+        },
+        "purple": {
+          "trials": 40,
+          "placements": 9,
+          "lifts": 13
+        },
+        "green": {
+          "trials": 20,
+          "placements": 6,
+          "lifts": 9
+        },
+        "orange": {
+          "trials": 10,
+          "placements": 1,
+          "lifts": 1
+        }
+      },
+      "unseen_placements": 33,
+      "mean_trial_seconds": 45.797270850986244,
+      "first_multicube_lift": {
+        "correct": 65,
+        "no_lift": 93,
+        "wrong": 2
+      },
+      "placement_failures": {
+        "outside_radius": 25,
+        "height": 13,
+        "hand_close": 12,
+        "unsettled": 1
+      },
+      "vs_original_6000": {
+        "gains": 29,
+        "losses": 48,
+        "shared": 32,
+        "p": 0.039539532877977755
+      }
+    },
+    "8000": {
+      "placements": 54,
+      "target_lifts": 74,
+      "controller_failures": 36,
+      "infrastructure_failures": 0,
+      "wrong_placements": 1,
+      "outcomes": {
+        "correct_placed": 54,
+        "no_lift": 125,
+        "target_lifted_not_placed": 20,
+        "wrong_placed": 1
+      },
+      "by_group": {
+        "single_seen": {
+          "trials": 20,
+          "placements": 13,
+          "lifts": 16
+        },
+        "single_unseen": {
+          "trials": 20,
+          "placements": 10,
+          "lifts": 10
+        },
+        "two_red_present": {
+          "trials": 40,
+          "placements": 12,
+          "lifts": 16
+        },
+        "two_red_absent": {
+          "trials": 40,
+          "placements": 11,
+          "lifts": 15
+        },
+        "four_red_present": {
+          "trials": 40,
+          "placements": 5,
+          "lifts": 10
+        },
+        "four_red_absent": {
+          "trials": 40,
+          "placements": 3,
+          "lifts": 7
+        }
+      },
+      "by_color": {
+        "red": {
+          "trials": 50,
+          "placements": 18,
+          "lifts": 24
+        },
+        "black": {
+          "trials": 80,
+          "placements": 27,
+          "lifts": 35
+        },
+        "purple": {
+          "trials": 40,
+          "placements": 6,
+          "lifts": 9
+        },
+        "green": {
+          "trials": 20,
+          "placements": 3,
+          "lifts": 6
+        },
+        "orange": {
+          "trials": 10,
+          "placements": 0,
+          "lifts": 0
+        }
+      },
+      "unseen_placements": 33,
+      "mean_trial_seconds": 42.32424265841022,
+      "first_multicube_lift": {
+        "correct": 48,
+        "no_lift": 111,
+        "wrong": 1
+      },
+      "placement_failures": {
+        "outside_radius": 20,
+        "height": 15,
+        "hand_close": 15,
+        "unsettled": 3
+      },
+      "vs_original_6000": {
+        "gains": 25,
+        "losses": 51,
+        "shared": 29,
+        "p": 0.0038362357516146246
+      },
+      "vs_new_6000": {
+        "gains": 23,
+        "losses": 30,
+        "shared": 31,
+        "p": 0.4101027163746913
+      },
+      "vs_same_update_continuation": {
+        "gains": 31,
+        "losses": 32,
+        "shared": 23,
+        "p": 1.0
+      }
+    },
+    "10000": {
+      "placements": 52,
+      "target_lifts": 94,
+      "controller_failures": 26,
+      "infrastructure_failures": 0,
+      "wrong_placements": 1,
+      "outcomes": {
+        "target_lifted_not_placed": 42,
+        "no_lift": 105,
+        "correct_placed": 52,
+        "wrong_placed": 1
+      },
+      "by_group": {
+        "single_seen": {
+          "trials": 20,
+          "placements": 12,
+          "lifts": 15
+        },
+        "single_unseen": {
+          "trials": 20,
+          "placements": 8,
+          "lifts": 11
+        },
+        "two_red_present": {
+          "trials": 40,
+          "placements": 14,
+          "lifts": 31
+        },
+        "two_red_absent": {
+          "trials": 40,
+          "placements": 8,
+          "lifts": 15
+        },
+        "four_red_present": {
+          "trials": 40,
+          "placements": 5,
+          "lifts": 12
+        },
+        "four_red_absent": {
+          "trials": 40,
+          "placements": 5,
+          "lifts": 10
+        }
+      },
+      "by_color": {
+        "red": {
+          "trials": 50,
+          "placements": 20,
+          "lifts": 32
+        },
+        "black": {
+          "trials": 80,
+          "placements": 18,
+          "lifts": 38
+        },
+        "purple": {
+          "trials": 40,
+          "placements": 8,
+          "lifts": 15
+        },
+        "green": {
+          "trials": 20,
+          "placements": 5,
+          "lifts": 7
+        },
+        "orange": {
+          "trials": 10,
+          "placements": 1,
+          "lifts": 2
+        }
+      },
+      "unseen_placements": 27,
+      "mean_trial_seconds": 48.08012328837067,
+      "first_multicube_lift": {
+        "correct": 68,
+        "no_lift": 91,
+        "wrong": 1
+      },
+      "placement_failures": {
+        "outside_radius": 42,
+        "height": 20,
+        "hand_close": 20,
+        "unsettled": 1
+      },
+      "vs_original_6000": {
+        "gains": 23,
+        "losses": 51,
+        "shared": 29,
+        "p": 0.0015162236642818612
+      },
+      "vs_new_6000": {
+        "gains": 24,
+        "losses": 33,
+        "shared": 28,
+        "p": 0.2892437471090205
+      },
+      "vs_same_update_continuation": {
+        "gains": 32,
+        "losses": 44,
+        "shared": 20,
+        "p": 0.20673684180839233
+      }
+    },
+    "12000": {
+      "placements": 40,
+      "target_lifts": 74,
+      "controller_failures": 23,
+      "infrastructure_failures": 0,
+      "wrong_placements": 0,
+      "outcomes": {
+        "correct_placed": 40,
+        "no_lift": 125,
+        "target_lifted_not_placed": 34,
+        "wrong_cube_lifted": 1
+      },
+      "by_group": {
+        "single_seen": {
+          "trials": 20,
+          "placements": 12,
+          "lifts": 15
+        },
+        "single_unseen": {
+          "trials": 20,
+          "placements": 4,
+          "lifts": 8
+        },
+        "two_red_present": {
+          "trials": 40,
+          "placements": 10,
+          "lifts": 21
+        },
+        "two_red_absent": {
+          "trials": 40,
+          "placements": 11,
+          "lifts": 16
+        },
+        "four_red_present": {
+          "trials": 40,
+          "placements": 0,
+          "lifts": 9
+        },
+        "four_red_absent": {
+          "trials": 40,
+          "placements": 3,
+          "lifts": 5
+        }
+      },
+      "by_color": {
+        "red": {
+          "trials": 50,
+          "placements": 16,
+          "lifts": 24
+        },
+        "black": {
+          "trials": 80,
+          "placements": 16,
+          "lifts": 34
+        },
+        "purple": {
+          "trials": 40,
+          "placements": 7,
+          "lifts": 12
+        },
+        "green": {
+          "trials": 20,
+          "placements": 1,
+          "lifts": 4
+        },
+        "orange": {
+          "trials": 10,
+          "placements": 0,
+          "lifts": 0
+        }
+      },
+      "unseen_placements": 23,
+      "mean_trial_seconds": 49.47807486621663,
+      "first_multicube_lift": {
+        "correct": 51,
+        "no_lift": 108,
+        "wrong": 1
+      },
+      "placement_failures": {
+        "height": 26,
+        "unsettled": 6,
+        "hand_close": 21,
+        "outside_radius": 31
+      },
+      "vs_original_6000": {
+        "gains": 13,
+        "losses": 53,
+        "shared": 27,
+        "p": 7.237175237417024e-07
+      },
+      "vs_new_6000": {
+        "gains": 15,
+        "losses": 36,
+        "shared": 25,
+        "p": 0.0046013097117665325
+      },
+      "vs_same_update_continuation": {
+        "gains": 20,
+        "losses": 44,
+        "shared": 20,
+        "p": 0.0036899642765400487
+      }
+    }
+  },
+  "initial_image_identical_subset": {
+    "trials": 198,
+    "original_successes": 79,
+    "new_6000_successes": 61
+  },
+  "source_dataset_examples": 43344,
+  "source_dataset_episodes": 600,
+  "selection_scoring": "First step where any cube maximum_lift_metres reaches 0.08; correct/wrong/both; multi-cube trials only",
+  "inference_config_matches_original": true
+}

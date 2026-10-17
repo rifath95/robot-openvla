@@ -5,8 +5,13 @@ Reviewed October 16, 2026. Session:
 
 Training completed all 12,000 updates. The final resumable state was verified
 locally, and the checkpoint/report backup was uploaded and verified on HF.
-The separate 800-trial simulator sweep is still pending review; training metrics
-alone cannot establish that this run improves closed-loop task success.
+At the October 16 training review, the separate 800-trial simulator sweep was
+pending review; training metrics alone cannot establish closed-loop task success.
+
+Follow-up October 17: the [completed sweep review](UNINTERRUPTED_COLOR_BOWL_12000_SWEEP.md)
+finds 30.5% placement at new checkpoint 6,000 and 20% at 12,000, below the
+original run's 40% at 6,000. The improving training metrics did not translate
+into higher simulator success.
 
 ## Setup and completion
 
