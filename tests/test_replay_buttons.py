@@ -53,6 +53,18 @@ class ReplayButtonTests(unittest.TestCase):
         self.assertIn('| Details | Replay |',report)
         self.assertIn('token=test-token',report)
 
+    def test_resume_old_partial_restore_reuses_recording_directory(self):
+        name=self.rows[0]['directory'];trial=self.dest/name
+        trial.mkdir(parents=True);(trial/'summary.json').write_text('{}')
+        (trial/'preserved.txt').write_text('earlier partial restore')
+        inode=trial.stat().st_ino
+        restore(self.source,self.dest)
+        moved=self.dest/'trials'/name
+        self.assertEqual(moved.stat().st_ino,inode)
+        self.assertEqual((moved/'preserved.txt').read_text(),'earlier partial restore')
+        self.assertFalse(trial.exists())
+        self.assertEqual(len(json.loads((self.dest/'results.json').read_text())['trials']),4)
+
     def test_checksum_rejects_corrupted_download(self):
         data=self.archive.read_bytes();self.archive.write_bytes(bytes([data[0]^1])+data[1:])
         with self.assertRaisesRegex(ValueError,'Checksum mismatch'):restore(self.source,self.dest)

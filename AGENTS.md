@@ -89,3 +89,11 @@ the original saved checkpoint 0 of panda-train-color-bowl-20261015-094416-4344d3
 using the pinned HF source and hashes in its training profile. Do not create a
 new random LoRA initialization. Start a fresh optimizer at update zero and keep
 it continuous through 12,000; save full training state at the final checkpoint.
+
+# Sweep folder layout
+
+For all future sweeps, keep REPORT.md, results.json and summary reports at the
+sweep root, with individual base/checkpoint trial recordings under trials/.
+Use common.sweep_layout trial paths in new plans. Keep legacy plans/archives
+readable and preserve direct Replay and Action Replay links after restoration
+or local organization. Never reorganize a running pod's experiment checkout.

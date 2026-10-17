@@ -2,6 +2,7 @@
 
 from common.output_layout import output_path, resolve_output_path
 from common.replay_links import add_trial_replays
+from common.sweep_layout import trial_directory, validate_trial_directory
 import argparse
 from collections import defaultdict
 from datetime import datetime, timezone
@@ -104,11 +105,12 @@ def resume_rows(folder, plan):
     for key in ('checkpoints','scene_seeds','cube_positions','steps','sampling','task','training_session','color_pairs'):
         if previous.get(key)!=plan.get(key):
             raise ValueError(f'Resume plan differs: {key}')
+    plan['trial_directory']=previous.get('trial_directory','')
     rows=saved['trials']
     if len({r['directory'] for r in rows})!=len(rows):raise ValueError('Duplicate saved trials')
     for row in rows:
         name=row['directory']
-        if Path(name).name!=name:raise ValueError('Invalid saved trial directory')
+        validate_trial_directory(name)
         summary=folder/name/'summary.json'
         if not summary.is_file():raise ValueError('Saved trial summary missing; inspect before resuming')
         data=json.loads(summary.read_text())
@@ -160,7 +162,7 @@ def run_trials(args, folder, ssh):
                 cube_positions=[s['cube_positions'] if task in ('color_touch','color_transfer') else s['cube_xy'] for s in specs], steps=args.steps,
                 instruction='Both red and blue touch instructions' if task=='color_touch' else 'touch the red cube.', sampling=False,
                 task=task,
-                training_session=args.training_session)
+                training_session=args.training_session,trial_directory='trials')
     if task=='color_transfer':
         from simulation.color_palette import parse_pairs
         plan['color_pairs']=parse_pairs(getattr(args,'color_pairs',None))
@@ -198,7 +200,7 @@ def run_trials(args, folder, ssh):
                 seed,color,colors,pair_name=spec
                 suffix=f'_{color}' if task in ('color_touch','color_transfer') else ''
                 if task=='color_transfer':suffix=f'_{pair_name.replace(":","-")}{suffix}'
-                return f'checkpoint_{checkpoint:06d}_seed_{seed}{suffix}'
+                return trial_directory(plan,f'checkpoint_{checkpoint:06d}_seed_{seed}{suffix}')
             pending=[spec for spec in trial_specs if trial_name(spec) not in done]
             if not pending:
                 print(f'Checkpoint {checkpoint}: all trials already saved; skipping model load.',flush=True)
@@ -223,7 +225,8 @@ def run_trials(args, folder, ssh):
             for seed,color,colors,pair_name in pending:
                 suffix=f'_{color}' if task in ('color_touch','color_transfer') else ''
                 if task=='color_transfer':suffix=f'_{pair_name.replace(":","-")}{suffix}'
-                trial = folder / f'checkpoint_{checkpoint:06d}_seed_{seed}{suffix}'
+                trial = folder / trial_directory(plan,f'checkpoint_{checkpoint:06d}_seed_{seed}{suffix}')
+                trial.parent.mkdir(parents=True,exist_ok=True)
                 if trial.exists():
                     trial.rename(trial.with_name(trial.name+f'_interrupted_{time.time_ns()}'))
                 instruction=f'touch the {color} cube.'
@@ -247,7 +250,7 @@ def run_trials(args, folder, ssh):
                 status_path = trial / 'status.json'
                 status = json.loads(status_path.read_text()) if status_path.exists() else {}
                 outcome=summary.get('task_result') or {}
-                rows.append(dict(checkpoint=checkpoint, seed=seed, directory=trial.name,
+                rows.append(dict(checkpoint=checkpoint, seed=seed, directory=trial.relative_to(folder).as_posix(),
                     phase=summary.get('phase', 'Missing summary'),
                     completed_steps=summary.get('completed_steps', 0),
                     contact=outcome.get('correct_cube_contact',False)

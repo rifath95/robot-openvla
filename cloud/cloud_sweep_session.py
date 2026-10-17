@@ -36,11 +36,18 @@ def extract_results(archive,destination):
                 not (destination/str(name)).resolve().is_relative_to(destination.resolve())):raise ValueError('Unsafe sweep archive')
         record=next((m for m in members if m.name=='results.json'),None)
         if record is None:raise ValueError('Sweep results missing')
-        validate_saved(json.load(stream.extractfile(record)))
+        payload=json.load(stream.extractfile(record))
+        specs=validate_saved(payload)
+        from common.sweep_layout import prepare_trial_restore
+        prepare_trial_restore(destination,specs)
         if (destination/'results.json').exists():
             (destination/f'results_before_cloud_fetch_{time.time_ns()}.json').write_bytes((destination/'results.json').read_bytes())
         for member in members:
-            target=destination/member.name;target.parent.mkdir(parents=True,exist_ok=True)
+            name=PurePosixPath(member.name)
+            relative='trials/'+member.name if name.parts[0] in specs else member.name
+            target=destination/relative
+            if not target.resolve().is_relative_to(destination.resolve()):raise ValueError('Unsafe sweep archive')
+            target.parent.mkdir(parents=True,exist_ok=True)
             with stream.extractfile(member) as src,target.open('wb') as dst:
                 while chunk:=src.read(1024**2):dst.write(chunk)
 
@@ -54,6 +61,8 @@ def fetch(ssh,remote,destination):
         with archive.open('wb') as out:subprocess.run(ssh+[command],stdout=out,check=True,timeout=1800)
         extract_results(archive,destination)
     from analysis.replay_launcher import refresh
+    from data_tools.organize_sweep_trials import organize
+    organize(destination,apply=True)
     refresh(destination)
     subprocess.run(ssh+['touch '+shlex.quote(remote+'/sync_ack')],check=True,timeout=20)
     print(f'Results saved locally: {destination}',flush=True)

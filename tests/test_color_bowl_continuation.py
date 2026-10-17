@@ -36,7 +36,7 @@ class ContinuationChainTests(unittest.TestCase):
             for spec in trial_specs(plan):
                 row={k:v for k,v in spec.items() if k!='layout'}
                 row.update(phase='Completed',outcome='no_lift',placement_success=False)
-                trial=source/spec['directory'];trial.mkdir()
+                trial=source/spec['directory'];trial.mkdir(parents=True)
                 (trial/'summary.json').write_text('{}')
                 rows.append(row)
             write_reports(source,plan,rows)

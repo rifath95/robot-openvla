@@ -98,7 +98,7 @@ class ColoredSweepTests(unittest.TestCase):
             plan=make_colored_plan('panda-train-color-bowl-test');rows=[]
             for spec in trial_specs(plan):
                 r={k:v for k,v in spec.items() if k!='layout'};r.update(phase='Completed',outcome='no_lift',placement_success=False)
-                folder=source/spec['directory'];folder.mkdir();(folder/'summary.json').write_text('{}');rows.append(r)
+                folder=source/spec['directory'];folder.mkdir(parents=True);(folder/'summary.json').write_text('{}');rows.append(r)
             write_reports(source,plan,rows);package(source,staging,dict(plan=plan,trials=rows))
             before=[r for r in json.loads((staging/'manifest.json').read_text())['files'] if r['path'].startswith('archives/')]
             (session/'TIMINGS.md').write_text('Complete timings');(session/'sweep_hf_receipt.json').write_text('{"verified":true,"revision":"previous"}')

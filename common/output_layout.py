@@ -42,5 +42,13 @@ def resolve_output_path(path):
     absolute=path.absolute()
     try:relative=absolute.relative_to(OUTPUTS_ROOT)
     except ValueError:return path
-    candidate=output_path(relative)
-    return candidate if candidate.exists() else path
+    candidates=[OUTPUTS_ROOT/relative,output_path(relative)]
+    for candidate in candidates:
+        if candidate.exists():return candidate
+        try:parts=candidate.relative_to(OUTPUTS_ROOT/'sweeps').parts
+        except ValueError:continue
+        if (len(parts)>=2 and parts[0].startswith('scripted_') and parts[1]!='trials'
+            and parts[1].startswith(('checkpoint_','base_model'))):
+            nested=OUTPUTS_ROOT/'sweeps'/parts[0]/'trials'/Path(*parts[1:])
+            if nested.exists():return nested
+    return path

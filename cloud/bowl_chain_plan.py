@@ -1,5 +1,6 @@
 """Frozen 1,000-trial bowl placement plan; pure validation also used on restoration."""
 import math
+from common.sweep_layout import trial_directory
 from simulation.color_place_bowl_scene import positions,validate_layout,slots
 GROUPS=(('single_seen',['red'],20),('single_unseen',['black'],20),
         ('two_red_present',['red','black'],20),('two_red_absent',['black','purple'],20),
@@ -30,7 +31,7 @@ def validate_layout_copy(actual,expected):
 def make_plan(session):
     groups=[dict(name=name,colors=list(colors),scene_seeds=list(range(1000,1000+n)),
                  layouts=[positions(s,len(colors)) for s in range(1000,1000+n)]) for name,colors,n in GROUPS]
-    return dict(task='multi_place_bowl',training_session=session,include_base_model=True,action_statistics_checkpoint=500,
+    return dict(trial_directory='trials',task='multi_place_bowl',training_session=session,include_base_model=True,action_statistics_checkpoint=500,
                 checkpoints=list(CHECKPOINTS),sampling=False,steps=120,groups=groups,
                 timeout_budget=timeout_budget(),estimated_seconds=25*3600,elapsed_seconds=0)
 
@@ -74,7 +75,7 @@ def trial_specs(plan):
                     label='base_model' if cp==0 else f'checkpoint_{cp:06d}'
                     yield dict(checkpoint=cp,seed=seed,target_color=color,cube_colors=rotated,
                         cube_count=count,color_set=g['name'],color_pair=None,layout=layout,
-                        directory=f'{label}_{g["name"]}_{count}c_seed_{seed}_{color}')
+                        directory=trial_directory(plan,f'{label}_{g["name"]}_{count}c_seed_{seed}_{color}'))
 
 
 def validate_saved(payload):

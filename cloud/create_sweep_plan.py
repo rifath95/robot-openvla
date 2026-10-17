@@ -11,7 +11,7 @@ from cloud.sweep_plan import validate_saved,trial_specs
 
 def create(profile):
     config=json.loads(Path(profile).read_text())
-    plan=dict(config,task=config.get('task','color_transfer'),sampling=False,elapsed_seconds=0)
+    plan=dict(config,trial_directory='trials',task=config.get('task','color_transfer'),sampling=False,elapsed_seconds=0)
     known=json.loads((PROJECT_ROOT/config['dataset_manifest']).read_text())['episodes']
     if plan['task']=='multi_color_touch':
         from simulation.multi_color_scene import positions

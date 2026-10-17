@@ -181,6 +181,7 @@ def run(directory,sim_python,*,port=0):
                     startup.write_text(json.dumps(startup_info,indent=2)+'\n')
                     for spec in selected:
                         trial=local/spec['directory']
+                        trial.parent.mkdir(parents=True,exist_ok=True)
                         if trial.exists():trial.rename(trial.with_name(trial.name+f'_interrupted_{time.time_ns()}'))
                         command=[str(sim_python),'-u','-m','inference.remote_loop','--task',plan['task'],
                             '--instruction',('pick up the red cube and place it in the blue bowl.' if plan['task']=='place_bowl' else f"pick up the {spec['target_color']} cube." if plan['task']=='color_lift' else 'pick up the red cube.' if plan['task']=='lift' else f"touch the {spec['target_color']} cube."),'--scene-seed',str(spec['seed']),
@@ -204,6 +205,7 @@ def run(directory,sim_python,*,port=0):
                         row=summarize(spec,trial,code)
                         row['model_label']='Pretrained base' if is_base else f'Checkpoint {checkpoint}'
                         destination=directory/spec['directory']
+                        destination.parent.mkdir(parents=True,exist_ok=True)
                         if destination.exists():destination.rename(destination.with_name(destination.name+f'_interrupted_{time.time_ns()}'))
                         if trial.exists():shutil.copytree(trial,destination)
                         rows.append(row);plan['elapsed_seconds']=previous+time.monotonic()-started

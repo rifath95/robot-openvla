@@ -15,12 +15,16 @@ class WorkerTests(unittest.TestCase):
     def test_wait_and_stage_only_when_next_checkpoint_is_needed(self):
         self.run_case(pending=True)
 
-    def run_case(self,pending=False):
+    def test_nested_trials_resume_without_repeating_saved_failures(self):
+        self.run_case(nested=True)
+
+    def run_case(self,pending=False,nested=False):
         with tempfile.TemporaryDirectory() as tmp:
             root=Path(tmp);directory=root/'sweep';directory.mkdir()
             plan=dict(task='color_transfer',checkpoints=[100,300],scene_seeds=[1000],color_pairs=[['black','purple']],
                 steps=50,sampling=False,cube_positions=[{'red':[.4,.1],'blue':[.6,-.1]}],training_session='panda-train-test',timeout_budget=timeout_budget(100))
             if pending:plan['checkpoint_wait_seconds']=30
+            if nested:plan['trial_directory']='trials'
             specs=list(trial_specs(plan))
             saved=[dict(specs[0],phase='Failed',completed_steps=10,outcome='no_contact',contact=False)]
             (directory/'results.json').write_text(json.dumps(dict(plan=plan,trials=saved)))
@@ -43,6 +47,7 @@ class WorkerTests(unittest.TestCase):
                 patch.object(worker,'write_reports',side_effect=lambda folder,plan,rows,error=None:(folder/'results.json').write_text(json.dumps(dict(plan=plan,trials=rows)))):
                 worker.run(directory,'/sim/python')
             self.assertEqual(len(calls),3)
+            if nested:self.assertTrue(all(r['directory'].startswith('trials/') for r in saved))
             self.assertTrue(all(c[c.index('--server-url')+1]=='http://127.0.0.1:12345' for c in calls))
             self.assertEqual(calls[0][calls[0].index('--target-color')+1],'purple')
             self.assertTrue(all('--no-view' in c and '--start-immediately' in c for c in calls))

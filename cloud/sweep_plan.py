@@ -2,6 +2,7 @@
 import json
 import math
 from pathlib import Path
+from common.sweep_layout import trial_directory
 
 
 def timeout_budget(estimated_seconds):
@@ -28,7 +29,7 @@ def trial_specs(plan):
                             prefix='base_model' if checkpoint==0 and plan.get('include_base_model') else f'checkpoint_{checkpoint:06d}'
                             name=f'{prefix}_{group["name"]}_{count}c_seed_{seed}_{target}'
                             yield dict(checkpoint=checkpoint,seed=seed,target_color=target,cube_colors=colors,
-                                color_pair=None,color_set=group['name'],cube_count=count,directory=name)
+                                color_pair=None,color_set=group['name'],cube_count=count,directory=trial_directory(plan,name))
         return
     for checkpoint in plan['checkpoints']:
         if task in ('color_transfer','color_lift'):
@@ -44,7 +45,7 @@ def trial_specs(plan):
                     name=f'{prefix}_seed_{seed}{suffix}'
                     yield dict(checkpoint=checkpoint,seed=seed,target_color=target,
                         cube_colors=colors if task in ('color_transfer','color_lift') else None,
-                        color_pair=':'.join(pair) if task in ('color_transfer','color_lift') else None,directory=name)
+                        color_pair=':'.join(pair) if task in ('color_transfer','color_lift') else None,directory=trial_directory(plan,name))
 
 
 def validate_saved(payload):

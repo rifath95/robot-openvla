@@ -52,8 +52,7 @@ For example:
 ```
 
 Restarting the replay launcher refreshes its local links. Reload the report's
-Markdown Preview after migration. Relative per-trial links remain valid because
-each complete sweep directory moves together.
+Markdown Preview after migration. Per-trial report and replay links are refreshed for the layout below.
 
 ## Migration and preserved data
 
@@ -74,3 +73,45 @@ The helper `python -m data_tools.organize_outputs` previews any remaining flat
 entries; `--apply` organizes them without overwriting existing destinations.
 Outputs remain excluded from Git, while this guide and path-handling code are
 tracked.
+
+## Inside each sweep
+
+New sweeps and restored archives use this layout:
+
+```text
+outputs/sweeps/<sweep-name>/
+├── REPORT.md
+├── results.json
+├── ...summary reports, logs and timings...
+└── trials/
+    ├── base_model_.../
+    ├── checkpoint_000050_.../
+    └── ...
+```
+
+Open `REPORT.md` directly; individual recordings no longer fill the sweep root.
+New plans store `trial_directory: "trials"` and index each recording as
+`trials/<trial-name>`. Reports, Replay/Action Replay, resumptions and archive
+packing/restoration use those indexed paths. Legacy plans without the field
+remain valid; old HF archives are organized automatically after restoration.
+A repeated restore reuses its progress and targets the same nested recordings.
+
+The October 17 local migration uses directory renames, preserving recording
+inodes and bytes. It updates the derived result index and Markdown links while
+retaining custom report tables/prose. Original result indexes and migration
+status are kept in each sweep's hidden `.trial_layout_migration.json`.
+Other historical JSON/log/provenance paths remain unchanged. Old local trial
+folder arguments and replay URLs resolve through the compatibility helper;
+commands directly naming a Python file need its new `trials/` path.
+
+To inspect another collection of legacy sweeps, run:
+
+```bash
+.venv-training/bin/python -m data_tools.organize_sweep_trials
+# Apply the previewed moves, or finish an interrupted migration:
+.venv-training/bin/python -m data_tools.organize_sweep_trials --apply
+```
+
+The helper refuses collisions and does not delete recordings. It is for local
+results; do not migrate an active pod's immutable experiment. Future runs use
+the new layout from their creation without migrating historical cloud data.

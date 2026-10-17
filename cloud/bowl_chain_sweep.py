@@ -86,7 +86,7 @@ def run(config):
                 startup.write_text(json.dumps(dict(health.get('startup_info',{}),execution_mode='cloud_sequential',model_label='Base' if cp==0 else f'Checkpoint {cp}'),indent=2)+'\n')
                 for spec in selected:
                     check()
-                    trial=directory/spec['directory'];positions=Path(config['local'])/'trial_layout.json';positions.write_text(json.dumps(spec['layout']))
+                    trial=directory/spec['directory'];trial.parent.mkdir(parents=True,exist_ok=True);positions=Path(config['local'])/'trial_layout.json';positions.write_text(json.dumps(spec['layout']))
                     if trial.exists():raise ValueError('Unexpected unindexed trial directory; resume explicitly after review')
                     command=[config['sim_python'],'-u','-m','inference.remote_loop','--task','multi_place_bowl','--target-color',spec['target_color'],'--cube-colors',*spec['cube_colors'],'--instruction',f"pick up the {spec['target_color']} cube and place it in the blue bowl.",'--scene-seed',str(spec['seed']),'--scene-positions',str(positions),'--steps','120','--no-view','--start-immediately','--startup-info',str(startup),'--output-dir',str(trial),'--server-url',f'http://127.0.0.1:{port}','--max-runtime-seconds','900']
                     print(f"Checkpoint {cp}, {spec['color_set']}, seed {spec['seed']}, target {spec['target_color']}",flush=True)
